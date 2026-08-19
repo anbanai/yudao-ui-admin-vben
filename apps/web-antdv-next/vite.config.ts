@@ -4,6 +4,15 @@ export default defineConfig(async () => {
   return {
     application: {},
     vite: {
+      vite: {
+        build: {
+          rolldownOptions: {
+            output: {
+              // Prevent cross-chunk init wrappers from running before assignment.
+              strictExecutionOrder: true,
+            },
+          },
+        },
       server: {
         allowedHosts: true,
         proxy: {
