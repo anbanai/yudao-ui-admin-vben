@@ -19,14 +19,6 @@ spec:
     spec:
       containers:
         - env:
-            - name: aliyun_logs_log-${micro_service_name}-${version_switch}_logstore
-              value: ${log_store}
-            - name: aliyun_logs_log-${micro_service_name}-${version_switch}
-              value: stdout
-            - name: aliyun_logs_${micro_service_name}-${version_switch}_tags
-              value: applog=${micro_service_name}-${version_switch}
-            - name: version_switch
-              value: ${version_switch}
             - name: version_switch
               value: ${version_switch}
             - name: TZ
