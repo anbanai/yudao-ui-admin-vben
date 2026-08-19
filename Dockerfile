@@ -1,4 +1,4 @@
 FROM prod-acr-brdx-registry.cn-chengdu.cr.aliyuncs.com/default/nginx:1.24-alpine
-COPY ./dist-prod /usr/share/nginx/html
+COPY ./apps/web-antd/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 CMD ["nginx", "-g", "daemon off;"]
