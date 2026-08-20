@@ -11,6 +11,7 @@ spec:
   selector:
     matchLabels:
       app: ${micro_service_name}
+      version: ${version_switch}
   template:
     metadata:
       labels:
@@ -47,6 +48,7 @@ metadata:
 spec:
   selector:
     app: ${micro_service_name}
+    version: ${version_switch}
   ports:
     - name: http-8080
       port: 8080

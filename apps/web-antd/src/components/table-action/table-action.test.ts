@@ -1,8 +1,9 @@
-import { createPinia, setActivePinia } from 'pinia';
 import { createApp } from 'vue';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { useAccessStore } from '@vben/stores';
+
+import { createPinia, setActivePinia } from 'pinia';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import TableAction from './table-action.vue';
 

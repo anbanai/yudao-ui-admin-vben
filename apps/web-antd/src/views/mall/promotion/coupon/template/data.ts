@@ -11,6 +11,7 @@ import {
   PromotionProductScopeEnum,
 } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
+import { isEqual } from '@vben/utils';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
@@ -70,9 +71,11 @@ export function useFormSchema(): VbenFormSchema[] {
           model.productScope === PromotionProductScopeEnum.SPU.scope,
         trigger(values, form) {
           // 当加载已有数据时，根据 productScopeValues 设置 productSpuIds
+          // 内容相同时不重复赋值，避免与 productScopeValues 互相触发导致死循环
           if (
             values.productScope === PromotionProductScopeEnum.SPU.scope &&
-            values.productScopeValues
+            values.productScopeValues &&
+            !isEqual(values.productSpuIds, values.productScopeValues)
           ) {
             form.setFieldValue('productSpuIds', values.productScopeValues);
           }
@@ -90,18 +93,20 @@ export function useFormSchema(): VbenFormSchema[] {
           model.productScope === PromotionProductScopeEnum.CATEGORY.scope,
         trigger(values, form) {
           // 当加载已有数据时，根据 productScopeValues 设置 productCategoryIds
+          // 内容相同时不重复赋值，避免与 productScopeValues 互相触发导致死循环
           if (
             values.productScope === PromotionProductScopeEnum.CATEGORY.scope &&
             values.productScopeValues
           ) {
             const categoryIds = values.productScopeValues;
             // 单选时使用数组不能反显，取第一个元素
-            form.setFieldValue(
-              'productCategoryIds',
+            const categoryId =
               Array.isArray(categoryIds) && categoryIds.length > 0
                 ? categoryIds[0]
-                : categoryIds,
-            );
+                : categoryIds;
+            if (!isEqual(values.productCategoryIds, categoryId)) {
+              form.setFieldValue('productCategoryIds', categoryId);
+            }
           }
         },
       },
@@ -298,16 +303,21 @@ export function useFormSchema(): VbenFormSchema[] {
         triggerFields: ['productScope', 'productSpuIds', 'productCategoryIds'],
         show: () => false,
         trigger(values, form) {
+          // 内容相同时不重复赋值，避免与 productSpuIds/productCategoryIds 互相触发导致死循环
           switch (values.productScope) {
             case PromotionProductScopeEnum.CATEGORY.scope: {
               const categoryIds = Array.isArray(values.productCategoryIds)
                 ? values.productCategoryIds
                 : [values.productCategoryIds];
-              form.setFieldValue('productScopeValues', categoryIds);
+              if (!isEqual(values.productScopeValues, categoryIds)) {
+                form.setFieldValue('productScopeValues', categoryIds);
+              }
               break;
             }
             case PromotionProductScopeEnum.SPU.scope: {
-              form.setFieldValue('productScopeValues', values.productSpuIds);
+              if (!isEqual(values.productScopeValues, values.productSpuIds)) {
+                form.setFieldValue('productScopeValues', values.productSpuIds);
+              }
               break;
             }
           }

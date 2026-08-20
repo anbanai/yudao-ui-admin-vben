@@ -3,5 +3,7 @@ node_modules
 .gitignore
 *.md
 dist
+!apps/web-antd/dist
+!apps/web-antd/dist/**
 .turbo
 dist.zip
