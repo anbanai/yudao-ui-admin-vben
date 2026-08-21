@@ -22,6 +22,7 @@ import { $t } from '#/locales';
 import { useGridColumns, useGridFormSchema } from './data';
 import DeliveryForm from './modules/delivery-form.vue';
 import RemarkForm from './modules/remark-form.vue';
+import { getOrderRemarkItems } from './remark-display';
 
 const { push } = useRouter();
 
@@ -139,6 +140,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
             </List.Item>
           </template>
         </List>
+        <div
+          v-if="getOrderRemarkItems(row).length > 0"
+          class="mt-2 space-y-1 border-t border-solid border-red-100 bg-red-50 px-3 py-2 text-sm text-red-500"
+        >
+          <div
+            v-for="remark in getOrderRemarkItems(row)"
+            :key="remark.key"
+            class="break-words leading-6"
+          >
+            <span class="font-medium">{{ remark.label }}：</span>
+            {{ remark.content }}
+          </div>
+        </div>
       </template>
       <template #actions="{ row }">
         <TableAction
