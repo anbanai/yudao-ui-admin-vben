@@ -17,10 +17,7 @@ describe('reward activity product scope dependencies', () => {
       productSpuIds: [],
     };
 
-    syncProductSpuIds(
-      { ...values, productSpuIds: [1, 2] },
-      setFieldValue,
-    );
+    syncProductSpuIds({ ...values, productSpuIds: [1, 2] }, setFieldValue);
 
     expect(setFieldValue).toHaveBeenCalledTimes(0);
   });
@@ -45,12 +42,12 @@ describe('reward activity product scope dependencies', () => {
     const spuValues = {
       productScope: PromotionProductScopeEnum.SPU.scope,
       productScopeValues: [1, 2],
-      productSpuIds: [],
+      productSpuIds: [] as number[],
     };
     const categoryValues = {
       productScope: PromotionProductScopeEnum.CATEGORY.scope,
       productScopeValues: [3, 4],
-      productCategoryIds: [],
+      productCategoryIds: [] as number[],
     };
 
     syncProductSpuIds(spuValues, (field, value) => {
@@ -67,15 +64,19 @@ describe('reward activity product scope dependencies', () => {
 
     expect(setFieldValue).toHaveBeenCalledTimes(2);
     expect(setFieldValue).toHaveBeenNthCalledWith(1, 'productSpuIds', [1, 2]);
-    expect(setFieldValue).toHaveBeenNthCalledWith(2, 'productCategoryIds', [3, 4]);
+    expect(setFieldValue).toHaveBeenNthCalledWith(
+      2,
+      'productCategoryIds',
+      [3, 4],
+    );
   });
 
   it('synchronizes category scope values without repeating the write', () => {
     const setFieldValue = vi.fn();
     const values = {
       productScope: PromotionProductScopeEnum.CATEGORY.scope,
-      productScopeValues: [],
-      productCategoryIds: [3, 4],
+      productScopeValues: [] as number[],
+      productCategoryIds: [3, 4] as number[],
     };
 
     syncProductScopeValues(values, (field, value) => {

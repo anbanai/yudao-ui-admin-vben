@@ -6,6 +6,7 @@ import type { MallOrderApi } from '#/api/mall/trade/order';
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import { useAccess } from '@vben/access';
 import { confirm, Page, useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { useTabs } from '@vben/hooks';
@@ -40,6 +41,7 @@ defineOptions({ name: 'TradeAfterSaleDetail' });
 const route = useRoute();
 const router = useRouter();
 const tabs = useTabs();
+const { hasAccessByCodes } = useAccess();
 
 const loading = ref(false);
 const afterSaleId = ref(0);
@@ -218,6 +220,17 @@ function handleBack() {
   router.push({ name: 'TradeAfterSale' });
 }
 
+/** Only refund-capable operators can approve refund-only requests in one step. */
+function canAgreeAfterSale() {
+  if (!hasAccessByCodes(['trade:after-sale:agree'])) {
+    return false;
+  }
+  return (
+    afterSale.value.way !== AFTER_SALE_REFUND_WAY ||
+    hasAccessByCodes(['trade:after-sale:refund'])
+  );
+}
+
 /** 初始化 */
 onMounted(() => {
   afterSaleId.value = Number(route.params.id);
@@ -243,33 +256,41 @@ onMounted(() => {
                 : '同意售后',
             type: 'primary',
             onClick: handleAgree,
-            ifShow: afterSale.status === 10,
+            ifShow: afterSale.status === 10 && canAgreeAfterSale(),
           },
           {
             label: '拒绝售后',
             type: 'primary',
             danger: true,
             onClick: handleDisagree,
-            ifShow: afterSale.status === 10,
+            ifShow:
+              afterSale.status === 10 &&
+              hasAccessByCodes(['trade:after-sale:disagree']),
           },
           {
             label: '确认收货',
             type: 'primary',
             onClick: handleReceive,
-            ifShow: afterSale.status === 30,
+            ifShow:
+              afterSale.status === 30 &&
+              hasAccessByCodes(['trade:after-sale:receive']),
           },
           {
             label: '拒绝收货',
             type: 'primary',
             danger: true,
             onClick: handleRefuse,
-            ifShow: afterSale.status === 30,
+            ifShow:
+              afterSale.status === 30 &&
+              hasAccessByCodes(['trade:after-sale:receive']),
           },
           {
             label: '确认退款/重试退款',
             type: 'primary',
             onClick: handleRefund,
-            ifShow: afterSale.status === 40,
+            ifShow:
+              afterSale.status === 40 &&
+              hasAccessByCodes(['trade:after-sale:refund']),
           },
         ]"
       />

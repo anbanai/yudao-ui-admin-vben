@@ -53,11 +53,12 @@ export function syncProductScopeValues(
 ) {
   switch (values.productScope) {
     case PromotionProductScopeEnum.CATEGORY.scope: {
-      const categoryIds = Array.isArray(values.productCategoryIds)
-        ? values.productCategoryIds
-        : values.productCategoryIds
-          ? [values.productCategoryIds]
-          : [];
+      let categoryIds: unknown[] = [];
+      if (Array.isArray(values.productCategoryIds)) {
+        categoryIds = values.productCategoryIds;
+      } else if (values.productCategoryIds) {
+        categoryIds = [values.productCategoryIds];
+      }
       if (!isEqual(values.productScopeValues, categoryIds)) {
         setFieldValue('productScopeValues', categoryIds);
       }
