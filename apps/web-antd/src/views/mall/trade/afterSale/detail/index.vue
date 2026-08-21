@@ -26,6 +26,7 @@ import { DictTag } from '#/components/dict-tag';
 import { TableAction } from '#/components/table-action';
 
 import DisagreeForm from '../modules/disagree-form.vue';
+import { AFTER_SALE_REFUND_WAY, agreeAndRefundAfterSale } from '../refund-flow';
 import {
   useAfterSaleInfoSchema,
   useOperateLogSchema,
@@ -133,16 +134,27 @@ async function getDetail() {
 
 /** 同意售后 */
 async function handleAgree() {
-  await confirm('是否同意售后？');
+  await confirm(
+    afterSale.value.way === AFTER_SALE_REFUND_WAY
+      ? '是否同意售后并立即退款？'
+      : '是否同意售后？',
+  );
   const hideLoading = message.loading({
     content: '正在处理中...',
     duration: 0,
   });
   try {
-    await agreeAfterSale(afterSale.value.id!);
-    message.success($t('ui.actionMessage.operationSuccess'));
-    await getDetail();
+    await agreeAndRefundAfterSale(afterSale.value.id!, afterSale.value.way, {
+      agreeAfterSale,
+      refundAfterSale,
+    });
+    message.success(
+      afterSale.value.way === AFTER_SALE_REFUND_WAY
+        ? '退款操作已提交，请以退款状态为准'
+        : $t('ui.actionMessage.operationSuccess'),
+    );
   } finally {
+    await getDetail();
     hideLoading();
   }
 }
@@ -162,8 +174,8 @@ async function handleReceive() {
   try {
     await receiveAfterSale(afterSale.value.id!);
     message.success($t('ui.actionMessage.operationSuccess'));
-    await getDetail();
   } finally {
+    await getDetail();
     hideLoading();
   }
 }
@@ -178,8 +190,8 @@ async function handleRefuse() {
   try {
     await refuseAfterSale(afterSale.value.id!);
     message.success($t('ui.actionMessage.operationSuccess'));
-    await getDetail();
   } finally {
+    await getDetail();
     hideLoading();
   }
 }
@@ -194,8 +206,8 @@ async function handleRefund() {
   try {
     await refundAfterSale(afterSale.value.id!);
     message.success($t('ui.actionMessage.operationSuccess'));
-    await getDetail();
   } finally {
+    await getDetail();
     hideLoading();
   }
 }
@@ -225,7 +237,10 @@ onMounted(() => {
             onClick: handleBack,
           },
           {
-            label: '同意售后',
+            label:
+              afterSale.way === AFTER_SALE_REFUND_WAY
+                ? '同意并退款'
+                : '同意售后',
             type: 'primary',
             onClick: handleAgree,
             ifShow: afterSale.status === 10,
@@ -251,7 +266,7 @@ onMounted(() => {
             ifShow: afterSale.status === 30,
           },
           {
-            label: '确认退款',
+            label: '确认退款/重试退款',
             type: 'primary',
             onClick: handleRefund,
             ifShow: afterSale.status === 40,
