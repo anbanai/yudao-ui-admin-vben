@@ -23,6 +23,9 @@ export const overridesPreferences = defineOverridesPreferences({
     name: import.meta.env.VITE_APP_TITLE,
     enableRefreshToken: true,
   },
+  logo: {
+    source: '/branding/logo-mark.png',
+  },
   footer: {
     /** 默认关闭 footer 页脚，因为有一定遮挡 */
     enable: false,
