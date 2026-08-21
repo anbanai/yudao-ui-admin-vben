@@ -11,6 +11,7 @@ import { Button, Form, FormItem, Tooltip } from 'ant-design-vue';
 import { ProductCategorySelect } from '#/views/mall/product/category/components/';
 
 import { APP_LINK_GROUP_LIST, APP_LINK_TYPE_ENUM } from './data';
+import LinkDetailSelect from './link-detail-select.vue';
 
 /** APP 链接选择弹框 */
 defineOptions({ name: 'AppLinkSelectDialog' });
@@ -35,6 +36,7 @@ const detailSelectDialog = ref<{
   id: undefined,
   type: undefined,
 }); // 详情选择对话框
+const linkDetailSelectRef = ref<InstanceType<typeof LinkDetailSelect>>(); // 详情单选表格引用
 
 const [Modal, modalApi] = useVbenModal({
   onConfirm() {
@@ -73,24 +75,47 @@ async function open(link: string) {
   }
 }
 
+/** 获取链接参数名（商品列表使用 categoryId 筛选分类，其余均为 id） */
+function getParamKey(type?: APP_LINK_TYPE_ENUM) {
+  return type === APP_LINK_TYPE_ENUM.PRODUCT_LIST ? 'categoryId' : 'id';
+}
+
 /** 处理 APP 链接选中 */
-function handleAppLinkSelected(appLink: AppLink) {
+async function handleAppLinkSelected(appLink: AppLink) {
   if (!isSameLink(appLink.path, activeAppLink.value.path)) {
     activeAppLink.value = appLink;
   }
+  if (!appLink.type) {
+    return;
+  }
+  // 返显当前链接的参数值
+  detailSelectDialog.value.type = appLink.type;
+  detailSelectDialog.value.id =
+    getUrlNumberValue(
+      getParamKey(appLink.type),
+      `http://127.0.0.1${activeAppLink.value.path}`,
+    ) || undefined;
   switch (appLink.type) {
-    case APP_LINK_TYPE_ENUM.PRODUCT_CATEGORY_LIST: {
-      detailSelectDialog.value.type = appLink.type;
-      // 返显
-      detailSelectDialog.value.id =
-        getUrlNumberValue(
-          'id',
-          `http://127.0.0.1${activeAppLink.value.path}`,
-        ) || undefined;
+    // 表格单选：商品详情、拼团商品、秒杀商品、优惠券、文章、自定义页面
+    case APP_LINK_TYPE_ENUM.ARTICLE_DETAIL:
+    case APP_LINK_TYPE_ENUM.COUPON_DETAIL:
+    case APP_LINK_TYPE_ENUM.DIY_PAGE_DETAIL:
+    case APP_LINK_TYPE_ENUM.PRODUCT_DETAIL_COMBINATION:
+    case APP_LINK_TYPE_ENUM.PRODUCT_DETAIL_NORMAL:
+    case APP_LINK_TYPE_ENUM.PRODUCT_DETAIL_SECKILL: {
+      // 等待类型变化触发的组件重新挂载完成，确保拿到新实例
+      await nextTick();
+      linkDetailSelectRef.value?.open();
+      break;
+    }
+    // 分类选择：商品分类页、商品列表页（按分类筛选）
+    case APP_LINK_TYPE_ENUM.PRODUCT_CATEGORY_LIST:
+    case APP_LINK_TYPE_ENUM.PRODUCT_LIST: {
       detailSelectModalApi.open();
       break;
     }
     default: {
+      // 无参数页面（如拼团/秒杀/积分商城活动列表页），无需额外选择
       break;
     }
   }
@@ -145,11 +170,14 @@ function isSameLink(link1: string, link2: string) {
   return link2 ? link1?.split('?')[0] === link2.split('?')[0] : false;
 }
 
-/** 处理详情选择 */
-function handleProductCategorySelected(id: number) {
+/** 处理详情选中，将记录编号拼接为链接参数 */
+function handleDetailSelected(id?: number) {
+  if (!id || !activeAppLink.value.path) {
+    return;
+  }
   // 生成 activeAppLink
   const url = new URL(activeAppLink.value.path, 'http://127.0.0.1');
-  url.searchParams.set('id', `${id}`);
+  url.searchParams.set(getParamKey(detailSelectDialog.value.type), `${id}`);
   activeAppLink.value.path = `${url.pathname}${url.search}`;
 
   // 关闭对话框，并重置 id
@@ -222,15 +250,26 @@ function handleProductCategorySelected(id: number) {
       <FormItem
         label="选择分类"
         v-if="
-          detailSelectDialog.type === APP_LINK_TYPE_ENUM.PRODUCT_CATEGORY_LIST
+          detailSelectDialog.type ===
+            APP_LINK_TYPE_ENUM.PRODUCT_CATEGORY_LIST ||
+          detailSelectDialog.type === APP_LINK_TYPE_ENUM.PRODUCT_LIST
         "
       >
         <ProductCategorySelect
           v-model="detailSelectDialog.id"
           :parent-id="0"
-          @update:model-value="handleProductCategorySelected"
+          @update:model-value="handleDetailSelected"
         />
       </FormItem>
     </Form>
   </DetailSelectModal>
+
+  <!-- 详情单选表格：商品、拼团、秒杀、优惠券、文章、自定义页面 -->
+  <LinkDetailSelect
+    ref="linkDetailSelectRef"
+    :key="detailSelectDialog.type"
+    :type="detailSelectDialog.type"
+    :current-id="detailSelectDialog.id"
+    @change="handleDetailSelected"
+  />
 </template>
