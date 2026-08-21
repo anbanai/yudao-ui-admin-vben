@@ -35,7 +35,6 @@ export function useGridFormSchema(
           label: 'name',
           value: 'id',
         },
-        treeCheckStrictly: true,
         placeholder: '请选择商品分类',
         allowClear: true,
         showSearch: true,

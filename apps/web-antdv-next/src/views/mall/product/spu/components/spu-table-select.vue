@@ -59,14 +59,12 @@ const formSchema = computed<VbenFormSchema[]>(() => [
     fieldName: 'categoryId',
     label: '商品分类',
     component: 'TreeSelect',
-    // TODO @芋艿：可能要测试下；
     componentProps: {
       treeData: categoryTreeList,
       fieldNames: {
         label: 'name',
         value: 'id',
       },
-      treeCheckStrictly: true,
       placeholder: '请选择商品分类',
       allowClear: true,
       showSearch: true,

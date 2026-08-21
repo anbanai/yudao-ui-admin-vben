@@ -8,10 +8,6 @@ const preferencesSource = readFileSync(
   resolve(appRoot, 'src/preferences.ts'),
   'utf8',
 );
-const authLayoutSource = readFileSync(
-  resolve(appRoot, 'src/layouts/auth.vue'),
-  'utf8',
-);
 const sharedAuthenticationSource = readFileSync(
   resolve(
     process.cwd(),
@@ -21,11 +17,8 @@ const sharedAuthenticationSource = readFileSync(
 );
 
 describe('Tea Worth Share branding', () => {
-  it('ships the compact and full logo assets', () => {
+  it('ships the compact logo asset', () => {
     expect(existsSync(resolve(appRoot, 'public/branding/logo-mark.png'))).toBe(
-      true,
-    );
-    expect(existsSync(resolve(appRoot, 'public/branding/logo-full.png'))).toBe(
       true,
     );
   });
@@ -34,12 +27,10 @@ describe('Tea Worth Share branding', () => {
     expect(preferencesSource).toContain("source: '/branding/logo-mark.png'");
   });
 
-  it('uses the full lockup in the login showcase without stretching it', () => {
-    expect(authLayoutSource).toContain(
-      ':slogan-image="\'/branding/logo-full.png\'"',
+  it('keeps the original login showcase banner', () => {
+    expect(sharedAuthenticationSource).toContain(
+      '<SloganIcon v-else :alt="appName" class="h-64 w-2/5 animate-float" />',
     );
-    expect(sharedAuthenticationSource).toMatch(
-      /:src="sloganImage"[\s\S]*class="h-64 w-2\/5 object-contain animate-float"/,
-    );
+    expect(sharedAuthenticationSource).not.toContain('object-contain');
   });
 });
