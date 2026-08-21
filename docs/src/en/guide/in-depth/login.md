@@ -94,11 +94,6 @@ If you want to adjust the content of the login form, you can configure the `Auth
   showRememberMe?: boolean;
 
   /**
-   * @en Whether to show third-party login
-   */
-  showThirdPartyLogin?: boolean;
-
-  /**
    * @en Login box subtitle
    */
   subTitle?: string;

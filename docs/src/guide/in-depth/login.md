@@ -91,11 +91,6 @@ outline: deep
   showRememberMe?: boolean;
 
   /**
-   * @zh_CN 是否显示第三方登录
-   */
-  showThirdPartyLogin?: boolean;
-
-  /**
    * @zh_CN 登录框子标题
    */
   subTitle?: string;
