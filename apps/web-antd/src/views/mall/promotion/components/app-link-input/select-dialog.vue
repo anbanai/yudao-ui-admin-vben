@@ -257,7 +257,6 @@ function handleDetailSelected(id?: number) {
       >
         <ProductCategorySelect
           v-model="detailSelectDialog.id"
-          :parent-id="0"
           @update:model-value="handleDetailSelected"
         />
       </FormItem>
