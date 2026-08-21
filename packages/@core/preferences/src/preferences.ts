@@ -131,13 +131,18 @@ class PreferenceManager {
       this.customPreferencesExtension,
     );
 
-    // 加载缓存的偏好设置，并仅用缓存补齐初始化配置中未显式设置的字段
+    // 加载缓存的偏好设置，用户缓存优先，初始设置仅补齐缺失字段
     const cachedPreferences = (await this.loadFromCache()) || {};
     const mergedPreference = merge(
       {},
-      cachedPreferences, // 用户缓存的设置优先
-      this.initialPreferences, // 初始设置仅补齐缺失字段
+      cachedPreferences,
+      this.initialPreferences,
     );
+
+    // Logo 属于应用品牌资源，更新应用后必须覆盖旧缓存；其他设置继续尊重用户选择
+    if (overrides?.logo) {
+      mergedPreference.logo = merge({}, overrides.logo, mergedPreference.logo);
+    }
 
     // 更新偏好设置
     this.updatePreferences(mergedPreference);

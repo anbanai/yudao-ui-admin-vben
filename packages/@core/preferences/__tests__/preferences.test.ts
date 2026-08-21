@@ -86,6 +86,42 @@ describe('preferences', () => {
     expect(preferenceManager.getPreferences()).toEqual(expected);
   });
 
+  it('keeps explicit logo overrides when an older logo is cached', async () => {
+    vi.mocked(localStorage.getItem).mockImplementation((key) => {
+      if (key.endsWith('-preferences')) {
+        return JSON.stringify({
+          value: {
+            logo: {
+              source: 'https://old.example/logo.webp',
+            },
+            footer: {
+              enable: true,
+            },
+          },
+        });
+      }
+
+      return null;
+    });
+
+    await preferenceManager.initPreferences({
+      namespace: 'branding-migration',
+      overrides: {
+        footer: {
+          enable: false,
+        },
+        logo: {
+          source: '/branding/logo-mark.png',
+        },
+      },
+    });
+
+    expect(preferenceManager.getPreferences().logo.source).toBe(
+      '/branding/logo-mark.png',
+    );
+    expect(preferenceManager.getPreferences().footer.enable).toBe(true);
+  });
+
   it('updates theme mode correctly', () => {
     preferenceManager.updatePreferences({
       theme: {
