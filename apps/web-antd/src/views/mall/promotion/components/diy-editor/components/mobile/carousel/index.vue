@@ -30,7 +30,11 @@ const handleIndexChange = (index: number) => {
   >
     <IconifyIcon icon="tdesign:image" class="text-[120px] text-gray-800" />
   </div>
-  <div v-else class="relative">
+  <div
+    v-else
+    class="carousel relative"
+    :style="{ height: `${property.height}px` }"
+  >
     <Carousel
       :autoplay="property.autoplay"
       :autoplay-speed="property.interval * 1000"
@@ -38,9 +42,14 @@ const handleIndexChange = (index: number) => {
       @change="handleIndexChange"
       :style="{ height: `${property.height}px` }"
     >
-      <div v-for="(item, index) in property.items" :key="index">
+      <div
+        v-for="(item, index) in property.items"
+        :key="index"
+        class="h-full w-full"
+        :style="{ height: `${property.height}px` }"
+      >
         <Image
-          class="h-full w-full object-cover"
+          class="block h-full w-full object-cover"
           :src="item.imgUrl"
           :preview="false"
         />
@@ -54,3 +63,14 @@ const handleIndexChange = (index: number) => {
     </div>
   </div>
 </template>
+<style scoped lang="scss">
+.carousel {
+  :deep(.slick-list),
+  :deep(.slick-track),
+  :deep(.slick-slide),
+  :deep(.slick-slide > div),
+  :deep(.slick-slide > div > div) {
+    height: 100%;
+  }
+}
+</style>
