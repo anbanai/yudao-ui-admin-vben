@@ -18,9 +18,7 @@ describe('getOrderRemarkItems', () => {
   it('returns only the non-empty remark', () => {
     expect(
       getOrderRemarkItems({ remark: '仅商家备注', userRemark: '  ' }),
-    ).toEqual([
-      { key: 'merchant', label: '商家备注', content: '仅商家备注' },
-    ]);
+    ).toEqual([{ key: 'merchant', label: '商家备注', content: '仅商家备注' }]);
     expect(
       getOrderRemarkItems({ remark: '', userRemark: '仅用户备注' }),
     ).toEqual([{ key: 'user', label: '用户备注', content: '仅用户备注' }]);
