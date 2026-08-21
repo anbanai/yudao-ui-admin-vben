@@ -56,7 +56,10 @@ export function getComponentBackgroundStyle(style?: ComponentStyle) {
   if (!style) return {};
   return style.bgType === 'color'
     ? { backgroundColor: style.bgColor, backgroundImage: 'none' }
-    : { backgroundColor: 'transparent', backgroundImage: `url(${style.bgImg})` };
+    : {
+        backgroundColor: 'transparent',
+        backgroundImage: `url(${style.bgImg})`,
+      };
 }
 
 /** 页面配置 */
