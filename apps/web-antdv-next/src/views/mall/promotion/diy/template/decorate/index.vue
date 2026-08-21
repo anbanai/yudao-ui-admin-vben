@@ -60,7 +60,9 @@ async function getPageDetail(id: any) {
     formData.value = await getDiyTemplateProperty(id);
     // 拼接手机预览链接
     const accessStore = useAccessStore();
-    previewUrl.value = `${domain}?templateId=${formData.value.id}&tenantId=${accessStore.tenantId}`;
+    previewUrl.value = domain
+      ? `${domain}?templateId=${formData.value.id}&tenantId=${accessStore.tenantId}`
+      : '';
   } finally {
     hideLoading();
   }

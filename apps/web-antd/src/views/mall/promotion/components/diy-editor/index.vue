@@ -510,7 +510,7 @@ onMounted(() => {
     </Row>
 
     <!-- 预览弹框 -->
-    <PreviewModal title="预览" class="w-[700px]">
+    <PreviewModal title="商城 H5 预览" class="w-[700px]">
       <div class="flex justify-around">
         <iframe
           :src="previewUrl"

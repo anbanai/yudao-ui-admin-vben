@@ -52,6 +52,13 @@ export interface ComponentStyle {
   borderBottomLeftRadius: number;
 }
 
+export function getComponentBackgroundStyle(style?: ComponentStyle) {
+  if (!style) return {};
+  return style.bgType === 'color'
+    ? { backgroundColor: style.bgColor, backgroundImage: 'none' }
+    : { backgroundColor: 'transparent', backgroundImage: `url(${style.bgImg})` };
+}
+
 /** 页面配置 */
 export interface PageConfig {
   page: PageConfigProperty; // 页面属性

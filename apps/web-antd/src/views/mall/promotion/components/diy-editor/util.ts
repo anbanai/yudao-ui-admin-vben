@@ -52,6 +52,14 @@ export interface ComponentStyle {
   borderBottomLeftRadius: number;
 }
 
+/** 将组件背景配置转换为稳定的 CSS 样式，避免 background 简写覆盖颜色。 */
+export function getComponentBackgroundStyle(style?: ComponentStyle) {
+  if (!style) return {};
+  return style.bgType === 'color'
+    ? { backgroundColor: style.bgColor, backgroundImage: 'none' }
+    : { backgroundColor: 'transparent', backgroundImage: `url(${style.bgImg})` };
+}
+
 /** 页面配置 */
 export interface PageConfig {
   page: PageConfigProperty; // 页面属性

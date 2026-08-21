@@ -104,10 +104,10 @@ export function zoomOut(list?: HotZoneItemProperty[]) {
   return (
     list?.map((hotZone) => ({
       ...hotZone,
-      left: (hotZone.left /= HOT_ZONE_SCALE_RATE),
-      top: (hotZone.top /= HOT_ZONE_SCALE_RATE),
-      width: (hotZone.width /= HOT_ZONE_SCALE_RATE),
-      height: (hotZone.height /= HOT_ZONE_SCALE_RATE),
+      left: hotZone.left / HOT_ZONE_SCALE_RATE,
+      top: hotZone.top / HOT_ZONE_SCALE_RATE,
+      width: hotZone.width / HOT_ZONE_SCALE_RATE,
+      height: hotZone.height / HOT_ZONE_SCALE_RATE,
     })) || []
   );
 }
@@ -117,10 +117,10 @@ export function zoomIn(list?: HotZoneItemProperty[]) {
   return (
     list?.map((hotZone) => ({
       ...hotZone,
-      left: (hotZone.left *= HOT_ZONE_SCALE_RATE),
-      top: (hotZone.top *= HOT_ZONE_SCALE_RATE),
-      width: (hotZone.width *= HOT_ZONE_SCALE_RATE),
-      height: (hotZone.height *= HOT_ZONE_SCALE_RATE),
+      left: hotZone.left * HOT_ZONE_SCALE_RATE,
+      top: hotZone.top * HOT_ZONE_SCALE_RATE,
+      width: hotZone.width * HOT_ZONE_SCALE_RATE,
+      height: hotZone.height * HOT_ZONE_SCALE_RATE,
     })) || []
   );
 }
