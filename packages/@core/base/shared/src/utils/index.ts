@@ -1,5 +1,6 @@
 export * from './cn';
 export * from './date';
+export * from './delivery-express-template-validation';
 export * from './diff';
 export * from './dom';
 export * from './download';
