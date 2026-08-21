@@ -147,8 +147,9 @@ export const useDraggable = (
     moveHeight: number,
   ) => void,
 ) => {
-  // 阻止事件冒泡
+  // 阻止事件冒泡、默认行为（避免拖拽时选中文本）
   downEvent.stopPropagation();
+  downEvent.preventDefault();
 
   // 移动前的鼠标坐标
   const { clientX: startX, clientY: startY } = downEvent;

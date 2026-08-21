@@ -78,9 +78,11 @@ function handleRemove(hotZone: HotZoneItemProperty) {
 
 /** 移动热区 */
 function handleMove(item: HotZoneItemProperty, e: MouseEvent) {
-  useDraggable(item, e, (left, top, _, __, moveWidth, moveHeight) => {
-    setLeft(item, left + moveWidth);
-    setTop(item, top + moveHeight);
+  useDraggable(item, e, (left, top, _width, _height, moveWidth, moveHeight) => {
+    const { width: containerWidth, height: containerHeight } =
+      getContainerSize();
+    item.left = clamp(left + moveWidth, 0, containerWidth - item.width);
+    item.top = clamp(top + moveHeight, 0, containerHeight - item.height);
   });
 }
 
@@ -91,78 +93,50 @@ function handleResize(
   e: MouseEvent,
 ) {
   useDraggable(item, e, (left, top, width, height, moveWidth, moveHeight) => {
-    ctrlDot.types.forEach((type) => {
-      switch (type) {
-        case CONTROL_TYPE_ENUM.HEIGHT: {
-          {
-            // 左移时，宽度为减少
-            const direction = ctrlDot.types.includes(CONTROL_TYPE_ENUM.TOP)
-              ? -1
-              : 1;
-            setHeight(item, height + moveHeight * direction);
-          }
-          break;
-        }
-        case CONTROL_TYPE_ENUM.LEFT: {
-          setLeft(item, left + moveWidth);
-          break;
-        }
-        case CONTROL_TYPE_ENUM.TOP: {
-          setTop(item, top + moveHeight);
-          break;
-        }
-        case CONTROL_TYPE_ENUM.WIDTH: {
-          {
-            // 上移时，高度为减少
-            const direction = ctrlDot.types.includes(CONTROL_TYPE_ENUM.LEFT)
-              ? -1
-              : 1;
-            setWidth(item, width + moveWidth * direction);
-          }
-          break;
-        }
-      }
-    });
+    const { width: containerWidth, height: containerHeight } =
+      getContainerSize();
+    const types = ctrlDot.types;
+
+    // 水平方向：拖左边缘时固定右边缘，否则固定左边缘
+    if (types.includes(CONTROL_TYPE_ENUM.LEFT)) {
+      const right = left + width;
+      item.left = clamp(left + moveWidth, 0, right - HOT_ZONE_MIN_SIZE);
+      item.width = right - item.left;
+    } else if (types.includes(CONTROL_TYPE_ENUM.WIDTH)) {
+      item.width = clamp(
+        width + moveWidth,
+        HOT_ZONE_MIN_SIZE,
+        containerWidth - left,
+      );
+    }
+
+    // 垂直方向：拖上边缘时固定下边缘，否则固定上边缘
+    if (types.includes(CONTROL_TYPE_ENUM.TOP)) {
+      const bottom = top + height;
+      item.top = clamp(top + moveHeight, 0, bottom - HOT_ZONE_MIN_SIZE);
+      item.height = bottom - item.top;
+    } else if (types.includes(CONTROL_TYPE_ENUM.HEIGHT)) {
+      item.height = clamp(
+        height + moveHeight,
+        HOT_ZONE_MIN_SIZE,
+        containerHeight - top,
+      );
+    }
   });
 }
 
-/** 设置 X 轴坐标 */
-function setLeft(item: HotZoneItemProperty, left: number) {
-  // 不能超出容器
-  if (left >= 0 && left <= container.value!.offsetWidth - item.width) {
-    item.left = left;
-  }
+/** 获取容器的尺寸 */
+function getContainerSize() {
+  return {
+    width: container.value?.offsetWidth ?? 0,
+    height: container.value?.offsetHeight ?? 0,
+  };
 }
 
-/** 设置Y轴坐标 */
-function setTop(item: HotZoneItemProperty, top: number) {
-  // 不能超出容器
-  if (top >= 0 && top <= container.value!.offsetHeight - item.height) {
-    item.top = top;
-  }
+/** 将数值限制在 [min, max] 范围内 */
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), Math.max(min, max));
 }
-
-/** 设置宽度 */
-const setWidth = (item: HotZoneItemProperty, width: number) => {
-  // 不能小于最小宽度 && 不能超出容器右边
-  if (
-    width >= HOT_ZONE_MIN_SIZE &&
-    item.left + width <= container.value!.offsetWidth
-  ) {
-    item.width = width;
-  }
-};
-
-/** 设置高度 */
-const setHeight = (item: HotZoneItemProperty, height: number) => {
-  // 不能小于最小高度 && 不能超出容器底部
-  if (
-    height >= HOT_ZONE_MIN_SIZE &&
-    item.top + height <= container.value!.offsetHeight
-  ) {
-    item.height = height;
-  }
-};
 
 const activeHotZone = ref<HotZoneItemProperty>();
 const appLinkDialogRef = ref();
@@ -185,11 +159,11 @@ const handleAppLinkChange = (appLink: AppLink) => {
 
 <template>
   <Modal title="设置热区" class="w-[780px]">
-    <div ref="container" class="w-750px relative h-full">
+    <div ref="container" class="relative w-750px">
       <Image
         :src="imgUrl"
         :preview="false"
-        class="w-750px pointer-events-none h-full select-none"
+        class="pointer-events-none block w-750px select-none"
       />
       <div
         v-for="(item, hotZoneIndex) in formData"
@@ -242,3 +216,10 @@ const handleAppLinkChange = (appLink: AppLink) => {
     @app-link-change="handleAppLinkChange"
   />
 </template>
+
+<style scoped>
+/* 让图片容器紧贴图片，保证热区边界与图片一致 */
+:deep(.ant-image) {
+  display: block;
+}
+</style>
