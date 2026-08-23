@@ -44,6 +44,7 @@ const traceLoading = ref(false);
 const traces = ref<MallWechatLogisticsApi.Trace[]>([]);
 const selectedWaybill = ref<MallWechatLogisticsApi.Waybill>();
 const printerOpenid = ref('');
+const actionLoadingId = ref<number>();
 
 const form = reactive<MallWechatLogisticsApi.Config>({
   userType: 1,
@@ -153,15 +154,27 @@ async function handleBindPrinter() {
 }
 
 async function handleConfirm(row: MallWechatLogisticsApi.Waybill) {
-  await confirmWechatWaybillPrint(row.id!);
-  message.success(`订单 ${row.orderNo ?? row.orderId} 已发货`);
-  await refreshPending();
+  if (!row.id || actionLoadingId.value) return;
+  actionLoadingId.value = row.id;
+  try {
+    await confirmWechatWaybillPrint(row.id);
+    message.success(`订单 ${row.orderNo ?? row.orderId} 已发货`);
+    await refreshPending();
+  } finally {
+    actionLoadingId.value = undefined;
+  }
 }
 
 async function handleCancel(row: MallWechatLogisticsApi.Waybill) {
-  await cancelWechatWaybill(row.id!);
-  message.success('微信物流订单已取消');
-  await refreshPending();
+  if (!row.id || actionLoadingId.value) return;
+  actionLoadingId.value = row.id;
+  try {
+    await cancelWechatWaybill(row.id);
+    message.success('微信物流订单已取消');
+    await refreshPending();
+  } finally {
+    actionLoadingId.value = undefined;
+  }
 }
 
 async function handleTrace(row: MallWechatLogisticsApi.Waybill) {
@@ -200,8 +213,8 @@ onMounted(load);
       <Card title="顺丰微信物流账号">
         <template #extra>
           <Button :loading="accountLoading" @click="refreshAccountStatus">
-刷新账号状态
-</Button>
+            刷新账号状态
+          </Button>
         </template>
         <div v-if="sfAccounts.length" class="grid gap-3 md:grid-cols-2">
           <div
@@ -242,10 +255,10 @@ onMounted(load);
         <Form layout="vertical" :model="form">
           <div class="grid gap-4 md:grid-cols-3">
             <Form.Item label="快递公司">
-<Input v-model:value="form.deliveryId" disabled />
-</Form.Item>
+              <Input v-model:value="form.deliveryId" disabled />
+            </Form.Item>
             <Form.Item label="biz_id" required>
-<Select
+              <Select
                 v-model:value="form.bizId"
                 :options="
                   sfAccounts.map((item) => ({
@@ -259,77 +272,77 @@ onMounted(load);
                     form.serviceName = '';
                   }
                 "
-            />
-</Form.Item>
+              />
+            </Form.Item>
             <Form.Item label="服务类型" required>
-<Select
+              <Select
                 v-model:value="form.serviceType"
                 :options="serviceOptions"
                 @change="applyServiceName"
-            />
-</Form.Item>
+              />
+            </Form.Item>
           </div>
           <div class="grid gap-4 md:grid-cols-3">
             <Form.Item label="发件人姓名" required>
-<Input v-model:value="form.senderName" />
-</Form.Item>
+              <Input v-model:value="form.senderName" />
+            </Form.Item>
             <Form.Item label="发件人手机号" required>
-<Input v-model:value="form.senderMobile" />
-</Form.Item>
+              <Input v-model:value="form.senderMobile" />
+            </Form.Item>
             <Form.Item label="发件人电话">
-<Input v-model:value="form.senderTel" />
-</Form.Item>
+              <Input v-model:value="form.senderTel" />
+            </Form.Item>
             <Form.Item label="发件人公司">
-<Input v-model:value="form.senderCompany" />
-</Form.Item>
+              <Input v-model:value="form.senderCompany" />
+            </Form.Item>
             <Form.Item label="省">
-<Input v-model:value="form.senderProvince" />
-</Form.Item>
+              <Input v-model:value="form.senderProvince" />
+            </Form.Item>
             <Form.Item label="市">
-<Input v-model:value="form.senderCity" />
-</Form.Item>
+              <Input v-model:value="form.senderCity" />
+            </Form.Item>
             <Form.Item label="区县">
-<Input v-model:value="form.senderArea" />
-</Form.Item>
+              <Input v-model:value="form.senderArea" />
+            </Form.Item>
             <Form.Item label="详细地址" class="md:col-span-2">
-<Input v-model:value="form.senderAddress" />
-</Form.Item>
+              <Input v-model:value="form.senderAddress" />
+            </Form.Item>
           </div>
           <div class="grid gap-4 md:grid-cols-4">
             <Form.Item label="默认重量（kg）">
-<InputNumber
+              <InputNumber
                 v-model:value="form.defaultWeight"
                 :min="0.01"
                 class="w-full"
-            />
-</Form.Item>
+              />
+            </Form.Item>
             <Form.Item label="默认长度（cm）">
-<InputNumber
+              <InputNumber
                 v-model:value="form.defaultSpaceLength"
                 :min="0.01"
                 class="w-full"
-            />
-</Form.Item>
+              />
+            </Form.Item>
             <Form.Item label="默认宽度（cm）">
-<InputNumber
+              <InputNumber
                 v-model:value="form.defaultSpaceWidth"
                 :min="0.01"
                 class="w-full"
-            />
-</Form.Item>
+              />
+            </Form.Item>
             <Form.Item label="默认高度（cm）">
-<InputNumber
+              <InputNumber
                 v-model:value="form.defaultSpaceHeight"
                 :min="0.01"
                 class="w-full"
-            />
-</Form.Item>
+              />
+            </Form.Item>
           </div>
           <Space>
             <span>启用微信物流打单</span><Switch v-model:checked="form.enabled" />
             <Button type="primary" :loading="loading" @click="handleSave">
-保存配置
-</Button>
+              保存配置
+            </Button>
           </Space>
         </Form>
       </Card>
@@ -348,8 +361,8 @@ onMounted(load);
 
       <Card title="待确认打印运单">
         <template #extra>
-<Button @click="refreshPending">刷新</Button>
-</template>
+          <Button @click="refreshPending">刷新</Button>
+        </template>
         <Table
           :loading="pendingLoading"
           :data-source="pendingWaybills"
@@ -360,37 +373,37 @@ onMounted(load);
           <Table.Column title="订单号" data-index="orderNo" />
           <Table.Column title="微信运单号" data-index="waybillId" />
           <Table.Column title="状态" data-index="status">
-<template #default="{ record }">
-<Tag :color="statusColor(record.status)">
-{{
-                record.status
-              }}
-</Tag>
-</template>
-</Table.Column>
+            <template #default="{ record }">
+              <Tag :color="statusColor(record.status)">
+                {{ record.status }}
+              </Tag>
+            </template>
+          </Table.Column>
           <Table.Column title="错误信息" data-index="errorMessage" />
           <Table.Column title="操作" key="actions" fixed="right" width="250">
-<template #default="{ record }">
-<Space>
-<Button
+            <template #default="{ record }">
+              <Space>
+                <Button
                   type="link"
-                  :disabled="record.status !== 'CREATED'"
+                  :disabled="record.status !== 'CREATED' || !!actionLoadingId"
+                  :loading="actionLoadingId === record.id"
                   @click="handleConfirm(record)"
-                  >
-确认打印并发货
+                >
+                  确认打印并发货
 </Button><Button
                   type="link"
                   danger
-                  :disabled="record.status !== 'CREATED'"
+                  :disabled="record.status !== 'CREATED' || !!actionLoadingId"
+                  :loading="actionLoadingId === record.id"
                   @click="handleCancel(record)"
-                  >
-取消
+                >
+                  取消
 </Button><Button type="link" @click="handleTrace(record)">
-轨迹
-</Button>
-</Space>
-</template>
-</Table.Column>
+                  轨迹
+                </Button>
+              </Space>
+            </template>
+          </Table.Column>
         </Table>
       </Card>
     </div>
@@ -401,19 +414,19 @@ onMounted(load);
       :footer="null"
     >
       <a-spin :spinning="traceLoading">
-<a-empty
+        <a-empty
           v-if="!traceLoading && !traces.length"
           description="暂无轨迹"
         /><a-timeline v-else>
-<a-timeline-item
+          <a-timeline-item
             v-for="trace in traces"
             :key="trace.id"
             :label="trace.actionTime"
-            >
-{{ trace.actionMsg }}
-</a-timeline-item>
-</a-timeline>
-</a-spin>
+          >
+            {{ trace.actionMsg }}
+          </a-timeline-item>
+        </a-timeline>
+      </a-spin>
     </a-modal>
   </Page>
 </template>
