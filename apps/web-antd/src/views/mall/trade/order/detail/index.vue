@@ -11,6 +11,7 @@ import { confirm, Page, useVbenModal } from '@vben/common-ui';
 import {
   DeliveryTypeEnum,
   DICT_TYPE,
+  PayChannelEnum,
   TradeOrderStatusEnum,
 } from '@vben/constants';
 import { useTabs } from '@vben/hooks';
@@ -33,6 +34,7 @@ import AddressForm from '../modules/address-form.vue';
 import DeliveryForm from '../modules/delivery-form.vue';
 import PriceForm from '../modules/price-form.vue';
 import RemarkForm from '../modules/remark-form.vue';
+import WechatDeliveryForm from '../modules/wechat-delivery-form.vue';
 import {
   useDeliveryInfoSchema,
   useExpressTrackColumns,
@@ -146,6 +148,11 @@ const [DeliveryFormModal, deliveryFormModalApi] = useVbenModal({
   destroyOnClose: true,
 });
 
+const [WechatDeliveryFormModal, wechatDeliveryFormModalApi] = useVbenModal({
+  connectedComponent: WechatDeliveryForm,
+  destroyOnClose: true,
+});
+
 const [RemarkFormModal, remarkFormModalApi] = useVbenModal({
   connectedComponent: RemarkForm,
   destroyOnClose: true,
@@ -201,6 +208,10 @@ const handleRemark = () => {
 };
 
 const handleDelivery = () => {
+  if (order.value.payChannelCode === PayChannelEnum.WX_LITE.code) {
+    wechatDeliveryFormModalApi.setData(order.value).open();
+    return;
+  }
   deliveryFormModalApi.setData(order.value).open();
 };
 
@@ -293,6 +304,7 @@ onMounted(async () => {
 
     <!-- 各种操作的弹窗 -->
     <DeliveryFormModal @success="getDetail" />
+    <WechatDeliveryFormModal @success="getDetail" />
     <RemarkFormModal @success="getDetail" />
     <AddressFormModal @success="getDetail" />
     <PriceFormModal @success="getDetail" />
