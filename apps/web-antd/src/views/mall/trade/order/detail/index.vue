@@ -208,11 +208,11 @@ const handleRemark = () => {
 };
 
 const handleDelivery = () => {
-  if (order.value.payChannelCode === PayChannelEnum.WX_LITE.code) {
-    wechatDeliveryFormModalApi.setData(order.value).open();
-    return;
-  }
   deliveryFormModalApi.setData(order.value).open();
+};
+
+const handleWechatDelivery = () => {
+  wechatDeliveryFormModalApi.setData(order.value).open();
 };
 
 const handleUpdateAddress = () => {
@@ -275,12 +275,22 @@ onMounted(async () => {
             onClick: handleRemark,
           },
           {
-            label: '发货',
+            label: '微信打单发货',
+            type: 'primary',
+            onClick: handleWechatDelivery,
+            ifShow:
+              order.status === TradeOrderStatusEnum.UNDELIVERED.status &&
+              order.deliveryType === DeliveryTypeEnum.EXPRESS.type &&
+              order.payChannelCode === PayChannelEnum.WX_LITE.code,
+          },
+          {
+            label: '手工发货',
             type: 'primary',
             onClick: handleDelivery,
             ifShow:
-              order.status === TradeOrderStatusEnum.UNDELIVERED.status &&
-              order.deliveryType === DeliveryTypeEnum.EXPRESS.type,
+              order.deliveryType === DeliveryTypeEnum.EXPRESS.type &&
+              (order.status === TradeOrderStatusEnum.UNDELIVERED.status ||
+                order.status === TradeOrderStatusEnum.DELIVERED.status),
           },
           {
             label: '修改地址',
