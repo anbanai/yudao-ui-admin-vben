@@ -127,7 +127,12 @@ async function refreshPrinter() {
 }
 
 async function handleSave() {
-  if (!form.bizId || !form.serviceType || !form.serviceName) {
+  if (
+    !form.bizId ||
+    form.serviceType === null ||
+    form.serviceType === undefined ||
+    !form.serviceName
+  ) {
     message.warning('请先选择已生效的顺丰账号和服务类型');
     return;
   }
