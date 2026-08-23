@@ -185,8 +185,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               ifShow: () =>
                 row.deliveryType === DeliveryTypeEnum.EXPRESS.type &&
                 row.payChannelCode === PayChannelEnum.WX_LITE.code &&
-                (row.status === TradeOrderStatusEnum.UNDELIVERED.status ||
-                  row.status === TradeOrderStatusEnum.DELIVERED.status),
+                row.status === TradeOrderStatusEnum.UNDELIVERED.status,
               onClick: handleWechatDelivery.bind(null, row),
             },
             {
