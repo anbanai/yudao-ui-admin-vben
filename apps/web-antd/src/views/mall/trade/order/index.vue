@@ -8,6 +8,7 @@ import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
 import {
   DeliveryTypeEnum,
   DICT_TYPE,
+  PayChannelEnum,
   TradeOrderStatusEnum,
 } from '@vben/constants';
 import { fenToYuan } from '@vben/utils';
@@ -22,6 +23,7 @@ import { $t } from '#/locales';
 import { useGridColumns, useGridFormSchema } from './data';
 import DeliveryForm from './modules/delivery-form.vue';
 import RemarkForm from './modules/remark-form.vue';
+import WechatDeliveryForm from './modules/wechat-delivery-form.vue';
 import { getOrderRemarkItems } from './remark-display';
 
 const { push } = useRouter();
@@ -33,6 +35,11 @@ const [DeliveryFormModal, deliveryFormModalApi] = useVbenModal({
 
 const [RemarkFormModal, remarkFormModalApi] = useVbenModal({
   connectedComponent: RemarkForm,
+  destroyOnClose: true,
+});
+
+const [WechatDeliveryFormModal, wechatDeliveryFormModalApi] = useVbenModal({
+  connectedComponent: WechatDeliveryForm,
   destroyOnClose: true,
 });
 
@@ -49,6 +56,11 @@ function handleDetail(row: MallOrderApi.Order) {
 /** 发货 */
 function handleDelivery(row: MallOrderApi.Order) {
   deliveryFormModalApi.setData(row).open();
+}
+
+/** 微信小程序订单：先创建微信物流运单，再确认打印发货。 */
+function handleWechatDelivery(row: MallOrderApi.Order) {
+  wechatDeliveryFormModalApi.setData(row).open();
 }
 
 /** 备注 */
@@ -106,6 +118,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     </template>
 
     <DeliveryFormModal @success="handleRefresh" />
+    <WechatDeliveryFormModal @success="handleRefresh" />
     <RemarkFormModal @success="handleRefresh" />
     <Grid table-title="订单列表">
       <template #expand_content="{ row }">
@@ -167,10 +180,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
           ]"
           :drop-down-actions="[
             {
-              label: '发货',
+              label: '微信打单发货',
               type: 'link',
               ifShow: () =>
                 row.deliveryType === DeliveryTypeEnum.EXPRESS.type &&
+                row.payChannelCode === PayChannelEnum.WX_LITE.code &&
+                (row.status === TradeOrderStatusEnum.UNDELIVERED.status ||
+                  row.status === TradeOrderStatusEnum.DELIVERED.status),
+              onClick: handleWechatDelivery.bind(null, row),
+            },
+            {
+              label: '手工发货',
+              type: 'link',
+              ifShow: () =>
+                row.deliveryType === DeliveryTypeEnum.EXPRESS.type &&
+                row.payChannelCode !== PayChannelEnum.WX_LITE.code &&
                 (row.status === TradeOrderStatusEnum.UNDELIVERED.status ||
                   row.status === TradeOrderStatusEnum.DELIVERED.status),
               onClick: handleDelivery.bind(null, row),
