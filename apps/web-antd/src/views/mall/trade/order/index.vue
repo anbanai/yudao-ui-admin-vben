@@ -118,7 +118,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     </template>
 
     <DeliveryFormModal @success="handleRefresh" />
-    <WechatDeliveryFormModal @success="handleRefresh" />
+    <WechatDeliveryFormModal />
     <RemarkFormModal @success="handleRefresh" />
     <Grid table-title="订单列表">
       <template #expand_content="{ row }">

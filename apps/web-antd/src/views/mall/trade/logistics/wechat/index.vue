@@ -252,6 +252,11 @@ onMounted(load);
       </Card>
 
       <Card title="物流参数配置">
+        <template #extra>
+          <Button type="primary" :loading="loading" @click="handleSave">
+            保存配置
+          </Button>
+        </template>
         <Form layout="vertical" :model="form">
           <div class="grid gap-4 md:grid-cols-3">
             <Form.Item label="快递公司">
@@ -340,9 +345,6 @@ onMounted(load);
           </div>
           <Space>
             <span>启用微信物流打单</span><Switch v-model:checked="form.enabled" />
-            <Button type="primary" :loading="loading" @click="handleSave">
-              保存配置
-            </Button>
           </Space>
         </Form>
       </Card>

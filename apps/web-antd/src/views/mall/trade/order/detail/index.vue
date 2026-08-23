@@ -304,7 +304,7 @@ onMounted(async () => {
 
     <!-- 各种操作的弹窗 -->
     <DeliveryFormModal @success="getDetail" />
-    <WechatDeliveryFormModal @success="getDetail" />
+    <WechatDeliveryFormModal />
     <RemarkFormModal @success="getDetail" />
     <AddressFormModal @success="getDetail" />
     <PriceFormModal @success="getDetail" />
