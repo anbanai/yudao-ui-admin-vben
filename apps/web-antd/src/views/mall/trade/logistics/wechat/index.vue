@@ -396,7 +396,7 @@ onMounted(load);
                   :loading="actionLoadingId === record.id"
                   @click="handleConfirm(record)"
                 >
-                  确认打印并发货
+                  已打印，确认发货
 </Button><Button
                   type="link"
                   danger
