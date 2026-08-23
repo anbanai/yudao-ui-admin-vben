@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getComponentBackgroundStyle } from './util';
+import { getComponentBackgroundStyle, getPageBackgroundStyle } from './util';
 
 describe('getComponentBackgroundStyle', () => {
   it('keeps a color background from being overwritten by an image', () => {
@@ -21,6 +21,32 @@ describe('getComponentBackgroundStyle', () => {
     ).toEqual({
       backgroundColor: 'transparent',
       backgroundImage: 'url(/cover.png)',
+    });
+  });
+});
+
+describe('getPageBackgroundStyle', () => {
+  it('keeps a page color visible when no background image is configured', () => {
+    expect(
+      getPageBackgroundStyle({
+        backgroundColor: '#ff0000',
+        backgroundImage: '',
+      }),
+    ).toEqual({
+      backgroundColor: '#ff0000',
+      backgroundImage: 'none',
+    });
+  });
+
+  it('uses the page image without replacing the configured color fallback', () => {
+    expect(
+      getPageBackgroundStyle({
+        backgroundColor: '#ffffff',
+        backgroundImage: '/background.png',
+      }),
+    ).toEqual({
+      backgroundColor: '#ffffff',
+      backgroundImage: 'url(/background.png)',
     });
   });
 });

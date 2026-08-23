@@ -23,6 +23,7 @@ import {
 } from './components/mobile/navigation-bar/config';
 import { component as PAGE_CONFIG_COMPONENT } from './components/mobile/page-config/config';
 import { component as TAB_BAR_COMPONENT } from './components/mobile/tab-bar/config';
+import { getPageBackgroundStyle } from './util';
 
 /** 页面装修详情页 */
 defineOptions({
@@ -394,10 +395,7 @@ onMounted(() => {
           <!-- 手机页面编辑区域 -->
           <div
             class="mx-auto min-h-full w-96 bg-no-repeat"
-            :style="{
-              // backgroundColor: pageConfigComponent.property.backgroundColor,
-              backgroundImage: `url(${pageConfigComponent.property.backgroundImage})`,
-            }"
+            :style="getPageBackgroundStyle(pageConfigComponent.property)"
           >
             <div
               class="relative my-0 min-h-full w-full items-center justify-center bg-auto bg-no-repeat"

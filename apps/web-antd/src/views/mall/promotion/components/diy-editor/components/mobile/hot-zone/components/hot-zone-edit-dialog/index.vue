@@ -4,19 +4,21 @@ import type { ControlDot } from './controller';
 
 import type { AppLink } from '#/views/mall/promotion/components/app-link-input/data';
 
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Image } from 'ant-design-vue';
+import { Button } from 'ant-design-vue';
 
 import { AppLinkSelectDialog } from '#/views/mall/promotion/components';
 
 import {
+  clamp,
   CONTROL_DOT_LIST,
   CONTROL_TYPE_ENUM,
   HOT_ZONE_MIN_SIZE,
+  normalizeHotZones,
   useDraggable,
   zoomIn,
   zoomOut,
@@ -55,6 +57,7 @@ function open() {
   // 放大
   formData.value = zoomIn(props.modelValue);
   modalApi.open();
+  void nextTick(normalizeFormData);
 }
 
 defineExpose({ open }); // 提供 open 方法，用于打开弹窗
@@ -74,6 +77,15 @@ function handleAdd() {
 /** 删除热区 */
 function handleRemove(hotZone: HotZoneItemProperty) {
   formData.value = formData.value.filter((item) => item !== hotZone);
+}
+
+/** 图片加载完成后，修正历史热区的越界坐标。 */
+function normalizeFormData() {
+  const size = getContainerSize();
+  if (size.width <= 0 && size.height <= 0) {
+    return;
+  }
+  formData.value = normalizeHotZones(formData.value, size);
 }
 
 /** 移动热区 */
@@ -128,14 +140,9 @@ function handleResize(
 /** 获取容器的尺寸 */
 function getContainerSize() {
   return {
-    width: container.value?.offsetWidth ?? 0,
+    width: container.value?.offsetWidth || 750,
     height: container.value?.offsetHeight ?? 0,
   };
-}
-
-/** 将数值限制在 [min, max] 范围内 */
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), Math.max(min, max));
 }
 
 const activeHotZone = ref<HotZoneItemProperty>();
@@ -160,10 +167,12 @@ const handleAppLinkChange = (appLink: AppLink) => {
 <template>
   <Modal title="设置热区" class="w-[780px]">
     <div ref="container" class="relative w-750px">
-      <Image
+      <img
         :src="imgUrl"
-        :preview="false"
-        class="pointer-events-none block w-750px select-none"
+        alt=""
+        class="pointer-events-none block h-auto w-750px select-none"
+        draggable="false"
+        @load="normalizeFormData"
       />
       <div
         v-for="(item, hotZoneIndex) in formData"
@@ -190,6 +199,7 @@ const handleAppLinkChange = (appLink: AppLink) => {
           class="absolute right-0 top-0 hidden cursor-pointer rounded-bl-[80%] p-[2px_2px_6px_6px] text-right text-white group-hover:block"
           :style="{ backgroundColor: 'hsl(var(--primary))' }"
           :size="14"
+          @mousedown.stop.prevent
           @click.stop="handleRemove(item)"
         />
 
@@ -216,10 +226,3 @@ const handleAppLinkChange = (appLink: AppLink) => {
     @app-link-change="handleAppLinkChange"
   />
 </template>
-
-<style scoped>
-/* 让图片容器紧贴图片，保证热区边界与图片一致 */
-:deep(.ant-image) {
-  display: block;
-}
-</style>

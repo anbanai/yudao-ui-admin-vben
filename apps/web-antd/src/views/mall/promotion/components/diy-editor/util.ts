@@ -63,6 +63,19 @@ export function getComponentBackgroundStyle(style?: ComponentStyle) {
       };
 }
 
+/** 将页面背景配置转换为稳定的 CSS 样式。 */
+export function getPageBackgroundStyle(
+  style?: Pick<PageConfigProperty, 'backgroundColor' | 'backgroundImage'>,
+) {
+  if (!style) return {};
+  return {
+    backgroundColor: style.backgroundColor || 'transparent',
+    backgroundImage: style.backgroundImage
+      ? `url(${style.backgroundImage})`
+      : 'none',
+  };
+}
+
 /** 页面配置 */
 export interface PageConfig {
   page: PageConfigProperty; // 页面属性
