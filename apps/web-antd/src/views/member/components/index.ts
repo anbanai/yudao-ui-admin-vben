@@ -1,1 +1,1 @@
-export { default as MemberUserSelect } from './member-user-select.vue';
+export { default as WechatUserSelect } from './wechat-user-select.vue';

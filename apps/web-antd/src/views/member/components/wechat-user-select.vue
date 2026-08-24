@@ -1,15 +1,15 @@
 <script lang="ts" setup>
 import type { SelectValue } from 'ant-design-vue/es/select';
 
-import type { MemberUserApi } from '#/api/member/user';
+import type { SystemSocialUserApi } from '#/api/system/social/user';
 
 import { computed, onMounted, ref } from 'vue';
 
 import { Select } from 'ant-design-vue';
 
-import { getUserPage } from '#/api/member/user';
+import { getSocialUserPage } from '#/api/system/social/user';
 
-defineOptions({ name: 'MemberUserSelect' });
+defineOptions({ name: 'WechatUserSelect' });
 
 const props = withDefaults(
   defineProps<{
@@ -19,21 +19,24 @@ const props = withDefaults(
     disabled?: boolean;
     /** 占位提示 */
     placeholder?: string;
+    /** 社交类型：1=微信小程序用户；默认只选小程序用户 */
+    type?: number;
   }>(),
   {
     allowClear: true,
     disabled: false,
-    placeholder: '搜索并选择员工（小程序用户）',
+    placeholder: '搜索并选择员工（小程序微信用户）',
+    type: 1,
   },
 );
 
 const emit = defineEmits<{
-  change: [value: string | undefined, user?: MemberUserApi.User];
+  change: [value: string | undefined, user?: SystemSocialUserApi.SocialUser];
 }>();
 
 const modelValue = defineModel<string>();
 
-const userList = ref<MemberUserApi.User[]>([]);
+const userList = ref<SystemSocialUserApi.SocialUser[]>([]);
 const loading = ref(false);
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -44,9 +47,7 @@ const userMap = computed(
 
 const options = computed(() =>
   userList.value.map((item) => ({
-    label: item.openid
-      ? `${item.nickname}（${item.openid}）`
-      : `${item.nickname}（未绑定微信，不可选）`,
+    label: `${item.nickname}（openid: ${item.openid}）`,
     value: item.openid,
     // 没有 openid 无法用于微信打单绑定，置灰禁止选择
     disabled: !item.openid,
@@ -56,7 +57,8 @@ const options = computed(() =>
 async function loadUsers(nickname?: string) {
   loading.value = true;
   try {
-    const page = await getUserPage({
+    const page = await getSocialUserPage({
+      type: props.type,
       pageNo: 1,
       pageSize: 50,
       ...(nickname ? { nickname } : {}),

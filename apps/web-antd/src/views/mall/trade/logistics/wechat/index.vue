@@ -31,7 +31,7 @@ import {
   saveWechatLogisticsConfig,
   syncWechatWaybillTrace,
 } from '#/api/mall/trade/logistics/wechat';
-import { MemberUserSelect } from '#/views/member/components';
+import { WechatUserSelect } from '#/views/member/components';
 
 const loading = ref(false);
 const accountLoading = ref(false);
@@ -47,7 +47,7 @@ const printerOpenid = ref('');
 const actionLoadingId = ref<number>();
 const bindLoading = ref(false);
 const manualOpenid = ref(false);
-const mpUserSelectRef = ref<InstanceType<typeof MemberUserSelect>>();
+const mpUserSelectRef = ref<InstanceType<typeof WechatUserSelect>>();
 
 const form = reactive<MallWechatLogisticsApi.Config>({
   userType: 1,
@@ -405,12 +405,11 @@ onMounted(load);
           <template #description>
             绑定后，订单创建微信运单时，打印员电脑上的打单软件会自动收到任务并打出顺丰电子面单；
             未绑定时没有人能接收打印任务，面单无法打印，也就无法走「微信打单发货」流程。
-            打印员须为本小程序的注册用户（已授权微信登录、拥有
-            openid），未绑定微信的用户将置灰不可选。
+            打印员须为已授权本小程序的微信用户（拥有 openid），未绑定微信的用户将置灰不可选。
           </template>
         </Alert>
         <div class="flex flex-wrap items-center gap-3">
-          <MemberUserSelect
+          <WechatUserSelect
             v-if="!manualOpenid"
             ref="mpUserSelectRef"
             v-model="printerOpenid"
