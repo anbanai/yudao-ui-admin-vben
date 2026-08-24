@@ -7,11 +7,8 @@ import { handleTree, treeToString } from '@vben/utils';
 import { getCategoryList } from '#/api/mall/product/category';
 import { getRangePickerDefaultProps } from '#/utils';
 
-/** 关联数据 */
+/** 分类树缓存：供表格分类名称列显示 */
 let categoryList: any[] = [];
-getCategoryList({}).then((data) => {
-  categoryList = handleTree(data, 'id', 'parentId', 'children');
-});
 
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
@@ -30,11 +27,17 @@ export function useGridFormSchema(): VbenFormSchema[] {
       label: '商品分类',
       component: 'ApiTreeSelect',
       componentProps: {
+        api: async () => {
+          const data = await getCategoryList({});
+          categoryList = handleTree(data, 'id', 'parentId', 'children');
+          return categoryList;
+        },
         placeholder: '请选择商品分类',
         allowClear: true,
         multiple: true,
-        options: categoryList,
-        fieldNames: { label: 'name', value: 'id', children: 'children' },
+        labelField: 'name',
+        valueField: 'id',
+        childrenField: 'children',
       },
     },
     {
