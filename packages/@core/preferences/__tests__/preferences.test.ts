@@ -122,6 +122,42 @@ describe('preferences', () => {
     expect(preferenceManager.getPreferences().footer.enable).toBe(true);
   });
 
+  it('keeps explicit copyright overrides when older filing info is cached', async () => {
+    vi.mocked(localStorage.getItem).mockImplementation((key) => {
+      if (key.endsWith('-preferences')) {
+        return JSON.stringify({
+          value: {
+            copyright: {
+              icp: '闽ICP备19024351号',
+            },
+            footer: {
+              enable: true,
+            },
+          },
+        });
+      }
+
+      return null;
+    });
+
+    await preferenceManager.initPreferences({
+      namespace: 'icp-migration',
+      overrides: {
+        copyright: {
+          icp: '蜀ICP备2025128192号-2',
+        },
+        footer: {
+          enable: false,
+        },
+      },
+    });
+
+    expect(preferenceManager.getPreferences().copyright.icp).toBe(
+      '蜀ICP备2025128192号-2',
+    );
+    expect(preferenceManager.getPreferences().footer.enable).toBe(true);
+  });
+
   it('updates theme mode correctly', () => {
     preferenceManager.updatePreferences({
       theme: {

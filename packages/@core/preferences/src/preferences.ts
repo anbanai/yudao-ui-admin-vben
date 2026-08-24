@@ -144,6 +144,16 @@ class PreferenceManager {
       mergedPreference.logo = merge({}, overrides.logo, mergedPreference.logo);
     }
 
+    // Copyright / ICP 备案属于合规展示信息，必须以代码配置为准，
+    // 避免用户浏览器中的旧缓存导致页脚显示过期备案号
+    if (overrides?.copyright) {
+      mergedPreference.copyright = merge(
+        {},
+        overrides.copyright,
+        mergedPreference.copyright,
+      );
+    }
+
     // 更新偏好设置
     this.updatePreferences(mergedPreference);
 
