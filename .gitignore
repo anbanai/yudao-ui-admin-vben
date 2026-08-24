@@ -57,6 +57,7 @@ vite.config.ts.*
 .agents
 .claude
 .codex
+.worktrees
 skills-lock.json
 .atomcode
 datalog
