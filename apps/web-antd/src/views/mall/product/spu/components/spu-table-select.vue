@@ -43,6 +43,7 @@ function handleRadioChange() {
 /** 搜索表单 Schema */
 const formSchema = useGridFormSchema((categories) => {
   categoryList.value = categories;
+  gridApi.grid?.refreshColumn();
 });
 
 /** 表格列配置 */
