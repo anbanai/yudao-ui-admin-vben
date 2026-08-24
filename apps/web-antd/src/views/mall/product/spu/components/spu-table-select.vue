@@ -1,20 +1,17 @@
 <!-- SPU 商品选择弹窗组件 -->
 <script lang="ts" setup>
-import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { MallCategoryApi } from '#/api/mall/product/category';
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
-import { computed, nextTick, onMounted, ref } from 'vue';
-
-import { handleTree } from '@vben/utils';
+import { computed, nextTick, ref } from 'vue';
 
 import { Modal } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getCategoryList } from '#/api/mall/product/category';
 import { getSpuPage } from '#/api/mall/product/spu';
-import { getRangePickerDefaultProps } from '#/utils';
+
+import { useGridFormSchema } from './spu-select-data';
 
 interface SpuTableSelectProps {
   multiple?: boolean; // 是否单选：true - checkbox；false - radio
@@ -29,7 +26,6 @@ const emit = defineEmits<{
 }>();
 
 const categoryList = ref<MallCategoryApi.Category[]>([]); // 分类列表
-const categoryTreeList = ref<any[]>([]); // 分类树
 
 /** 弹窗显示状态 */
 const visible = ref(false);
@@ -45,42 +41,9 @@ function handleRadioChange() {
 }
 
 /** 搜索表单 Schema */
-const formSchema = computed<VbenFormSchema[]>(() => [
-  {
-    fieldName: 'name',
-    label: '商品名称',
-    component: 'Input',
-    componentProps: {
-      placeholder: '请输入商品名称',
-      allowClear: true,
-    },
-  },
-  {
-    fieldName: 'categoryId',
-    label: '商品分类',
-    component: 'TreeSelect',
-    componentProps: {
-      treeData: categoryTreeList,
-      fieldNames: {
-        label: 'name',
-        value: 'id',
-      },
-      placeholder: '请选择商品分类',
-      allowClear: true,
-      showSearch: true,
-      treeNodeFilterProp: 'name',
-    },
-  },
-  {
-    fieldName: 'createTime',
-    label: '创建时间',
-    component: 'RangePicker',
-    componentProps: {
-      ...getRangePickerDefaultProps(),
-      allowClear: true,
-    },
-  },
-]);
+const formSchema = useGridFormSchema((categories) => {
+  categoryList.value = categories;
+});
 
 /** 表格列配置 */
 const gridColumns = computed<VxeGridProps['columns']>(() => {
@@ -126,7 +89,7 @@ const gridColumns = computed<VxeGridProps['columns']>(() => {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
-    schema: formSchema.value,
+    schema: formSchema,
     layout: 'horizontal',
     collapsed: false,
   },
@@ -216,12 +179,6 @@ function handleConfirm() {
 defineExpose({
   open: openModal,
 }); // 对外暴露的方法
-
-/** 初始化分类数据 */
-onMounted(async () => {
-  categoryList.value = await getCategoryList({});
-  categoryTreeList.value = handleTree(categoryList.value, 'id', 'parentId');
-});
 </script>
 
 <template>
