@@ -32,8 +32,11 @@ export const overridesPreferences = defineOverridesPreferences({
     fixed: false,
   },
   copyright: {
-    companyName: import.meta.env.VITE_APP_TITLE,
-    companySiteLink: 'https://gitee.com/yudaocode/yudao-ui-admin-vben',
+    companyName: '峨眉山不忍独享茶业有限公司',
+    companySiteLink: 'https://teaworthshare.com',
+    date: '2026',
+    icp: '蜀ICP备2025128192号-2',
+    icpLink: 'https://beian.miit.gov.cn/',
   },
 });
 
