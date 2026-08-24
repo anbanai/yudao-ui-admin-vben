@@ -48,7 +48,7 @@ describe('商品选择分类筛选', () => {
       placeholder: '请选择商品分类',
       allowClear: true,
       showSearch: true,
-      treeNodeFilterProp: 'name',
+      treeNodeFilterProp: 'label',
     });
   });
 });

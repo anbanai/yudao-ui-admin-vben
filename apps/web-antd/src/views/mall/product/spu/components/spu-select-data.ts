@@ -42,7 +42,7 @@ export function useGridFormSchema(
         placeholder: '请选择商品分类',
         allowClear: true,
         showSearch: true,
-        treeNodeFilterProp: 'name',
+        treeNodeFilterProp: 'label',
       },
     },
     {
