@@ -21,6 +21,9 @@ describe('getComponentBackgroundStyle', () => {
     ).toEqual({
       backgroundColor: 'transparent',
       backgroundImage: 'url(/cover.png)',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundSize: '100% 100%',
     });
   });
 });

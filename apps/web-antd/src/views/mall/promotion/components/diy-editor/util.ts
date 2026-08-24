@@ -60,6 +60,9 @@ export function getComponentBackgroundStyle(style?: ComponentStyle) {
     : {
         backgroundColor: 'transparent',
         backgroundImage: `url(${style.bgImg})`,
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: '100% 100%',
       };
 }
 
