@@ -14,6 +14,7 @@ import { getDiyPagePage } from '#/api/mall/promotion/diy/page';
 import { getSeckillActivityPage } from '#/api/mall/promotion/seckill/seckillActivity';
 
 import { APP_LINK_TYPE_ENUM } from './data';
+import { getLinkDetailName } from './link-utils';
 
 /**
  * APP 链接详情通用单选表格
@@ -29,7 +30,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  change: [id: number];
+  change: [id: number, name?: string];
 }>();
 
 /** 弹窗标题 */
@@ -217,6 +218,7 @@ function useGridColumns(): VxeTableGridOptions['columns'] {
 
 const visible = ref(false); // 弹窗显示状态
 const selectedId = ref<number>(); // 选中的记录编号
+const selectedRow = ref<Record<string, unknown>>(); // 选中的记录，用于回传名称
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -247,6 +249,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridEvents: {
     radioChange: ({ row }: any) => {
       selectedId.value = row.id;
+      selectedRow.value = row;
     },
   },
 });
@@ -255,6 +258,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 async function open() {
   visible.value = true;
   selectedId.value = props.currentId;
+  selectedRow.value = undefined;
   // 等待 Modal 和 Grid 组件挂载完成后再查询
   await nextTick();
   await gridApi.query();
@@ -266,7 +270,7 @@ function handleConfirm() {
     message.warning('请先选择一条记录');
     return;
   }
-  emit('change', selectedId.value);
+  emit('change', selectedId.value, getLinkDetailName(selectedRow.value));
   visible.value = false;
 }
 

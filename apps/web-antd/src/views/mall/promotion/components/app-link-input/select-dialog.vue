@@ -12,6 +12,11 @@ import { ProductCategorySelect } from '#/views/mall/product/category/components/
 
 import { APP_LINK_GROUP_LIST, APP_LINK_TYPE_ENUM } from './data';
 import LinkDetailSelect from './link-detail-select.vue';
+import {
+  appendLinkParam,
+  getLinkParamKey,
+  resolveAppLinkName,
+} from './link-utils';
 
 /** APP 链接选择弹框 */
 defineOptions({ name: 'AppLinkSelectDialog' });
@@ -55,15 +60,22 @@ const [DetailSelectModal, detailSelectModalApi] = useVbenModal({
 defineExpose({ open });
 
 /** 打开弹窗 */
-async function open(link: string) {
-  activeAppLink.value.path = link;
+async function open(link: string, currentName?: string) {
+  activeAppLink.value = {
+    name: currentName || '',
+    path: link,
+  };
   modalApi.open();
   // 滚动到当前的链接
   const group = APP_LINK_GROUP_LIST.find((group) =>
     group.links.some((linkItem) => {
       const sameLink = isSameLink(linkItem.path, link);
       if (sameLink) {
-        activeAppLink.value = { ...linkItem, path: link };
+        activeAppLink.value = {
+          ...linkItem,
+          name: currentName || linkItem.name,
+          path: link,
+        };
       }
       return sameLink;
     }),
@@ -75,15 +87,10 @@ async function open(link: string) {
   }
 }
 
-/** 获取链接参数名（商品列表使用 categoryId 筛选分类，其余均为 id） */
-function getParamKey(type?: APP_LINK_TYPE_ENUM) {
-  return type === APP_LINK_TYPE_ENUM.PRODUCT_LIST ? 'categoryId' : 'id';
-}
-
 /** 处理 APP 链接选中 */
 async function handleAppLinkSelected(appLink: AppLink) {
   if (!isSameLink(appLink.path, activeAppLink.value.path)) {
-    activeAppLink.value = appLink;
+    activeAppLink.value = { ...appLink };
   }
   if (!appLink.type) {
     return;
@@ -92,7 +99,7 @@ async function handleAppLinkSelected(appLink: AppLink) {
   detailSelectDialog.value.type = appLink.type;
   detailSelectDialog.value.id =
     getUrlNumberValue(
-      getParamKey(appLink.type),
+      getLinkParamKey(appLink.type),
       `http://127.0.0.1${activeAppLink.value.path}`,
     ) || undefined;
   switch (appLink.type) {
@@ -171,18 +178,27 @@ function isSameLink(link1: string, link2: string) {
 }
 
 /** 处理详情选中，将记录编号拼接为链接参数 */
-function handleDetailSelected(id?: number) {
+function handleDetailSelected(id?: number, detailName?: string) {
   if (!id || !activeAppLink.value.path) {
     return;
   }
-  // 生成 activeAppLink
-  const url = new URL(activeAppLink.value.path, 'http://127.0.0.1');
-  url.searchParams.set(getParamKey(detailSelectDialog.value.type), `${id}`);
-  activeAppLink.value.path = `${url.pathname}${url.search}`;
+  activeAppLink.value = {
+    ...activeAppLink.value,
+    name: resolveAppLinkName(activeAppLink.value.name, detailName),
+    path: appendLinkParam(
+      activeAppLink.value.path,
+      getLinkParamKey(detailSelectDialog.value.type),
+      id,
+    ),
+  };
 
   // 关闭对话框，并重置 id
   detailSelectModalApi.close();
   detailSelectDialog.value.id = undefined;
+}
+
+function handleCategorySelected(category?: { id: number; name: string }) {
+  handleDetailSelected(category?.id, category?.name);
 }
 </script>
 <template>
@@ -257,7 +273,7 @@ function handleDetailSelected(id?: number) {
       >
         <ProductCategorySelect
           v-model="detailSelectDialog.id"
-          @update:model-value="handleDetailSelected"
+          @category-selected="handleCategorySelected"
         />
       </FormItem>
     </Form>
