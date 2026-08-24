@@ -13,7 +13,6 @@ import {
   Input,
   InputNumber,
   message,
-  Select,
   Space,
   Switch,
   Table,
@@ -32,6 +31,7 @@ import {
   saveWechatLogisticsConfig,
   syncWechatWaybillTrace,
 } from '#/api/mall/trade/logistics/wechat';
+import { MemberUserSelect } from '#/views/member/components';
 
 const loading = ref(false);
 const accountLoading = ref(false);
@@ -45,6 +45,9 @@ const traces = ref<MallWechatLogisticsApi.Trace[]>([]);
 const selectedWaybill = ref<MallWechatLogisticsApi.Waybill>();
 const printerOpenid = ref('');
 const actionLoadingId = ref<number>();
+const bindLoading = ref(false);
+const manualOpenid = ref(false);
+const mpUserSelectRef = ref<InstanceType<typeof MemberUserSelect>>();
 
 const form = reactive<MallWechatLogisticsApi.Config>({
   userType: 1,
@@ -112,6 +115,19 @@ async function load() {
   }
 }
 
+/** 当前绑定展示：openid -> 昵称 */
+const boundPrinterText = computed(() => {
+  const ids = printer.value?.openid ?? [];
+  if (!ids.length) return '未绑定';
+  const userMap = mpUserSelectRef.value?.userMap;
+  return ids
+    .map((id) => {
+      const user = userMap?.get(id);
+      return user?.nickname ? `${user.nickname}（${id}）` : id;
+    })
+    .join('、');
+});
+
 async function refreshPending() {
   pendingLoading.value = true;
   try {
@@ -146,16 +162,41 @@ async function handleSave() {
 }
 
 async function handleBindPrinter() {
-  if (!printerOpenid.value.trim()) {
-    message.warning('请输入打印员 OpenID');
+  const openid = printerOpenid.value?.toString().trim();
+  if (!openid) {
+    message.warning('请先选择打印员');
     return;
   }
-  await bindWechatPrinter({
-    openid: printerOpenid.value.trim(),
-    updateType: 'bind',
-  });
-  await refreshPrinter();
-  message.success('打印员绑定成功');
+  bindLoading.value = true;
+  try {
+    await bindWechatPrinter({
+      openid,
+      updateType: 'bind',
+    });
+    await refreshPrinter();
+    message.success('打印员绑定成功');
+  } finally {
+    bindLoading.value = false;
+  }
+}
+
+async function handleUnbindPrinter() {
+  const openid = printerOpenid.value?.toString().trim();
+  if (!openid) {
+    message.warning('请先选择要解绑的打印员');
+    return;
+  }
+  bindLoading.value = true;
+  try {
+    await bindWechatPrinter({
+      openid,
+      updateType: 'unbind',
+    });
+    await refreshPrinter();
+    message.success('打印员已解绑');
+  } finally {
+    bindLoading.value = false;
+  }
 }
 
 async function handleConfirm(row: MallWechatLogisticsApi.Waybill) {
@@ -355,14 +396,61 @@ onMounted(load);
       </Card>
 
       <Card title="微信打单打印员">
+        <Alert
+          class="mb-4"
+          type="info"
+          show-icon
+          message="打印员是使用自己微信登录「微信打单」PC 软件的员工"
+        >
+          <template #description>
+            绑定后，订单创建微信运单时，打印员电脑上的打单软件会自动收到任务并打出顺丰电子面单；
+            未绑定时没有人能接收打印任务，面单无法打印，也就无法走「微信打单发货」流程。
+            打印员须为本小程序的注册用户（已授权微信登录、拥有
+            openid），未绑定微信的用户将置灰不可选。
+          </template>
+        </Alert>
         <div class="flex flex-wrap items-center gap-3">
+          <MemberUserSelect
+            v-if="!manualOpenid"
+            ref="mpUserSelectRef"
+            v-model="printerOpenid"
+          />
           <Input
+            v-else
             v-model:value="printerOpenid"
             placeholder="打印员 OpenID"
             class="w-80"
           />
-          <Button type="primary" @click="handleBindPrinter">绑定打印员</Button>
-          <span class="text-sm text-gray-500">当前绑定：{{ printer?.openid?.join('、') || '未绑定' }}</span>
+          <Button
+            type="link"
+            @click="
+              manualOpenid = !manualOpenid;
+              printerOpenid = '';
+            "
+          >
+            {{ manualOpenid ? '返回选择员工' : '手动输入 OpenID' }}
+          </Button>
+          <Button
+            type="primary"
+            :loading="bindLoading"
+            @click="handleBindPrinter"
+          >
+            绑定打印员
+          </Button>
+          <Button
+            danger
+            :disabled="!printer?.openid?.length || bindLoading"
+            @click="handleUnbindPrinter"
+          >
+            解绑
+          </Button>
+        </div>
+        <div class="mt-3 text-sm text-gray-500">
+          若下拉中没有该员工，请确认其已在本小程序授权微信登录（拥有
+          openid），或改用手动输入 OpenID。
+        </div>
+        <div class="mt-1 text-sm text-gray-500">
+          当前绑定：{{ boundPrinterText }}
         </div>
       </Card>
 
