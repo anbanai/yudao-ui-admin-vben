@@ -4,7 +4,10 @@ import type { MallCouponTemplateApi } from '#/api/mall/promotion/coupon/couponTe
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import { CouponTemplateTakeTypeEnum } from '@vben/constants';
+import {
+  CouponTemplateTakeTypeEnum,
+  PromotionProductScopeEnum,
+} from '@vben/constants';
 import { convertToInteger, formatToFraction } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
@@ -110,6 +113,11 @@ async function processSubmitData(
 ): Promise<MallCouponTemplateApi.CouponTemplate> {
   return {
     ...formValues,
+    // 商品范围值：通用劵（productScope=1）固定为空数组，避免前端残留旧选中值或后端存 NULL 导致分页查询解析报错
+    productScopeValues:
+      formValues.productScope === PromotionProductScopeEnum.ALL.scope
+        ? []
+        : (formValues.productScopeValues ?? []),
     // 金额转换：元转分
     discountPrice: convertToInteger(formValues.discountPrice),
     discountPercent:
