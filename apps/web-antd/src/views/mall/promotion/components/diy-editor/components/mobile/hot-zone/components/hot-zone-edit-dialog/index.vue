@@ -151,7 +151,7 @@ const appLinkDialogRef = ref();
 /** 显示 App 链接选择对话框 */
 const handleShowAppLinkDialog = (hotZone: HotZoneItemProperty) => {
   activeHotZone.value = hotZone;
-  appLinkDialogRef.value.open(hotZone.url);
+  appLinkDialogRef.value.open(hotZone.url, hotZone.name);
 };
 
 /** 处理 App 链接选择变更 */
