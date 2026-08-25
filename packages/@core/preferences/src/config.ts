@@ -20,6 +20,7 @@ const defaultPreferences: Preferences = {
     defaultHomePath: '/dashboard',
     dynamicTitle: true,
     panelFloat: false,
+    panelFloatSettingShow: false,
     enableCheckUpdates: true,
     enableCopyPreferences: true,
     enablePreferences: true,

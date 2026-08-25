@@ -155,6 +155,8 @@ interface AppPreferences {
   name: string;
   /** 是否开启悬浮面板模式（侧边栏、顶栏、内容区以圆角卡片悬浮于画布之上） */
   panelFloat: boolean;
+  /** 是否在偏好设置中显示悬浮面板开关 */
+  panelFloatSettingShow: boolean;
   /** 偏好设置按钮位置 */
   preferencesButtonPosition: PreferencesButtonPositionType;
   /**

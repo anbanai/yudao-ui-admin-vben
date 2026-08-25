@@ -136,7 +136,8 @@ watch(
 
 /** 保存 */
 function handleSave() {
-  // 发送保存通知，由外部保存
+  // 先同步编辑器内部已规范化的配置，保证外部保存拿到最新值
+  pageConfigChange();
   emits('save');
 }
 

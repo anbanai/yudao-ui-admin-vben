@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import type { SelectValue } from 'ant-design-vue/es/select';
 
-import type { MemberUserApi } from '#/api/member/user';
+import type { SystemSocialUserApi } from '#/api/system/social/user';
 
 import { computed, onMounted, ref } from 'vue';
 
 import { Avatar, Select } from 'ant-design-vue';
 
-import { getUserPage } from '#/api/member/user';
+import { getSocialUserPage } from '#/api/system/social/user';
 
 defineOptions({ name: 'WechatUserSelect' });
 
@@ -19,44 +19,41 @@ const props = withDefaults(
     disabled?: boolean;
     /** 占位提示 */
     placeholder?: string;
+    /** 社交类型：1=微信小程序用户；默认只选小程序用户 */
+    type?: number;
   }>(),
   {
     allowClear: true,
     disabled: false,
-    placeholder: '输入昵称或手机号搜索打印员',
+    placeholder: '输入昵称搜索打印员',
+    type: 1,
   },
 );
 
 const emit = defineEmits<{
-  change: [value: string | undefined, user?: MemberUserApi.User];
+  change: [value: string | undefined, user?: SystemSocialUserApi.SocialUser];
 }>();
 
 const modelValue = defineModel<string>();
 
-const userList = ref<MemberUserApi.User[]>([]);
+const userList = ref<SystemSocialUserApi.SocialUser[]>([]);
 const loading = ref(false);
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
 let searchSeq = 0;
 
-/** openid -> 会员信息，便于回显昵称 */
+/** openid -> 小程序用户信息，便于回显昵称 */
 const userMap = computed(
-  () =>
-    new Map(
-      userList.value
-        .filter((item) => !!item.openid)
-        .map((item) => [item.openid as string, item]),
-    ),
+  () => new Map(userList.value.map((item) => [item.openid, item])),
 );
 
-function displayName(user: MemberUserApi.User) {
-  return user.nickname || user.name || `会员${user.id}`;
+function displayName(user: SystemSocialUserApi.SocialUser) {
+  return user.nickname || `微信用户${user.id}`;
 }
 
 const options = computed(() =>
   userList.value.map((item) => ({
-    label: `${displayName(item)}${item.mobile ? ` ${item.mobile}` : ''}`,
-    // 无 openid 的会员无法接收打单任务，用占位 value 保证可渲染并置灰
-    value: item.openid ?? `member-${item.id}`,
+    label: `${displayName(item)}（openid: ${item.openid}）`,
+    value: item.openid,
     disabled: !item.openid,
     user: item,
   })),
@@ -67,15 +64,11 @@ async function loadUsers(keyword?: string) {
   loading.value = true;
   try {
     const trimmed = keyword?.trim();
-    const isMobile = !!trimmed && /^\d+$/.test(trimmed);
-    let keywordParams: { mobile?: string; nickname?: string } = {};
-    if (trimmed) {
-      keywordParams = isMobile ? { mobile: trimmed } : { nickname: trimmed };
-    }
-    const page = await getUserPage({
+    const page = await getSocialUserPage({
       pageNo: 1,
       pageSize: 50,
-      ...keywordParams,
+      type: props.type,
+      ...(trimmed ? { nickname: trimmed } : {}),
     });
     // 丢弃过期响应，避免旧请求覆盖新结果
     if (seq !== searchSeq) return;
@@ -98,7 +91,7 @@ function handleChange(value: SelectValue) {
     return;
   }
   const user = userMap.value.get(openid);
-  // 兜底：无 openid 的会员不可选，忽略本次选择
+  // 兜底：无 openid 的用户不可选，忽略本次选择
   if (!user) {
     return;
   }
@@ -135,11 +128,8 @@ defineExpose({ userMap });
           {{ displayName(option.user).slice(0, 1) }}
         </Avatar>
         <span class="flex-shrink-0">{{ displayName(option.user) }}</span>
-        <span v-if="option.user.mobile" class="text-gray-400">
-          {{ option.user.mobile }}
-        </span>
         <span class="min-w-0 truncate text-xs text-gray-400">
-          openid：{{ option.user.openid ?? '无（未授权微信，不可选）' }}
+          openid：{{ option.user.openid }}
         </span>
       </div>
     </template>

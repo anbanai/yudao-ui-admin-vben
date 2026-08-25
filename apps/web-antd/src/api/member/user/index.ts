@@ -16,8 +16,6 @@ export namespace MemberUserApi {
     email?: string;
     name?: string;
     nickname?: string;
-    /** 微信 openid（小程序用户），用于微信打单打印员绑定 */
-    openid?: string;
     registerIp?: string;
     sex?: number;
     status?: number;

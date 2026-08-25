@@ -73,6 +73,9 @@ const appColorGrayMode = defineModel<boolean>('appColorGrayMode');
 const appColorWeakMode = defineModel<boolean>('appColorWeakMode');
 const appContentCompact = defineModel<ContentCompactType>('appContentCompact');
 const appPanelFloat = defineModel<boolean>('appPanelFloat');
+const appPanelFloatSettingShow = defineModel<boolean>(
+  'appPanelFloatSettingShow',
+);
 const appWatermark = defineModel<boolean>('appWatermark');
 const appWatermarkContent = defineModel<string>('appWatermarkContent');
 const appEnableCheckUpdates = defineModel<boolean>('appEnableCheckUpdates');
@@ -413,7 +416,10 @@ function handleCustomPreferencesUpdate(updates: CustomPreferencesRecord) {
             <Block :title="$t('preferences.layout')">
               <Layout v-model="appLayout" />
             </Block>
-            <Block :title="$t('preferences.panel.title')">
+            <Block
+              v-if="appPanelFloatSettingShow"
+              :title="$t('preferences.panel.title')"
+            >
               <SwitchItem
                 v-model="appPanelFloat"
                 :disabled="isFullContent"
