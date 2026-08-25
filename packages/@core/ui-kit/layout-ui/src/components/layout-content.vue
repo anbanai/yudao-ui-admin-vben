@@ -22,9 +22,22 @@ interface Props {
   paddingLeft: number;
   paddingRight: number;
   paddingTop: number;
+  /**
+   * 悬浮面板模式：内容区域包裹在圆角卡片中
+   * @default false
+   */
+  panelFloat?: boolean;
+  /**
+   * 悬浮面板模式下，卡片与画布边缘的间距
+   * @default 12
+   */
+  panelGap?: number;
 }
 
-const props = withDefaults(defineProps<Props>(), {});
+const props = withDefaults(defineProps<Props>(), {
+  panelFloat: false,
+  panelGap: 12,
+});
 
 // @ts-expect-error - unused
 const { contentElement, overlayStyle } = useLayoutContentStyle();
@@ -32,6 +45,8 @@ const { contentElement, overlayStyle } = useLayoutContentStyle();
 const style = computed((): CSSProperties => {
   const {
     contentCompact,
+    panelFloat,
+    panelGap,
     padding,
     paddingBottom,
     paddingLeft,
@@ -43,9 +58,29 @@ const style = computed((): CSSProperties => {
     contentCompact === 'compact'
       ? { margin: '0 auto', width: `${props.contentCompactWidth}px` }
       : {};
+  if (panelFloat) {
+    // 悬浮面板模式：内容卡片与画布边缘保留间距，原有内边距由卡片承担
+    return {
+      ...compactStyle,
+      flex: 1,
+      padding: `${panelGap}px`,
+    };
+  }
   return {
     ...compactStyle,
     flex: 1,
+    padding: `${padding}px`,
+    paddingBottom: `${paddingBottom}px`,
+    paddingLeft: `${paddingLeft}px`,
+    paddingRight: `${paddingRight}px`,
+    paddingTop: `${paddingTop}px`,
+  };
+});
+
+const cardStyle = computed((): CSSProperties => {
+  const { paddingBottom, paddingLeft, paddingRight, paddingTop, padding } =
+    props;
+  return {
     padding: `${padding}px`,
     paddingBottom: `${paddingBottom}px`,
     paddingLeft: `${paddingLeft}px`,
@@ -60,6 +95,15 @@ const style = computed((): CSSProperties => {
     <Slot :style="overlayStyle">
       <slot name="overlay"></slot>
     </Slot>
-    <slot></slot>
+    <div
+      v-if="panelFloat"
+      class="border-border bg-background rounded-xl border shadow-sm"
+      :style="cardStyle"
+    >
+      <slot></slot>
+    </div>
+    <template v-else>
+      <slot></slot>
+    </template>
   </main>
 </template>

@@ -55,6 +55,7 @@ import {
   Navigation,
   Radius,
   Sidebar,
+  SwitchItem,
   Tabbar,
   Theme,
   Widget,
@@ -71,6 +72,7 @@ const appLayout = defineModel<LayoutType>('appLayout');
 const appColorGrayMode = defineModel<boolean>('appColorGrayMode');
 const appColorWeakMode = defineModel<boolean>('appColorWeakMode');
 const appContentCompact = defineModel<ContentCompactType>('appContentCompact');
+const appPanelFloat = defineModel<boolean>('appPanelFloat');
 const appWatermark = defineModel<boolean>('appWatermark');
 const appWatermarkContent = defineModel<string>('appWatermarkContent');
 const appEnableCheckUpdates = defineModel<boolean>('appEnableCheckUpdates');
@@ -410,6 +412,15 @@ function handleCustomPreferencesUpdate(updates: CustomPreferencesRecord) {
           <template #layout>
             <Block :title="$t('preferences.layout')">
               <Layout v-model="appLayout" />
+            </Block>
+            <Block :title="$t('preferences.panel.title')">
+              <SwitchItem
+                v-model="appPanelFloat"
+                :disabled="isFullContent"
+                :tip="$t('preferences.panel.floatTip')"
+              >
+                {{ $t('preferences.panel.float') }}
+              </SwitchItem>
             </Block>
             <Block :title="$t('preferences.content')">
               <Content v-model="appContentCompact" />

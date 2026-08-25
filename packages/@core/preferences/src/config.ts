@@ -19,6 +19,7 @@ const defaultPreferences: Preferences = {
       'https://unpkg.com/@vbenjs/static-source@0.1.7/source/avatar-v1.webp',
     defaultHomePath: '/dashboard',
     dynamicTitle: true,
+    panelFloat: false,
     enableCheckUpdates: true,
     enableCopyPreferences: true,
     enablePreferences: true,

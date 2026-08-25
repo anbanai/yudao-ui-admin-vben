@@ -126,12 +126,12 @@ function menuIcon(menu: MenuRecordRaw) {
 }
 
 .vben-normal-menu__item.is-active {
-  @apply bg-primary text-primary dark:bg-accent;
+  @apply bg-primary/10 text-primary dark:bg-accent dark:text-accent-foreground;
 }
 
 .vben-normal-menu__item.is-active .vben-normal-menu__name,
 .vben-normal-menu__item.is-active .vben-normal-menu__icon {
-  @apply text-primary-foreground font-semibold;
+  @apply text-primary font-semibold dark:text-primary-foreground;
 }
 
 .vben-normal-menu__item:not(.is-active):hover {

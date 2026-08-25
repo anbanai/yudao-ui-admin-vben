@@ -29,6 +29,7 @@ exports[`defaultPreferences immutability test > should not modify the config obj
     "locale": "zh-CN",
     "loginExpiredMode": "page",
     "name": "Vben Admin",
+    "panelFloat": false,
     "preferencesButtonPosition": "auto",
     "timezone": "Asia/Shanghai",
     "watermark": false,

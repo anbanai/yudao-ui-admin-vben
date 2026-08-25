@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue';
 
-import { computed, onUnmounted, shallowRef, useSlots, watchEffect } from 'vue';
+import {
+  computed,
+  onUnmounted,
+  shallowRef,
+  useSlots,
+  watch,
+  watchEffect,
+} from 'vue';
 
 import { VbenScrollbar } from '@vben-core/shadcn-ui';
 
@@ -64,6 +71,16 @@ interface Props {
    */
   paddingTop?: number;
   /**
+   * 悬浮面板模式：侧边栏以圆角卡片形式悬浮于画布之上
+   * @default false
+   */
+  panelFloat?: boolean;
+  /**
+   * 悬浮面板模式下，面板与画布边缘的间距
+   * @default 12
+   */
+  panelGap?: number;
+  /**
    * 是否显示
    * @default true
    */
@@ -106,6 +123,8 @@ const props = withDefaults(defineProps<Props>(), {
   isSidebarMixed: false,
   marginTop: 0,
   mixedWidth: 70,
+  panelFloat: false,
+  panelGap: 12,
   paddingTop: 0,
   show: true,
   showCollapseButton: true,
@@ -129,28 +148,63 @@ const dragBarRef = shallowRef<HTMLElement | null>(null);
 
 const hiddenSideStyle = computed((): CSSProperties => calcMenuWidthStyle(true));
 
+// 悬浮面板模式下，双列扩展面板"收起"等价于"隐藏"，避免残留空白竖条；
+// 重新显示（点击一级菜单/悬停）时自动恢复为完整宽度
+watchEffect(() => {
+  if (props.panelFloat && extraCollapse.value && extraVisible.value) {
+    extraVisible.value = false;
+  }
+});
+watch(extraVisible, (visible) => {
+  if (props.panelFloat && visible && extraCollapse.value) {
+    extraCollapse.value = false;
+  }
+});
+
 const style = computed((): CSSProperties => {
-  const { isSidebarMixed, marginTop, paddingTop, zIndex } = props;
+  const {
+    isSidebarMixed,
+    marginTop,
+    panelFloat,
+    panelGap,
+    paddingTop,
+    show,
+    zIndex,
+  } = props;
 
   return {
     '--scroll-shadow': 'var(--sidebar)',
     ...calcMenuWidthStyle(false),
-    height: `calc(100% - ${marginTop}px)`,
+    height: `calc(100% - ${marginTop + (panelFloat ? panelGap * 2 : 0)}px)`,
     marginTop: `${marginTop}px`,
     paddingTop: `${paddingTop}px`,
     zIndex,
+    // 悬浮偏移仅在显示时生效，隐藏时保持 left-0 以配合负 margin 完全移出屏幕
+    ...(panelFloat && show
+      ? { left: `${panelGap}px`, top: `${panelGap}px` }
+      : {}),
     ...(isSidebarMixed && extraVisible.value ? { transition: 'none' } : {}),
   };
 });
 
 const extraStyle = computed((): CSSProperties => {
-  const { extraWidth, show, width, zIndex } = props;
+  const { extraWidth, panelFloat, panelGap, show, width, zIndex } = props;
 
   return {
-    left: `${width}px`,
+    left: `${width + (panelFloat ? panelGap * 2 : 0)}px`,
     width: extraVisible.value && show ? `${extraWidth}px` : 0,
     zIndex,
   };
+});
+
+const extraPanelStyle = computed((): CSSProperties => {
+  const { marginTop, panelFloat, panelGap } = props;
+  return panelFloat
+    ? {
+        height: `calc(100% - ${marginTop + panelGap * 2}px)`,
+        top: `${marginTop + panelGap}px`,
+      }
+    : {};
 });
 
 const extraTitleStyle = computed((): CSSProperties => {
@@ -214,25 +268,33 @@ function calcMenuWidthStyle(isHiddenDom: boolean): CSSProperties {
     mixedWidth,
     fixedExtra,
     isSidebarMixed,
+    panelFloat,
+    panelGap,
     show,
     width,
   } = props;
 
-  let widthValue =
-    width === 0
-      ? '0px'
-      : `${width + (isSidebarMixed && fixedExtra && extraVisible.value ? extraWidth : 0)}px`;
+  const extraVisibleFixed = isSidebarMixed && fixedExtra && extraVisible.value;
+
+  let widthValue: number =
+    width === 0 ? 0 : width + (extraVisibleFixed ? extraWidth : 0);
 
   if (isHiddenDom && expandOnHovering.value && !expandOnHover.value) {
-    widthValue = isSidebarMixed ? `${mixedWidth}px` : `${collapseWidth}px`;
+    widthValue = isSidebarMixed ? mixedWidth : collapseWidth;
   }
+
+  // 悬浮面板模式：占位区域需要额外包含面板两侧以及双列面板之间的间距
+  if (isHiddenDom && panelFloat && width > 0) {
+    widthValue += panelGap * (extraVisibleFixed ? 3 : 2);
+  }
+
   return {
-    ...(widthValue === '0px' ? { overflow: 'hidden' } : {}),
-    flex: `0 0 ${widthValue}`,
-    marginLeft: show ? 0 : `-${widthValue}`,
-    maxWidth: widthValue,
-    minWidth: widthValue,
-    width: widthValue,
+    ...(widthValue === 0 ? { overflow: 'hidden' } : {}),
+    flex: `0 0 ${widthValue}px`,
+    marginLeft: show ? 0 : `-${widthValue}px`,
+    maxWidth: `${widthValue}px`,
+    minWidth: `${widthValue}px`,
+    width: `${widthValue}px`,
   };
 }
 
@@ -325,6 +387,9 @@ onUnmounted(() => {
           'bg-sidebar-deep': isSidebarMixed,
           'border-r border-border bg-sidebar': !isSidebarMixed,
         },
+        panelFloat
+          ? 'overflow-hidden rounded-xl border shadow-sm border-border'
+          : '',
       ]"
       :style="{ width: `${width}px` }"
     >
@@ -350,10 +415,13 @@ onUnmounted(() => {
       :class="[
         themeSub,
         {
-          'border-l': extraVisible,
+          'border-l': extraVisible && !panelFloat,
         },
+        panelFloat
+          ? 'overflow-hidden rounded-xl border shadow-sm border-border bg-sidebar'
+          : '',
       ]"
-      :style="extraStyle"
+      :style="[extraStyle, extraPanelStyle]"
       class="fixed top-0 h-full overflow-hidden border-r border-border bg-sidebar transition-all duration-200"
     >
       <SidebarCollapseButton
