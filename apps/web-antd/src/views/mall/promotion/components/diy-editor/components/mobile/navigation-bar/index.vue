@@ -9,8 +9,8 @@ import type {
 
 import { computed } from 'vue';
 
-import SearchBar from '../search-bar/index.vue';
 import { MALL_DIY_ASSETS } from '../../../static-assets';
+import SearchBar from '../search-bar/index.vue';
 
 /** 页面顶部导航栏 */
 defineOptions({ name: 'NavigationBar' });

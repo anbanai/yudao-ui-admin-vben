@@ -26,6 +26,8 @@ export const overridesPreferences = defineOverridesPreferences({
     layout: 'sidebar-mixed-nav',
     /** 悬浮面板模式：侧边栏/顶栏/内容区以圆角卡片悬浮于画布之上 */
     panelFloat: true,
+    /** 仅在 Ant Design 应用中开放悬浮面板切换 */
+    panelFloatSettingShow: true,
   },
   logo: {
     source: '/branding/logo-mark.png',

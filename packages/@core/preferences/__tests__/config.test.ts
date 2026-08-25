@@ -7,4 +7,11 @@ describe('defaultPreferences immutability test', () => {
   it('should not modify the config object', () => {
     expect(defaultPreferences).toMatchSnapshot();
   });
+
+  it('hides the floating-panel setting unless an app opts in', () => {
+    expect(
+      (defaultPreferences.app as unknown as Record<string, unknown>)
+        .panelFloatSettingShow,
+    ).toBe(false);
+  });
 });
