@@ -21,7 +21,7 @@ import {
 } from './components/mobile/navigation-bar/config';
 import { component as PAGE_CONFIG_COMPONENT } from './components/mobile/page-config/config';
 import { component as TAB_BAR_COMPONENT } from './components/mobile/tab-bar/config';
-import { MALL_DIY_ASSETS } from './static-assets';
+import { MALL_DIY_ASSETS, normalizeMallDiyAssetUrls } from './static-assets';
 import { getPageBackgroundStyle } from './util';
 
 /** 页面装修详情页 */
@@ -83,10 +83,11 @@ function normalizeNavigationBarProperty(property: NavigationBarProperty) {
 watch(
   () => props.modelValue,
   () => {
-    const modelValue =
+    const parsedModelValue =
       isString(props.modelValue) && !isEmpty(props.modelValue)
         ? (JSON.parse(props.modelValue) as PageConfig)
         : props.modelValue;
+    const modelValue = normalizeMallDiyAssetUrls(parsedModelValue);
     // noinspection SuspiciousTypeOfGuard
     pageConfigComponent.value.property =
       (typeof modelValue !== 'string' && modelValue?.page) ||
