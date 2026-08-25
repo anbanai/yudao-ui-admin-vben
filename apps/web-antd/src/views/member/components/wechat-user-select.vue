@@ -68,14 +68,14 @@ async function loadUsers(keyword?: string) {
   try {
     const trimmed = keyword?.trim();
     const isMobile = !!trimmed && /^\d+$/.test(trimmed);
+    let keywordParams: { mobile?: string; nickname?: string } = {};
+    if (trimmed) {
+      keywordParams = isMobile ? { mobile: trimmed } : { nickname: trimmed };
+    }
     const page = await getUserPage({
       pageNo: 1,
       pageSize: 50,
-      ...(trimmed
-        ? isMobile
-          ? { mobile: trimmed }
-          : { nickname: trimmed }
-        : {}),
+      ...keywordParams,
     });
     // 丢弃过期响应，避免旧请求覆盖新结果
     if (seq !== searchSeq) return;

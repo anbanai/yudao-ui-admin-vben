@@ -30,12 +30,12 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.lock();
     try {
       waybill.value = await createWechatWaybill(order.value.id);
-      if (waybill.value.status !== 'CREATED') {
+      if (waybill.value.status === 'CREATED') {
+        modalApi.setState({ confirmText: '关闭', showCancelButton: false });
+      } else {
         errorMessage.value =
           waybill.value.errorMessage ||
           '微信物流订单创建失败，请查看后台错误码后重试';
-      } else {
-        modalApi.setState({ confirmText: '关闭', showCancelButton: false });
       }
     } finally {
       modalApi.unlock();

@@ -366,24 +366,30 @@ const headerZIndex = computed(() => {
 
 const headerWrapperStyle = computed((): CSSProperties => {
   const fixed = headerFixed.value;
+  const isHeaderOffscreen = headerIsHidden.value || isFullContent.value;
+  let left: CSSProperties['left'] = mainStyle.value.sidebarAndExtraWidth;
+  let top: CSSProperties['top'] = isHeaderOffscreen
+    ? `-${headerWrapperHeight.value}px`
+    : 0;
+
+  if (isPanelFloat.value) {
+    left =
+      mainStyle.value.sidebarAndExtraWidth === 'unset'
+        ? `${PANEL_GAP}px`
+        : mainStyle.value.sidebarAndExtraWidth;
+    top = isHeaderOffscreen
+      ? `${PANEL_GAP - headerWrapperHeight.value}px`
+      : `${PANEL_GAP}px`;
+  } else if (isMixedNav.value) {
+    left = 0;
+  }
+
   return {
     height: isFullContent.value ? '0' : `${headerWrapperHeight.value}px`,
-    left: isPanelFloat.value
-      ? // 悬浮面板模式：顶栏整体避开侧边区域并与画布边缘保留间距
-        mainStyle.value.sidebarAndExtraWidth === 'unset'
-        ? `${PANEL_GAP}px`
-        : mainStyle.value.sidebarAndExtraWidth
-      : isMixedNav.value
-        ? 0
-        : mainStyle.value.sidebarAndExtraWidth,
+    // 悬浮面板模式：顶栏整体避开侧边区域并与画布边缘保留间距
+    left,
     position: fixed ? 'fixed' : 'static',
-    top: isPanelFloat.value
-      ? headerIsHidden.value || isFullContent.value
-        ? `${PANEL_GAP - headerWrapperHeight.value}px`
-        : `${PANEL_GAP}px`
-      : headerIsHidden.value || isFullContent.value
-        ? `-${headerWrapperHeight.value}px`
-        : 0,
+    top,
     width: mainStyle.value.width,
     'z-index': headerZIndex.value,
   };
