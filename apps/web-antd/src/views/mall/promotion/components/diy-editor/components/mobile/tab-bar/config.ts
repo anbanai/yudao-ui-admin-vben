@@ -1,5 +1,7 @@
 import type { DiyComponent } from '../../../util';
 
+import { MALL_DIY_ASSETS } from '../../../static-assets';
+
 /** 底部导航菜单属性 */
 export interface TabBarProperty {
   items: TabBarItemProperty[]; // 选项列表
@@ -41,26 +43,26 @@ export const component = {
       {
         text: '首页',
         url: '/pages/index/index',
-        iconUrl: 'http://mall.yudao.iocoder.cn/static/images/1-001.png',
-        activeIconUrl: 'http://mall.yudao.iocoder.cn/static/images/1-002.png',
+        iconUrl: MALL_DIY_ASSETS.tabbar1Default,
+        activeIconUrl: MALL_DIY_ASSETS.tabbar1Active,
       },
       {
         text: '分类',
         url: '/pages/index/category?id=3',
-        iconUrl: 'http://mall.yudao.iocoder.cn/static/images/2-001.png',
-        activeIconUrl: 'http://mall.yudao.iocoder.cn/static/images/2-002.png',
+        iconUrl: MALL_DIY_ASSETS.tabbar2Default,
+        activeIconUrl: MALL_DIY_ASSETS.tabbar2Active,
       },
       {
         text: '购物车',
         url: '/pages/index/cart',
-        iconUrl: 'http://mall.yudao.iocoder.cn/static/images/3-001.png',
-        activeIconUrl: 'http://mall.yudao.iocoder.cn/static/images/3-002.png',
+        iconUrl: MALL_DIY_ASSETS.tabbar3Default,
+        activeIconUrl: MALL_DIY_ASSETS.tabbar3Active,
       },
       {
         text: '我的',
         url: '/pages/index/user',
-        iconUrl: 'http://mall.yudao.iocoder.cn/static/images/4-001.png',
-        activeIconUrl: 'http://mall.yudao.iocoder.cn/static/images/4-002.png',
+        iconUrl: MALL_DIY_ASSETS.tabbar4Default,
+        activeIconUrl: MALL_DIY_ASSETS.tabbar4Active,
       },
     ],
   },

@@ -1,5 +1,7 @@
 import type { ComponentStyle, DiyComponent } from '../../../util';
 
+import { MALL_DIY_ASSETS } from '../../../static-assets';
+
 /** 轮播图属性 */
 export interface CarouselProperty {
   type: 'card' | 'default'; // 类型：默认 | 卡片
@@ -33,12 +35,12 @@ export const component = {
     items: [
       {
         type: 'img',
-        imgUrl: 'https://static.iocoder.cn/mall/banner-01.jpg',
+        imgUrl: MALL_DIY_ASSETS.banner01,
         videoUrl: '',
       },
       {
         type: 'img',
-        imgUrl: 'https://static.iocoder.cn/mall/banner-02.jpg',
+        imgUrl: MALL_DIY_ASSETS.banner02,
         videoUrl: '',
       },
     ] as CarouselItemProperty[],

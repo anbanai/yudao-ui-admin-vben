@@ -17,13 +17,14 @@ import {
   Tooltip,
 } from 'ant-design-vue';
 
-import appNavBarMp from '#/assets/imgs/diy/app-nav-bar-mp.png';
 import UploadImg from '#/components/upload/image-upload.vue';
 import {
   AppLinkInput,
   ColorInput,
   MagicCubeEditor,
 } from '#/views/mall/promotion/components';
+
+import { MALL_DIY_ASSETS } from '../../../../static-assets';
 
 /** 导航栏单元格属性面板 */
 defineOptions({ name: 'NavigationBarCellProperty' });
@@ -86,7 +87,7 @@ function handleHotAreaSelected(
       v-if="isMp"
       alt=""
       style="width: 76px; height: 30px"
-      :src="appNavBarMp"
+      :src="MALL_DIY_ASSETS.appNavBarMp"
     />
   </div>
   <template v-for="(cell, cellIndex) in cellList" :key="cellIndex">

@@ -9,9 +9,8 @@ import type {
 
 import { computed } from 'vue';
 
-import appNavbarMp from '#/assets/imgs/diy/app-nav-bar-mp.png';
-
 import SearchBar from '../search-bar/index.vue';
+import { MALL_DIY_ASSETS } from '../../../static-assets';
 
 /** 页面顶部导航栏 */
 defineOptions({ name: 'NavigationBar' });
@@ -83,7 +82,7 @@ const getSearchProp = computed(() => (cell: NavigationBarCellProperty) => {
     </div>
     <img
       v-if="property._local?.previewMp"
-      :src="appNavbarMp"
+      :src="MALL_DIY_ASSETS.appNavBarMp"
       alt=""
       style="width: 86px; height: 30px"
     />

@@ -11,8 +11,6 @@ import { cloneDeep, isEmpty, isString } from '@vben/utils';
 import { Button, Card, Col, QRCode, Row, Tag, Tooltip } from 'ant-design-vue';
 import draggable from 'vuedraggable';
 
-import statusBarImg from '#/assets/imgs/diy/statusBar.png';
-
 import ComponentContainer from './components/component-container.vue';
 import ComponentLibrary from './components/component-library.vue';
 import { componentConfigs, components } from './components/mobile';
@@ -23,6 +21,7 @@ import {
 } from './components/mobile/navigation-bar/config';
 import { component as PAGE_CONFIG_COMPONENT } from './components/mobile/page-config/config';
 import { component as TAB_BAR_COMPONENT } from './components/mobile/tab-bar/config';
+import { MALL_DIY_ASSETS } from './static-assets';
 import { getPageBackgroundStyle } from './util';
 
 /** 页面装修详情页 */
@@ -366,7 +365,7 @@ onMounted(() => {
           <!-- 手机顶部 -->
           <div class="mx-auto flex w-96 flex-col">
             <!-- 手机顶部状态栏 -->
-            <img alt="" class="h-6 bg-card" :src="statusBarImg" />
+            <img alt="" class="h-6 bg-card" :src="MALL_DIY_ASSETS.statusBar" />
             <!-- 手机顶部导航栏 -->
             <ComponentContainer
               v-if="showNavigationBar"
