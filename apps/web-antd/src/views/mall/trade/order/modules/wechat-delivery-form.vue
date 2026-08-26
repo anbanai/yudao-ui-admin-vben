@@ -6,9 +6,11 @@ import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { Alert, Descriptions, Result, Tag } from 'ant-design-vue';
+import { Alert, Descriptions, message, Result, Tag } from 'ant-design-vue';
 
 import { createWechatWaybill } from '#/api/mall/trade/logistics/wechat';
+
+import { withOperationFeedback } from '../operation-feedback';
 
 const order = ref<MallOrderApi.Order>();
 const waybill = ref<MallWechatLogisticsApi.Waybill>();
@@ -26,16 +28,26 @@ const [Modal, modalApi] = useVbenModal({
       return;
     }
     if (!order.value?.id) return;
+    const orderId = order.value.id;
     errorMessage.value = '';
     modalApi.lock();
     try {
-      waybill.value = await createWechatWaybill(order.value.id);
-      if (waybill.value.status === 'CREATED') {
+      await withOperationFeedback(async () => {
+        const result = await createWechatWaybill(orderId);
+        if (result.status !== 'CREATED') {
+          errorMessage.value =
+            result.errorMessage ||
+            '微信物流订单创建失败，请查看后台错误码后重试';
+          message.error(errorMessage.value);
+          throw new Error(errorMessage.value);
+        }
+        waybill.value = result;
         modalApi.setState({ confirmText: '关闭', showCancelButton: false });
-      } else {
-        errorMessage.value =
-          waybill.value.errorMessage ||
-          '微信物流订单创建失败，请查看后台错误码后重试';
+        return result;
+      });
+    } catch (error) {
+      if (!errorMessage.value) {
+        throw error;
       }
     } finally {
       modalApi.unlock();

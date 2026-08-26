@@ -5,13 +5,11 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { message } from 'ant-design-vue';
-
 import { useVbenForm } from '#/adapter/form';
 import { deliveryOrder } from '#/api/mall/trade/order';
-import { $t } from '#/locales';
 
 import { useDeliveryFormSchema } from '../data';
+import { withOperationFeedback } from '../operation-feedback';
 
 const emit = defineEmits(['success']);
 
@@ -50,11 +48,11 @@ const [Modal, modalApi] = useVbenModal({
       data.logisticsNo = '';
     }
     try {
-      await deliveryOrder(data as MallOrderApi.OrderUpdateDeliveryReqVO);
-      // 关闭并提示
-      await modalApi.close();
-      emit('success');
-      message.success($t('ui.actionMessage.operationSuccess'));
+      await withOperationFeedback(async () => {
+        await deliveryOrder(data as MallOrderApi.OrderUpdateDeliveryReqVO);
+        await modalApi.close();
+        emit('success');
+      });
     } finally {
       modalApi.unlock();
     }

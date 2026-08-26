@@ -6,13 +6,12 @@ import { ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 import { fenToYuan } from '@vben/utils';
 
-import { message } from 'ant-design-vue';
-
 import { useVbenForm } from '#/adapter/form';
 import { updateOrderPrice } from '#/api/mall/trade/order';
 import { $t } from '#/locales';
 
 import { usePriceFormSchema } from '../data';
+import { withOperationFeedback } from '../operation-feedback';
 
 const emit = defineEmits(['success']);
 
@@ -46,14 +45,14 @@ const [Modal, modalApi] = useVbenModal({
     // 提交表单
     const data = await formApi.getValues();
     try {
-      await updateOrderPrice({
-        id: data.id,
-        adjustPrice: data.adjustPrice * 100, // 转换为分
+      await withOperationFeedback(async () => {
+        await updateOrderPrice({
+          id: data.id,
+          adjustPrice: data.adjustPrice * 100, // 转换为分
+        });
+        await modalApi.close();
+        emit('success');
       });
-      // 关闭并提示
-      await modalApi.close();
-      emit('success');
-      message.success($t('ui.actionMessage.operationSuccess'));
     } finally {
       modalApi.unlock();
     }

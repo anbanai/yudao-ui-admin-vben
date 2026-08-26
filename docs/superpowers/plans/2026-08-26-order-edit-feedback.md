@@ -4,7 +4,7 @@
 
 **Goal:** Add consistent visible save progress, success, and failure feedback to every editable order-detail modal.
 
-**Architecture:** Add a small order-scoped helper that wraps an async save transaction with Ant Design Vue's persistent loading message, translated success/error messages, and guaranteed loading cleanup. Each modal keeps its existing validation and `modalApi.lock/unlock` lifecycle, while the wrapped transaction includes the API request plus close/refresh emission so success feedback appears only after the save flow completes. The WeChat waybill modal uses the same helper while preserving its inline business-status error state.
+**Architecture:** Add a small order-scoped helper that wraps an async save transaction with Ant Design Vue's persistent loading message, translated success message, and guaranteed loading cleanup. Each modal keeps its existing validation and `modalApi.lock/unlock` lifecycle, while the wrapped transaction includes the API request plus close/refresh emission so success feedback appears only after the save flow completes. Request exceptions are rethrown for the existing global request error interceptor; the WeChat waybill modal adds a specific business-status error toast and inline error state.
 
 **Tech Stack:** Vue 3 `<script setup>`, TypeScript, Ant Design Vue `message`, Vitest, existing `#` path aliases.
 
@@ -53,7 +53,7 @@ describe('withOperationFeedback', () => {
     expect(hideLoading).toHaveBeenCalledOnce();
   });
 
-  it('shows failure feedback, hides loading, and preserves the rejection', async () => {
+  it('hides loading and preserves a rejection for global error handling', async () => {
     const { withOperationFeedback } = await import('./operation-feedback');
     const failure = new Error('request failed');
 
@@ -61,7 +61,7 @@ describe('withOperationFeedback', () => {
       failure,
     );
     expect(success).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledWith('ui.actionMessage.operationFailed');
+    expect(error).not.toHaveBeenCalled();
     expect(hideLoading).toHaveBeenCalledOnce();
   });
 });
@@ -97,9 +97,6 @@ export async function withOperationFeedback<T>(
     const result = await operation();
     message.success($t('ui.actionMessage.operationSuccess'));
     return result;
-  } catch (error) {
-    message.error($t('ui.actionMessage.operationFailed'));
-    throw error;
   } finally {
     hideLoading();
   }
@@ -138,8 +135,6 @@ try {
     await modalApi.close();
     emit('success');
   });
-} catch {
-  // The shared helper already displays the failure message and keeps the modal open.
 } finally {
   modalApi.unlock();
 }
@@ -165,7 +160,7 @@ Expected: the focused test passes and Vue/TypeScript reports no new errors.
 
 - [ ] **Step 1: Wrap waybill creation and classify business failure**
 
-Import `withOperationFeedback`. Inside the existing locked `try` block, wrap `createWechatWaybill` in the helper. If the API returns a status other than `CREATED`, set the existing `errorMessage` and throw an error so the helper shows the generic failure toast; only assign `waybill` and change the confirm button state for a created waybill:
+Import `withOperationFeedback` and Ant Design Vue `message`. Inside the existing locked `try` block, wrap `createWechatWaybill` in the helper. If the API returns a status other than `CREATED`, set the existing `errorMessage`, show that specific error, and throw so the transaction stops; only assign `waybill` and change the confirm button state for a created waybill:
 
 ```ts
 try {
@@ -174,14 +169,17 @@ try {
     if (result.status !== 'CREATED') {
       errorMessage.value =
         result.errorMessage || '微信物流订单创建失败，请查看后台错误码后重试';
+      message.error(errorMessage.value);
       throw new Error(errorMessage.value);
     }
     waybill.value = result;
     modalApi.setState({ confirmText: '关闭', showCancelButton: false });
     return result;
   });
-} catch {
-  // Inline errorMessage and the shared toast both communicate the failed attempt.
+} catch (error) {
+  if (!errorMessage.value) {
+    throw error;
+  }
 }
 ```
 

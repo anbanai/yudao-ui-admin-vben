@@ -5,13 +5,12 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { message } from 'ant-design-vue';
-
 import { useVbenForm } from '#/adapter/form';
 import { updateOrderAddress } from '#/api/mall/trade/order';
 import { $t } from '#/locales';
 
 import { useAddressFormSchema } from '../data';
+import { withOperationFeedback } from '../operation-feedback';
 
 const emit = defineEmits(['success']);
 
@@ -40,11 +39,11 @@ const [Modal, modalApi] = useVbenModal({
     // 提交表单
     const data = await formApi.getValues();
     try {
-      await updateOrderAddress(data as MallOrderApi.OrderUpdateAddressReqVO);
-      // 关闭并提示
-      await modalApi.close();
-      emit('success');
-      message.success($t('ui.actionMessage.operationSuccess'));
+      await withOperationFeedback(async () => {
+        await updateOrderAddress(data as MallOrderApi.OrderUpdateAddressReqVO);
+        await modalApi.close();
+        emit('success');
+      });
     } finally {
       modalApi.unlock();
     }
