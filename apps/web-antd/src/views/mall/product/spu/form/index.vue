@@ -187,47 +187,49 @@ function handleTabChange(key: string) {
 
 /** 提交表单 */
 async function handleSubmit() {
-  const values: MallSpuApi.Spu = await infoFormApi
-    .merge(skuFormApi)
-    .merge(deliveryFormApi)
-    .merge(descriptionFormApi)
-    .merge(otherFormApi)
-    .submitAllForm(true);
-  // 校验商品名称不能为空（用于 SKU name）
-  if (!values.name || values.name.trim() === '') {
-    message.error('商品名称不能为空');
+  if (submitLoading.value) {
     return;
   }
-  try {
-    // 校验 sku
-    skuListRef.value.validateSku();
-  } catch {
-    message.error('【库存价格】不完善，请填写相关信息');
-    return;
-  }
-  // 金额转换：元转分
-  values.skus = formData.value.skus!.map((item) => ({
-    ...item,
-    name: values.name,
-    price: convertToInteger(item.price),
-    marketPrice: convertToInteger(item.marketPrice),
-    costPrice: convertToInteger(item.costPrice),
-    firstBrokeragePrice: convertToInteger(item.firstBrokeragePrice),
-    secondBrokeragePrice: convertToInteger(item.secondBrokeragePrice),
-  }));
-  // 处理轮播图列表：上传组件可能返回对象或字符串，统一处理成字符串数组
-  const newSliderPicUrls: any[] = [];
-  values.sliderPicUrls!.forEach((item: any) => {
-    // 如果是前端选的图
-    typeof item === 'object'
-      ? newSliderPicUrls.push(item.url)
-      : newSliderPicUrls.push(item);
-  });
-  values.sliderPicUrls = newSliderPicUrls;
-
-  // 提交数据
   submitLoading.value = true;
   try {
+    const values: MallSpuApi.Spu = await infoFormApi
+      .merge(skuFormApi)
+      .merge(deliveryFormApi)
+      .merge(descriptionFormApi)
+      .merge(otherFormApi)
+      .submitAllForm(true);
+    // 校验商品名称不能为空（用于 SKU name）
+    if (!values.name || values.name.trim() === '') {
+      message.error('商品名称不能为空');
+      return;
+    }
+    try {
+      // 校验 sku
+      skuListRef.value.validateSku();
+    } catch {
+      message.error('【库存价格】不完善，请填写相关信息');
+      return;
+    }
+    // 金额转换：元转分
+    values.skus = formData.value.skus!.map((item) => ({
+      ...item,
+      name: values.name,
+      price: convertToInteger(item.price),
+      marketPrice: convertToInteger(item.marketPrice),
+      costPrice: convertToInteger(item.costPrice),
+      firstBrokeragePrice: convertToInteger(item.firstBrokeragePrice),
+      secondBrokeragePrice: convertToInteger(item.secondBrokeragePrice),
+    }));
+    // 处理轮播图列表：上传组件可能返回对象或字符串，统一处理成字符串数组
+    const newSliderPicUrls: any[] = [];
+    values.sliderPicUrls!.forEach((item: any) => {
+      // 如果是前端选的图
+      typeof item === 'object'
+        ? newSliderPicUrls.push(item.url)
+        : newSliderPicUrls.push(item);
+    });
+    values.sliderPicUrls = newSliderPicUrls;
+
     await withOperationFeedback(() =>
       spuId.value ? updateSpu(values) : createSpu(values),
     );

@@ -20,4 +20,17 @@ describe('商品 SPU 表单提交状态', () => {
     expect(handleSubmit).toContain('submitLoading.value = true');
     expect(handleSubmit).toContain('submitLoading.value = false');
   });
+
+  it('提交进行中会直接忽略后续点击，避免重复保存请求', () => {
+    const handleSubmit = source.slice(
+      source.indexOf('async function handleSubmit()'),
+      source.indexOf('/** 获得详情 */'),
+    );
+    expect(handleSubmit).toMatch(
+      /async function handleSubmit\(\) \{\s+if \(submitLoading\.value\) \{\s+return;\s+\}/,
+    );
+    expect(handleSubmit.indexOf('submitLoading.value = true')).toBeLessThan(
+      handleSubmit.indexOf('submitAllForm'),
+    );
+  });
 });
