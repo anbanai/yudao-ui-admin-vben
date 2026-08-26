@@ -18,7 +18,8 @@ import {
 
 import UploadFile from '#/components/upload/file-upload.vue';
 import UploadImg from '#/components/upload/image-upload.vue';
-import { AppLinkInput, Draggable } from '#/views/mall/promotion/components';
+import AppLinkInput from '#/views/mall/promotion/components/app-link-input/index.vue';
+import Draggable from '#/views/mall/promotion/components/draggable/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 

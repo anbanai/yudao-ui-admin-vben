@@ -15,11 +15,9 @@ import {
 } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import {
-  AppLinkInput,
-  ColorInput,
-  Draggable,
-} from '#/views/mall/promotion/components';
+import AppLinkInput from '#/views/mall/promotion/components/app-link-input/index.vue';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
+import Draggable from '#/views/mall/promotion/components/draggable/index.vue';
 
 import { component, THEME_LIST } from './config';
 

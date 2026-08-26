@@ -7,7 +7,7 @@ import { IconifyIcon } from '@vben/icons';
 
 import { Button } from 'ant-design-vue';
 
-import { VerticalButtonGroup } from '#/views/mall/promotion/components';
+import VerticalButtonGroup from '#/views/mall/promotion/components/vertical-button-group/index.vue';
 
 import { getComponentBackgroundStyle, getComponentOverflow } from '../util';
 import { components } from './mobile';

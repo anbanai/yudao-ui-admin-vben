@@ -18,7 +18,7 @@ import {
 } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 import { PointShowcase } from '#/views/mall/promotion/point/components';
 
 import ComponentContainerProperty from '../../component-container-property.vue';

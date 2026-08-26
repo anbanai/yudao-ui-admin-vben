@@ -29,7 +29,7 @@ import VueDraggable from 'vuedraggable';
 
 import { getCategoryList } from '#/api/mall/product/category';
 import UploadImg from '#/components/upload/image-upload.vue';
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 import {

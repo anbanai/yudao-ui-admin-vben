@@ -18,7 +18,7 @@ import {
 
 import UploadImg from '#/components/upload/image-upload.vue';
 import SpuShowcase from '#/views/mall/product/spu/components/spu-showcase.vue';
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 

@@ -1,4 +1,4 @@
-import type { DiyComponent } from '../../../util';
+import type { DiyComponent } from '../../../types';
 
 import { MALL_DIY_ASSETS } from '../../../static-assets';
 

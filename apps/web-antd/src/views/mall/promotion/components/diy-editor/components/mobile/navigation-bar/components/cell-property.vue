@@ -18,11 +18,9 @@ import {
 } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import {
-  AppLinkInput,
-  ColorInput,
-  MagicCubeEditor,
-} from '#/views/mall/promotion/components';
+import AppLinkInput from '#/views/mall/promotion/components/app-link-input/index.vue';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
+import MagicCubeEditor from '#/views/mall/promotion/components/magic-cube-editor/index.vue';
 
 import { MALL_DIY_ASSETS } from '../../../../static-assets';
 

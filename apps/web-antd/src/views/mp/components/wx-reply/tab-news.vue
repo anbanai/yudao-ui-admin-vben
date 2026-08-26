@@ -8,7 +8,8 @@ import { IconifyIcon } from '@vben/icons';
 
 import { Button, Col, Modal, Row } from 'ant-design-vue';
 
-import { WxMaterialSelect, WxNews } from '#/views/mp/components';
+import WxMaterialSelect from '#/views/mp/components/wx-material-select/wx-material-select.vue';
+import WxNews from '#/views/mp/components/wx-news/wx-news.vue';
 
 defineOptions({ name: 'TabNews' });
 

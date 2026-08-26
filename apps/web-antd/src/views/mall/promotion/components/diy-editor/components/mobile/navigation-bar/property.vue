@@ -15,7 +15,7 @@ import {
 } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 import NavigationBarCellProperty from './components/cell-property.vue';
 import { isNavigationBarAlwaysShow, isNavigationBarShowType } from './config';

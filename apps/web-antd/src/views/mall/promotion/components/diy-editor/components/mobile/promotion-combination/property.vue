@@ -19,7 +19,7 @@ import {
 
 import UploadImg from '#/components/upload/image-upload.vue';
 import { CombinationShowcase } from '#/views/mall/promotion/combination/components';
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 

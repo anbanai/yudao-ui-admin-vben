@@ -1,5 +1,5 @@
 import type { Rect } from '../../../../magic-cube-editor/util';
-import type { DiyComponent } from '../../../util';
+import type { DiyComponent } from '../../../types';
 
 export const NAVIGATION_BAR_SHOW_TYPES = ['always', 'scroll'] as const;
 export type NavigationBarShowType = (typeof NAVIGATION_BAR_SHOW_TYPES)[number];

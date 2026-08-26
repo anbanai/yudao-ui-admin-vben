@@ -19,7 +19,7 @@ import {
 } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import { AppLinkSelectDialog } from '#/views/mall/promotion/components';
+import AppLinkSelectDialog from '#/views/mall/promotion/components/app-link-input/select-dialog.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 import {

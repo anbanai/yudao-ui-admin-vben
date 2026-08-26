@@ -7,10 +7,8 @@ import { useVModel } from '@vueuse/core';
 import { Form, FormItem, Slider } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import {
-  AppLinkInput,
-  MagicCubeEditor,
-} from '#/views/mall/promotion/components';
+import AppLinkInput from '#/views/mall/promotion/components/app-link-input/index.vue';
+import MagicCubeEditor from '#/views/mall/promotion/components/magic-cube-editor/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 

@@ -5,11 +5,9 @@ import { useVModel } from '@vueuse/core';
 import { Form, FormItem, Radio, RadioGroup, Switch } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import {
-  AppLinkInput,
-  Draggable,
-  InputWithColor,
-} from '#/views/mall/promotion/components';
+import AppLinkInput from '#/views/mall/promotion/components/app-link-input/index.vue';
+import Draggable from '#/views/mall/promotion/components/draggable/index.vue';
+import InputWithColor from '#/views/mall/promotion/components/input-with-color/index.vue';
 
 /** 悬浮按钮属性面板 */
 defineOptions({ name: 'FloatingActionButtonProperty' });

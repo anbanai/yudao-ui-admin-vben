@@ -26,7 +26,7 @@ import {
 
 import { getCouponTemplateList } from '#/api/mall/promotion/coupon/couponTemplate';
 import UploadImg from '#/components/upload/image-upload.vue';
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 import CouponSelect from '#/views/mall/promotion/coupon/components/select.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';

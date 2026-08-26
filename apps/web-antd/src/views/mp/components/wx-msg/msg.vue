@@ -2,13 +2,11 @@
 import { MpMsgType } from '@vben/constants';
 import { IconifyIcon } from '@vben/icons';
 
-import {
-  WxLocation,
-  WxMusic,
-  WxNews,
-  WxVideoPlayer,
-  WxVoicePlayer,
-} from '#/views/mp/components';
+import WxLocation from '#/views/mp/components/wx-location/wx-location.vue';
+import WxMusic from '#/views/mp/components/wx-music/wx-music.vue';
+import WxNews from '#/views/mp/components/wx-news/wx-news.vue';
+import WxVideoPlayer from '#/views/mp/components/wx-video-play/wx-video-play.vue';
+import WxVoicePlayer from '#/views/mp/components/wx-voice-play/wx-voice-play.vue';
 
 import MsgEvent from './msg-event.vue';
 
