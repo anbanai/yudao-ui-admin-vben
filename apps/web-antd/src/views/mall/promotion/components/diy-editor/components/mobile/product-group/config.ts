@@ -45,7 +45,7 @@ export const component = {
     sticky: false,
     pageSize: 10,
     sortType: 'default',
-    layoutType: 'twoCol',
+    layoutType: 'threeCol',
     fields: {
       name: { show: true, color: '#000' },
       price: { show: true, color: '#ff3000' },

@@ -16,7 +16,7 @@ describe('product group configuration', () => {
   it('provides conservative defaults', () => {
     expect(component.property).toMatchObject({
       categoryIds: [],
-      layoutType: 'twoCol',
+      layoutType: 'threeCol',
       pageSize: 10,
       showAll: false,
       sortType: 'default',

@@ -122,8 +122,8 @@ onMounted(async () => {
   <div class="min-h-[30px] w-full">
     <div
       v-if="tabs.length"
-      class="z-20 bg-white"
-      :class="property.sticky ? 'sticky top-0' : 'relative'"
+      class="relative z-20 isolate bg-white"
+      :class="property.sticky ? 'sticky top-0' : ''"
     >
       <Tabs v-model:active-key="activeKey" size="small" :animated="false">
         <Tabs.TabPane v-for="tab in tabs" :key="tab.id" :tab="tab.name" />
