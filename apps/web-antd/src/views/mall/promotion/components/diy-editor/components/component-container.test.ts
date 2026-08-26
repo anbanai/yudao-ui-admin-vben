@@ -29,6 +29,9 @@ describe('ComponentContainer toolbar', () => {
   it('renders all component actions when the component is active', async () => {
     host = document.createElement('div');
     document.body.append(host);
+    const moves: number[] = [];
+    let copies = 0;
+    let deletes = 0;
 
     app = createApp(ComponentContainer, {
       component: {
@@ -40,6 +43,9 @@ describe('ComponentContainer toolbar', () => {
       canMoveUp: true,
       canMoveDown: true,
       showToolbar: true,
+      onMove: (direction: number) => moves.push(direction),
+      onCopy: () => copies++,
+      onDelete: () => deletes++,
     });
     app.directive('tippy', {});
     app.mount(host);
@@ -47,8 +53,15 @@ describe('ComponentContainer toolbar', () => {
 
     const toolbar = host.querySelector('.component-toolbar');
     expect(toolbar).toBeTruthy();
-    expect(
-      toolbar?.querySelectorAll('.component-toolbar-buttons button'),
-    ).toHaveLength(4);
+    const buttons = toolbar?.querySelectorAll('.component-toolbar-buttons button');
+    expect(buttons).toHaveLength(4);
+
+    buttons?.[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    buttons?.[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    buttons?.[2]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    buttons?.[3]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(moves).toEqual([-1, 1]);
+    expect(copies).toBe(1);
+    expect(deletes).toBe(1);
   });
 });
