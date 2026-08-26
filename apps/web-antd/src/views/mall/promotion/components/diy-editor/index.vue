@@ -323,8 +323,18 @@ const [PreviewModal, previewModalApi] = useVbenModal({
 type PreviewStatus = 'failed' | 'idle' | 'loaded' | 'loading';
 
 const PREVIEW_TIMEOUT = 8000;
+function isSameOriginPreviewUrl(url: string) {
+  try {
+    return new URL(url, window.location.href).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 const previewStatus = ref<PreviewStatus>(
-  props.previewUrl ? 'loading' : 'failed',
+  props.previewUrl && isSameOriginPreviewUrl(props.previewUrl)
+    ? 'loading'
+    : 'failed',
 );
 let previewTimeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -343,6 +353,12 @@ function markPreviewFailed() {
 function startPreviewLoading() {
   clearPreviewTimeout();
   if (!props.previewUrl) {
+    markPreviewFailed();
+    return;
+  }
+  // Cross-origin documents cannot be inspected. Treat them as unavailable so
+  // challenge pages or unrelated redirects are never shown in the editor.
+  if (!isSameOriginPreviewUrl(props.previewUrl)) {
     markPreviewFailed();
     return;
   }
@@ -368,9 +384,11 @@ function handlePreview() {
 watch(
   () => props.previewUrl,
   () => {
-    if (previewStatus.value !== 'idle') {
-      startPreviewLoading();
-    }
+    clearPreviewTimeout();
+    previewStatus.value =
+      props.previewUrl && isSameOriginPreviewUrl(props.previewUrl)
+        ? 'loading'
+        : 'failed';
   },
 );
 
@@ -597,7 +615,11 @@ onMounted(() => {
           class="relative h-[667px] w-96 overflow-hidden rounded-lg border-4 border-solid bg-white p-0.5"
         >
           <iframe
-            v-if="previewUrl && previewStatus !== 'failed'"
+            :key="previewUrl"
+            v-if="
+              previewUrl &&
+              (previewStatus === 'loading' || previewStatus === 'loaded')
+            "
             :src="previewUrl"
             class="h-full w-full rounded-md border-0"
             :class="{ invisible: previewStatus !== 'loaded' }"
@@ -619,11 +641,14 @@ onMounted(() => {
               v-if="previewStatus === 'failed'"
               class="absolute inset-x-4 top-1/2 -translate-y-1/2 text-center text-sm text-gray-500"
             >
-              暂时无法预览，请使用手机扫码
+              当前预览地址不可用，请检查配置后重试
             </div>
           </div>
         </div>
-        <div class="flex flex-col">
+        <div
+          v-if="previewStatus === 'loading' || previewStatus === 'loaded'"
+          class="flex flex-col"
+        >
           <div class="text-base">手机扫码预览</div>
           <QRCode :value="previewUrl" error-level="H" />
         </div>

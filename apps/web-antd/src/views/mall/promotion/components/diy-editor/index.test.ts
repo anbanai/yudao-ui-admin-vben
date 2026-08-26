@@ -70,7 +70,7 @@ describe('diy editor', () => {
     document.body.append(host);
     const app = createApp(DiyEditor, {
       modelValue: { components: [], navigationBar: {}, page: {} },
-      previewUrl: 'https://preview.example.com?templateId=1',
+      previewUrl: '/mall-h5?templateId=1',
       showNavigationBar: false,
     });
     app.mount(host);
@@ -78,11 +78,13 @@ describe('diy editor', () => {
 
     const iframe = host.querySelector('iframe');
     expect(iframe).toBeTruthy();
+    expect(host.querySelector('canvas')).toBeTruthy();
     iframe?.dispatchEvent(new Event('error'));
     await nextTick();
 
     expect(host.querySelector('iframe')).toBeNull();
-    expect(host.textContent).toContain('暂时无法预览');
+    expect(host.querySelector('canvas')).toBeNull();
+    expect(host.textContent).toContain('当前预览地址不可用');
 
     app.unmount();
     host.remove();
@@ -99,7 +101,25 @@ describe('diy editor', () => {
     await nextTick();
 
     expect(host.querySelector('iframe')).toBeNull();
-    expect(host.textContent).toContain('暂时无法预览');
+    expect(host.textContent).toContain('当前预览地址不可用');
+
+    app.unmount();
+    host.remove();
+  });
+
+  it('keeps cross-origin preview pages in the skeleton state', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(DiyEditor, {
+      modelValue: { components: [], navigationBar: {}, page: {} },
+      previewUrl: 'https://preview.example.com?templateId=1',
+      showNavigationBar: false,
+    });
+    app.mount(host);
+    await nextTick();
+
+    expect(host.querySelector('iframe')).toBeNull();
+    expect(host.textContent).toContain('当前预览地址不可用');
 
     app.unmount();
     host.remove();
