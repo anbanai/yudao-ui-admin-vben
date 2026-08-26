@@ -35,6 +35,8 @@ const { closeCurrentTab } = useTabs();
 const activeTabName = ref('info');
 const formLoading = ref(false); // 表单详情的加载中
 const submitLoading = ref(false); // 表单提交的加载中
+const hasUnsavedChanges = ref(true); // 是否存在待保存的修改
+const changeVersion = ref(0); // 表单变更版本，用于识别保存期间的修改
 const isDetail = ref(name === 'ProductSpuDetail'); // 是否查看详情
 const initializingForm = ref(false); // 详情回填时不触发 SKU 重置逻辑
 const skuListRef = ref(); // 商品属性列表 Ref
@@ -106,6 +108,7 @@ const [InfoForm, infoFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useInfoFormSchema(),
   showDefaultActions: false,
+  handleValuesChange: markUnsavedChanges,
 });
 
 const [SkuForm, skuFormApi] = useVbenForm({
@@ -119,6 +122,7 @@ const [SkuForm, skuFormApi] = useVbenForm({
     if (initializingForm.value) {
       return;
     }
+    markUnsavedChanges();
     if (
       fieldsChanged.includes('subCommissionType') &&
       values.subCommissionType !== formData.value.subCommissionType
@@ -152,6 +156,7 @@ const [DeliveryForm, deliveryFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useDeliveryFormSchema(),
   showDefaultActions: false,
+  handleValuesChange: markUnsavedChanges,
 });
 
 const [DescriptionForm, descriptionFormApi] = useVbenForm({
@@ -165,6 +170,7 @@ const [DescriptionForm, descriptionFormApi] = useVbenForm({
   layout: 'vertical',
   schema: useDescriptionFormSchema(),
   showDefaultActions: false,
+  handleValuesChange: markUnsavedChanges,
 });
 
 const [OtherForm, otherFormApi] = useVbenForm({
@@ -178,6 +184,7 @@ const [OtherForm, otherFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useOtherFormSchema(),
   showDefaultActions: false,
+  handleValuesChange: markUnsavedChanges,
 });
 
 /** tab 切换 */
@@ -185,12 +192,22 @@ function handleTabChange(key: string) {
   activeTabName.value = key;
 }
 
+/** 标记表单存在待保存的修改 */
+function markUnsavedChanges() {
+  if (initializingForm.value) {
+    return;
+  }
+  changeVersion.value += 1;
+  hasUnsavedChanges.value = true;
+}
+
 /** 提交表单 */
 async function handleSubmit() {
-  if (submitLoading.value) {
+  if (formLoading.value || !hasUnsavedChanges.value || submitLoading.value) {
     return;
   }
   submitLoading.value = true;
+  const submittedChangeVersion = changeVersion.value;
   try {
     const values: MallSpuApi.Spu = await infoFormApi
       .merge(skuFormApi)
@@ -233,6 +250,9 @@ async function handleSubmit() {
     await withOperationFeedback(() =>
       spuId.value ? updateSpu(values) : createSpu(values),
     );
+    if (changeVersion.value === submittedChangeVersion) {
+      hasUnsavedChanges.value = false;
+    }
   } finally {
     submitLoading.value = false;
   }
@@ -277,6 +297,7 @@ async function getDetail() {
   } finally {
     initializingForm.value = false;
     formLoading.value = false;
+    hasUnsavedChanges.value = false;
   }
 }
 
@@ -334,6 +355,9 @@ watch(
   { deep: true },
 );
 
+// SKU 表格直接修改 formData，表单组件的变更回调无法覆盖这类输入。
+watch(formData, markUnsavedChanges, { deep: true });
+
 /** 初始化 */
 onMounted(async () => {
   spuId.value = params.id as unknown as number;
@@ -375,12 +399,15 @@ onMounted(async () => {
           },
         ]"
         :active-key="activeTabName"
+        @change.capture="markUnsavedChanges"
+        @input.capture="markUnsavedChanges"
         @tab-change="handleTabChange"
       >
         <template #tabBarExtraContent>
           <Button
             type="primary"
             v-if="!isDetail"
+            :disabled="formLoading || !hasUnsavedChanges || submitLoading"
             :loading="submitLoading"
             @click="handleSubmit"
           >

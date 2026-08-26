@@ -27,10 +27,22 @@ describe('商品 SPU 表单提交状态', () => {
       source.indexOf('/** 获得详情 */'),
     );
     expect(handleSubmit).toMatch(
-      /async function handleSubmit\(\) \{\s+if \(submitLoading\.value\) \{\s+return;\s+\}/,
+      /async function handleSubmit\(\) \{\s+if \(formLoading\.value \|\| !hasUnsavedChanges\.value \|\| submitLoading\.value\) \{\s+return;\s+\}/,
     );
     expect(handleSubmit.indexOf('submitLoading.value = true')).toBeLessThan(
       handleSubmit.indexOf('submitAllForm'),
+    );
+  });
+
+  it('保存成功后禁用无变更保存，修改内容后重新允许保存', () => {
+    expect(source).toMatch(/const hasUnsavedChanges = ref\(true\)/);
+    expect(source).toMatch(/hasUnsavedChanges\.value = false/);
+    expect(source).toMatch(/hasUnsavedChanges\.value = true/);
+    expect(source).toMatch(
+      /:disabled="formLoading \|\| !hasUnsavedChanges \|\| submitLoading"/,
+    );
+    expect(source).toMatch(
+      /if \(changeVersion\.value === submittedChangeVersion\) \{\s+hasUnsavedChanges\.value = false;/,
     );
   });
 });
