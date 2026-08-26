@@ -12,7 +12,7 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { useTabs } from '@vben/hooks';
 import { convertToInteger, formatToFraction } from '@vben/utils';
 
-import { Button, Card, message } from 'ant-design-vue';
+import { Alert, Button, Card, message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { createSpu, getSpu, updateSpu } from '#/api/mall/product/spu';
@@ -33,10 +33,12 @@ const spuId = ref<number>();
 const { params, name } = useRoute();
 const { closeCurrentTab } = useTabs();
 const activeTabName = ref('info');
-const formLoading = ref(false); // 表单详情的加载中
+const formLoading = ref(Boolean(params.id)); // 表单详情的加载中
 const submitLoading = ref(false); // 表单提交的加载中
-const hasUnsavedChanges = ref(true); // 是否存在待保存的修改
+const hasUnsavedChanges = ref(!params.id); // 是否存在待保存的修改
+const detailLoadFailed = ref(false); // 商品详情加载是否失败
 const changeVersion = ref(0); // 表单变更版本，用于识别保存期间的修改
+const savedPayloadSnapshot = ref<null | string>(null);
 const isDetail = ref(name === 'ProductSpuDetail'); // 是否查看详情
 const initializingForm = ref(false); // 详情回填时不触发 SKU 重置逻辑
 const skuListRef = ref(); // 商品属性列表 Ref
@@ -201,9 +203,34 @@ function markUnsavedChanges() {
   hasUnsavedChanges.value = true;
 }
 
+/** 转换表单值为接口提交格式 */
+function prepareSubmissionValues(values: MallSpuApi.Spu): MallSpuApi.Spu {
+  const preparedValues = {
+    ...values,
+    skus: formData.value.skus!.map((item) => ({
+      ...item,
+      name: values.name,
+      price: convertToInteger(item.price),
+      marketPrice: convertToInteger(item.marketPrice),
+      costPrice: convertToInteger(item.costPrice),
+      firstBrokeragePrice: convertToInteger(item.firstBrokeragePrice),
+      secondBrokeragePrice: convertToInteger(item.secondBrokeragePrice),
+    })),
+    sliderPicUrls: (values.sliderPicUrls ?? []).map((item: any) =>
+      typeof item === 'object' ? item.url : item,
+    ),
+  };
+  return preparedValues;
+}
+
 /** 提交表单 */
 async function handleSubmit() {
-  if (formLoading.value || !hasUnsavedChanges.value || submitLoading.value) {
+  if (
+    formLoading.value ||
+    detailLoadFailed.value ||
+    !hasUnsavedChanges.value ||
+    submitLoading.value
+  ) {
     return;
   }
   submitLoading.value = true;
@@ -227,29 +254,20 @@ async function handleSubmit() {
       message.error('【库存价格】不完善，请填写相关信息');
       return;
     }
-    // 金额转换：元转分
-    values.skus = formData.value.skus!.map((item) => ({
-      ...item,
-      name: values.name,
-      price: convertToInteger(item.price),
-      marketPrice: convertToInteger(item.marketPrice),
-      costPrice: convertToInteger(item.costPrice),
-      firstBrokeragePrice: convertToInteger(item.firstBrokeragePrice),
-      secondBrokeragePrice: convertToInteger(item.secondBrokeragePrice),
-    }));
-    // 处理轮播图列表：上传组件可能返回对象或字符串，统一处理成字符串数组
-    const newSliderPicUrls: any[] = [];
-    values.sliderPicUrls!.forEach((item: any) => {
-      // 如果是前端选的图
-      typeof item === 'object'
-        ? newSliderPicUrls.push(item.url)
-        : newSliderPicUrls.push(item);
-    });
-    values.sliderPicUrls = newSliderPicUrls;
+    const preparedValues = prepareSubmissionValues(values);
 
-    await withOperationFeedback(() =>
-      spuId.value ? updateSpu(values) : createSpu(values),
+    if (savedPayloadSnapshot.value === JSON.stringify(preparedValues)) {
+      hasUnsavedChanges.value = false;
+      return;
+    }
+
+    const savedSpuId = await withOperationFeedback(() =>
+      spuId.value ? updateSpu(preparedValues) : createSpu(preparedValues),
     );
+    if (!spuId.value) {
+      spuId.value = savedSpuId;
+    }
+    savedPayloadSnapshot.value = JSON.stringify(preparedValues);
     if (changeVersion.value === submittedChangeVersion) {
       hasUnsavedChanges.value = false;
     }
@@ -270,6 +288,8 @@ async function getDetail() {
   }
   // 将 SKU 的属性，整理成 PropertyAndValues 数组
   propertyList.value = getPropertyList(formData.value);
+  detailLoadFailed.value = false;
+  savedPayloadSnapshot.value = null;
   formLoading.value = true;
   try {
     const res = await getSpu(spuId.value!);
@@ -287,17 +307,32 @@ async function getDetail() {
     // 将 SKU 的属性，整理成 PropertyAndValues 数组
     propertyList.value = getPropertyList(formData.value);
     // 初始化各表单值
-    void infoFormApi.setValues(res);
-    void skuFormApi.setValues(res);
-    void deliveryFormApi.setValues(res);
-    void descriptionFormApi.setValues(res);
-    void otherFormApi.setValues(res);
+    await Promise.all([
+      infoFormApi.setValues(res),
+      skuFormApi.setValues(res),
+      deliveryFormApi.setValues(res),
+      descriptionFormApi.setValues(res),
+      otherFormApi.setValues(res),
+    ]);
     await nextTick();
     await nextTick();
+    const initialValues = (await infoFormApi
+      .merge(skuFormApi)
+      .merge(deliveryFormApi)
+      .merge(descriptionFormApi)
+      .merge(otherFormApi)
+      .getValues()) as MallSpuApi.Spu;
+    savedPayloadSnapshot.value = JSON.stringify(
+      prepareSubmissionValues(initialValues),
+    );
+    hasUnsavedChanges.value = false;
+  } catch {
+    detailLoadFailed.value = true;
+    hasUnsavedChanges.value = false;
+    message.error('商品详情加载失败，请重试');
   } finally {
     initializingForm.value = false;
     formLoading.value = false;
-    hasUnsavedChanges.value = false;
   }
 }
 
@@ -399,15 +434,30 @@ onMounted(async () => {
           },
         ]"
         :active-key="activeTabName"
-        @change.capture="markUnsavedChanges"
-        @input.capture="markUnsavedChanges"
         @tab-change="handleTabChange"
       >
+        <Alert
+          v-if="detailLoadFailed"
+          class="mb-4"
+          message="商品详情加载失败"
+          description="请重试后再编辑和保存商品"
+          type="error"
+          show-icon
+        >
+          <template #action>
+            <Button size="small" @click="getDetail">重试</Button>
+          </template>
+        </Alert>
         <template #tabBarExtraContent>
           <Button
             type="primary"
             v-if="!isDetail"
-            :disabled="formLoading || !hasUnsavedChanges || submitLoading"
+            :disabled="
+              formLoading ||
+              detailLoadFailed ||
+              !hasUnsavedChanges ||
+              submitLoading
+            "
             :loading="submitLoading"
             @click="handleSubmit"
           >

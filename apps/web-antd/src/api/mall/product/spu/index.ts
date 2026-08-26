@@ -85,7 +85,7 @@ export function getTabsCount(params?: Record<string, any>) {
 
 /** 创建商品 SPU */
 export function createSpu(data: MallSpuApi.Spu) {
-  return requestClient.post('/product/spu/create', data);
+  return requestClient.post<number>('/product/spu/create', data);
 }
 
 /** 更新商品 SPU */

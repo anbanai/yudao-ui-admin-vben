@@ -27,7 +27,7 @@ describe('商品 SPU 表单提交状态', () => {
       source.indexOf('/** 获得详情 */'),
     );
     expect(handleSubmit).toMatch(
-      /async function handleSubmit\(\) \{\s+if \(formLoading\.value \|\| !hasUnsavedChanges\.value \|\| submitLoading\.value\) \{\s+return;\s+\}/,
+      /async function handleSubmit\(\) \{\s+if \(\s+formLoading\.value\s+\|\|\s+detailLoadFailed\.value\s+\|\|\s+!hasUnsavedChanges\.value\s+\|\|\s+submitLoading\.value\s+\) \{\s+return;/,
     );
     expect(handleSubmit.indexOf('submitLoading.value = true')).toBeLessThan(
       handleSubmit.indexOf('submitAllForm'),
@@ -35,14 +35,35 @@ describe('商品 SPU 表单提交状态', () => {
   });
 
   it('保存成功后禁用无变更保存，修改内容后重新允许保存', () => {
-    expect(source).toMatch(/const hasUnsavedChanges = ref\(true\)/);
+    expect(source).toMatch(/const formLoading = ref\(Boolean\(params\.id\)\)/);
+    expect(source).toMatch(/const hasUnsavedChanges = ref\(!params\.id\)/);
+    expect(source).toMatch(/const detailLoadFailed = ref\(false\)/);
+    expect(source).toMatch(
+      /formLoading\.value\s+\|\|\s+detailLoadFailed\.value\s+\|\|\s+!hasUnsavedChanges\.value\s+\|\|\s+submitLoading\.value/,
+    );
     expect(source).toMatch(/hasUnsavedChanges\.value = false/);
     expect(source).toMatch(/hasUnsavedChanges\.value = true/);
     expect(source).toMatch(
-      /:disabled="formLoading \|\| !hasUnsavedChanges \|\| submitLoading"/,
+      /formLoading\s+\|\|\s+detailLoadFailed\s+\|\|\s+!hasUnsavedChanges\s+\|\|\s+submitLoading/,
     );
     expect(source).toMatch(
       /if \(changeVersion\.value === submittedChangeVersion\) \{\s+hasUnsavedChanges\.value = false;/,
     );
+    expect(source).toMatch(
+      /const savedPayloadSnapshot = ref<null \| string>\(null\)/,
+    );
+    expect(source).toMatch(
+      /if \(savedPayloadSnapshot\.value === JSON\.stringify\(preparedValues\)\) \{\s+hasUnsavedChanges\.value = false;\s+return;/,
+    );
+    expect(source).toMatch(
+      /if \(!spuId\.value\) \{\s+spuId\.value = savedSpuId;\s+\}/,
+    );
+    expect(source).toMatch(
+      /savedPayloadSnapshot\.value = JSON\.stringify\(\s+prepareSubmissionValues\(initialValues\),\s+\)/,
+    );
+    expect(source).not.toContain('@change.capture="markUnsavedChanges"');
+    expect(source).not.toContain('@input.capture="markUnsavedChanges"');
+    expect(source).toMatch(/v-if="detailLoadFailed"/);
+    expect(source).toMatch(/@click="getDetail"/);
   });
 });
