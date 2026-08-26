@@ -9,8 +9,7 @@ import { useVbenModal } from '@vben/common-ui';
 import { Alert, Descriptions, message, Result, Tag } from 'ant-design-vue';
 
 import { createWechatWaybill } from '#/api/mall/trade/logistics/wechat';
-
-import { withOperationFeedback } from '../operation-feedback';
+import { withOperationFeedback } from '#/utils/operation-feedback';
 
 const order = ref<MallOrderApi.Order>();
 const waybill = ref<MallWechatLogisticsApi.Waybill>();

@@ -8,9 +8,9 @@ import { useVbenModal } from '@vben/common-ui';
 import { useVbenForm } from '#/adapter/form';
 import { updateOrderAddress } from '#/api/mall/trade/order';
 import { $t } from '#/locales';
+import { withOperationFeedback } from '#/utils/operation-feedback';
 
 import { useAddressFormSchema } from '../data';
-import { withOperationFeedback } from '../operation-feedback';
 
 const emit = defineEmits(['success']);
 

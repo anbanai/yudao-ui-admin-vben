@@ -9,9 +9,9 @@ import { fenToYuan } from '@vben/utils';
 import { useVbenForm } from '#/adapter/form';
 import { updateOrderPrice } from '#/api/mall/trade/order';
 import { $t } from '#/locales';
+import { withOperationFeedback } from '#/utils/operation-feedback';
 
 import { usePriceFormSchema } from '../data';
-import { withOperationFeedback } from '../operation-feedback';
 
 const emit = defineEmits(['success']);
 

@@ -16,6 +16,7 @@ import { Button, Card, message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { createSpu, getSpu, updateSpu } from '#/api/mall/product/spu';
+import { withOperationFeedback } from '#/utils/operation-feedback';
 import { getPropertyList, SkuList } from '#/views/mall/product/spu/components';
 
 import {
@@ -224,7 +225,14 @@ async function handleSubmit() {
   values.sliderPicUrls = newSliderPicUrls;
 
   // 提交数据
-  await (spuId.value ? updateSpu(values) : createSpu(values));
+  formLoading.value = true;
+  try {
+    await withOperationFeedback(() =>
+      spuId.value ? updateSpu(values) : createSpu(values),
+    );
+  } finally {
+    formLoading.value = false;
+  }
 }
 
 /** 获得详情 */
@@ -249,9 +257,7 @@ async function getDetail() {
       marketPrice: Number(formatToFraction(item.marketPrice)),
       costPrice: Number(formatToFraction(item.costPrice)),
       firstBrokeragePrice: Number(formatToFraction(item.firstBrokeragePrice)),
-      secondBrokeragePrice: Number(
-        formatToFraction(item.secondBrokeragePrice),
-      ),
+      secondBrokeragePrice: Number(formatToFraction(item.secondBrokeragePrice)),
     }));
     initializingForm.value = true;
     formData.value = res;
@@ -369,7 +375,12 @@ onMounted(async () => {
         @tab-change="handleTabChange"
       >
         <template #tabBarExtraContent>
-          <Button type="primary" v-if="!isDetail" @click="handleSubmit">
+          <Button
+            type="primary"
+            v-if="!isDetail"
+            :loading="formLoading"
+            @click="handleSubmit"
+          >
             保存
           </Button>
           <Button type="default" v-else @click="() => closeCurrentTab()">
