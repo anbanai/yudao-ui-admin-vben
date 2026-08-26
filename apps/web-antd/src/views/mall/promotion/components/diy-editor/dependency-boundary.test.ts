@@ -41,4 +41,14 @@ describe('diy-editor dependency boundaries', () => {
 
     expect(utilImports).toEqual([]);
   });
+
+  it('keeps the toolbar buttons in the component container itself', () => {
+    const source = readFileSync(
+      join(diyEditorRoot, 'components/component-container.vue'),
+      'utf8',
+    );
+
+    expect(source).not.toContain('VerticalButtonGroup');
+    expect(source.match(/<Button/g)).toHaveLength(4);
+  });
 });
