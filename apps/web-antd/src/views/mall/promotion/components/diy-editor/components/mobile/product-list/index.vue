@@ -3,7 +3,7 @@ import type { ProductListProperty } from './config';
 
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import { fenToYuan } from '@vben/utils';
 
@@ -14,14 +14,22 @@ import { getSpuDetailList } from '#/api/mall/product/spu';
 /** 商品栏 */
 defineOptions({ name: 'ProductList' });
 
-const props = defineProps<{ property: ProductListProperty }>();
+const props = defineProps<{
+  property: ProductListProperty;
+  spuList?: MallSpuApi.Spu[];
+}>();
 
-const spuList = ref<MallSpuApi.Spu[]>([]);
+const fetchedSpuList = ref<MallSpuApi.Spu[]>([]);
+const displaySpuList = computed(() => props.spuList ?? fetchedSpuList.value);
 
 watch(
   () => props.property.spuIds,
   async () => {
-    spuList.value =
+    if (props.spuList !== undefined) {
+      fetchedSpuList.value = [];
+      return;
+    }
+    fetchedSpuList.value =
       props.property.spuIds.length > 0
         ? await getSpuDetailList(props.property.spuIds)
         : [];
@@ -41,7 +49,7 @@ const gridTemplateColumns = ref(''); // 商品网络列数
 
 /** 计算布局参数 */
 watch(
-  () => [props.property, phoneWidth, spuList.value.length],
+  () => [props.property, phoneWidth, displaySpuList.value.length],
   () => {
     // 计算列数
     columns.value = props.property.layoutType === 'twoCol' ? 2 : 3;
@@ -57,8 +65,8 @@ watch(
       gridTemplateColumns.value = `repeat(auto-fill, ${productWidth}px)`;
       // 显示滚动条
       scrollbarWidth.value = `${
-        productWidth * spuList.value.length +
-        props.property.space * (spuList.value.length - 1)
+        productWidth * displaySpuList.value.length +
+        props.property.space * Math.max(displaySpuList.value.length - 1, 0)
       }px`;
     } else {
       // 指定列数
@@ -95,7 +103,7 @@ onMounted(() => {
           borderBottomLeftRadius: `${property.borderRadiusBottom}px`,
           borderBottomRightRadius: `${property.borderRadiusBottom}px`,
         }"
-        v-for="(spu, index) in spuList"
+        v-for="(spu, index) in displaySpuList"
         :key="index"
       >
         <!-- 角标 -->

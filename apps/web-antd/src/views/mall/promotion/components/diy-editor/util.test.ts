@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { getComponentBackgroundStyle, getPageBackgroundStyle } from './util';
+import {
+  getComponentBackgroundStyle,
+  getComponentOverflow,
+  getPageBackgroundStyle,
+} from './util';
+
+describe('getComponentOverflow', () => {
+  it('allows sticky product group menus to escape the component clip', () => {
+    expect(getComponentOverflow('ProductGroup', true)).toBe('visible');
+    expect(getComponentOverflow('ProductGroup', false)).toBe('hidden');
+    expect(getComponentOverflow('ProductList', true)).toBe('hidden');
+  });
+});
 
 describe('getComponentBackgroundStyle', () => {
   it('keeps a color background from being overwritten by an image', () => {

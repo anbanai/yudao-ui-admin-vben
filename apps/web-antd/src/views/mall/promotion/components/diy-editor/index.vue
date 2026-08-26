@@ -8,7 +8,16 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 import { cloneDeep, isEmpty, isString } from '@vben/utils';
 
-import { Button, Card, Col, QRCode, Row, Tag, Tooltip } from 'ant-design-vue';
+import {
+  Button,
+  Card,
+  Col,
+  message,
+  QRCode,
+  Row,
+  Tag,
+  Tooltip,
+} from 'ant-design-vue';
 import draggable from 'vuedraggable';
 
 import ComponentContainer from './components/component-container.vue';
@@ -20,6 +29,11 @@ import {
   component as NAVIGATION_BAR_COMPONENT,
 } from './components/mobile/navigation-bar/config';
 import { component as PAGE_CONFIG_COMPONENT } from './components/mobile/page-config/config';
+import {
+  clampProductGroupPageSize,
+  getProductGroupValidationError,
+  normalizeCategoryIds,
+} from './components/mobile/product-group/utils';
 import { component as TAB_BAR_COMPONENT } from './components/mobile/tab-bar/config';
 import { MALL_DIY_ASSETS, normalizeMallDiyAssetUrls } from './static-assets';
 import { getPageBackgroundStyle } from './util';
@@ -136,6 +150,21 @@ watch(
 
 /** 保存 */
 function handleSave() {
+  for (const [index, component] of pageComponents.value.entries()) {
+    if (component.id !== 'ProductGroup') continue;
+    component.property.categoryIds = normalizeCategoryIds(
+      component.property.categoryIds || [],
+    );
+    component.property.pageSize = clampProductGroupPageSize(
+      component.property.pageSize,
+    );
+    const validationError = getProductGroupValidationError(component.property);
+    if (validationError) {
+      handleComponentSelected(component, index);
+      message.warning(validationError);
+      return;
+    }
+  }
   // 先同步编辑器内部已规范化的配置，保证外部保存拿到最新值
   pageConfigChange();
   emits('save');

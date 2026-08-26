@@ -52,6 +52,11 @@ export interface ComponentStyle {
   borderBottomLeftRadius: number;
 }
 
+/** 吸顶菜单需要越过组件容器，其余场景继续裁剪圆角内容。 */
+export function getComponentOverflow(componentId: string, sticky: boolean) {
+  return componentId === 'ProductGroup' && sticky ? 'visible' : 'hidden';
+}
+
 /** 将组件背景配置转换为稳定的 CSS 样式，避免 background 简写覆盖颜色。 */
 export function getComponentBackgroundStyle(style?: ComponentStyle) {
   if (!style) return {};
@@ -121,7 +126,7 @@ export const PAGE_LIBS = [
   {
     name: '商品组件',
     extended: true,
-    components: ['ProductCard', 'ProductList'],
+    components: ['ProductCard', 'ProductList', 'ProductGroup'],
   },
   {
     name: '用户组件',

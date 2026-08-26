@@ -9,7 +9,7 @@ import { Button } from 'ant-design-vue';
 
 import { VerticalButtonGroup } from '#/views/mall/promotion/components';
 
-import { getComponentBackgroundStyle } from '../util';
+import { getComponentBackgroundStyle, getComponentOverflow } from '../util';
 import { components } from './mobile';
 
 /**
@@ -69,7 +69,10 @@ const style = computed(() => {
     borderTopRightRadius: `${componentStyle.borderTopRightRadius || 0}px`,
     borderBottomRightRadius: `${componentStyle.borderBottomRightRadius || 0}px`,
     borderBottomLeftRadius: `${componentStyle.borderBottomLeftRadius || 0}px`,
-    overflow: 'hidden',
+    overflow: getComponentOverflow(
+      props.component.id,
+      props.component.property.sticky === true,
+    ),
     ...getComponentBackgroundStyle(componentStyle),
   };
 });
