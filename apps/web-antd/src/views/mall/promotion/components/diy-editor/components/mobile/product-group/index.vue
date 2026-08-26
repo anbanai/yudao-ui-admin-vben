@@ -44,6 +44,7 @@ const tabs = computed(() => [
     name: category.name,
   })),
 ]);
+const showTabs = computed(() => tabs.value.length > 1);
 const productListProperty = computed(
   () => ({ ...props.property, spuIds: [] }) as ProductListProperty,
 );
@@ -121,7 +122,7 @@ onMounted(async () => {
 <template>
   <div class="min-h-[30px] w-full">
     <div
-      v-if="tabs.length"
+      v-if="showTabs"
       class="relative z-20 isolate bg-white"
       :class="property.sticky ? 'sticky top-0' : ''"
     >
