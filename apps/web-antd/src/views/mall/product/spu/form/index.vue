@@ -33,7 +33,8 @@ const spuId = ref<number>();
 const { params, name } = useRoute();
 const { closeCurrentTab } = useTabs();
 const activeTabName = ref('info');
-const formLoading = ref(false); // 表单的加载中：1）修改时的数据加载；2）提交的按钮禁用
+const formLoading = ref(false); // 表单详情的加载中
+const submitLoading = ref(false); // 表单提交的加载中
 const isDetail = ref(name === 'ProductSpuDetail'); // 是否查看详情
 const initializingForm = ref(false); // 详情回填时不触发 SKU 重置逻辑
 const skuListRef = ref(); // 商品属性列表 Ref
@@ -225,13 +226,13 @@ async function handleSubmit() {
   values.sliderPicUrls = newSliderPicUrls;
 
   // 提交数据
-  formLoading.value = true;
+  submitLoading.value = true;
   try {
     await withOperationFeedback(() =>
       spuId.value ? updateSpu(values) : createSpu(values),
     );
   } finally {
-    formLoading.value = false;
+    submitLoading.value = false;
   }
 }
 
@@ -378,7 +379,7 @@ onMounted(async () => {
           <Button
             type="primary"
             v-if="!isDetail"
-            :loading="formLoading"
+            :loading="submitLoading"
             @click="handleSubmit"
           >
             保存
