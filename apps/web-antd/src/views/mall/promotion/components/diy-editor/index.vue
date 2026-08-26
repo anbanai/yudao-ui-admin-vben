@@ -2,7 +2,7 @@
 import type { NavigationBarProperty } from './components/mobile/navigation-bar/config';
 import type { DiyComponent, DiyComponentLibrary, PageConfig } from './util';
 
-import { onMounted, ref, unref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, unref, watch } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
@@ -314,14 +314,67 @@ const [PreviewModal, previewModalApi] = useVbenModal({
   showConfirmButton: false,
   showCancelButton: false,
   onCancel() {
+    clearPreviewTimeout();
+    previewStatus.value = 'idle';
     previewModalApi.close();
   },
 });
 
+type PreviewStatus = 'failed' | 'idle' | 'loaded' | 'loading';
+
+const PREVIEW_TIMEOUT = 8000;
+const previewStatus = ref<PreviewStatus>(
+  props.previewUrl ? 'loading' : 'failed',
+);
+let previewTimeout: ReturnType<typeof setTimeout> | undefined;
+
+function clearPreviewTimeout() {
+  if (previewTimeout) {
+    clearTimeout(previewTimeout);
+    previewTimeout = undefined;
+  }
+}
+
+function markPreviewFailed() {
+  clearPreviewTimeout();
+  previewStatus.value = 'failed';
+}
+
+function startPreviewLoading() {
+  clearPreviewTimeout();
+  if (!props.previewUrl) {
+    markPreviewFailed();
+    return;
+  }
+  previewStatus.value = 'loading';
+  previewTimeout = setTimeout(markPreviewFailed, PREVIEW_TIMEOUT);
+}
+
+function handlePreviewLoad() {
+  clearPreviewTimeout();
+  previewStatus.value = 'loaded';
+}
+
+function handlePreviewError() {
+  markPreviewFailed();
+}
+
 /** 预览 */
 function handlePreview() {
+  startPreviewLoading();
   previewModalApi.open();
 }
+
+watch(
+  () => props.previewUrl,
+  () => {
+    if (previewStatus.value !== 'idle') {
+      startPreviewLoading();
+    }
+  },
+);
+
+onBeforeUnmount(clearPreviewTimeout);
 
 /** 设置默认选中的组件 */
 function setDefaultSelectedComponent() {
@@ -539,11 +592,37 @@ onMounted(() => {
 
     <!-- 预览弹框 -->
     <PreviewModal title="商城 H5 预览" class="w-[700px]">
-      <div class="flex justify-around">
-        <iframe
-          :src="previewUrl"
-          class="h-[667px] w-96 rounded-lg border-4 border-solid p-0.5"
-        ></iframe>
+      <div class="flex flex-wrap justify-around gap-8">
+        <div
+          class="relative h-[667px] w-96 overflow-hidden rounded-lg border-4 border-solid bg-white p-0.5"
+        >
+          <iframe
+            v-if="previewUrl && previewStatus !== 'failed'"
+            :src="previewUrl"
+            class="h-full w-full rounded-md border-0"
+            :class="{ invisible: previewStatus !== 'loaded' }"
+            @error="handlePreviewError"
+            @load="handlePreviewLoad"
+          ></iframe>
+          <div
+            v-if="previewStatus !== 'loaded'"
+            class="absolute inset-0 flex flex-col gap-4 bg-white p-6"
+            role="status"
+            aria-live="polite"
+          >
+            <div class="h-8 w-3/5 animate-pulse rounded bg-gray-200"></div>
+            <div class="h-32 animate-pulse rounded bg-gray-100"></div>
+            <div class="h-4 w-4/5 animate-pulse rounded bg-gray-200"></div>
+            <div class="h-4 w-3/5 animate-pulse rounded bg-gray-200"></div>
+            <div class="h-48 animate-pulse rounded bg-gray-100"></div>
+            <div
+              v-if="previewStatus === 'failed'"
+              class="absolute inset-x-4 top-1/2 -translate-y-1/2 text-center text-sm text-gray-500"
+            >
+              暂时无法预览，请使用手机扫码
+            </div>
+          </div>
+        </div>
         <div class="flex flex-col">
           <div class="text-base">手机扫码预览</div>
           <QRCode :value="previewUrl" error-level="H" />

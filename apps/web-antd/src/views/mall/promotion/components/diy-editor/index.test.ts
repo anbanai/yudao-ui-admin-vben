@@ -10,7 +10,7 @@ vi.mock('@vben/common-ui', async (importOriginal) => {
     ...actual,
     Page: { template: '<div><slot /></div>' },
     useVbenModal: () => [
-      { template: '<div />' },
+      { template: '<div><slot /></div>' },
       { close: vi.fn(), open: vi.fn() },
     ],
   };
@@ -61,6 +61,46 @@ describe('diy editor', () => {
 
     expect(events.map((event) => event.type)).toEqual(['update', 'save']);
     expect(events[0]?.value).toContain(`${ossBaseUrl}/mall/diy/banner-01.jpg`);
+    app.unmount();
+    host.remove();
+  });
+
+  it('shows a preview skeleton and hides the iframe when loading fails', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(DiyEditor, {
+      modelValue: { components: [], navigationBar: {}, page: {} },
+      previewUrl: 'https://preview.example.com?templateId=1',
+      showNavigationBar: false,
+    });
+    app.mount(host);
+    await nextTick();
+
+    const iframe = host.querySelector('iframe');
+    expect(iframe).toBeTruthy();
+    iframe?.dispatchEvent(new Event('error'));
+    await nextTick();
+
+    expect(host.querySelector('iframe')).toBeNull();
+    expect(host.textContent).toContain('暂时无法预览');
+
+    app.unmount();
+    host.remove();
+  });
+
+  it('does not create an iframe when the preview url is empty', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(DiyEditor, {
+      modelValue: { components: [], navigationBar: {}, page: {} },
+      showNavigationBar: false,
+    });
+    app.mount(host);
+    await nextTick();
+
+    expect(host.querySelector('iframe')).toBeNull();
+    expect(host.textContent).toContain('暂时无法预览');
+
     app.unmount();
     host.remove();
   });
