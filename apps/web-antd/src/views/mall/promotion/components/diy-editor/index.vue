@@ -367,11 +367,13 @@ function startPreviewLoading() {
 }
 
 function handlePreviewLoad() {
+  if (previewStatus.value !== 'loading') return;
   clearPreviewTimeout();
   previewStatus.value = 'loaded';
 }
 
 function handlePreviewError() {
+  if (previewStatus.value !== 'loading') return;
   markPreviewFailed();
 }
 
