@@ -144,7 +144,9 @@ export function useOrderPriceSchema(): DescriptionItemSchema[] {
 }
 
 /** 收货信息 schema */
-export function useDeliveryInfoSchema(): DescriptionItemSchema[] {
+export function useDeliveryInfoSchema(
+  getLogisticsName: (id?: number) => string | undefined = () => undefined,
+): DescriptionItemSchema[] {
   return [
     {
       field: 'deliveryType',
@@ -172,6 +174,16 @@ export function useDeliveryInfoSchema(): DescriptionItemSchema[] {
       field: 'deliveryTime',
       label: '发货时间',
       render: (val) => formatDateTime(val) as string,
+    },
+    {
+      field: 'logisticsId',
+      label: '物流公司',
+      render: (val) => getLogisticsName(val) || '-',
+    },
+    {
+      field: 'logisticsNo',
+      label: '物流单号',
+      render: (val) => val || '-',
     },
   ];
 }

@@ -15,36 +15,23 @@ import {
   message,
   Space,
   Switch,
-  Table,
   Tag,
 } from 'ant-design-vue';
 
 import {
   bindWechatPrinter,
-  cancelWechatWaybill,
-  confirmWechatWaybillPrint,
   getWechatLogisticsAccountStatus,
   getWechatLogisticsConfig,
-  getWechatLogisticsPending,
   getWechatPrinter,
-  getWechatWaybillTrace,
   saveWechatLogisticsConfig,
-  syncWechatWaybillTrace,
 } from '#/api/mall/trade/logistics/wechat';
 import { WechatUserSelect } from '#/views/member/components';
 
 const loading = ref(false);
 const accountLoading = ref(false);
-const pendingLoading = ref(false);
 const accountStatus = ref<MallWechatLogisticsApi.AccountStatus>();
 const printer = ref<MallWechatLogisticsApi.Printer>();
-const pendingWaybills = ref<MallWechatLogisticsApi.Waybill[]>([]);
-const traceVisible = ref(false);
-const traceLoading = ref(false);
-const traces = ref<MallWechatLogisticsApi.Trace[]>([]);
-const selectedWaybill = ref<MallWechatLogisticsApi.Waybill>();
 const printerOpenid = ref('');
-const actionLoadingId = ref<number>();
 const bindLoading = ref(false);
 const manualOpenid = ref(false);
 const mpUserSelectRef = ref<InstanceType<typeof WechatUserSelect>>();
@@ -104,11 +91,7 @@ async function refreshAccountStatus() {
 }
 
 async function load() {
-  await Promise.all([
-    refreshAccountStatus(),
-    refreshPending(),
-    refreshPrinter(),
-  ]);
+  await Promise.all([refreshAccountStatus(), refreshPrinter()]);
   const config = await getWechatLogisticsConfig();
   if (config) {
     Object.assign(form, config);
@@ -127,15 +110,6 @@ const boundPrinterText = computed(() => {
     })
     .join('、');
 });
-
-async function refreshPending() {
-  pendingLoading.value = true;
-  try {
-    pendingWaybills.value = await getWechatLogisticsPending();
-  } finally {
-    pendingLoading.value = false;
-  }
-}
 
 async function refreshPrinter() {
   printer.value = await getWechatPrinter();
@@ -197,50 +171,6 @@ async function handleUnbindPrinter() {
   } finally {
     bindLoading.value = false;
   }
-}
-
-async function handleConfirm(row: MallWechatLogisticsApi.Waybill) {
-  if (!row.id || actionLoadingId.value) return;
-  actionLoadingId.value = row.id;
-  try {
-    await confirmWechatWaybillPrint(row.id);
-    message.success(`订单 ${row.orderNo ?? row.orderId} 已发货`);
-    await refreshPending();
-  } finally {
-    actionLoadingId.value = undefined;
-  }
-}
-
-async function handleCancel(row: MallWechatLogisticsApi.Waybill) {
-  if (!row.id || actionLoadingId.value) return;
-  actionLoadingId.value = row.id;
-  try {
-    await cancelWechatWaybill(row.id);
-    message.success('微信物流订单已取消');
-    await refreshPending();
-  } finally {
-    actionLoadingId.value = undefined;
-  }
-}
-
-async function handleTrace(row: MallWechatLogisticsApi.Waybill) {
-  selectedWaybill.value = row;
-  traceVisible.value = true;
-  traceLoading.value = true;
-  try {
-    await syncWechatWaybillTrace(row.id!);
-    traces.value = await getWechatWaybillTrace(row.id!);
-  } finally {
-    traceLoading.value = false;
-  }
-}
-
-function statusColor(status?: string) {
-  return status === 'CREATED'
-    ? 'green'
-    : status === 'FAILED'
-      ? 'red'
-      : 'orange';
 }
 
 onMounted(load);
@@ -390,7 +320,8 @@ onMounted(load);
             </Form.Item>
           </div>
           <Space>
-            <span>启用微信物流打单</span><Switch v-model:checked="form.enabled" />
+            <span>启用微信物流打单</span
+            ><Switch v-model:checked="form.enabled" />
           </Space>
         </Form>
       </Card>
@@ -405,7 +336,8 @@ onMounted(load);
           <template #description>
             绑定后，订单创建微信运单时，打印员电脑上的打单软件会自动收到任务并打出顺丰电子面单；
             未绑定时没有人能接收打印任务，面单无法打印，也就无法走「微信打单发货」流程。
-            打印员须为已授权本小程序的微信用户（拥有 openid），未绑定微信的用户将置灰不可选。
+            打印员须为已授权本小程序的微信用户（拥有
+            openid），未绑定微信的用户将置灰不可选。
           </template>
         </Alert>
         <div class="flex flex-wrap items-center gap-3">
@@ -452,75 +384,6 @@ onMounted(load);
           当前绑定：{{ boundPrinterText }}
         </div>
       </Card>
-
-      <Card title="待确认打印运单">
-        <template #extra>
-          <Button @click="refreshPending">刷新</Button>
-        </template>
-        <Table
-          :loading="pendingLoading"
-          :data-source="pendingWaybills"
-          :pagination="false"
-          row-key="id"
-          :scroll="{ x: 900 }"
-        >
-          <Table.Column title="订单号" data-index="orderNo" />
-          <Table.Column title="微信运单号" data-index="waybillId" />
-          <Table.Column title="状态" data-index="status">
-            <template #default="{ record }">
-              <Tag :color="statusColor(record.status)">
-                {{ record.status }}
-              </Tag>
-            </template>
-          </Table.Column>
-          <Table.Column title="错误信息" data-index="errorMessage" />
-          <Table.Column title="操作" key="actions" fixed="right" width="250">
-            <template #default="{ record }">
-              <Space>
-                <Button
-                  type="link"
-                  :disabled="record.status !== 'CREATED' || !!actionLoadingId"
-                  :loading="actionLoadingId === record.id"
-                  @click="handleConfirm(record)"
-                >
-                  已打印，确认发货
-</Button><Button
-                  type="link"
-                  danger
-                  :disabled="record.status !== 'CREATED' || !!actionLoadingId"
-                  :loading="actionLoadingId === record.id"
-                  @click="handleCancel(record)"
-                >
-                  取消
-</Button><Button type="link" @click="handleTrace(record)">
-                  轨迹
-                </Button>
-              </Space>
-            </template>
-          </Table.Column>
-        </Table>
-      </Card>
     </div>
-
-    <a-modal
-      v-model:open="traceVisible"
-      :title="`物流轨迹 ${selectedWaybill?.waybillId ?? ''}`"
-      :footer="null"
-    >
-      <a-spin :spinning="traceLoading">
-        <a-empty
-          v-if="!traceLoading && !traces.length"
-          description="暂无轨迹"
-        /><a-timeline v-else>
-          <a-timeline-item
-            v-for="trace in traces"
-            :key="trace.id"
-            :label="trace.actionTime"
-          >
-            {{ trace.actionMsg }}
-          </a-timeline-item>
-        </a-timeline>
-      </a-spin>
-    </a-modal>
   </Page>
 </template>

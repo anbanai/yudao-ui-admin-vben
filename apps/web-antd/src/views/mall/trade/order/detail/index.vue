@@ -91,7 +91,9 @@ const [DeliveryInfoDescriptions] = useDescription({
   bordered: false,
   column: 3,
   class: 'mx-4',
-  schema: useDeliveryInfoSchema(),
+  schema: useDeliveryInfoSchema(
+    (id) => deliveryExpressList.value.find((item) => item.id === id)?.name,
+  ),
 });
 
 const [ProductGrid, productGridApi] = useVbenVxeGrid({
@@ -277,6 +279,7 @@ onMounted(async () => {
           {
             label: '发货',
             type: 'primary',
+            auth: ['trade:order:update'],
             onClick: handleDelivery,
             ifShow:
               order.status === TradeOrderStatusEnum.UNDELIVERED.status &&
@@ -304,7 +307,7 @@ onMounted(async () => {
 
     <!-- 各种操作的弹窗 -->
     <DeliveryFormModal @success="getDetail" />
-    <WechatDeliveryFormModal />
+    <WechatDeliveryFormModal @success="getDetail" />
     <RemarkFormModal @success="getDetail" />
     <AddressFormModal @success="getDetail" />
     <PriceFormModal @success="getDetail" />

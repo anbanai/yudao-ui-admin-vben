@@ -118,7 +118,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     </template>
 
     <DeliveryFormModal @success="handleRefresh" />
-    <WechatDeliveryFormModal />
+    <WechatDeliveryFormModal @success="handleRefresh" />
     <RemarkFormModal @success="handleRefresh" />
     <Grid table-title="订单列表">
       <template #expand_content="{ row }">
@@ -182,6 +182,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             {
               label: '微信打单发货',
               type: 'link',
+              auth: ['trade:order:update'],
               ifShow: () =>
                 row.deliveryType === DeliveryTypeEnum.EXPRESS.type &&
                 row.payChannelCode === PayChannelEnum.WX_LITE.code &&

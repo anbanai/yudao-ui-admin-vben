@@ -8,9 +8,15 @@ import { useVbenModal } from '@vben/common-ui';
 
 import { Alert, Descriptions, message, Result, Tag } from 'ant-design-vue';
 
-import { createWechatWaybill } from '#/api/mall/trade/logistics/wechat';
+import {
+  confirmWechatWaybillPrint,
+  createWechatWaybill,
+} from '#/api/mall/trade/logistics/wechat';
 import { withOperationFeedback } from '#/utils/operation-feedback';
 
+import { createAndConfirmWechatWaybill } from './wechat-delivery';
+
+const emit = defineEmits(['success']);
 const order = ref<MallOrderApi.Order>();
 const waybill = ref<MallWechatLogisticsApi.Waybill>();
 const errorMessage = ref('');
@@ -20,34 +26,30 @@ const created = computed(
 );
 
 const [Modal, modalApi] = useVbenModal({
-  confirmText: '创建微信运单',
+  confirmText: '确认发货',
   async onConfirm() {
-    if (created.value) {
-      await modalApi.close();
-      return;
-    }
     if (!order.value?.id) return;
     const orderId = order.value.id;
     errorMessage.value = '';
     modalApi.lock();
     try {
-      await withOperationFeedback(async () => {
-        const result = await createWechatWaybill(orderId);
-        if (result.status !== 'CREATED') {
-          errorMessage.value =
-            result.errorMessage ||
-            '微信物流订单创建失败，请查看后台错误码后重试';
-          message.error(errorMessage.value);
-          throw new Error(errorMessage.value);
-        }
-        waybill.value = result;
-        modalApi.setState({ confirmText: '关闭', showCancelButton: false });
-        return result;
-      });
+      const result = await withOperationFeedback(() =>
+        createAndConfirmWechatWaybill(orderId, {
+          confirmPrint: confirmWechatWaybillPrint,
+          createWaybill: createWechatWaybill,
+          onWaybillCreated: (createdWaybill) => {
+            waybill.value = createdWaybill;
+            modalApi.setState({ confirmText: '重试确认发货' });
+          },
+        }),
+      );
+      waybill.value = result;
+      emit('success');
+      await modalApi.close();
     } catch (error) {
-      if (!errorMessage.value) {
-        throw error;
-      }
+      errorMessage.value =
+        error instanceof Error ? error.message : '微信物流发货失败，请重试';
+      message.error(errorMessage.value);
     } finally {
       modalApi.unlock();
     }
@@ -61,7 +63,7 @@ const [Modal, modalApi] = useVbenModal({
     }
     order.value = modalApi.getData<MallOrderApi.Order>();
     waybill.value = undefined;
-    modalApi.setState({ confirmText: '创建微信运单', showCancelButton: true });
+    modalApi.setState({ confirmText: '确认发货', showCancelButton: true });
   },
 });
 </script>
@@ -83,14 +85,14 @@ const [Modal, modalApi] = useVbenModal({
       class="mt-4"
       type="info"
       show-icon
-      message="创建运单后，微信打单 PC 软件会自动拉取并打印面单。打印完成后请到物流打单工作台确认发货。"
+      message="确认发货后，系统将创建微信运单、写入物流单号并更新订单为已发货。"
     />
     <Result
       v-if="created"
       class="py-4"
       status="success"
       title="微信运单已创建"
-      sub-title="请确认微信打单软件已打印标签，再到物流打单工作台确认发货"
+      sub-title="正在确认订单发货；如失败可直接重试。"
     >
       <template #extra>
         <Tag color="blue">{{ waybill?.waybillId }}</Tag>
