@@ -161,7 +161,7 @@ async function resetQueryState() {
   await gridApi.grid.clearCheckboxRow();
   await gridApi.grid.clearCheckboxReserve();
   await gridApi.grid.clearRadioRow();
-  await gridApi.formApi.resetForm();
+  await gridApi.formApi.reset();
   if (props.processId) {
     await gridApi.formApi.setFieldValue('processId', props.processId);
   }
@@ -212,6 +212,7 @@ defineExpose({ open: openModal });
     v-model="open"
     title="工作站选择"
     width="70%"
+    :append-to-body="true"
     destroy-on-close
     @close="closeModal"
   >

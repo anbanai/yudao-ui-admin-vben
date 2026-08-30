@@ -162,7 +162,7 @@ async function resetQueryState() {
   await gridApi.grid.clearCheckboxRow();
   await gridApi.grid.clearCheckboxReserve();
   await gridApi.grid.clearRadioRow();
-  await gridApi.formApi.resetForm();
+  await gridApi.formApi.reset();
 }
 
 /** 打开方案选择弹窗 */
@@ -210,6 +210,7 @@ defineExpose({ open: openModal });
     v-model="open"
     title="点检方案选择"
     width="70%"
+    :append-to-body="true"
     destroy-on-close
     @close="closeModal"
   >

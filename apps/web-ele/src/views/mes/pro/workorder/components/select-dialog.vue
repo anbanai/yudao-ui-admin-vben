@@ -176,7 +176,7 @@ async function resetQueryState() {
   await gridApi.grid.clearCheckboxRow();
   await gridApi.grid.clearCheckboxReserve();
   await gridApi.grid.clearRadioRow();
-  await gridApi.formApi.resetForm();
+  await gridApi.formApi.reset();
   if (props.status !== undefined) {
     await gridApi.formApi.setFieldValue('status', props.status);
   }
@@ -220,7 +220,12 @@ defineExpose({ open: openModal });
 </script>
 
 <template>
-  <ElDialog v-model="open" title="生产工单选择" width="80%">
+  <ElDialog
+    v-model="open"
+    title="生产工单选择"
+    width="80%"
+    :append-to-body="true"
+  >
     <ElAlert
       v-if="typeTip"
       :closable="false"

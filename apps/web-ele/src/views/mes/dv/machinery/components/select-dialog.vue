@@ -173,7 +173,7 @@ async function resetQueryState() {
   await gridApi.grid.clearCheckboxRow();
   await gridApi.grid.clearCheckboxReserve();
   await gridApi.grid.clearRadioRow();
-  await gridApi.formApi.resetForm();
+  await gridApi.formApi.reset();
 }
 
 /** 打开设备选择弹窗 */
@@ -219,6 +219,7 @@ defineExpose({ open: openModal });
     v-model="open"
     title="设备选择"
     width="80%"
+    :append-to-body="true"
     destroy-on-close
     @close="closeModal"
   >

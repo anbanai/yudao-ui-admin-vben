@@ -159,7 +159,7 @@ async function resetQueryState() {
   await gridApi.grid.clearCheckboxRow();
   await gridApi.grid.clearCheckboxReserve();
   await gridApi.grid.clearRadioRow();
-  await gridApi.formApi.resetForm();
+  await gridApi.formApi.reset();
 }
 
 /** 打开盘点方案选择弹窗 */
@@ -205,6 +205,7 @@ defineExpose({ open: openModal });
     destroy-on-close
     title="盘点方案选择"
     width="70%"
+    :append-to-body="true"
     @close="closeModal"
   >
     <Grid table-title="盘点方案列表" />

@@ -169,7 +169,7 @@ async function resetQueryState() {
   await gridApi.grid.clearCheckboxRow();
   await gridApi.grid.clearCheckboxReserve();
   await gridApi.grid.clearRadioRow();
-  await gridApi.formApi.resetForm();
+  await gridApi.formApi.reset();
   if (externalWorkOrderId.value) {
     await gridApi.formApi.setFieldValue(
       'workOrderId',
@@ -232,6 +232,7 @@ defineExpose({ open: openModal });
     v-model="open"
     title="生产任务选择"
     width="80%"
+    :append-to-body="true"
     destroy-on-close
     @close="closeModal"
   >

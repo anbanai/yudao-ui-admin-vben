@@ -129,7 +129,7 @@ async function getList() {
 /** 打开点检项目表单 */
 async function openForm() {
   formOpen.value = true;
-  await formApi.resetForm();
+  await formApi.reset();
   await formApi.setValues({ planId: props.planId });
 }
 
@@ -192,7 +192,12 @@ watch(
         />
       </template>
     </Grid>
-    <ElDialog v-model="formOpen" title="添加项目" width="520px">
+    <ElDialog
+      v-model="formOpen"
+      title="添加项目"
+      width="520px"
+      :append-to-body="true"
+    >
       <Form class="mx-4" />
       <template #footer>
         <ElButton @click="formOpen = false">取消</ElButton>

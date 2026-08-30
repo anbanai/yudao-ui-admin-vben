@@ -149,7 +149,7 @@ async function openForm(
 ) {
   formOpen.value = true;
   lineFormType.value = type;
-  await formApi.resetForm();
+  await formApi.reset();
   await formApi.setValues(
     row
       ? await getRepairLine(row.id!)
@@ -232,7 +232,12 @@ watch(
         />
       </template>
     </Grid>
-    <ElDialog v-model="formOpen" :title="formTitle" width="620px">
+    <ElDialog
+      v-model="formOpen"
+      :title="formTitle"
+      width="620px"
+      :append-to-body="true"
+    >
       <Form class="mx-4" />
       <template #footer>
         <ElButton @click="formOpen = false">取消</ElButton>

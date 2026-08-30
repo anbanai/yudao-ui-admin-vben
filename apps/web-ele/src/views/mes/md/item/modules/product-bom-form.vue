@@ -179,7 +179,7 @@ async function handleItemSelected(rows: MesMdItemApi.Item[]) {
 async function openForm(row: MesMdProductBomApi.ProductBom) {
   formOpen.value = true;
   formData.value = row;
-  await formApi.resetForm();
+  await formApi.reset();
   await formApi.setValues({
     ...row,
     itemId: props.itemId,
@@ -261,7 +261,12 @@ watch(
       </template>
     </Grid>
 
-    <ElDialog v-model="formOpen" title="编辑 BOM" width="600px">
+    <ElDialog
+      v-model="formOpen"
+      title="编辑 BOM"
+      width="600px"
+      :append-to-body="true"
+    >
       <Form class="mx-4" />
       <template #footer>
         <ElButton @click="formOpen = false">取消</ElButton>

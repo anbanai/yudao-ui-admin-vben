@@ -125,7 +125,7 @@ async function getList() {
 /** 打开成员表单 */
 async function openForm() {
   formOpen.value = true;
-  await formApi.resetForm();
+  await formApi.reset();
   await formApi.setValues({ teamId: props.teamId });
 }
 
@@ -190,7 +190,12 @@ watch(
       </template>
     </Grid>
 
-    <ElDialog v-model="formOpen" title="添加成员" width="520px">
+    <ElDialog
+      v-model="formOpen"
+      title="添加成员"
+      width="520px"
+      :append-to-body="true"
+    >
       <Form class="mx-4" />
       <template #footer>
         <ElButton @click="formOpen = false">取消</ElButton>
