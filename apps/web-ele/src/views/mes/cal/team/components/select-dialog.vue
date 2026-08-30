@@ -99,7 +99,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 async function resetQueryState() {
   selectedRows.value = [];
   await gridApi.grid.clearCheckboxRow();
-  await gridApi.formApi.resetForm();
+  await gridApi.formApi.reset();
 }
 
 /** 打开班组选择弹窗 */
@@ -144,6 +144,7 @@ defineExpose({ open: openModal });
     v-model="open"
     title="班组选择"
     width="720px"
+    :append-to-body="true"
     destroy-on-close
     @close="closeModal"
   >

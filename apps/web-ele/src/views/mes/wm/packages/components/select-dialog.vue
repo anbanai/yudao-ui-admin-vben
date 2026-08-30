@@ -166,7 +166,7 @@ async function resetQueryState() {
   await gridApi.grid.clearCheckboxRow();
   await gridApi.grid.clearCheckboxReserve();
   await gridApi.grid.clearRadioRow();
-  await gridApi.formApi.resetForm();
+  await gridApi.formApi.reset();
 }
 
 /** 打开装箱单选择弹窗 */
@@ -212,6 +212,7 @@ defineExpose({ open: openModal });
     destroy-on-close
     title="装箱单选择"
     width="80%"
+    :append-to-body="true"
     @close="closeModal"
   >
     <ElAlert

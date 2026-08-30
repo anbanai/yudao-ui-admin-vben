@@ -206,7 +206,7 @@ async function resetQueryState() {
   await gridApi.grid.clearCheckboxRow();
   await gridApi.grid.clearCheckboxReserve();
   await gridApi.grid.clearRadioRow();
-  await gridApi.formApi.resetForm();
+  await gridApi.formApi.reset();
 }
 
 /** 打开弹窗 */
@@ -253,6 +253,7 @@ defineExpose({ open: openModal });
     destroy-on-close
     title="库存物资选择"
     width="80%"
+    :append-to-body="true"
     @close="closeModal"
   >
     <ElAlert

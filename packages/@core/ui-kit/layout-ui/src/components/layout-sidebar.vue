@@ -10,9 +10,8 @@ import {
   watchEffect,
 } from 'vue';
 
+import { useScrollLock } from '@vben-core/composables';
 import { VbenScrollbar } from '@vben-core/shadcn-ui';
-
-import { useScrollLock } from '@vueuse/core';
 
 import { useSidebarDrag } from '../hooks/use-sidebar-drag';
 import { SidebarCollapseButton, SidebarFixedButton } from './widgets';
@@ -34,6 +33,10 @@ interface Props {
    */
   domVisible?: boolean;
   /**
+   * 标准侧栏展开宽度
+   */
+  expandedWidth?: number;
+  /**
    * 扩展区域extra-title的高度
    */
   extraTitleHeight?: number;
@@ -50,6 +53,11 @@ interface Props {
    * 头部高度
    */
   headerHeight: number;
+  /**
+   * 是否移动端抽屉模式
+   * @default false
+   */
+  isMobile?: boolean;
   /**
    * 是否侧边混合模式
    * @default false
@@ -118,8 +126,10 @@ const props = withDefaults(defineProps<Props>(), {
   collapseHeight: 42,
   collapseWidth: 48,
   domVisible: true,
+  expandedWidth: 180,
   extraTitleHeight: undefined,
   fixedExtra: false,
+  isMobile: false,
   isSidebarMixed: false,
   marginTop: 0,
   mixedWidth: 70,
@@ -140,13 +150,35 @@ const expandOnHovering = defineModel<boolean>('expandOnHovering');
 const expandOnHover = defineModel<boolean>('expandOnHover');
 const extraVisible = defineModel<boolean>('extraVisible');
 
-const isLocked = useScrollLock(document.body);
+const isLocked = useScrollLock({ immediate: false });
 const slots = useSlots();
 
 const asideRef = shallowRef<HTMLElement | null>(null);
 const dragBarRef = shallowRef<HTMLElement | null>(null);
 
-const hiddenSideStyle = computed((): CSSProperties => calcMenuWidthStyle(true));
+const hiddenSideStyle = computed((): CSSProperties => {
+  const widthValue = props.show ? getMenuWidthValue(true) : '0px';
+  return {
+    flexBasis: widthValue,
+    flexGrow: 0,
+    flexShrink: 0,
+    overflow: 'hidden',
+  };
+});
+
+const sidebarVisualWidth = computed(() => {
+  const currentWidth = Number.parseFloat(getMenuWidthValue(false));
+  return !props.isMobile && !props.isSidebarMixed
+    ? Math.max(currentWidth, props.expandedWidth)
+    : currentWidth;
+});
+
+const dragBarStyle = computed((): CSSProperties => {
+  const currentWidth = Number.parseFloat(getMenuWidthValue(false));
+  return {
+    right: `${Math.max(0, sidebarVisualWidth.value - currentWidth)}px`,
+  };
+});
 
 // 悬浮面板模式下，双列扩展面板"收起"等价于"隐藏"，避免残留空白竖条；
 // 重新显示（点击一级菜单/悬停）时自动恢复为完整宽度
@@ -174,7 +206,7 @@ const style = computed((): CSSProperties => {
 
   return {
     '--scroll-shadow': 'var(--sidebar)',
-    ...calcMenuWidthStyle(false),
+    ...calcMenuWidthStyle(),
     height: `calc(100% - ${marginTop + (panelFloat ? panelGap * 2 : 0)}px)`,
     marginTop: `${marginTop}px`,
     paddingTop: `${paddingTop}px`,
@@ -261,7 +293,7 @@ watchEffect(() => {
   extraVisible.value = props.fixedExtra ? true : extraVisible.value;
 });
 
-function calcMenuWidthStyle(isHiddenDom: boolean): CSSProperties {
+function getMenuWidthValue(isHiddenDom: boolean) {
   const {
     collapseWidth,
     extraWidth,
@@ -270,31 +302,44 @@ function calcMenuWidthStyle(isHiddenDom: boolean): CSSProperties {
     isSidebarMixed,
     panelFloat,
     panelGap,
-    show,
     width,
   } = props;
 
   const extraVisibleFixed = isSidebarMixed && fixedExtra && extraVisible.value;
 
-  let widthValue: number =
+  let widthValue =
     width === 0 ? 0 : width + (extraVisibleFixed ? extraWidth : 0);
 
   if (isHiddenDom && expandOnHovering.value && !expandOnHover.value) {
     widthValue = isSidebarMixed ? mixedWidth : collapseWidth;
   }
-
   // 悬浮面板模式：占位区域需要额外包含面板两侧以及双列面板之间的间距
   if (isHiddenDom && panelFloat && width > 0) {
     widthValue += panelGap * (extraVisibleFixed ? 3 : 2);
   }
 
+  return `${widthValue}px`;
+}
+
+function calcMenuWidthStyle(): CSSProperties {
+  const widthValue = getMenuWidthValue(false);
+  const currentWidth = Number.parseFloat(widthValue);
+  const clippedWidth = Math.max(0, sidebarVisualWidth.value - currentWidth);
+  let transform: CSSProperties['transform'];
+
+  if (props.isMobile) {
+    transform = undefined;
+  } else if (props.show) {
+    transform = 'translate3d(0, 0, 0)';
+  } else {
+    transform = 'translate3d(-100%, 0, 0)';
+  }
+
   return {
-    ...(widthValue === 0 ? { overflow: 'hidden' } : {}),
-    flex: `0 0 ${widthValue}px`,
-    marginLeft: show ? 0 : `-${widthValue}px`,
-    maxWidth: `${widthValue}px`,
-    minWidth: `${widthValue}px`,
-    width: `${widthValue}px`,
+    ...(widthValue === '0px' ? { overflow: 'hidden' } : {}),
+    clipPath: `inset(0 ${clippedWidth}px 0 0)`,
+    transform,
+    width: `${sidebarVisualWidth.value}px`,
   };
 }
 
@@ -370,86 +415,120 @@ onUnmounted(() => {
     v-if="domVisible"
     :class="theme"
     :style="hiddenSideStyle"
-    class="h-full transition-all duration-150"
+    class="h-full"
   ></div>
-  <aside
-    ref="asideRef"
-    :style="style"
-    class="fixed left-0 top-0 h-full transition-all duration-150"
-    :class="theme"
-    @mouseenter="handleMouseenter"
-    @mouseleave="handleMouseleave"
-  >
-    <div
-      class="h-full"
+  <Transition name="mobile-sidebar">
+    <aside
+      v-if="!isMobile || !collapse"
+      ref="asideRef"
+      data-layout-region="sidebar"
+      :inert="!show || width === 0"
+      :style="style"
+      class="fixed left-0 top-0 h-full"
       :class="[
+        theme,
         {
-          'bg-sidebar-deep': isSidebarMixed,
-          'border-r border-border bg-sidebar': !isSidebarMixed,
+          'border-r border-border bg-sidebar transition-[clip-path,transform] duration-300 ease-out':
+            !isMobile && !isSidebarMixed,
+          'transition-transform duration-300 ease-out':
+            !isMobile && isSidebarMixed,
         },
-        panelFloat
-          ? 'overflow-hidden rounded-xl border shadow-sm border-border'
-          : '',
       ]"
-      :style="{ width: `${width}px` }"
+      @mouseenter="handleMouseenter"
+      @mouseleave="handleMouseleave"
     >
-      <SidebarFixedButton
-        v-if="!collapse && !isSidebarMixed && showFixedButton"
-        v-model:expand-on-hover="expandOnHover"
-      />
-      <div v-if="slots.logo" :style="headerStyle">
-        <slot name="logo"></slot>
-      </div>
-      <VbenScrollbar :style="contentStyle" shadow shadow-border>
-        <slot></slot>
-      </VbenScrollbar>
-
-      <div :style="collapseStyle"></div>
-      <SidebarCollapseButton
-        v-if="showCollapseButton && !isSidebarMixed"
-        v-model:collapsed="collapse"
-      />
-    </div>
-    <div
-      v-if="isSidebarMixed"
-      :class="[
-        themeSub,
-        {
-          'border-l': extraVisible && !panelFloat,
-        },
-        panelFloat
-          ? 'overflow-hidden rounded-xl border shadow-sm border-border bg-sidebar'
-          : '',
-      ]"
-      :style="[extraStyle, extraPanelStyle]"
-      class="fixed top-0 h-full overflow-hidden border-r border-border bg-sidebar transition-all duration-200"
-    >
-      <SidebarCollapseButton
-        v-if="isSidebarMixed && expandOnHover"
-        v-model:collapsed="extraCollapse"
-      />
-
-      <SidebarFixedButton
-        v-if="!extraCollapse"
-        v-model:expand-on-hover="expandOnHover"
-      />
-      <div v-if="!extraCollapse" :style="extraTitleStyle" class="pl-2">
-        <slot name="extra-title"></slot>
-      </div>
-      <VbenScrollbar
-        :style="extraContentStyle"
-        class="border-border py-2"
-        shadow
-        shadow-border
+      <div
+        class="h-full"
+        :class="[
+          {
+            'bg-sidebar-deep': isSidebarMixed,
+            'border-r border-border bg-sidebar': !isSidebarMixed,
+          },
+          panelFloat
+            ? 'border-border overflow-hidden rounded-xl border shadow-sm'
+            : '',
+        ]"
+        :style="{ width: `${width}px` }"
       >
-        <slot name="extra"></slot>
-      </VbenScrollbar>
-    </div>
-    <div
-      v-if="draggable"
-      ref="dragBarRef"
-      class="absolute inset-y-0 -right-px z-1000 w-0.5 cursor-col-resize hover:bg-primary"
-      @mousedown="handleDragSidebar"
-    ></div>
-  </aside>
+        <SidebarFixedButton
+          v-if="!collapse && !isSidebarMixed && showFixedButton"
+          v-model:expand-on-hover="expandOnHover"
+        />
+        <div v-if="slots.logo" :style="headerStyle">
+          <slot name="logo"></slot>
+        </div>
+        <VbenScrollbar :style="contentStyle" shadow shadow-border>
+          <slot></slot>
+        </VbenScrollbar>
+
+        <div :style="collapseStyle"></div>
+        <SidebarCollapseButton
+          v-if="showCollapseButton && !isSidebarMixed"
+          v-model:collapsed="collapse"
+        />
+      </div>
+      <div
+        v-if="isSidebarMixed"
+        :class="[
+          themeSub,
+          {
+            'border-l': extraVisible && !panelFloat,
+          },
+          panelFloat
+            ? 'border-border bg-sidebar overflow-hidden rounded-xl border shadow-sm'
+            : '',
+        ]"
+        :style="[extraStyle, extraPanelStyle]"
+        class="fixed top-0 h-full overflow-hidden border-r border-border bg-sidebar transition-[left,width] duration-300 ease-out"
+      >
+        <SidebarCollapseButton
+          v-if="isSidebarMixed && expandOnHover"
+          v-model:collapsed="extraCollapse"
+        />
+
+        <SidebarFixedButton
+          v-if="!extraCollapse"
+          v-model:expand-on-hover="expandOnHover"
+        />
+        <div v-if="!extraCollapse" :style="extraTitleStyle" class="pl-2">
+          <slot name="extra-title"></slot>
+        </div>
+        <VbenScrollbar
+          :style="extraContentStyle"
+          class="border-border py-2"
+          shadow
+          shadow-border
+        >
+          <slot name="extra"></slot>
+        </VbenScrollbar>
+      </div>
+      <div
+        v-if="draggable"
+        ref="dragBarRef"
+        :style="dragBarStyle"
+        class="absolute inset-y-0 -right-px z-1000 w-0.5 cursor-col-resize hover:bg-primary"
+        @mousedown="handleDragSidebar"
+      ></div>
+    </aside>
+  </Transition>
 </template>
+
+<style scoped>
+.mobile-sidebar-enter-active,
+.mobile-sidebar-leave-active {
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.mobile-sidebar-enter-from,
+.mobile-sidebar-leave-to {
+  transform: translate3d(-100%, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-sidebar-enter-active,
+  .mobile-sidebar-leave-active {
+    transition-duration: 0ms;
+  }
+}
+</style>

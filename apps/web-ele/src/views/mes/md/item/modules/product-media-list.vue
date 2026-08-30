@@ -167,7 +167,7 @@ async function getList() {
 async function openForm(row?: MediaItem) {
   formOpen.value = true;
   formData.value = row;
-  await formApi.resetForm();
+  await formApi.reset();
   await formApi.setValues({
     itemId: props.itemId,
     sort: 0,
@@ -277,6 +277,7 @@ watch(
       v-model="formOpen"
       :title="`${formData?.id ? '编辑' : '新增'} ${title}`"
       width="500px"
+      :append-to-body="true"
     >
       <Form class="mx-4" />
       <template #footer>

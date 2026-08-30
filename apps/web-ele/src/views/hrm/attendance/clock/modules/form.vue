@@ -135,10 +135,13 @@ const [Modal, modalApi] = useVbenModal({
       shiftInfo.value = undefined;
       return;
     }
-    const data = modalApi.getData<{ id?: number; type: 'create' | 'update' }>();
+    const data = modalApi.getData() as {
+      id?: number;
+      type: 'create' | 'update';
+    };
     formType.value = data?.type ?? 'create';
     shiftInfo.value = undefined;
-    await formApi.resetForm();
+    await formApi.reset();
     if (data?.type === 'update' && data.id) {
       modalApi.lock();
       try {
@@ -217,7 +220,10 @@ async function loadShift(applyDefaultTime = false) {
   try {
     shiftInfo.value = await getAttendanceClockShift({
       employeeId: values.employeeId,
-      attendanceTime: formatDate(values.attendanceTime),
+      attendanceTime: formatDate(
+        values.attendanceTime,
+        'YYYY-MM-DD HH:mm:ss',
+      ),
     });
     if (applyDefaultTime && shiftInfo.value) {
       await formApi.setFieldValue(

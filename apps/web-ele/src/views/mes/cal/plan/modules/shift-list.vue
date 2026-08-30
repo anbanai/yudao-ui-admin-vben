@@ -169,7 +169,7 @@ async function openForm(
 ) {
   formOpen.value = true;
   shiftFormType.value = type;
-  await formApi.resetForm();
+  await formApi.reset();
   await formApi.setValues(row ? { ...row } : { planId: props.planId, sort: 1 });
 }
 
@@ -247,7 +247,12 @@ watch(
         />
       </template>
     </Grid>
-    <ElDialog v-model="formOpen" :title="formTitle" width="520px">
+    <ElDialog
+      v-model="formOpen"
+      :title="formTitle"
+      width="520px"
+      :append-to-body="true"
+    >
       <Form class="mx-4" />
       <template #footer>
         <ElButton @click="formOpen = false">取消</ElButton>

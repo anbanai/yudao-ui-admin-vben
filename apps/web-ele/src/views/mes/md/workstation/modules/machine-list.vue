@@ -151,7 +151,7 @@ async function getList() {
 /** 打开设备资源表单 */
 async function openForm() {
   formOpen.value = true;
-  await formApi.resetForm();
+  await formApi.reset();
   await formApi.setValues({
     quantity: 1,
     workstationId: props.workstationId,
@@ -226,7 +226,12 @@ watch(
       </template>
     </Grid>
 
-    <ElDialog v-model="formOpen" title="添加设备" width="520px">
+    <ElDialog
+      v-model="formOpen"
+      title="添加设备"
+      width="520px"
+      :append-to-body="true"
+    >
       <Form class="mx-4" />
       <template #footer>
         <ElButton @click="formOpen = false">取消</ElButton>

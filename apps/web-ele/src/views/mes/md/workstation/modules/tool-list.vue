@@ -163,7 +163,7 @@ async function getList() {
 async function openForm(row?: MesMdWorkstationToolApi.WorkstationTool) {
   formOpen.value = true;
   formData.value = row;
-  await formApi.resetForm();
+  await formApi.reset();
   await formApi.setValues({
     quantity: 1,
     workstationId: props.workstationId,
@@ -251,6 +251,7 @@ watch(
       v-model="formOpen"
       :title="formData?.id ? '编辑工具' : '添加工具'"
       width="520px"
+      :append-to-body="true"
     >
       <Form class="mx-4" />
       <template #footer>
