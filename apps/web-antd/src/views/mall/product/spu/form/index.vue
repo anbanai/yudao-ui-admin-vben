@@ -306,6 +306,9 @@ async function getDetail() {
     formData.value = res;
     // 将 SKU 的属性，整理成 PropertyAndValues 数组
     propertyList.value = getPropertyList(formData.value);
+    // Card 的 loading 骨架不会渲染默认插槽，需先关闭骨架让表单完成挂载。
+    formLoading.value = false;
+    await nextTick();
     // 初始化各表单值
     await Promise.all([
       infoFormApi.setValues(res),
