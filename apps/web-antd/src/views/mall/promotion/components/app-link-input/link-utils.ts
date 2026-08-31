@@ -1,5 +1,38 @@
 import { APP_LINK_TYPE_ENUM } from './data';
 
+/** 商品分类页只支持定位一级分类；商品列表可筛选任意层级分类。 */
+export function getCategorySelectParentId(type?: APP_LINK_TYPE_ENUM) {
+  return type === APP_LINK_TYPE_ENUM.PRODUCT_CATEGORY_LIST ? 0 : undefined;
+}
+
+/** 校验商品分类页中已保存的分类是否仍为有效的一级分类。 */
+export async function validateCategoryLink(
+  type: APP_LINK_TYPE_ENUM | undefined,
+  path: string,
+  getCategory: (id: number) => Promise<{ parentId?: number }>,
+) {
+  if (type !== APP_LINK_TYPE_ENUM.PRODUCT_CATEGORY_LIST) {
+    return true;
+  }
+  const idValue = new URL(path, 'http://127.0.0.1').searchParams.get('id');
+  if (idValue === null) {
+    return true;
+  }
+  if (!/^[1-9]\d*$/.test(idValue)) {
+    return false;
+  }
+  const id = Number(idValue);
+  if (!Number.isSafeInteger(id)) {
+    return false;
+  }
+  try {
+    const category = await getCategory(id);
+    return category.parentId === 0;
+  } catch {
+    return false;
+  }
+}
+
 /** 获取链接参数名。商品列表通过 categoryId 筛选，其余详情使用 id。 */
 export function getLinkParamKey(type?: APP_LINK_TYPE_ENUM) {
   return type === APP_LINK_TYPE_ENUM.PRODUCT_LIST ? 'categoryId' : 'id';

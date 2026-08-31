@@ -6,16 +6,19 @@ import { nextTick, ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 import { getUrlNumberValue } from '@vben/utils';
 
-import { Button, Form, FormItem, Tooltip } from 'ant-design-vue';
+import { Button, Form, FormItem, message, Tooltip } from 'ant-design-vue';
 
+import { getCategory } from '#/api/mall/product/category';
 import { ProductCategorySelect } from '#/views/mall/product/category/components/';
 
 import { APP_LINK_GROUP_LIST, APP_LINK_TYPE_ENUM } from './data';
 import LinkDetailSelect from './link-detail-select.vue';
 import {
   appendLinkParam,
+  getCategorySelectParentId,
   getLinkParamKey,
   resolveAppLinkName,
+  validateCategoryLink,
 } from './link-utils';
 
 /** APP 链接选择弹框 */
@@ -44,7 +47,21 @@ const detailSelectDialog = ref<{
 const linkDetailSelectRef = ref<InstanceType<typeof LinkDetailSelect>>(); // 详情单选表格引用
 
 const [Modal, modalApi] = useVbenModal({
-  onConfirm() {
+  async onConfirm() {
+    const isValidCategoryLink = await validateCategoryLink(
+      activeAppLink.value.type,
+      activeAppLink.value.path,
+      getCategory,
+    );
+    if (!isValidCategoryLink) {
+      message.warning('当前分类无效或不是一级分类，请重新选择');
+      detailSelectDialog.value = {
+        id: undefined,
+        type: APP_LINK_TYPE_ENUM.PRODUCT_CATEGORY_LIST,
+      };
+      detailSelectModalApi.open();
+      return;
+    }
     emit('change', activeAppLink.value.path);
     emit('appLinkChange', activeAppLink.value);
     modalApi.close();
@@ -273,6 +290,7 @@ function handleCategorySelected(category?: { id: number; name: string }) {
       >
         <ProductCategorySelect
           v-model="detailSelectDialog.id"
+          :parent-id="getCategorySelectParentId(detailSelectDialog.type)"
           @category-selected="handleCategorySelected"
         />
       </FormItem>

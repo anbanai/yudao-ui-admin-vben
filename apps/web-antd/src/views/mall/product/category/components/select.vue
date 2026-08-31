@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { MallCategoryApi } from '#/api/mall/product/category';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { handleTree } from '@vben/utils';
 
@@ -72,13 +72,21 @@ function findCategory(
   return undefined;
 }
 
-/** 初始化 */
-onMounted(async () => {
-  const data = await getCategoryList({
-    parentId: props.parentId,
-  });
-  categoryList.value = handleTree(data, 'id', 'parentId') as CategoryTree[];
-});
+watch(
+  () => props.parentId,
+  async (parentId, _oldParentId, onCleanup) => {
+    let cancelled = false;
+    onCleanup(() => {
+      cancelled = true;
+    });
+    categoryList.value = [];
+    const data = await getCategoryList({ parentId });
+    if (!cancelled) {
+      categoryList.value = handleTree(data, 'id', 'parentId') as CategoryTree[];
+    }
+  },
+  { immediate: true },
+);
 </script>
 <template>
   <TreeSelect
