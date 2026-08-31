@@ -92,7 +92,11 @@ const cardStyle = computed((): CSSProperties => {
 </script>
 
 <template>
-  <main :style="style" class="relative min-w-0 bg-background-deep">
+  <main
+    :class="{ 'flex flex-col': panelFloat }"
+    :style="style"
+    class="relative min-w-0 bg-background-deep"
+  >
     <div
       v-if="$slots.overlay"
       data-layout-region="content-overlay"
@@ -108,7 +112,7 @@ const cardStyle = computed((): CSSProperties => {
     </div>
     <div
       v-if="panelFloat"
-      class="border-border bg-background rounded-xl border shadow-sm"
+      class="border-border bg-background flex-1 rounded-xl border shadow-sm"
       :style="cardStyle"
     >
       <slot></slot>
