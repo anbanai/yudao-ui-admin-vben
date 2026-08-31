@@ -168,15 +168,27 @@ const hiddenSideStyle = computed((): CSSProperties => {
 
 const sidebarVisualWidth = computed(() => {
   const currentWidth = Number.parseFloat(getMenuWidthValue(false));
-  return !props.isMobile && !props.isSidebarMixed
-    ? Math.max(currentWidth, props.expandedWidth)
-    : currentWidth;
+  if (!props.isMobile && !props.isSidebarMixed) {
+    return Math.max(currentWidth, props.expandedWidth);
+  }
+  if (
+    props.isSidebarMixed &&
+    props.panelFloat &&
+    props.show &&
+    props.width > 0 &&
+    extraVisible.value
+  ) {
+    return props.width + props.panelGap + props.extraWidth;
+  }
+  return currentWidth;
 });
 
 const dragBarStyle = computed((): CSSProperties => {
   const currentWidth = Number.parseFloat(getMenuWidthValue(false));
   return {
-    right: `${Math.max(0, sidebarVisualWidth.value - currentWidth)}px`,
+    right: props.isSidebarMixed
+      ? '0px'
+      : `${Math.max(0, sidebarVisualWidth.value - currentWidth)}px`,
   };
 });
 
@@ -223,7 +235,8 @@ const extraStyle = computed((): CSSProperties => {
   const { extraWidth, panelFloat, panelGap, show, width, zIndex } = props;
 
   return {
-    left: `${width + (panelFloat ? panelGap * 2 : 0)}px`,
+    // The transformed aside is the containing block for this fixed panel.
+    left: `${width + (panelFloat ? panelGap : 0)}px`,
     width: extraVisible.value && show ? `${extraWidth}px` : 0,
     zIndex,
   };
@@ -324,7 +337,9 @@ function getMenuWidthValue(isHiddenDom: boolean) {
 function calcMenuWidthStyle(): CSSProperties {
   const widthValue = getMenuWidthValue(false);
   const currentWidth = Number.parseFloat(widthValue);
-  const clippedWidth = Math.max(0, sidebarVisualWidth.value - currentWidth);
+  const clippedWidth = props.isSidebarMixed
+    ? 0
+    : Math.max(0, sidebarVisualWidth.value - currentWidth);
   let transform: CSSProperties['transform'];
 
   if (props.isMobile) {
@@ -378,9 +393,13 @@ function handleMouseleave() {
 const { startDrag, endDrag } = useSidebarDrag();
 
 const handleDragSidebar = (e: MouseEvent) => {
-  const { isSidebarMixed, collapseWidth, width } = props;
-  const minLimit = isSidebarMixed ? width + collapseWidth : collapseWidth;
-  const maxLimit = isSidebarMixed ? width + 320 : 320;
+  const { isSidebarMixed, collapseWidth, panelFloat, panelGap, width } = props;
+  const mixedPanelOffset =
+    width + (panelFloat && extraVisible.value ? panelGap : 0);
+  const minLimit = isSidebarMixed
+    ? mixedPanelOffset + collapseWidth
+    : collapseWidth;
+  const maxLimit = isSidebarMixed ? mixedPanelOffset + 320 : 320;
 
   startDrag(
     e,
@@ -394,9 +413,9 @@ const handleDragSidebar = (e: MouseEvent) => {
     },
     (newWidth) => {
       if (isSidebarMixed) {
-        emit('update:width', newWidth - width);
-        extraCollapse.value = collapse.value =
-          newWidth - width <= collapseWidth;
+        const extraWidth = newWidth - mixedPanelOffset;
+        emit('update:width', extraWidth);
+        extraCollapse.value = collapse.value = extraWidth <= collapseWidth;
       } else {
         emit('update:width', newWidth);
         collapse.value = extraCollapse.value = newWidth <= collapseWidth;
