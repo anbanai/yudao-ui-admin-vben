@@ -1,3 +1,5 @@
+import { watch } from 'vue';
+
 import {
   defineOverridesPreferences,
   definePreferencesExtension,
@@ -8,6 +10,37 @@ interface WebAntdPreferencesExtension {
   enableFormFullscreen: boolean;
   reportTitle: string;
   tenantMode: 'multi' | 'single';
+}
+
+interface SidebarPreferencesRuntime {
+  initialize: () => Promise<void>;
+  readWidth: () => number;
+  writeWidth: (width: number) => void;
+}
+
+const MIN_SIDEBAR_WIDTH = 260;
+
+export function normalizeSidebarWidth(width: number) {
+  return Number.isFinite(width)
+    ? Math.max(width, MIN_SIDEBAR_WIDTH)
+    : MIN_SIDEBAR_WIDTH;
+}
+
+export async function initializeSidebarPreferences(
+  runtime: SidebarPreferencesRuntime,
+) {
+  await runtime.initialize();
+
+  return watch(
+    runtime.readWidth,
+    (width) => {
+      const normalizedWidth = normalizeSidebarWidth(width);
+      if (normalizedWidth !== width) {
+        runtime.writeWidth(normalizedWidth);
+      }
+    },
+    { flush: 'sync', immediate: true },
+  );
 }
 
 /**
@@ -31,6 +64,9 @@ export const overridesPreferences = defineOverridesPreferences({
   },
   logo: {
     source: '/branding/logo-mark.png',
+  },
+  sidebar: {
+    width: MIN_SIDEBAR_WIDTH,
   },
   tabbar: {
     /** 朴素风格标签页，配合悬浮面板更接近有赞样式 */
