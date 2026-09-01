@@ -33,6 +33,7 @@ import {
   clampProductGroupPageSize,
   getProductGroupValidationError,
   normalizeGroupIds,
+  normalizeProductGroupProperty,
 } from './components/mobile/product-group/utils';
 import { component as TAB_BAR_COMPONENT } from './components/mobile/tab-bar/config';
 import { MALL_DIY_ASSETS, normalizeMallDiyAssetUrls } from './static-assets';
@@ -122,7 +123,11 @@ watch(
       []
     ).map((item: any) => {
       const component = componentConfigs[item.id];
-      return { ...component, property: item.property };
+      const property =
+        item.id === 'ProductGroup'
+          ? normalizeProductGroupProperty(item.property)
+          : item.property;
+      return { ...component, property };
     });
   },
   {

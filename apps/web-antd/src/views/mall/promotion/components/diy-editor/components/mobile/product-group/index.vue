@@ -9,14 +9,13 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 import { CommonStatusEnum } from '@vben/constants';
 
-import { Tabs } from 'ant-design-vue';
-
 import { getGroupSpuPage, getSimpleGroupList } from '#/api/mall/product/group';
 
 import ProductList from '../product-list/index.vue';
 import {
   buildProductGroupQuery,
   createPreviewProductLoader,
+  normalizeProductGroupProperty,
   orderSelectedGroups,
 } from './utils';
 
@@ -41,6 +40,10 @@ const tabs = computed(() => [
   })),
 ]);
 const showTabs = computed(() => tabs.value.length > 1);
+const menu = computed(() => normalizeProductGroupProperty(props.property).menu);
+const isVerticalMenu = computed(
+  () => showTabs.value && menu.value.layout === 'vertical',
+);
 const productListProperty = computed(
   () => ({ ...props.property, spuIds: [] }) as ProductListProperty,
 );
@@ -86,6 +89,17 @@ function resetProducts() {
   }
 }
 
+function getMenuItemStyle(tabId: string) {
+  const active = activeKey.value === tabId;
+  return {
+    backgroundColor: active
+      ? menu.value.activeBackgroundColor
+      : menu.value.backgroundColor,
+    color: active ? menu.value.activeColor : menu.value.color,
+    fontWeight: active ? '600' : '400',
+  };
+}
+
 watch(activeKey, () => void loadActiveTab());
 watch(
   () => [
@@ -112,16 +126,93 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-[30px] w-full">
-    <div
+  <div
+    class="product-group min-h-[30px] w-full"
+    :class="{ 'product-group--vertical': isVerticalMenu }"
+  >
+    <nav
       v-if="showTabs"
-      class="relative z-20 isolate bg-white"
-      :class="property.sticky ? 'sticky top-0' : ''"
+      aria-label="商品分组"
+      class="product-group-menu relative z-20 isolate"
+      :class="[
+        isVerticalMenu
+          ? 'product-group-menu--vertical'
+          : 'product-group-menu--horizontal',
+        property.sticky ? 'sticky top-0' : '',
+      ]"
+      :style="{ backgroundColor: menu.backgroundColor }"
     >
-      <Tabs v-model:active-key="activeKey" size="small" :animated="false">
-        <Tabs.TabPane v-for="tab in tabs" :key="tab.id" :tab="tab.name" />
-      </Tabs>
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        type="button"
+        class="product-group-menu__item"
+        :aria-current="activeKey === tab.id ? 'page' : undefined"
+        :style="getMenuItemStyle(tab.id)"
+        @click="activeKey = tab.id"
+      >
+        {{ tab.name }}
+      </button>
+    </nav>
+    <div class="product-group__content min-w-0 flex-1">
+      <ProductList
+        :key="menu.layout"
+        :property="productListProperty"
+        :spu-list="spuList"
+      />
     </div>
-    <ProductList :property="productListProperty" :spu-list="spuList" />
   </div>
 </template>
+
+<style scoped>
+.product-group--vertical {
+  display: flex;
+  align-items: stretch;
+}
+
+.product-group-menu--horizontal {
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  border-bottom: 1px solid rgb(0 0 0 / 6%);
+  scrollbar-width: none;
+}
+
+.product-group-menu--horizontal::-webkit-scrollbar {
+  display: none;
+}
+
+.product-group-menu--vertical {
+  align-self: flex-start;
+  width: 88px;
+  max-height: 100dvh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.product-group-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  font-size: 13px;
+  line-height: 20px;
+  letter-spacing: 0;
+  border: 0;
+  outline: 0;
+  cursor: pointer;
+}
+
+.product-group-menu--horizontal .product-group-menu__item {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.product-group-menu--vertical .product-group-menu__item {
+  width: 100%;
+  padding-right: 8px;
+  padding-left: 8px;
+  overflow-wrap: anywhere;
+}
+</style>

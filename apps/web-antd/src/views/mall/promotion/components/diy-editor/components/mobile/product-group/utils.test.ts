@@ -16,6 +16,13 @@ describe('product group configuration', () => {
     expect(component.property).toMatchObject({
       groupIds: [],
       layoutType: 'threeCol',
+      menu: {
+        activeBackgroundColor: '#e6f4ff',
+        activeColor: '#0958d9',
+        backgroundColor: '#ffffff',
+        color: '#595959',
+        layout: 'horizontal',
+      },
       pageSize: 10,
       showAll: false,
       sortType: 'default',

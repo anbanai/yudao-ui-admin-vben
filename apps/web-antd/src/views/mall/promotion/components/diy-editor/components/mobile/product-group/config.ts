@@ -1,6 +1,7 @@
 import type { ComponentStyle, DiyComponent } from '../../../util';
 
 export type ProductGroupLayoutType = 'horizSwiper' | 'threeCol' | 'twoCol';
+export type ProductGroupMenuLayoutType = 'horizontal' | 'vertical';
 export type ProductGroupSortType =
   | 'default'
   | 'latest'
@@ -12,6 +13,22 @@ export interface ProductGroupFieldProperty {
   color: string;
   show: boolean;
 }
+
+export interface ProductGroupMenuProperty {
+  activeBackgroundColor: string;
+  activeColor: string;
+  backgroundColor: string;
+  color: string;
+  layout: ProductGroupMenuLayoutType;
+}
+
+export const PRODUCT_GROUP_MENU_DEFAULTS: ProductGroupMenuProperty = {
+  activeBackgroundColor: '#e6f4ff',
+  activeColor: '#0958d9',
+  backgroundColor: '#ffffff',
+  color: '#595959',
+  layout: 'horizontal',
+};
 
 /** 商品分组属性 */
 export interface ProductGroupProperty {
@@ -27,6 +44,7 @@ export interface ProductGroupProperty {
     price: ProductGroupFieldProperty;
   };
   layoutType: ProductGroupLayoutType;
+  menu: ProductGroupMenuProperty;
   pageSize: number;
   showAll: boolean;
   sortType: ProductGroupSortType;
@@ -46,6 +64,7 @@ export const component = {
     pageSize: 10,
     sortType: 'default',
     layoutType: 'threeCol',
+    menu: { ...PRODUCT_GROUP_MENU_DEFAULTS },
     fields: {
       name: { show: true, color: '#000' },
       price: { show: true, color: '#ff3000' },

@@ -1,4 +1,10 @@
-import type { ProductGroupSortType } from './config';
+import type {
+  ProductGroupMenuProperty,
+  ProductGroupProperty,
+  ProductGroupSortType,
+} from './config';
+
+import { PRODUCT_GROUP_MENU_DEFAULTS } from './config';
 
 export const PRODUCT_GROUP_LIMIT = 15;
 export const PRODUCT_GROUP_PAGE_SIZE_MAX = 50;
@@ -12,6 +18,22 @@ interface ProductGroupQuerySource {
 
 interface ProductGroupLike {
   id?: number;
+}
+
+type LegacyProductGroupProperty = Omit<ProductGroupProperty, 'menu'> & {
+  menu?: Partial<ProductGroupMenuProperty>;
+};
+
+export function normalizeProductGroupProperty(
+  property: LegacyProductGroupProperty,
+): ProductGroupProperty {
+  return {
+    ...property,
+    menu: {
+      ...PRODUCT_GROUP_MENU_DEFAULTS,
+      ...property.menu,
+    },
+  };
 }
 
 export function normalizeGroupIds(groupIds: number[]) {

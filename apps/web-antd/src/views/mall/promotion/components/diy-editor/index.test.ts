@@ -20,6 +20,11 @@ vi.mock('@vben/icons', () => ({
   IconifyIcon: { template: '<i />' },
 }));
 
+vi.mock('#/api/mall/product/group', () => ({
+  getGroupSpuPage: vi.fn().mockResolvedValue({ list: [], total: 0 }),
+  getSimpleGroupList: vi.fn().mockResolvedValue([]),
+}));
+
 const legacyBannerUrl = 'https://static.iocoder.cn/mall/banner-01.jpg';
 const ossBaseUrl = 'https://teaworthshare.oss-cn-chengdu.aliyuncs.com';
 
@@ -61,6 +66,53 @@ describe('diy editor', () => {
 
     expect(events.map((event) => event.type)).toEqual(['update', 'save']);
     expect(events[0]?.value).toContain(`${ossBaseUrl}/mall/diy/banner-01.jpg`);
+    app.unmount();
+    host.remove();
+  });
+
+  it('adds readable menu defaults to legacy product group data', async () => {
+    const updates: unknown[] = [];
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(DiyEditor, {
+      modelValue: {
+        components: [
+          {
+            id: 'ProductGroup',
+            property: {
+              groupIds: [1],
+              layoutType: 'threeCol',
+              pageSize: 10,
+              showAll: false,
+              sortType: 'default',
+              sticky: false,
+            },
+          },
+        ],
+        navigationBar: {},
+        page: {},
+      },
+      showNavigationBar: false,
+      'onUpdate:modelValue': (value: unknown) => updates.push(value),
+    });
+
+    app.mount(host);
+    await nextTick();
+    const buttons = host.querySelectorAll('button');
+    buttons.item(buttons.length - 1).click();
+    await nextTick();
+
+    const latest = updates.at(-1) as {
+      components: Array<{ property: { menu?: unknown } }>;
+    };
+    expect(latest.components[0]?.property.menu).toEqual({
+      activeBackgroundColor: '#e6f4ff',
+      activeColor: '#0958d9',
+      backgroundColor: '#ffffff',
+      color: '#595959',
+      layout: 'horizontal',
+    });
+
     app.unmount();
     host.remove();
   });

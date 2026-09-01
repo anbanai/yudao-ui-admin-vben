@@ -168,9 +168,6 @@ onMounted(async () => {
         <FormItem label="显示全部" name="showAll">
           <Switch v-model:checked="formData.showAll" />
         </FormItem>
-        <FormItem label="菜单吸顶" name="sticky">
-          <Switch v-model:checked="formData.sticky" />
-        </FormItem>
         <FormItem label="商品数量" name="pageSize">
           <InputNumber
             v-model:value="formData.pageSize"
@@ -191,6 +188,38 @@ onMounted(async () => {
               { label: '价格降序', value: 'priceDesc' },
             ]"
           />
+        </FormItem>
+      </Card>
+
+      <Card title="分类样式" class="property-group" :bordered="false">
+        <FormItem label="布局" name="menu.layout">
+          <RadioGroup v-model:value="formData.menu.layout">
+            <Tooltip title="顶部横排" placement="bottom">
+              <RadioButton value="horizontal">
+                <IconifyIcon icon="lucide:panel-top" class="size-6" />
+              </RadioButton>
+            </Tooltip>
+            <Tooltip title="左侧竖排" placement="bottom">
+              <RadioButton value="vertical">
+                <IconifyIcon icon="lucide:panel-left" class="size-6" />
+              </RadioButton>
+            </Tooltip>
+          </RadioGroup>
+        </FormItem>
+        <FormItem label="分类文字" name="menu.color">
+          <ColorInput v-model="formData.menu.color" />
+        </FormItem>
+        <FormItem label="选中文字" name="menu.activeColor">
+          <ColorInput v-model="formData.menu.activeColor" />
+        </FormItem>
+        <FormItem label="菜单背景" name="menu.backgroundColor">
+          <ColorInput v-model="formData.menu.backgroundColor" />
+        </FormItem>
+        <FormItem label="选中背景" name="menu.activeBackgroundColor">
+          <ColorInput v-model="formData.menu.activeBackgroundColor" />
+        </FormItem>
+        <FormItem label="菜单吸顶" name="sticky">
+          <Switch v-model:checked="formData.sticky" />
         </FormItem>
       </Card>
 
