@@ -155,6 +155,7 @@ export function useAssignMenuFormSchema(): VbenFormSchema[] {
       label: '菜单权限',
       component: 'Input',
       formItemClass: 'items-start',
+      modelPropName: 'modelValue',
     },
   ];
 }
