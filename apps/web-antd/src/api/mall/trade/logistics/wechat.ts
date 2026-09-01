@@ -119,17 +119,9 @@ export function getWechatLogisticsPending() {
   );
 }
 
-export function createWechatWaybill(orderId: number) {
-  return requestClient.post<MallWechatLogisticsApi.Waybill>(
-    `${baseUrl}/waybills/create`,
-    { orderId },
-  );
-}
-
-export function batchCreateWechatWaybills(orderIds: number[]) {
-  return requestClient.post<MallWechatLogisticsApi.Waybill[]>(
-    `${baseUrl}/waybills/batch-create`,
-    { orderIds },
+export function getWechatLogisticsHistory() {
+  return requestClient.get<MallWechatLogisticsApi.Waybill[]>(
+    `${baseUrl}/history`,
   );
 }
 
