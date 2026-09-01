@@ -5,12 +5,24 @@ import { createApp, defineComponent, h, nextTick, ref } from 'vue';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const { getSpuMock } = vi.hoisted(() => ({
-  getSpuMock: vi.fn(),
-}));
+const { getSpuMock, productFormTestState, submitAllFormMock } = vi.hoisted(
+  () => ({
+    getSpuMock: vi.fn(),
+    productFormTestState: {
+      onDescriptionUploadingChange: undefined as
+        | ((uploading: boolean) => void)
+        | undefined,
+      route: { name: 'ProductSpuDetail', params: { id: '1' } } as {
+        name: string;
+        params: Record<string, string>;
+      },
+    },
+    submitAllFormMock: vi.fn(async () => ({})),
+  }),
+);
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ name: 'ProductSpuDetail', params: { id: '1' } }),
+  useRoute: () => productFormTestState.route,
 }));
 
 vi.mock('@vben/common-ui', () => ({
@@ -62,7 +74,7 @@ vi.mock('#/adapter/form', () => ({
         }
         values.value = fields;
       }),
-      submitAllForm: vi.fn(async () => ({})),
+      submitAllForm: submitAllFormMock,
       updateSchema: vi.fn(),
     };
     return [Form, api];
@@ -86,7 +98,12 @@ vi.mock('#/views/mall/product/spu/components', () => ({
 
 vi.mock('./data', () => ({
   useDeliveryFormSchema: () => [],
-  useDescriptionFormSchema: () => [],
+  useDescriptionFormSchema: (
+    onUploadingChange?: (uploading: boolean) => void,
+  ) => {
+    productFormTestState.onDescriptionUploadingChange = onUploadingChange;
+    return [];
+  },
   useInfoFormSchema: () => [],
   useOtherFormSchema: () => [],
   useSkuFormSchema: () => [],
@@ -116,6 +133,11 @@ describe('商品 SPU 详情加载', () => {
     host?.remove();
     app = undefined;
     host = undefined;
+    productFormTestState.onDescriptionUploadingChange = undefined;
+    productFormTestState.route = {
+      name: 'ProductSpuDetail',
+      params: { id: '1' },
+    };
     vi.clearAllMocks();
   });
 
@@ -126,7 +148,8 @@ describe('商品 SPU 详情加载', () => {
       skus: [],
       sliderPicUrls: [],
     });
-    const ProductForm = (await import('./index.vue')).default as Component;
+    const productFormModule = await import('./index.vue');
+    const ProductForm = productFormModule.default as Component;
     host = document.createElement('div');
     document.body.append(host);
     app = createApp(ProductForm);
@@ -141,5 +164,29 @@ describe('商品 SPU 详情加载', () => {
     expect([...forms].every((form) => form.textContent === '测试商品')).toBe(
       true,
     );
+  });
+
+  it('商品详情图片上传期间禁用保存', async () => {
+    productFormTestState.route = { name: 'ProductSpuCreate', params: {} };
+    const productFormModule = await import('./index.vue');
+    const ProductForm = productFormModule.default as Component;
+    host = document.createElement('div');
+    document.body.append(host);
+    app = createApp(ProductForm);
+    app.mount(host);
+    await flushVueUpdates();
+
+    const saveButton = [...host.querySelectorAll('button')].find(
+      (button) => button.textContent?.replaceAll(/\s/g, '') === '保存',
+    );
+    expect(saveButton).toBeDefined();
+    expect((saveButton as HTMLButtonElement).disabled).toBe(false);
+
+    productFormTestState.onDescriptionUploadingChange?.(true);
+    await nextTick();
+
+    expect((saveButton as HTMLButtonElement).disabled).toBe(true);
+    saveButton?.click();
+    expect(submitAllFormMock).not.toHaveBeenCalled();
   });
 });

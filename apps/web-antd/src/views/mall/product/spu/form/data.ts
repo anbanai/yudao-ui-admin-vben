@@ -259,7 +259,9 @@ export function useDeliveryFormSchema(): VbenFormSchema[] {
 }
 
 /** 商品详情的表单 */
-export function useDescriptionFormSchema(): VbenFormSchema[] {
+export function useDescriptionFormSchema(
+  onUploadingChange?: (uploading: boolean) => void,
+): VbenFormSchema[] {
   return [
     {
       fieldName: 'id',
@@ -276,6 +278,7 @@ export function useDescriptionFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请输入商品详情',
         height: 1000,
+        onUploadingChange,
       },
       rules: 'required',
     },

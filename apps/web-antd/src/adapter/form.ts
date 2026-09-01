@@ -23,6 +23,7 @@ async function initSetupVbenForm() {
         ApiTreeSelect: 'modelValue',
         Checkbox: 'checked',
         Radio: 'checked',
+        RichTextarea: 'modelValue',
         Switch: 'checked',
         Upload: 'fileList',
       },

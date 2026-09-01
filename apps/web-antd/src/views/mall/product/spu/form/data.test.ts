@@ -38,3 +38,20 @@ describe('商品基础信息表单', () => {
     });
   });
 });
+
+describe('商品详情表单', () => {
+  it('把富文本图片上传状态转发给商品表单', async () => {
+    const { useDescriptionFormSchema } = await import('./data');
+    const onUploadingChange = vi.fn();
+    const descriptionField = useDescriptionFormSchema(onUploadingChange).find(
+      (item) => item.fieldName === 'description',
+    );
+
+    const componentProps = descriptionField?.componentProps as
+      | Record<string, any>
+      | undefined;
+    componentProps?.onUploadingChange(true);
+
+    expect(onUploadingChange).toHaveBeenCalledWith(true);
+  });
+});

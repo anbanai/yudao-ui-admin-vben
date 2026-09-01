@@ -35,6 +35,7 @@ const { closeCurrentTab } = useTabs();
 const activeTabName = ref('info');
 const formLoading = ref(Boolean(params.id)); // 表单详情的加载中
 const submitLoading = ref(false); // 表单提交的加载中
+const descriptionUploading = ref(false); // 商品详情图片上传中
 const hasUnsavedChanges = ref(!params.id); // 是否存在待保存的修改
 const detailLoadFailed = ref(false); // 商品详情加载是否失败
 const changeVersion = ref(0); // 表单变更版本，用于识别保存期间的修改
@@ -171,7 +172,7 @@ const [DescriptionForm, descriptionFormApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'vertical',
-  schema: useDescriptionFormSchema(),
+  schema: useDescriptionFormSchema(handleDescriptionUploadingChange),
   showDefaultActions: false,
   handleValuesChange: markUnsavedChanges,
 });
@@ -204,6 +205,11 @@ function markUnsavedChanges() {
   hasUnsavedChanges.value = true;
 }
 
+/** 更新商品详情图片上传状态 */
+function handleDescriptionUploadingChange(uploading: boolean) {
+  descriptionUploading.value = uploading;
+}
+
 /** 转换表单值为接口提交格式 */
 function prepareSubmissionValues(values: MallSpuApi.Spu): MallSpuApi.Spu {
   const preparedValues = {
@@ -229,6 +235,7 @@ async function handleSubmit() {
   if (
     formLoading.value ||
     detailLoadFailed.value ||
+    descriptionUploading.value ||
     !hasUnsavedChanges.value ||
     submitLoading.value
   ) {
@@ -459,6 +466,7 @@ onMounted(async () => {
             :disabled="
               formLoading ||
               detailLoadFailed ||
+              descriptionUploading ||
               !hasUnsavedChanges ||
               submitLoading
             "

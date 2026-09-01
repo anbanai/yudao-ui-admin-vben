@@ -42,7 +42,7 @@ const props = withDefaults(defineProps<TinymacProps>(), {
   showImageUpload: true,
 });
 
-const emit = defineEmits(['change']);
+const emit = defineEmits(['change', 'uploadingChange']);
 
 interface TinymacProps {
   options?: Partial<InitOptions>;
@@ -55,6 +55,23 @@ interface TinymacProps {
 
 /** 外部使用 v-model 绑定值 */
 const modelValue = defineModel('modelValue', { default: '', type: String });
+const editorValue = ref(modelValue.value);
+const pendingUploadIds = new Set<string>();
+
+watch(
+  () => modelValue.value,
+  (value) => {
+    if (value !== editorValue.value) {
+      editorValue.value = value;
+    }
+  },
+);
+
+watch(editorValue, (value) => {
+  if (pendingUploadIds.size === 0 && value !== modelValue.value) {
+    modelValue.value = value;
+  }
+});
 
 /** TinyMCE 自托管：https://www.jianshu.com/p/59a9c3802443 */
 const tinymceScriptSrc = `${import.meta.env.VITE_BASE}tinymce/tinymce.min.js`;
@@ -207,6 +224,7 @@ function setEditorMode() {
 function destroy() {
   const editor = unref(editorRef);
   editor?.destroy();
+  editorRef.value = undefined;
 }
 
 function initEditor() {
@@ -221,7 +239,7 @@ function initSetup(e: any) {
   if (!editor) {
     return;
   }
-  const value = modelValue.value || '';
+  const value = editorValue.value || '';
 
   editor.setContent(value);
   bindModelHandlers(editor);
@@ -239,6 +257,23 @@ function setValue(editor: Record<string, any>, val?: string, prevVal?: string) {
   }
 }
 
+function getEditorContent(editor: EditorType): string {
+  const outputFormat = attrs.outputFormat;
+  return outputFormat === 'html' || outputFormat === 'text'
+    ? editor.getContent({ format: outputFormat })
+    : editor.getContent();
+}
+
+function escapeHtmlAttribute(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+}
+
+function getImageHtml(url: string, editor?: EditorType): string {
+  return editor
+    ? editor.dom.createHTML('img', { src: url })
+    : `<img src="${escapeHtmlAttribute(url)}"/>`;
+}
+
 function bindModelHandlers(editor: any) {
   const modelEvents = attrs.modelEvents ?? null;
   const normalizedEvents = Array.isArray(modelEvents)
@@ -246,7 +281,7 @@ function bindModelHandlers(editor: any) {
     : modelEvents;
 
   watch(
-    () => modelValue.value,
+    () => editorValue.value,
     (val, prevVal) => {
       setValue(editor, val, prevVal);
     },
@@ -262,39 +297,45 @@ function bindModelHandlers(editor: any) {
   });
 }
 
-function getUploadingImgName(name: string) {
-  return `[uploading:${name}]`;
+function getUploadingImgName(uploadId: string) {
+  return `[uploading:${uploadId}]`;
 }
 
-function handleImageUploading(name: string) {
+function handleImageUploading(uploadId: string) {
   const editor = unref(editorRef);
   if (!editor) {
     return;
   }
-  editor.execCommand('mceInsertContent', false, getUploadingImgName(name));
-  const content = editor?.getContent() ?? '';
-  setValue(editor, content);
+  pendingUploadIds.add(uploadId);
+  editor.execCommand('mceInsertContent', false, getUploadingImgName(uploadId));
+  editorValue.value = getEditorContent(editor);
 }
 
-function handleDone(name: string, url: string) {
+function handleDone(uploadId: string, url: string) {
   const editor = unref(editorRef);
-  if (!editor) {
-    return;
+  const content = editor ? editor.getContent() : editorValue.value;
+  const imageHtml = getImageHtml(url, editor);
+  const val = content?.replace(getUploadingImgName(uploadId), imageHtml) ?? '';
+  if (editor) {
+    setValue(editor, val);
   }
-  const content = editor?.getContent() ?? '';
-  const val =
-    content?.replace(getUploadingImgName(name), `<img src="${url}"/>`) ?? '';
-  setValue(editor, val);
+  pendingUploadIds.delete(uploadId);
+  editorValue.value = editor ? getEditorContent(editor) : val;
 }
 
-function handleError(name: string) {
+function handleError(uploadId: string) {
   const editor = unref(editorRef);
-  if (!editor) {
-    return;
+  const content = editor ? editor.getContent() : editorValue.value;
+  const val = content?.replace(getUploadingImgName(uploadId), '') ?? '';
+  if (editor) {
+    setValue(editor, val);
   }
-  const content = editor?.getContent() ?? '';
-  const val = content?.replace(getUploadingImgName(name), '') ?? '';
-  setValue(editor, val);
+  pendingUploadIds.delete(uploadId);
+  editorValue.value = editor ? getEditorContent(editor) : val;
+}
+
+function handleUploadingChange(uploading: boolean) {
+  emit('uploadingChange', uploading);
 }
 </script>
 
@@ -308,10 +349,11 @@ function handleError(name: string) {
       @done="handleDone"
       @error="handleError"
       @uploading="handleImageUploading"
+      @uploading-change="handleUploadingChange"
     />
     <Editor
       v-if="!initOptions.inline && init"
-      v-model="modelValue"
+      v-model="editorValue"
       :init="initOptions"
       :style="{ visibility: 'hidden', zIndex: 3000 }"
       :tinymce-script-src="tinymceScriptSrc"

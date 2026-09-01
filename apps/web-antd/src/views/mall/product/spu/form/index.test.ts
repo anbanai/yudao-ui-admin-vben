@@ -27,7 +27,7 @@ describe('商品 SPU 表单提交状态', () => {
       source.indexOf('/** 获得详情 */'),
     );
     expect(handleSubmit).toMatch(
-      /async function handleSubmit\(\) \{\s+if \(\s+formLoading\.value\s+\|\|\s+detailLoadFailed\.value\s+\|\|\s+!hasUnsavedChanges\.value\s+\|\|\s+submitLoading\.value\s+\) \{\s+return;/,
+      /async function handleSubmit\(\) \{\s+if \(\s+formLoading\.value\s+\|\|\s+detailLoadFailed\.value\s+\|\|\s+descriptionUploading\.value\s+\|\|\s+!hasUnsavedChanges\.value\s+\|\|\s+submitLoading\.value\s+\) \{\s+return;/,
     );
     expect(handleSubmit.indexOf('submitLoading.value = true')).toBeLessThan(
       handleSubmit.indexOf('submitAllForm'),
@@ -39,12 +39,12 @@ describe('商品 SPU 表单提交状态', () => {
     expect(source).toMatch(/const hasUnsavedChanges = ref\(!params\.id\)/);
     expect(source).toMatch(/const detailLoadFailed = ref\(false\)/);
     expect(source).toMatch(
-      /formLoading\.value\s+\|\|\s+detailLoadFailed\.value\s+\|\|\s+!hasUnsavedChanges\.value\s+\|\|\s+submitLoading\.value/,
+      /formLoading\.value\s+\|\|\s+detailLoadFailed\.value\s+\|\|\s+descriptionUploading\.value\s+\|\|\s+!hasUnsavedChanges\.value\s+\|\|\s+submitLoading\.value/,
     );
     expect(source).toMatch(/hasUnsavedChanges\.value = false/);
     expect(source).toMatch(/hasUnsavedChanges\.value = true/);
     expect(source).toMatch(
-      /formLoading\s+\|\|\s+detailLoadFailed\s+\|\|\s+!hasUnsavedChanges\s+\|\|\s+submitLoading/,
+      /formLoading\s+\|\|\s+detailLoadFailed\s+\|\|\s+descriptionUploading\s+\|\|\s+!hasUnsavedChanges\s+\|\|\s+submitLoading/,
     );
     expect(source).toMatch(
       /if \(changeVersion\.value === submittedChangeVersion\) \{\s+hasUnsavedChanges\.value = false;/,

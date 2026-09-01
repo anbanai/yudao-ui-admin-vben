@@ -4,6 +4,7 @@ import type { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface
 import { computed, ref } from 'vue';
 
 import { $t } from '@vben/locales';
+import { buildShortUUID } from '@vben/utils';
 
 import { Button, Upload } from 'ant-design-vue';
 
@@ -22,9 +23,9 @@ const props = defineProps({
   }, // 图片上传，是否放到全屏的位置
 });
 
-const emit = defineEmits(['uploading', 'done', 'error']);
+const emit = defineEmits(['uploading', 'uploadingChange', 'done', 'error']);
 
-const uploading = ref(false);
+const uploadingCount = ref(0);
 
 const getButtonProps = computed(() => {
   const { disabled } = props;
@@ -34,23 +35,25 @@ const getButtonProps = computed(() => {
 });
 
 async function customRequest(info: UploadRequestOption<any>) {
-  // 1. emit 上传中
   const file = info.file as File;
-  const name = file?.name;
-  if (!uploading.value) {
-    emit('uploading', name);
-    uploading.value = true;
+  const uploadId = buildShortUUID('tinymce-upload');
+  uploadingCount.value += 1;
+  emit('uploading', uploadId);
+  if (uploadingCount.value === 1) {
+    emit('uploadingChange', true);
   }
 
-  // 2. 执行上传
   const { httpRequest } = useUpload();
   try {
     const url = await httpRequest(file);
-    emit('done', name, url);
+    emit('done', uploadId, url);
   } catch {
-    emit('error', name);
+    emit('error', uploadId);
   } finally {
-    uploading.value = false;
+    uploadingCount.value = Math.max(0, uploadingCount.value - 1);
+    if (uploadingCount.value === 0) {
+      emit('uploadingChange', false);
+    }
   }
 }
 </script>

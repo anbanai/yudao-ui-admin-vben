@@ -39,14 +39,34 @@ const TestApiSelect = defineComponent({
   },
 });
 
+const TestRichTextarea = defineComponent({
+  emits: ['update:modelValue'],
+  setup(_props, { emit }) {
+    return () =>
+      h(
+        'button',
+        {
+          onClick: () =>
+            emit(
+              'update:modelValue',
+              '<p><img src="https://example.com/product.png"></p>',
+            ),
+          type: 'button',
+        },
+        'insert product image',
+      );
+  },
+});
+
 const API_COMPONENT_NAMES = [
   'ApiCascader',
   'ApiSelect',
   'ApiTreeSelect',
 ] as const;
+const FORM_COMPONENT_NAMES = [...API_COMPONENT_NAMES, 'RichTextarea'] as const;
 const originalComponents = globalShareState.getComponents();
 const originalFormRegistry = new Map(
-  API_COMPONENT_NAMES.map((component) => [
+  FORM_COMPONENT_NAMES.map((component) => [
     component,
     {
       bindEvent: COMPONENT_BIND_EVENT_MAP[component],
@@ -65,9 +85,9 @@ describe('web-antd form adapter', () => {
       app.unmount();
     }
     globalShareState.setComponents(originalComponents);
-    for (const component of API_COMPONENT_NAMES) {
+    for (const component of FORM_COMPONENT_NAMES) {
       const original = originalFormRegistry.get(component)!;
-      if (original.hasComponent) {
+      if (original.hasComponent && original.component) {
         COMPONENT_MAP[component] = original.component;
       } else {
         Reflect.deleteProperty(COMPONENT_MAP, component);
@@ -110,4 +130,35 @@ describe('web-antd form adapter', () => {
       expect(await formApi.getValues()).toEqual({ roleIds: [3] });
     },
   );
+
+  it('writes RichTextarea model updates back to the form field', async () => {
+    globalShareState.setComponents({ RichTextarea: TestRichTextarea });
+    await initSetupVbenForm();
+    const [Form, formApi] = useVbenForm({
+      schema: [
+        {
+          component: 'RichTextarea',
+          fieldName: 'description',
+          rules: 'required',
+        },
+      ],
+      showDefaultActions: false,
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(Form);
+    apps.push(app);
+    app.mount(host);
+    await nextTick();
+    await Promise.resolve();
+    await nextTick();
+
+    host.querySelector('button')?.click();
+    await nextTick();
+
+    expect(await formApi.getValues()).toEqual({
+      description: '<p><img src="https://example.com/product.png"></p>',
+    });
+    await expect(formApi.validate()).resolves.toBeTruthy();
+  });
 });
