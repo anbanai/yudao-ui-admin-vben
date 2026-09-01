@@ -1,34 +1,23 @@
 import type { ProductGroupSortType } from './config';
 
-export const PRODUCT_GROUP_CATEGORY_LIMIT = 15;
+export const PRODUCT_GROUP_LIMIT = 15;
 export const PRODUCT_GROUP_PAGE_SIZE_MAX = 50;
 export const PRODUCT_GROUP_PAGE_SIZE_MIN = 1;
 
 interface ProductGroupQuerySource {
-  categoryIds: number[];
+  groupIds: number[];
   pageSize: number;
   sortType: ProductGroupSortType;
 }
 
-interface ProductCategoryLike {
+interface ProductGroupLike {
   id?: number;
 }
 
-export function normalizeCategoryIds(categoryIds: number[]) {
+export function normalizeGroupIds(groupIds: number[]) {
   return [
-    ...new Set(categoryIds.filter((id) => Number.isInteger(id) && id > 0)),
-  ].slice(0, PRODUCT_GROUP_CATEGORY_LIMIT);
-}
-
-export function normalizeTreeSelectCategoryIds(values: unknown[]) {
-  return normalizeCategoryIds(
-    values.map((item) => {
-      if (typeof item === 'object' && item !== null && 'value' in item) {
-        return Number(item.value);
-      }
-      return Number(item);
-    }),
-  );
+    ...new Set(groupIds.filter((id) => Number.isInteger(id) && id > 0)),
+  ].slice(0, PRODUCT_GROUP_LIMIT);
 }
 
 export function clampProductGroupPageSize(pageSize: number) {
@@ -39,18 +28,18 @@ export function clampProductGroupPageSize(pageSize: number) {
   );
 }
 
-export function orderSelectedCategories<T extends ProductCategoryLike>(
-  categoryIds: number[],
-  categories: T[],
+export function orderSelectedGroups<T extends ProductGroupLike>(
+  groupIds: number[],
+  groups: T[],
 ) {
-  const categoryMap = new Map(
-    categories
-      .filter((category) => typeof category.id === 'number')
-      .map((category) => [category.id as number, category]),
+  const groupMap = new Map(
+    groups
+      .filter((group) => typeof group.id === 'number')
+      .map((group) => [group.id as number, group]),
   );
-  return normalizeCategoryIds(categoryIds)
-    .map((id) => categoryMap.get(id))
-    .filter((category): category is T => Boolean(category));
+  return normalizeGroupIds(groupIds)
+    .map((id) => groupMap.get(id))
+    .filter((group): group is T => Boolean(group));
 }
 
 function getSortParams(sortType: ProductGroupSortType) {
@@ -79,11 +68,10 @@ export function buildProductGroupQuery(
 ) {
   return {
     ...(tab === 'all'
-      ? { categoryIds: normalizeCategoryIds(source.categoryIds) }
-      : { categoryId: tab }),
+      ? { groupIds: normalizeGroupIds(source.groupIds) }
+      : { groupIds: [tab] }),
     pageNo: 1,
     pageSize: clampProductGroupPageSize(source.pageSize),
-    tabType: 0,
     ...getSortParams(source.sortType),
   };
 }
@@ -136,9 +124,9 @@ export function createPreviewProductLoader<T, Q>(
 }
 
 export function getProductGroupValidationError(property: {
-  categoryIds?: number[];
+  groupIds?: number[];
 }) {
-  return normalizeCategoryIds(property.categoryIds || []).length === 0
-    ? '商品分组至少需要选择一个商品分类'
+  return normalizeGroupIds(property.groupIds || []).length === 0
+    ? '商品分组至少需要选择一个分组'
     : undefined;
 }

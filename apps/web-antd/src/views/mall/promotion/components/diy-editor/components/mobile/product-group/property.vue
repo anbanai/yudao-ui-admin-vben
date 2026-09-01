@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { ProductGroupProperty } from './config';
 
-import type { MallCategoryApi } from '#/api/mall/product/category';
+import type { MallProductGroupApi } from '#/api/mall/product/group';
 
 import { computed, onMounted, ref, watch } from 'vue';
 
 import { CommonStatusEnum } from '@vben/constants';
 import { IconifyIcon } from '@vben/icons';
-import { handleTree } from '@vben/utils';
 
 import { useVModel } from '@vueuse/core';
 import {
@@ -23,21 +22,19 @@ import {
   Slider,
   Switch,
   Tooltip,
-  TreeSelect,
 } from 'ant-design-vue';
 import VueDraggable from 'vuedraggable';
 
-import { getCategoryList } from '#/api/mall/product/category';
+import { getSimpleGroupList } from '#/api/mall/product/group';
 import UploadImg from '#/components/upload/image-upload.vue';
 import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 import {
   clampProductGroupPageSize,
-  normalizeCategoryIds,
-  normalizeTreeSelectCategoryIds,
-  orderSelectedCategories,
-  PRODUCT_GROUP_CATEGORY_LIMIT,
+  normalizeGroupIds,
+  orderSelectedGroups,
+  PRODUCT_GROUP_LIMIT,
 } from './utils';
 
 defineOptions({ name: 'ProductGroupProperty' });
@@ -46,34 +43,34 @@ const props = defineProps<{ modelValue: ProductGroupProperty }>();
 const emit = defineEmits(['update:modelValue']);
 const formData = useVModel(props, 'modelValue', emit);
 
-const categories = ref<MallCategoryApi.Category[]>([]);
-const categoryTree = computed(() =>
-  handleTree([...categories.value], 'id', 'parentId'),
+const groups = ref<MallProductGroupApi.Group[]>([]);
+const groupOptions = computed(() =>
+  groups.value.map((group) => ({
+    label: group.name,
+    value: group.id,
+    disabled: group.status !== CommonStatusEnum.ENABLE,
+  })),
 );
-const selectedCategories = computed(() =>
-  orderSelectedCategories(formData.value.categoryIds, categories.value),
+const selectedGroups = computed(() =>
+  orderSelectedGroups(formData.value.groupIds, groups.value),
 );
-const selectedCategoryIds = computed({
-  get: () => formData.value.categoryIds,
-  set: (value: unknown[]) => {
-    formData.value.categoryIds = normalizeTreeSelectCategoryIds(value || []);
-  },
-});
 
-function getCategoryItemKey(categoryId: number) {
-  return categoryId;
+function getGroupItemKey(groupId: number) {
+  return groupId;
 }
 
-function getCategoryName(categoryId: number) {
+function getGroupName(groupId: number) {
   return (
-    categories.value.find((category) => category.id === categoryId)?.name ||
-    `分类 ${categoryId}`
+    groups.value.find((group) => group.id === groupId)?.name ||
+    `分组 ${groupId}`
   );
 }
 
-function handleRemoveCategory(categoryId: number) {
-  formData.value.categoryIds = formData.value.categoryIds.filter(
-    (id) => id !== categoryId,
+function handleRemoveGroup(groupId: number) {
+  const group = groups.value.find((item) => item.id === groupId);
+  if (group?.status !== CommonStatusEnum.ENABLE) return;
+  formData.value.groupIds = formData.value.groupIds.filter(
+    (id) => id !== groupId,
   );
 }
 
@@ -82,11 +79,11 @@ function normalizePageSize() {
 }
 
 watch(
-  () => formData.value.categoryIds,
+  () => formData.value.groupIds,
   (value) => {
-    const normalized = normalizeCategoryIds(value || []);
+    const normalized = normalizeGroupIds(value || []);
     if (normalized.join(',') !== (value || []).join(',')) {
-      formData.value.categoryIds = normalized;
+      formData.value.groupIds = normalized;
     }
   },
   { deep: true },
@@ -94,12 +91,9 @@ watch(
 
 onMounted(async () => {
   try {
-    const data = await getCategoryList({ status: CommonStatusEnum.ENABLE });
-    categories.value = data.filter(
-      (category) => category.status === CommonStatusEnum.ENABLE,
-    );
+    groups.value = await getSimpleGroupList();
   } catch {
-    categories.value = [];
+    groups.value = [];
   }
 });
 </script>
@@ -111,34 +105,32 @@ onMounted(async () => {
       :wrapper-col="{ span: 18 }"
       :model="formData"
     >
-      <Card title="商品分类" class="property-group" :bordered="false">
-        <FormItem label="选择分类" required>
-          <TreeSelect
-            v-model:value="selectedCategoryIds"
-            :tree-data="categoryTree"
-            :field-names="{ children: 'children', label: 'name', value: 'id' }"
+      <Card title="商品分组" class="property-group" :bordered="false">
+        <FormItem label="选择分组" required>
+          <Select
+            v-model:value="formData.groupIds"
+            :options="groupOptions"
             :max-tag-count="2"
-            :max-tag-placeholder="() => `已选 ${selectedCategoryIds.length} 个`"
+            :max-count="PRODUCT_GROUP_LIMIT"
+            :max-tag-placeholder="() => `已选 ${formData.groupIds.length} 个`"
             allow-clear
-            multiple
+            mode="multiple"
             show-search
-            tree-checkable
-            tree-check-strictly
-            tree-default-expand-all
-            placeholder="请选择商品分类"
+            option-filter-prop="label"
+            placeholder="请选择商品分组"
           />
           <div class="mt-1 text-xs text-gray-500">
-            最多选择 {{ PRODUCT_GROUP_CATEGORY_LIMIT }} 个分类
+            最多选择 {{ PRODUCT_GROUP_LIMIT }} 个分组，禁用分组仅保留已有关系
           </div>
         </FormItem>
 
-        <div v-if="selectedCategories.length" class="mt-2">
+        <div v-if="selectedGroups.length" class="mt-2">
           <div class="mb-2 text-xs text-gray-500">拖动调整菜单顺序</div>
           <VueDraggable
-            v-model="formData.categoryIds"
+            v-model="formData.groupIds"
             :animation="200"
-            :item-key="getCategoryItemKey"
-            handle=".category-drag-handle"
+            :item-key="getGroupItemKey"
+            handle=".group-drag-handle"
           >
             <template #item="{ element }">
               <div
@@ -146,10 +138,10 @@ onMounted(async () => {
               >
                 <IconifyIcon
                   icon="lucide:grip-vertical"
-                  class="category-drag-handle cursor-move text-gray-400"
+                  class="group-drag-handle cursor-move text-gray-400"
                 />
                 <span class="min-w-0 flex-1 truncate text-sm">
-                  {{ getCategoryName(element) }}
+                  {{ getGroupName(element) }}
                 </span>
                 <Tooltip title="删除">
                   <Button
@@ -157,7 +149,11 @@ onMounted(async () => {
                     danger
                     shape="circle"
                     size="small"
-                    @click="handleRemoveCategory(element)"
+                    :disabled="
+                      groups.find((item) => item.id === element)?.status !==
+                      CommonStatusEnum.ENABLE
+                    "
+                    @click="handleRemoveGroup(element)"
                   >
                     <template #icon>
                       <IconifyIcon icon="lucide:x" />

@@ -46,6 +46,7 @@ const skuListRef = ref(); // 商品属性列表 Ref
 const formData = ref<MallSpuApi.Spu>({
   name: '',
   categoryId: undefined,
+  groupIds: [],
   keyword: '',
   picUrl: '',
   sliderPicUrls: [],
