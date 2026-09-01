@@ -7,15 +7,14 @@ import {
   createPreviewProductLoader,
   createRequestGuard,
   getProductGroupValidationError,
-  normalizeCategoryIds,
-  normalizeTreeSelectCategoryIds,
-  orderSelectedCategories,
+  normalizeGroupIds,
+  orderSelectedGroups,
 } from './utils';
 
 describe('product group configuration', () => {
   it('provides conservative defaults', () => {
     expect(component.property).toMatchObject({
-      categoryIds: [],
+      groupIds: [],
       layoutType: 'threeCol',
       pageSize: 10,
       showAll: false,
@@ -24,9 +23,9 @@ describe('product group configuration', () => {
     });
   });
 
-  it('deduplicates categories and limits selection to 15 items', () => {
+  it('deduplicates groups and limits selection to 15 items', () => {
     expect(
-      normalizeCategoryIds([
+      normalizeGroupIds([
         1,
         2,
         1,
@@ -35,22 +34,12 @@ describe('product group configuration', () => {
     ).toEqual(Array.from({ length: 15 }, (_, i) => i + 1));
   });
 
-  it('normalizes strict tree-select label values to category ids', () => {
-    expect(
-      normalizeTreeSelectCategoryIds([
-        { label: '黄茶', value: 2 },
-        1,
-        { label: '重复黄茶', value: 2 },
-      ]),
-    ).toEqual([2, 1]);
-  });
-
-  it('restores categories to the configured order and drops unavailable values', () => {
-    const categories = [
+  it('restores groups to the configured order and drops unavailable values', () => {
+    const groups = [
       { id: 1, name: '黄茶' },
       { id: 2, name: '绿茶' },
     ];
-    expect(orderSelectedCategories([2, 99, 1], categories)).toEqual([
+    expect(orderSelectedGroups([2, 99, 1], groups)).toEqual([
       { id: 2, name: '绿茶' },
       { id: 1, name: '黄茶' },
     ]);
@@ -68,17 +57,16 @@ describe('product group configuration', () => {
       expect(
         buildProductGroupQuery(
           {
-            categoryIds: [3, 5],
+            groupIds: [3, 5],
             pageSize: 10,
             sortType,
           },
           3,
         ),
       ).toEqual({
-        categoryId: 3,
+        groupIds: [3],
         pageNo: 1,
         pageSize: 10,
-        tabType: 0,
         ...sorting,
       });
     },
@@ -88,14 +76,13 @@ describe('product group configuration', () => {
     expect(clampProductGroupPageSize(100)).toBe(50);
     expect(
       buildProductGroupQuery(
-        { categoryIds: [3, 5], pageSize: 100, sortType: 'default' },
+        { groupIds: [3, 5], pageSize: 100, sortType: 'default' },
         'all',
       ),
     ).toEqual({
-      categoryIds: [3, 5],
+      groupIds: [3, 5],
       pageNo: 1,
       pageSize: 50,
-      tabType: 0,
     });
   });
 
@@ -130,12 +117,10 @@ describe('product group configuration', () => {
     expect(await secondRequest).toEqual({ accepted: false, list: [] });
   });
 
-  it('requires at least one product category before saving', () => {
-    expect(getProductGroupValidationError({ categoryIds: [] })).toBe(
-      '商品分组至少需要选择一个商品分类',
+  it('requires at least one product group before saving', () => {
+    expect(getProductGroupValidationError({ groupIds: [] })).toBe(
+      '商品分组至少需要选择一个分组',
     );
-    expect(
-      getProductGroupValidationError({ categoryIds: [1] }),
-    ).toBeUndefined();
+    expect(getProductGroupValidationError({ groupIds: [1] })).toBeUndefined();
   });
 });

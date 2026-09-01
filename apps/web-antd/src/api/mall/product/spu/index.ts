@@ -8,6 +8,7 @@ export namespace MallSpuApi {
     id?: number; // 商品编号
     name?: string; // 商品名称
     categoryId?: number; // 商品分类
+    groupIds?: number[]; // 商品分组
     keyword?: string; // 关键字
     unit?: number; // 单位
     picUrl?: string; // 商品封面图
@@ -33,6 +34,7 @@ export namespace MallSpuApi {
     createTime?: Date; // 商品创建时间
     status?: number; // 商品状态
     browseCount?: number; // 浏览量
+    groupSort?: number; // 组内排序（仅分组成员分页返回）
   }
 
   /** 商品 SKU */

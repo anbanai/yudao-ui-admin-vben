@@ -21,7 +21,7 @@ export interface ProductGroupProperty {
   };
   borderRadiusBottom: number;
   borderRadiusTop: number;
-  categoryIds: number[];
+  groupIds: number[];
   fields: {
     name: ProductGroupFieldProperty;
     price: ProductGroupFieldProperty;
@@ -40,7 +40,7 @@ export const component = {
   name: '商品分组',
   icon: 'lucide:panels-top-left',
   property: {
-    categoryIds: [],
+    groupIds: [],
     showAll: false,
     sticky: false,
     pageSize: 10,

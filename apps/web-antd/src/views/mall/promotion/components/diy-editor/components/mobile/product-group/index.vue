@@ -2,7 +2,7 @@
 import type { ProductListProperty } from '../product-list/config';
 import type { ProductGroupProperty } from './config';
 
-import type { MallCategoryApi } from '#/api/mall/product/category';
+import type { MallProductGroupApi } from '#/api/mall/product/group';
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
 import { computed, onMounted, ref, watch } from 'vue';
@@ -11,37 +11,33 @@ import { CommonStatusEnum } from '@vben/constants';
 
 import { Tabs } from 'ant-design-vue';
 
-import { getCategoryList } from '#/api/mall/product/category';
-import { getSpuPage } from '#/api/mall/product/spu';
+import { getGroupSpuPage, getSimpleGroupList } from '#/api/mall/product/group';
 
 import ProductList from '../product-list/index.vue';
 import {
   buildProductGroupQuery,
   createPreviewProductLoader,
-  orderSelectedCategories,
+  orderSelectedGroups,
 } from './utils';
 
 defineOptions({ name: 'ProductGroup' });
 
 const props = defineProps<{ property: ProductGroupProperty }>();
 
-const availableCategories = ref<MallCategoryApi.Category[]>([]);
+const availableGroups = ref<MallProductGroupApi.Group[]>([]);
 const activeKey = ref('');
 const spuList = ref<MallSpuApi.Spu[]>([]);
 
-const selectedCategories = computed(() =>
-  orderSelectedCategories(
-    props.property.categoryIds,
-    availableCategories.value,
-  ),
+const selectedGroups = computed(() =>
+  orderSelectedGroups(props.property.groupIds, availableGroups.value),
 );
 const tabs = computed(() => [
-  ...(props.property.showAll && selectedCategories.value.length > 0
+  ...(props.property.showAll && selectedGroups.value.length > 0
     ? [{ id: 'all', name: '全部' }]
     : []),
-  ...selectedCategories.value.map((category) => ({
-    id: String(category.id),
-    name: category.name,
+  ...selectedGroups.value.map((group) => ({
+    id: String(group.id),
+    name: group.name,
   })),
 ]);
 const showTabs = computed(() => tabs.value.length > 1);
@@ -50,16 +46,14 @@ const productListProperty = computed(
 );
 const queryProperty = computed(() => ({
   ...props.property,
-  categoryIds: selectedCategories.value.map(
-    (category) => category.id as number,
-  ),
+  groupIds: selectedGroups.value.map((group) => group.id as number),
 }));
 type ProductGroupQuery = ReturnType<typeof buildProductGroupQuery>;
 const productLoader = createPreviewProductLoader<
   MallSpuApi.Spu,
   ProductGroupQuery
 >(async (query) => {
-  const result = await getSpuPage(query);
+  const result = await getGroupSpuPage(query);
   return result.list || [];
 });
 
@@ -95,7 +89,7 @@ function resetProducts() {
 watch(activeKey, () => void loadActiveTab());
 watch(
   () => [
-    props.property.categoryIds,
+    props.property.groupIds,
     props.property.pageSize,
     props.property.showAll,
     props.property.sortType,
@@ -106,14 +100,12 @@ watch(
 
 onMounted(async () => {
   try {
-    const categories = await getCategoryList({
-      status: CommonStatusEnum.ENABLE,
-    });
-    availableCategories.value = categories.filter(
-      (category) => category.status === CommonStatusEnum.ENABLE,
+    const groups = await getSimpleGroupList();
+    availableGroups.value = groups.filter(
+      (group) => group.status === CommonStatusEnum.ENABLE,
     );
   } catch {
-    availableCategories.value = [];
+    availableGroups.value = [];
   }
   resetProducts();
 });
