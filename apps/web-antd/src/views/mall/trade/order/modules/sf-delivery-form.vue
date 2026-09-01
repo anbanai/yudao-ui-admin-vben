@@ -22,6 +22,11 @@ import {
   getSfAccounts,
 } from '#/api/mall/trade/logistics/sf';
 
+import {
+  getPrintTaskErrorMessage,
+  isPrintTaskQueued,
+} from '../../logistics/sf/delivery-status';
+
 const emit = defineEmits(['success']);
 const order = ref<MallOrderApi.Order>();
 const accounts = ref<MallSfLogisticsApi.Account[]>([]);
@@ -56,7 +61,7 @@ const [Modal, modalApi] = useVbenModal({
         deviceId: deviceId.value,
         orderId: order.value.id,
       });
-      if (result.value.printStatus) {
+      if (isPrintTaskQueued(result.value.printStatus)) {
         message.success('顺丰运单和打印任务已创建，等待 PrintBridge 拉取');
         emit('success');
         await modalApi.close();
@@ -110,7 +115,7 @@ const [Modal, modalApi] = useVbenModal({
       message="创建成功后，PrintBridge 将自动拉取 100×150 面单；只有打印回执 success 才会自动发货。"
     />
     <Result
-      v-else-if="result.printStatus"
+      v-else-if="isPrintTaskQueued(result.printStatus)"
       status="success"
       title="打印任务已创建"
     >
@@ -123,7 +128,7 @@ const [Modal, modalApi] = useVbenModal({
       type="error"
       show-icon
       :message="
-        result.errorMessage || '顺丰运单或面单创建失败，请查看运单管理后重试'
+        getPrintTaskErrorMessage(result.printStatus, result.errorMessage)
       "
     />
   </Modal>

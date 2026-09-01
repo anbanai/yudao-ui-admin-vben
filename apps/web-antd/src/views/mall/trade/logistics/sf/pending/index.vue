@@ -24,6 +24,11 @@ import {
   getSfAccounts,
 } from '#/api/mall/trade/logistics/sf';
 
+import {
+  getPrintTaskErrorMessage,
+  isPrintTaskQueued,
+} from '../delivery-status';
+
 const loading = ref(false);
 const batchSubmitting = ref(false);
 const submittingOrderIds = ref<Set<number>>(new Set());
@@ -87,8 +92,10 @@ async function createOne(orderId: number) {
       accountId: accountId.value,
       deviceId: deviceId.value,
     });
-    if (!result.printStatus) {
-      message.error(result.errorMessage || '运单或面单创建失败');
+    if (!isPrintTaskQueued(result.printStatus)) {
+      message.error(
+        getPrintTaskErrorMessage(result.printStatus, result.errorMessage),
+      );
       return;
     }
     message.success(`运单 ${result.waybillNo} 已进入打印队列`);
@@ -119,7 +126,9 @@ async function createBatch() {
       accountId: accountId.value,
       deviceId: deviceId.value,
     });
-    const failed = results.filter((item) => !item.printStatus);
+    const failed = results.filter(
+      (item) => !isPrintTaskQueued(item.printStatus),
+    );
     failed.length > 0
       ? message.warning(
           `${failed.length} 个订单未生成打印任务，请到运单管理查看`,
