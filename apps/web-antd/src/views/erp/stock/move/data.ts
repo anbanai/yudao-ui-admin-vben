@@ -18,10 +18,7 @@ export function useFormSchema(formType: FormType): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'no',

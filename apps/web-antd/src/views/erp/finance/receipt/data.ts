@@ -19,10 +19,7 @@ export function useFormSchema(formType: FormType): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'no',
@@ -161,15 +158,6 @@ export function useFormSchema(formType: FormType): VbenFormSchema[] {
         precision: 2,
         formatter: erpPriceInputFormatter,
         disabled: true,
-      },
-      dependencies: {
-        triggerFields: ['totalPrice', 'discountPrice'],
-        componentProps: (values) => {
-          const totalPrice = values.totalPrice || 0;
-          const discountPrice = values.discountPrice || 0;
-          values.receiptPrice = totalPrice - discountPrice;
-          return {};
-        },
       },
     },
   ];

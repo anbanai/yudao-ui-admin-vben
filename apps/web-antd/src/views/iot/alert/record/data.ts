@@ -72,16 +72,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['productId'],
-        componentProps: (values) => {
-          return {
-            params: { productId: values.productId },
-          };
-        },
-        trigger: (values, formApi) => {
-          if (values.deviceId !== undefined) {
-            formApi.setFieldValue('deviceId', undefined);
-          }
-        },
+        resolve: ({ values }) => ({
+          componentProps: { params: { productId: values.productId } },
+        }),
       },
     },
     {

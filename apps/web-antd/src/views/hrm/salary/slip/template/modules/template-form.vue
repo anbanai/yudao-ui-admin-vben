@@ -45,10 +45,7 @@ const [Form, formApi] = useVbenForm({
   schema: [
     {
       component: 'Input',
-      dependencies: {
-        show: false,
-        triggerFields: ['id'],
-      },
+      hide: true,
       fieldName: 'id',
       label: '编号',
     },

@@ -72,13 +72,16 @@ const [Form, formApi] = useVbenForm({
         formData.value.supplierId = values.supplierId;
       }
       // 目的：同步到 item-form 组件，触发整体的价格计算
-      if (changedFields.includes('discountPrice')) {
-        formData.value.discountPrice = values.discountPrice;
-        formData.value.paymentPrice =
-          formData.value.totalPrice - values.discountPrice;
-        formApi.setValues({
-          paymentPrice: formData.value.paymentPrice,
-        });
+      if (
+        changedFields.includes('totalPrice') ||
+        changedFields.includes('discountPrice')
+      ) {
+        formData.value.totalPrice = values.totalPrice ?? 0;
+        formData.value.discountPrice = values.discountPrice ?? 0;
+        const paymentPrice =
+          formData.value.totalPrice - formData.value.discountPrice;
+        formData.value.paymentPrice = paymentPrice;
+        formApi.setValues({ paymentPrice });
       }
     }
   },

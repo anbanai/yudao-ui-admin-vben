@@ -467,7 +467,7 @@ export function usePositionChangeFormSchema(
     {
       fieldName: 'employeeId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'employeeName',
@@ -629,7 +629,7 @@ export function useQuitFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'employeeId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'employeeName',
@@ -655,16 +655,16 @@ export function useQuitFormSchema(): VbenFormSchema[] {
         class: 'w-full',
       },
       dependencies: {
-        triggerFields: ['applyQuitTime', 'planQuitTime'],
-        rules(values) {
-          return refineRequiredTimestamp('请选择计划离职时间').pipe(
+        triggerFields: ['applyQuitTime'],
+        resolve: ({ values }) => ({
+          rules: refineRequiredTimestamp('请选择计划离职时间').pipe(
             refineNotBeforeStart(
               values.applyQuitTime,
               '计划离职日期不能早于申请离职日期',
               'day',
             ),
-          );
-        },
+          ),
+        }),
       },
     },
     {
@@ -699,15 +699,17 @@ export function useQuitFormSchema(): VbenFormSchema[] {
       component: 'Select',
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type !== HrmEmployeeQuitType.RETIREMENT,
-        rules: (values) =>
-          values.type === HrmEmployeeQuitType.RETIREMENT ? null : 'required',
-        componentProps: (values) => ({
-          options: HrmEmployeeQuitReasonOptions.filter(
-            (item) => item.quitType === values.type,
-          ),
-          placeholder: '请选择离职原因',
-          allowClear: true,
+        resolve: ({ values }) => ({
+          show: values.type !== HrmEmployeeQuitType.RETIREMENT,
+          componentProps: {
+            options: HrmEmployeeQuitReasonOptions.filter(
+              (item) => item.quitType === values.type,
+            ),
+            placeholder: '请选择离职原因',
+            allowClear: true,
+          },
+          rules:
+            values.type === HrmEmployeeQuitType.RETIREMENT ? null : 'required',
         }),
       },
     },
@@ -722,16 +724,16 @@ export function useQuitFormSchema(): VbenFormSchema[] {
         class: 'w-full',
       },
       dependencies: {
-        triggerFields: ['planQuitTime', 'salarySettlementTime'],
-        rules(values) {
-          return refineRequiredTimestamp('请选择薪资结算日期').pipe(
+        triggerFields: ['planQuitTime'],
+        resolve: ({ values }) => ({
+          rules: refineRequiredTimestamp('请选择薪资结算日期').pipe(
             refineNotBeforeStart(
               values.planQuitTime,
               '薪资结算日期不能早于计划离职日期',
               'day',
             ),
-          );
-        },
+          ),
+        }),
       },
     },
     {
@@ -954,9 +956,10 @@ export function useEmployeeEntryFormSchema(
       component: 'Select',
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === HrmEmployeeType.INFORMAL,
-        rules: (values) =>
-          values.type === HrmEmployeeType.INFORMAL ? 'required' : null,
+        resolve: ({ values }) => ({
+          show: values.type === HrmEmployeeType.INFORMAL,
+          rules: values.type === HrmEmployeeType.INFORMAL ? 'required' : null,
+        }),
       },
       componentProps: {
         options: nonFormalStatusOptions,
@@ -970,9 +973,10 @@ export function useEmployeeEntryFormSchema(
       component: 'InputNumber',
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === HrmEmployeeType.FORMAL,
-        rules: (values) =>
-          values.type === HrmEmployeeType.FORMAL ? 'required' : null,
+        resolve: ({ values }) => ({
+          show: values.type === HrmEmployeeType.FORMAL,
+          rules: values.type === HrmEmployeeType.FORMAL ? 'required' : null,
+        }),
       },
       componentProps: { min: 0, max: 24, class: 'w-full' },
     },
@@ -1173,13 +1177,13 @@ export function useCertificateFormSchema(): VbenFormSchema[] {
         class: 'w-full',
       },
       dependencies: {
-        triggerFields: ['startTime', 'endTime'],
-        rules(values) {
-          return refineNotBeforeStart(
+        triggerFields: ['startTime'],
+        resolve: ({ values }) => ({
+          rules: refineNotBeforeStart(
             values.startTime,
             '有效结束日期不能早于有效开始日期',
-          );
-        },
+          ),
+        }),
       },
     },
     {
@@ -1261,14 +1265,14 @@ export function useEducationFormSchema(): VbenFormSchema[] {
         class: 'w-full',
       },
       dependencies: {
-        triggerFields: ['admissionTime', 'graduationTime'],
-        rules(values) {
-          return refineNotBeforeStart(
+        triggerFields: ['admissionTime'],
+        resolve: ({ values }) => ({
+          rules: refineNotBeforeStart(
             values.admissionTime,
             '毕业日期不能早于入学日期',
             'day',
-          );
-        },
+          ),
+        }),
       },
     },
     {
@@ -1332,14 +1336,14 @@ export function useWorkFormSchema(): VbenFormSchema[] {
         class: 'w-full',
       },
       dependencies: {
-        triggerFields: ['startTime', 'endTime'],
-        rules(values) {
-          return refineNotBeforeStart(
+        triggerFields: ['startTime'],
+        resolve: ({ values }) => ({
+          rules: refineNotBeforeStart(
             values.startTime,
             '结束日期不能早于开始日期',
             'day',
-          );
-        },
+          ),
+        }),
       },
     },
     {
@@ -1411,14 +1415,14 @@ export function useTrainingFormSchema(): VbenFormSchema[] {
         class: 'w-full',
       },
       dependencies: {
-        triggerFields: ['startTime', 'endTime'],
-        rules(values) {
-          return refineNotBeforeStart(
+        triggerFields: ['startTime'],
+        resolve: ({ values }) => ({
+          rules: refineNotBeforeStart(
             values.startTime,
             '结束日期不能早于开始日期',
             'day',
-          );
-        },
+          ),
+        }),
       },
     },
     {
@@ -1497,15 +1501,15 @@ export function useContractFormSchema(): VbenFormSchema[] {
         class: 'w-full',
       },
       dependencies: {
-        triggerFields: ['startTime', 'endTime'],
-        rules(values) {
-          return refineRequiredTimestamp('结束日期不能为空').pipe(
+        triggerFields: ['startTime'],
+        resolve: ({ values }) => ({
+          rules: refineRequiredTimestamp('结束日期不能为空').pipe(
             refineNotBeforeStart(
               values.startTime,
               '合同结束日期不能早于开始日期',
             ),
-          );
-        },
+          ),
+        }),
       },
     },
     {
@@ -1519,8 +1523,11 @@ export function useContractFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) =>
-          values.type !== HrmEmployeeContractType.NON_FIXED_TERM_LABOR_CONTRACT,
+        resolve: ({ values }) => ({
+          show:
+            values.type !==
+            HrmEmployeeContractType.NON_FIXED_TERM_LABOR_CONTRACT,
+        }),
       },
     },
     {

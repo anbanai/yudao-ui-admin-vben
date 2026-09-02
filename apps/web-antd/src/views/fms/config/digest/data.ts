@@ -28,18 +28,12 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'accountSetId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'content',
@@ -62,10 +56,7 @@ export function useDigestLibraryFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'content',

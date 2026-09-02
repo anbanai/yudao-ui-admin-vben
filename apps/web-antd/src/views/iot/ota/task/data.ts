@@ -36,10 +36,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'firmwareId',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -82,15 +79,7 @@ export function useFormSchema(): VbenFormSchema[] {
         optionFilterProp: 'label',
       },
       defaultValue: [],
-      dependencies: {
-        triggerFields: ['deviceScope'],
-        show: (values) =>
-          values.deviceScope === IoTOtaTaskDeviceScopeEnum.SELECT.value,
-        rules: (values) =>
-          values.deviceScope === IoTOtaTaskDeviceScopeEnum.SELECT.value
-            ? 'required'
-            : null,
-      },
+      dependencies: { triggerFields: ['deviceScope'], resolve: ({ values }) => ({ show: values.deviceScope === IoTOtaTaskDeviceScopeEnum.SELECT.value, rules: values.deviceScope === IoTOtaTaskDeviceScopeEnum.SELECT.value ? 'required' : null }) },
     },
   ];
 }

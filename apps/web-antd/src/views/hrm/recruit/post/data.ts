@@ -215,10 +215,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'postName',
@@ -317,28 +314,39 @@ export function useFormSchema(): VbenFormSchema[] {
       formItemClass: 'items-start',
       description: '最低薪资不能大于最高薪资；勾选“面议”后无需填写范围。',
       dependencies: {
-        triggerFields: ['minSalary', 'maxSalary', 'salaryUnit', 'salaryNegotiable'],
+        triggerFields: [
+          'minSalary',
+          'maxSalary',
+          'salaryUnit',
+          'salaryNegotiable',
+        ],
         resolve({ values, actions }) {
-          return { componentProps: { values, formApi: actions } };
+          const { maxSalary, minSalary, salaryNegotiable, salaryUnit } = values;
+          return {
+            componentProps: {
+              values: { maxSalary, minSalary, salaryNegotiable, salaryUnit },
+              formApi: actions,
+            },
+          };
         },
       },
     },
     {
       fieldName: 'maxSalary',
       component: 'InputNumber',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'salaryUnit',
       component: 'Select',
       defaultValue: HrmRecruitSalaryUnit.MONTH,
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'salaryNegotiable',
       component: 'Checkbox',
       defaultValue: false,
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'latestEntryTime',
@@ -363,20 +371,26 @@ export function useFormSchema(): VbenFormSchema[] {
       dependencies: {
         triggerFields: ['minAge', 'maxAge', 'ageUnlimited'],
         resolve({ values, actions }) {
-          return { componentProps: { values, formApi: actions } };
+          const { ageUnlimited, maxAge, minAge } = values;
+          return {
+            componentProps: {
+              values: { ageUnlimited, maxAge, minAge },
+              formApi: actions,
+            },
+          };
         },
       },
     },
     {
       fieldName: 'maxAge',
       component: 'InputNumber',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'ageUnlimited',
       component: 'Checkbox',
       defaultValue: false,
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'emergencyLevel',

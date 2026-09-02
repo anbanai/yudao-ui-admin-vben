@@ -327,10 +327,7 @@ export function useFormSchema({
   return [
     {
       component: 'Input',
-      dependencies: {
-        show: () => false,
-        triggerFields: [''],
-      },
+      hide: true,
       fieldName: 'id',
     },
     {

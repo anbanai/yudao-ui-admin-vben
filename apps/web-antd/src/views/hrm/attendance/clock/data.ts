@@ -189,18 +189,12 @@ export function useClockFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'formType',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'employeeId',
@@ -209,7 +203,9 @@ export function useClockFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['formType'],
-        disabled: (values) => values.formType === 'update',
+        resolve: ({ values }) => ({
+          disabled: values.formType === 'update',
+        }),
       },
     },
     {

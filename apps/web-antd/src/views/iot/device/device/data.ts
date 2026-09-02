@@ -15,10 +15,7 @@ export function useBasicFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'productId',
@@ -30,19 +27,13 @@ export function useBasicFormSchema(): VbenFormSchema[] {
         valueField: 'id',
         placeholder: '请选择产品',
       },
-      dependencies: {
-        triggerFields: ['id'],
-        disabled: (values: any) => !!values?.id,
-      },
+      dependencies: { triggerFields: ['id'], resolve: ({ values }) => ({ disabled: !!values.id }) },
       rules: 'required',
     },
     {
       component: 'Input',
       fieldName: 'deviceType',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'deviceName',
@@ -51,10 +42,7 @@ export function useBasicFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请输入 DeviceName',
       },
-      dependencies: {
-        triggerFields: ['id'],
-        disabled: (values: any) => !!values?.id,
-      },
+      dependencies: { triggerFields: ['id'], resolve: ({ values }) => ({ disabled: !!values.id }) },
       rules: z
         .string()
         .min(4, 'DeviceName 长度不能少于 4 个字符')

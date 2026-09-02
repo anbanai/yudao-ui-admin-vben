@@ -10,10 +10,7 @@ export function useFormSchema(
     {
       fieldName: 'hasParameter',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'baseDivider',
@@ -68,7 +65,9 @@ export function useFormSchema(
       label: '',
       dependencies: {
         triggerFields: ['hasParameter'],
-        show: (values) => !!values.hasParameter,
+        resolve: ({ values }) => ({
+          show: !!values.hasParameter,
+        }),
       },
       renderComponentContent: () => ({
         default: () => ['科目参数'],
@@ -82,10 +81,12 @@ export function useFormSchema(
       description: '科目级次和编码长度调大后不能再调小，请谨慎操作',
       dependencies: {
         triggerFields: ['hasParameter'],
-        show: (values) => !!values.hasParameter,
-        componentProps: () => ({
-          options: getLevelOptions(),
-          placeholder: '请选择科目级次',
+        resolve: ({ values }) => ({
+          componentProps: {
+            options: getLevelOptions(),
+            placeholder: '请选择科目级次',
+          },
+          show: !!values.hasParameter,
         }),
       },
     },
@@ -96,7 +97,9 @@ export function useFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['hasParameter'],
-        show: (values) => !!values.hasParameter,
+        resolve: ({ values }) => ({
+          show: !!values.hasParameter,
+        }),
       },
     },
     {
@@ -105,7 +108,9 @@ export function useFormSchema(
       label: '',
       dependencies: {
         triggerFields: ['hasParameter'],
-        show: (values) => !!values.hasParameter,
+        resolve: ({ values }) => ({
+          show: !!values.hasParameter,
+        }),
       },
       renderComponentContent: () => ({
         default: () => ['账簿'],
@@ -118,7 +123,9 @@ export function useFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['hasParameter'],
-        show: (values) => !!values.hasParameter,
+        resolve: ({ values }) => ({
+          show: !!values.hasParameter,
+        }),
       },
     },
     {
@@ -130,7 +137,9 @@ export function useFormSchema(
       }),
       dependencies: {
         triggerFields: ['hasParameter'],
-        show: (values) => !!values.hasParameter,
+        resolve: ({ values }) => ({
+          show: !!values.hasParameter,
+        }),
       },
     },
   ];

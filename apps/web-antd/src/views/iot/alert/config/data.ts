@@ -30,10 +30,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -119,55 +116,21 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'smsTemplateCode',
       label: '短信模板',
       component: markRaw(SmsTemplateSelect),
-      dependencies: {
-        triggerFields: ['receiveTypes'],
-        show: (values) => hasReceiveType(values, IotAlertReceiveTypeEnum.SMS),
-        trigger: async (values, formApi) => {
-          if (
-            !hasReceiveType(values, IotAlertReceiveTypeEnum.SMS) &&
-            values.smsTemplateCode
-          ) {
-            await formApi.setFieldValue('smsTemplateCode', undefined);
-          }
-        },
-      },
+      dependencies: { triggerFields: ['receiveTypes'], resolve: ({ values }) => ({ show: hasReceiveType(values, IotAlertReceiveTypeEnum.SMS) }) },
       rules: 'selectRequired',
     },
     {
       fieldName: 'mailTemplateCode',
       label: '邮件模板',
       component: markRaw(MailTemplateSelect),
-      dependencies: {
-        triggerFields: ['receiveTypes'],
-        show: (values) => hasReceiveType(values, IotAlertReceiveTypeEnum.MAIL),
-        trigger: async (values, formApi) => {
-          if (
-            !hasReceiveType(values, IotAlertReceiveTypeEnum.MAIL) &&
-            values.mailTemplateCode
-          ) {
-            await formApi.setFieldValue('mailTemplateCode', undefined);
-          }
-        },
-      },
+      dependencies: { triggerFields: ['receiveTypes'], resolve: ({ values }) => ({ show: hasReceiveType(values, IotAlertReceiveTypeEnum.MAIL) }) },
       rules: 'selectRequired',
     },
     {
       fieldName: 'notifyTemplateCode',
       label: '站内信模板',
       component: markRaw(NotifyTemplateSelect),
-      dependencies: {
-        triggerFields: ['receiveTypes'],
-        show: (values) =>
-          hasReceiveType(values, IotAlertReceiveTypeEnum.NOTIFY),
-        trigger: async (values, formApi) => {
-          if (
-            !hasReceiveType(values, IotAlertReceiveTypeEnum.NOTIFY) &&
-            values.notifyTemplateCode
-          ) {
-            await formApi.setFieldValue('notifyTemplateCode', undefined);
-          }
-        },
-      },
+      dependencies: { triggerFields: ['receiveTypes'], resolve: ({ values }) => ({ show: hasReceiveType(values, IotAlertReceiveTypeEnum.NOTIFY) }) },
       rules: 'selectRequired',
     },
   ];

@@ -89,18 +89,12 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'systemFlag',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -109,7 +103,7 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['systemFlag'],
-        disabled: (values) => !!values.systemFlag,
+        resolve: ({ values }) => ({ disabled: !!values.systemFlag }),
       },
       componentProps: {
         placeholder: '请输入渠道名称',
@@ -148,10 +142,7 @@ export function useDeleteFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'channelName',
@@ -168,11 +159,13 @@ export function useDeleteFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({
-          excludeIds: values.id ? [values.id] : [],
-          placeholder: '请选择承接渠道',
-          allowClear: true,
-          showSearch: true,
+        resolve: ({ values }) => ({
+          componentProps: {
+            excludeIds: values.id ? [values.id] : [],
+            placeholder: '请选择承接渠道',
+            allowClear: true,
+            showSearch: true,
+          },
         }),
       },
     },

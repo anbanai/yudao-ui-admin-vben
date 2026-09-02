@@ -48,10 +48,7 @@ export function useRuleFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
