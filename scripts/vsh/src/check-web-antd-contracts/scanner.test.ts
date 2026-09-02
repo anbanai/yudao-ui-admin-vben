@@ -71,6 +71,27 @@ describe('web-antd contract scanner', () => {
     expect(ruleIds(source)).toEqual(expect.arrayContaining(['VF003', 'VF004']));
   });
 
+  it('detects aliased form API mutations without flagging unrelated receivers', () => {
+    const source = `
+      const schema = [{
+        dependencies: {
+          resolve: ({ formApi: api, controller: formController }) => {
+            api.setValues({ name: 'updated' });
+            formController.reset();
+            cache.reset();
+            return {
+              componentProps: {
+                onChange: () => api.setFieldValue('name', 'deferred'),
+              },
+            };
+          },
+        },
+      }];
+    `;
+
+    expect(ruleIds(source)).toEqual(['VF004', 'VF004']);
+  });
+
   it('rejects empty trigger field arrays', () => {
     const source = `
       const schema = [{
@@ -151,6 +172,58 @@ describe('web-antd contract scanner', () => {
     expect(ruleIds(source, 'src/example.vue')).toEqual(
       expect.arrayContaining(['VF009', 'VF010', 'TH001', 'TH002']),
     );
+  });
+
+  it('reports Vue block locations and sources on their original lines', () => {
+    const source = `<script setup lang="ts">
+const color = '#fff';
+</script>
+<template>
+  <div :class="'bg-white'" :style="{ color: '#123456' }" />
+</template>
+<style>
+  .panel {
+    color: #abcdef;
+  }
+</style>`;
+    const violations = scanSource(source, 'src/example.vue');
+    const scriptColor = violations.find(({ literal }) => literal === '#fff');
+    const dynamicClass = violations.find(({ literal }) => literal === 'bg-white');
+    const dynamicStyle = violations.find(({ literal }) => literal === '#123456');
+    const cssColor = violations.find(({ literal }) => literal === '#abcdef');
+
+    expect(scriptColor).toMatchObject({
+      column: 16,
+      line: 2,
+      source: "const color = '#fff';",
+    });
+    expect(dynamicClass).toMatchObject({
+      column: 17,
+      line: 5,
+      source: `<div :class="'bg-white'" :style="{ color: '#123456' }" />`,
+    });
+    expect(dynamicStyle).toMatchObject({
+      column: 46,
+      line: 5,
+      source: `<div :class="'bg-white'" :style="{ color: '#123456' }" />`,
+    });
+    expect(cssColor).toMatchObject({
+      column: 12,
+      line: 9,
+      source: 'color: #abcdef;',
+    });
+    expect(
+      applyThemeExceptions(violations, [
+        {
+          category: 'status',
+          literal: '#fff',
+          occurrence: 1,
+          path: 'src/example.vue',
+          reason: 'Covers the exact SFC script source line.',
+          source: "const color = '#fff';",
+        },
+      ]),
+    ).not.toContainEqual(expect.objectContaining({ literal: '#fff' }));
   });
 
   it('accepts field slots that do not bind the removed model value', () => {

@@ -29,6 +29,7 @@ const RESOLVER_WRITE_METHODS = new Set([
   'validateAndSubmit',
   'validateAndSubmitForm',
 ]);
+const FORM_API_CONTEXT_KEYS = new Set(['controller', 'formApi']);
 const DEPRECATED_FORM_METHODS = new Set([
   'resetForm',
   'resetValidate',
@@ -279,11 +280,30 @@ function scanTypeScript(
     if (resolveProperty) {
       const resolver = getFunctionLike(resolveProperty);
       if (resolver?.body) {
-        function inspectResolver(node: ts.Node) {
+        const { aliases, contexts } = getResolverFormApiBindings(resolver);
+
+        function inspectResolver(node: ts.Node, isResolverBody = false) {
+          if (
+            !isResolverBody &&
+            (ts.isArrowFunction(node) ||
+              ts.isFunctionExpression(node) ||
+              ts.isFunctionDeclaration(node) ||
+              ts.isMethodDeclaration(node))
+          ) {
+            return;
+          }
+          if (
+            ts.isVariableDeclaration(node) &&
+            ts.isIdentifier(node.name) &&
+            isFormApiReceiver(node.initializer, aliases, contexts)
+          ) {
+            aliases.add(node.name.text);
+          }
           if (
             ts.isCallExpression(node) &&
             ts.isPropertyAccessExpression(node.expression) &&
-            RESOLVER_WRITE_METHODS.has(node.expression.name.text)
+            RESOLVER_WRITE_METHODS.has(node.expression.name.text) &&
+            isFormApiReceiver(node.expression.expression, aliases, contexts)
           ) {
             reportNode(
               node,
@@ -293,7 +313,7 @@ function scanTypeScript(
           }
           ts.forEachChild(node, inspectResolver);
         }
-        inspectResolver(resolver.body);
+        inspectResolver(resolver.body, true);
       }
     }
   }
@@ -388,6 +408,51 @@ function scanTypeScript(
   visit(sourceFile);
 }
 
+function getResolverFormApiBindings(
+  resolver: ts.ArrowFunction | ts.FunctionExpression | ts.MethodDeclaration,
+) {
+  const aliases = new Set<string>();
+  const contexts = new Set<string>();
+  for (const parameter of resolver.parameters) {
+    if (ts.isIdentifier(parameter.name)) {
+      contexts.add(parameter.name.text);
+      continue;
+    }
+    if (!ts.isObjectBindingPattern(parameter.name)) continue;
+    for (const element of parameter.name.elements) {
+      let contextKey: string | undefined;
+      if (element.propertyName && ts.isIdentifier(element.propertyName)) {
+        contextKey = element.propertyName.text;
+      } else if (ts.isIdentifier(element.name)) {
+        contextKey = element.name.text;
+      }
+      if (
+        contextKey &&
+        FORM_API_CONTEXT_KEYS.has(contextKey) &&
+        ts.isIdentifier(element.name)
+      ) {
+        aliases.add(element.name.text);
+      }
+    }
+  }
+  return { aliases, contexts };
+}
+
+function isFormApiReceiver(
+  node: ts.Node | undefined,
+  aliases: Set<string>,
+  contexts: Set<string>,
+): boolean {
+  if (node && ts.isIdentifier(node)) return aliases.has(node.text);
+  return (
+    !!node &&
+    ts.isPropertyAccessExpression(node) &&
+    ts.isIdentifier(node.expression) &&
+    contexts.has(node.expression.text) &&
+    FORM_API_CONTEXT_KEYS.has(node.name.text)
+  );
+}
+
 function isScriptColorLiteral(node: ts.StringLiteralLike): boolean {
   const parent = node.parent;
   if (ts.isPropertyAssignment(parent)) {
@@ -464,12 +529,7 @@ function scanTemplateNode(node: any, context: ScanContext) {
         (prop.arg?.content === 'class' || prop.arg?.content === 'style') &&
         expression
       ) {
-        scanTypeScript(
-          `const value = (${expression});`,
-          context,
-          ts.ScriptKind.TS,
-          true,
-        );
+        scanTemplateExpression(expression, prop, context);
       }
       if (prop.name === 'bind' && !prop.arg && expression === 'slotProps') {
         addViolation(
@@ -497,6 +557,34 @@ function scanTemplateNode(node: any, context: ScanContext) {
   }
 }
 
+function scanTemplateExpression(expression: string, prop: any, context: ScanContext) {
+  const sourceFile = ts.createSourceFile(
+    context.path,
+    `(${expression})`,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const expressionStart = prop.exp.loc.start;
+
+  function visit(node: ts.Node) {
+    if (ts.isStringLiteralLike(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+      const relativeStart = node.getStart(sourceFile) - 1;
+      const beforeLiteral = expression.slice(0, relativeStart);
+      const lineBreak = beforeLiteral.lastIndexOf('\n');
+      const line = expressionStart.line + beforeLiteral.split('\n').length - 1;
+      const column =
+        lineBreak === -1
+          ? expressionStart.column + relativeStart + 1
+          : relativeStart - lineBreak + 1;
+      scanThemeLiteral(node.text, context, line, column);
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+}
+
 function scanStyle(code: string, context: ScanContext, isScss: boolean) {
   const root = isScss
     ? postcssScss.parse(code, { from: context.path })
@@ -516,7 +604,9 @@ function scanStyle(code: string, context: ScanContext, isScss: boolean) {
       declaration.value,
       context,
       start?.line ?? 1,
-      start?.column ?? 1,
+      (start?.column ?? 1) +
+        declaration.prop.length +
+        (declaration.raw('between') || ':').length,
     );
   });
 }
@@ -533,6 +623,10 @@ function assignOccurrences(violations: ContractViolation[]) {
     violation.occurrence = occurrence;
   }
   return violations;
+}
+
+function getBlockLineOffset(source: string, blockStartOffset: number): number {
+  return source.slice(0, blockStartOffset).split(/\r?\n/).length - 1;
 }
 
 export function scanSource(source: string, path: string): ContractViolation[] {
@@ -575,23 +669,20 @@ export function scanSource(source: string, path: string): ContractViolation[] {
       script.content,
       {
         ...baseContext,
-        lineOffset: script.loc.start.line - 1,
+        lineOffset: getBlockLineOffset(source, script.loc.start.offset),
       },
       script.lang === 'tsx' ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
     );
   }
   if (descriptor.template?.ast) {
-    scanTemplateNode(descriptor.template.ast, {
-      ...baseContext,
-      lineOffset: descriptor.template.loc.start.line - 1,
-    });
+    scanTemplateNode(descriptor.template.ast, baseContext);
   }
   for (const style of descriptor.styles) {
     scanStyle(
       style.content,
       {
         ...baseContext,
-        lineOffset: style.loc.start.line - 1,
+        lineOffset: getBlockLineOffset(source, style.loc.start.offset),
       },
       style.lang === 'scss',
     );
