@@ -22,22 +22,33 @@ import { $t } from '#/locales';
 import { ProductCategorySelect } from '#/views/mall/product/category/components';
 import { SpuShowcase } from '#/views/mall/product/spu/components';
 
-import { useFormSchema } from '../data';
+import {
+  expandProductScopeValues,
+  getProductScopeValues,
+  useFormSchema,
+} from '../data';
 
 const emit = defineEmits(['success']);
-const formData = ref<
-  Partial<MallCouponTemplateApi.CouponTemplate> & {
-    productCategoryIds?: number | number[];
-    productSpuIds?: number[];
-  }
->({});
+type CouponTemplateFormValues = Omit<
+  Partial<MallCouponTemplateApi.CouponTemplate>,
+  'discountLimitPrice' | 'discountPrice' | 'usePrice'
+> & {
+  discountLimitPrice?: number | string;
+  discountPrice?: number | string;
+  productCategoryIds?: number | number[];
+  productSpuIds?: number[];
+  usePrice?: number | string;
+  validTimes?: Date[];
+};
+
+const editingId = ref<number>();
 const getTitle = computed(() => {
-  return formData.value?.id
+  return editingId.value
     ? $t('ui.actionTitle.edit', ['优惠券模板'])
     : $t('ui.actionTitle.create', ['优惠券模板']);
 });
 
-const [Form, formApi] = useVbenForm({
+const [Form, formApi] = useVbenForm<CouponTemplateFormValues>({
   commonConfig: {
     componentProps: {
       class: 'w-full',
@@ -52,29 +63,16 @@ const [Form, formApi] = useVbenForm({
 
 const [Modal, modalApi] = useVbenModal({
   async onConfirm() {
-    // 同步商品/分类选择到表单，确保验证时能获取到值
-    if (formData.value.productSpuIds) {
-      await formApi.setFieldValue(
-        'productSpuIds',
-        formData.value.productSpuIds,
-      );
-    }
-    if (formData.value.productCategoryIds) {
-      await formApi.setFieldValue(
-        'productCategoryIds',
-        formData.value.productCategoryIds,
-      );
-    }
     const { valid } = await formApi.validate();
     if (!valid) {
       return;
     }
     modalApi.lock();
     // 提交表单
-    const formValues = (await formApi.getValues()) as any;
+    const formValues = await formApi.getValues();
     const data = await processSubmitData(formValues);
     try {
-      await (formData.value?.id
+      await (editingId.value
         ? updateCouponTemplate(data)
         : createCouponTemplate(data));
       // 关闭并提示
@@ -87,18 +85,22 @@ const [Modal, modalApi] = useVbenModal({
   },
   async onOpenChange(isOpen: boolean) {
     if (!isOpen) {
-      formData.value = {};
+      editingId.value = undefined;
+      await formApi.reset({ values: createDefaultFormData() });
       return;
     }
     // 加载数据
     const data = modalApi.getData() as MallCouponTemplateApi.CouponTemplate;
     if (!data || !data.id) {
+      editingId.value = undefined;
+      await formApi.reset({ values: createDefaultFormData() });
       return;
     }
     modalApi.lock();
     try {
-      formData.value = await getCouponTemplate(data.id);
-      const processedData = await processLoadData(formData.value as any);
+      const result = await getCouponTemplate(data.id);
+      editingId.value = result.id;
+      const processedData = await processLoadData(result);
       // 设置到表单
       await formApi.setValues(processedData);
     } finally {
@@ -109,15 +111,11 @@ const [Modal, modalApi] = useVbenModal({
 
 /** 处理提交数据 */
 async function processSubmitData(
-  formValues: any,
+  formValues: CouponTemplateFormValues,
 ): Promise<MallCouponTemplateApi.CouponTemplate> {
   return {
     ...formValues,
-    // 商品范围值：通用劵（productScope=1）固定为空数组，避免前端残留旧选中值或后端存 NULL 导致分页查询解析报错
-    productScopeValues:
-      formValues.productScope === PromotionProductScopeEnum.ALL.scope
-        ? []
-        : (formValues.productScopeValues ?? []),
+    productScopeValues: getProductScopeValues(formValues),
     // 金额转换：元转分
     discountPrice: convertToInteger(formValues.discountPrice),
     discountPercent:
@@ -144,14 +142,14 @@ async function processSubmitData(
       formValues.takeType === CouponTemplateTakeTypeEnum.USER.type
         ? formValues.takeLimitCount
         : -1,
-  };
+  } as MallCouponTemplateApi.CouponTemplate;
 }
 
 /** 处理加载的数据 */
 async function processLoadData(
   data: MallCouponTemplateApi.CouponTemplate,
-): Promise<any> {
-  return {
+): Promise<CouponTemplateFormValues> {
+  return expandProductScopeValues({
     ...data,
     // 金额转换：分转元
     discountPrice: formatToFraction(data.discountPrice),
@@ -166,6 +164,14 @@ async function processLoadData(
       data.validStartTime && data.validEndTime
         ? [data.validStartTime, data.validEndTime]
         : [],
+  });
+}
+
+function createDefaultFormData() {
+  return {
+    productCategoryIds: undefined,
+    productScope: PromotionProductScopeEnum.ALL.scope,
+    productSpuIds: [],
   };
 }
 </script>
@@ -174,12 +180,12 @@ async function processLoadData(
   <Modal :title="getTitle" class="w-2/5">
     <Form class="mx-4">
       <!-- 自定义插槽：商品选择 -->
-      <template #productSpuIds>
-        <SpuShowcase v-model="formData.productSpuIds" />
+      <template #productSpuIds="slotProps">
+        <SpuShowcase v-bind="slotProps.componentField" />
       </template>
       <!-- 自定义插槽：分类选择 -->
-      <template #productCategoryIds>
-        <ProductCategorySelect v-model="formData.productCategoryIds" />
+      <template #productCategoryIds="slotProps">
+        <ProductCategorySelect v-bind="slotProps.componentField" />
       </template>
     </Form>
   </Modal>

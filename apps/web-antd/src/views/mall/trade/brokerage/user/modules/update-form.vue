@@ -30,34 +30,29 @@ defineOptions({ name: 'BrokerageUserUpdateForm' });
 
 const emit = defineEmits(['success']);
 
-const formData = ref<any>({
-  id: undefined,
-  bindUserId: undefined,
-});
-
-const [Form, formApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
+const [Form, formApi] =
+  useVbenForm<MallBrokerageUserApi.BrokerageUserUpdateReqVO>({
+    commonConfig: {
+      componentProps: {
+        class: 'w-full',
+      },
+      formItemClass: 'col-span-2',
+      labelWidth: 120,
     },
-    formItemClass: 'col-span-2',
-    labelWidth: 120,
-  },
-  layout: 'horizontal',
-  schema: useUpdateFormSchema(),
-  showDefaultActions: false,
-});
+    layout: 'horizontal',
+    schema: useUpdateFormSchema(),
+    showDefaultActions: false,
+  });
 
 const [Modal, modalApi] = useVbenModal({
   async onConfirm() {
-    await formApi.setValues(formData.value);
     const { valid } = await formApi.validate();
     if (!valid) {
       return;
     }
     modalApi.lock();
     try {
-      await updateBindUser(formData.value);
+      await updateBindUser(await formApi.getValues());
       // 关闭并提示
       await modalApi.close();
       emit('success');
@@ -76,11 +71,11 @@ const [Modal, modalApi] = useVbenModal({
     }
     modalApi.lock();
     try {
-      formData.value = {
+      const formData = {
         id: data.id,
         bindUserId: data.bindUserId,
       };
-      await formApi.setValues(formData.value);
+      await formApi.setValues(formData);
       if (data.bindUserId) {
         await handleSearchUser(data.bindUserId, '上级分销员');
       }
@@ -94,17 +89,18 @@ const [Modal, modalApi] = useVbenModal({
 const bindUser = ref<MallBrokerageUserApi.BrokerageUser | undefined>();
 
 /** 查询分销员 */
-async function handleSearchUser(id: number, userType: string) {
+async function handleSearchUser(id: number | string, userType: string) {
   if (isEmpty(id)) {
     message.warning(`请先输入${userType}编号后重试！！！`);
     return;
   }
-  if (formData.value?.bindUserId === formData.value?.id) {
+  const formValues = await formApi.getValues();
+  if (formValues.bindUserId === formValues.id) {
     message.error('不能绑定自己为推广人');
     return;
   }
 
-  const userData = await getBrokerageUser(id);
+  const userData = await getBrokerageUser(Number(id));
   if (!userData) {
     message.warning(`${userType}不存在`);
     return;
@@ -116,11 +112,11 @@ async function handleSearchUser(id: number, userType: string) {
 <template>
   <Modal title="修改上级推广人" class="w-1/3">
     <Form>
-      <template #bindUserId>
+      <template #bindUserId="slotProps">
         <InputSearch
-          v-model:value="formData.bindUserId"
+          v-bind="slotProps.componentProps"
           placeholder="请输入上级分销员编号"
-          @search="handleSearchUser(formData.bindUserId, '上级分销员')"
+          @search="handleSearchUser($event, '上级分销员')"
         />
       </template>
     </Form>

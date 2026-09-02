@@ -11,9 +11,53 @@ import {
   PromotionProductScopeEnum,
 } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
-import { isEqual } from '@vben/utils';
 
 import { getRangePickerDefaultProps } from '#/utils';
+
+export interface ProductScopeFormValues {
+  productCategoryIds?: number | number[];
+  productScope?: number;
+  productScopeValues?: number[];
+  productSpuIds?: number[];
+}
+
+function normalizeIds(value: number | number[] | undefined): number[] {
+  if (Array.isArray(value)) {
+    return [...value];
+  }
+  return value === undefined ? [] : [value];
+}
+
+/** Convert the active selector to the API's persisted scope shape. */
+export function getProductScopeValues(
+  values: ProductScopeFormValues,
+): number[] {
+  if (values.productScope === PromotionProductScopeEnum.SPU.scope) {
+    return [...(values.productSpuIds ?? [])];
+  }
+  if (values.productScope === PromotionProductScopeEnum.CATEGORY.scope) {
+    return normalizeIds(values.productCategoryIds);
+  }
+  return [];
+}
+
+/** Expand the API scope shape into the fields rendered by the form. */
+export function expandProductScopeValues<T extends ProductScopeFormValues>(
+  values: T,
+): T {
+  const scopeValues = [...(values.productScopeValues ?? [])];
+  return {
+    ...values,
+    productCategoryIds:
+      values.productScope === PromotionProductScopeEnum.CATEGORY.scope
+        ? scopeValues[0]
+        : undefined,
+    productSpuIds:
+      values.productScope === PromotionProductScopeEnum.SPU.scope
+        ? scopeValues
+        : [],
+  } as T;
+}
 
 import {
   discountFormat,
@@ -66,19 +110,11 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '商品',
       component: 'Input',
       dependencies: {
-        triggerFields: ['productScope', 'productScopeValues'],
-        show: (model) =>
-          model.productScope === PromotionProductScopeEnum.SPU.scope,
-        trigger(values, form) {
-          // 当加载已有数据时，根据 productScopeValues 设置 productSpuIds
-          // 内容相同时不重复赋值，避免与 productScopeValues 互相触发导致死循环
-          if (
-            values.productScope === PromotionProductScopeEnum.SPU.scope &&
-            values.productScopeValues &&
-            !isEqual(values.productSpuIds, values.productScopeValues)
-          ) {
-            form.setFieldValue('productSpuIds', values.productScopeValues);
-          }
+        triggerFields: ['productScope'],
+        resolve({ values }) {
+          return {
+            show: values.productScope === PromotionProductScopeEnum.SPU.scope,
+          };
         },
       },
       rules: 'required',
@@ -88,26 +124,12 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '商品分类',
       component: 'Input',
       dependencies: {
-        triggerFields: ['productScope', 'productScopeValues'],
-        show: (model) =>
-          model.productScope === PromotionProductScopeEnum.CATEGORY.scope,
-        trigger(values, form) {
-          // 当加载已有数据时，根据 productScopeValues 设置 productCategoryIds
-          // 内容相同时不重复赋值，避免与 productScopeValues 互相触发导致死循环
-          if (
-            values.productScope === PromotionProductScopeEnum.CATEGORY.scope &&
-            values.productScopeValues
-          ) {
-            const categoryIds = values.productScopeValues;
-            // 单选时使用数组不能反显，取第一个元素
-            const categoryId =
-              Array.isArray(categoryIds) && categoryIds.length > 0
-                ? categoryIds[0]
-                : categoryIds;
-            if (!isEqual(values.productCategoryIds, categoryId)) {
-              form.setFieldValue('productCategoryIds', categoryId);
-            }
-          }
+        triggerFields: ['productScope'],
+        resolve({ values }) {
+          return {
+            show:
+              values.productScope === PromotionProductScopeEnum.CATEGORY.scope,
+          };
         },
       },
       rules: 'required',
@@ -295,34 +317,6 @@ export function useFormSchema(): VbenFormSchema[] {
           model.validityType === CouponTemplateValidityTypeEnum.TERM.type,
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'productScopeValues',
-      component: 'Input',
-      dependencies: {
-        triggerFields: ['productScope', 'productSpuIds', 'productCategoryIds'],
-        show: () => false,
-        trigger(values, form) {
-          // 内容相同时不重复赋值，避免与 productSpuIds/productCategoryIds 互相触发导致死循环
-          switch (values.productScope) {
-            case PromotionProductScopeEnum.CATEGORY.scope: {
-              const categoryIds = Array.isArray(values.productCategoryIds)
-                ? values.productCategoryIds
-                : [values.productCategoryIds];
-              if (!isEqual(values.productScopeValues, categoryIds)) {
-                form.setFieldValue('productScopeValues', categoryIds);
-              }
-              break;
-            }
-            case PromotionProductScopeEnum.SPU.scope: {
-              if (!isEqual(values.productScopeValues, values.productSpuIds)) {
-                form.setFieldValue('productScopeValues', values.productSpuIds);
-              }
-              break;
-            }
-          }
-        },
-      },
     },
   ];
 }

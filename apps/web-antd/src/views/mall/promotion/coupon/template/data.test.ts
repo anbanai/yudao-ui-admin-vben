@@ -9,14 +9,14 @@ import {
   useFormSchema,
 } from './data';
 
-describe('reward activity product scope', () => {
+describe('coupon template product scope', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
 
-  it('derives persisted scope values from the active selector only', () => {
+  it('derives persisted values from the active selector only', () => {
     const values = {
-      productCategoryIds: [3, 4],
+      productCategoryIds: 3,
       productSpuIds: [1, 2],
     };
 
@@ -37,27 +37,27 @@ describe('reward activity product scope', () => {
         ...values,
         productScope: PromotionProductScopeEnum.CATEGORY.scope,
       }),
-    ).toEqual([3, 4]);
+    ).toEqual([3]);
   });
 
-  it('expands persisted scope values into only the active selector', () => {
+  it('expands category scope to the single-select field', () => {
+    expect(
+      expandProductScopeValues({
+        productScope: PromotionProductScopeEnum.CATEGORY.scope,
+        productScopeValues: [3],
+      }),
+    ).toMatchObject({
+      productCategoryIds: 3,
+      productSpuIds: [],
+    });
     expect(
       expandProductScopeValues({
         productScope: PromotionProductScopeEnum.SPU.scope,
         productScopeValues: [1, 2],
       }),
     ).toMatchObject({
-      productCategoryIds: [],
+      productCategoryIds: undefined,
       productSpuIds: [1, 2],
-    });
-    expect(
-      expandProductScopeValues({
-        productScope: PromotionProductScopeEnum.CATEGORY.scope,
-        productScopeValues: [3, 4],
-      }),
-    ).toMatchObject({
-      productCategoryIds: [3, 4],
-      productSpuIds: [],
     });
   });
 

@@ -8,69 +8,53 @@ import {
 } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 import { $t } from '@vben/locales';
-import { isEqual } from '@vben/utils';
 
 import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
-type FieldValueSetter = (field: string, value: unknown) => void;
-
-/** Synchronize the selected products from the persisted scope values. */
-export function syncProductSpuIds(
-  values: Record<string, any>,
-  setFieldValue: FieldValueSetter,
-) {
-  if (
-    values.productScope === PromotionProductScopeEnum.SPU.scope &&
-    values.productScopeValues &&
-    !isEqual(values.productSpuIds, values.productScopeValues)
-  ) {
-    setFieldValue('productSpuIds', values.productScopeValues);
-  }
+export interface ProductScopeFormValues {
+  productCategoryIds?: number | number[];
+  productScope?: number;
+  productScopeValues?: number[];
+  productSpuIds?: number[];
 }
 
-/** Synchronize the selected categories from the persisted scope values. */
-export function syncProductCategoryIds(
-  values: Record<string, any>,
-  setFieldValue: FieldValueSetter,
-) {
-  if (
-    values.productScope !== PromotionProductScopeEnum.CATEGORY.scope ||
-    !values.productScopeValues
-  ) {
-    return;
+function normalizeIds(value: number | number[] | undefined): number[] {
+  if (Array.isArray(value)) {
+    return [...value];
   }
-
-  if (!isEqual(values.productCategoryIds, values.productScopeValues)) {
-    setFieldValue('productCategoryIds', values.productScopeValues);
-  }
+  return value === undefined ? [] : [value];
 }
 
-/** Synchronize the persisted scope values from the selected products/categories. */
-export function syncProductScopeValues(
-  values: Record<string, any>,
-  setFieldValue: FieldValueSetter,
-) {
-  switch (values.productScope) {
-    case PromotionProductScopeEnum.CATEGORY.scope: {
-      let categoryIds: unknown[] = [];
-      if (Array.isArray(values.productCategoryIds)) {
-        categoryIds = values.productCategoryIds;
-      } else if (values.productCategoryIds) {
-        categoryIds = [values.productCategoryIds];
-      }
-      if (!isEqual(values.productScopeValues, categoryIds)) {
-        setFieldValue('productScopeValues', categoryIds);
-      }
-      break;
-    }
-    case PromotionProductScopeEnum.SPU.scope: {
-      if (!isEqual(values.productScopeValues, values.productSpuIds)) {
-        setFieldValue('productScopeValues', values.productSpuIds);
-      }
-      break;
-    }
+/** Convert the active selector to the API's persisted scope shape. */
+export function getProductScopeValues(
+  values: ProductScopeFormValues,
+): number[] {
+  if (values.productScope === PromotionProductScopeEnum.SPU.scope) {
+    return [...(values.productSpuIds ?? [])];
   }
+  if (values.productScope === PromotionProductScopeEnum.CATEGORY.scope) {
+    return normalizeIds(values.productCategoryIds);
+  }
+  return [];
+}
+
+/** Expand the API scope shape into the fields rendered by the form. */
+export function expandProductScopeValues<T extends ProductScopeFormValues>(
+  values: T,
+): T {
+  const scopeValues = [...(values.productScopeValues ?? [])];
+  return {
+    ...values,
+    productCategoryIds:
+      values.productScope === PromotionProductScopeEnum.CATEGORY.scope
+        ? scopeValues
+        : [],
+    productSpuIds:
+      values.productScope === PromotionProductScopeEnum.SPU.scope
+        ? scopeValues
+        : [],
+  } as T;
 }
 
 /** 列表的搜索表单 */
@@ -233,14 +217,11 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '选择商品',
       component: 'Input',
       dependencies: {
-        triggerFields: ['productScope', 'productScopeValues'],
-        show: (values) => {
-          return values.productScope === PromotionProductScopeEnum.SPU.scope;
-        },
-        trigger(values, form) {
-          syncProductSpuIds(values, (field, value) =>
-            form.setFieldValue(field, value),
-          );
+        triggerFields: ['productScope'],
+        resolve({ values }) {
+          return {
+            show: values.productScope === PromotionProductScopeEnum.SPU.scope,
+          };
         },
       },
       rules: 'required',
@@ -250,16 +231,12 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '选择分类',
       component: 'Input',
       dependencies: {
-        triggerFields: ['productScope', 'productScopeValues'],
-        show: (values) => {
-          return (
-            values.productScope === PromotionProductScopeEnum.CATEGORY.scope
-          );
-        },
-        trigger(values, form) {
-          syncProductCategoryIds(values, (field, value) =>
-            form.setFieldValue(field, value),
-          );
+        triggerFields: ['productScope'],
+        resolve({ values }) {
+          return {
+            show:
+              values.productScope === PromotionProductScopeEnum.CATEGORY.scope,
+          };
         },
       },
       rules: 'required',
@@ -273,19 +250,6 @@ export function useFormSchema(): VbenFormSchema[] {
         .array(z.any())
         .min(1, { message: '请添加至少一条优惠规则' })
         .default([]),
-    },
-    {
-      fieldName: 'productScopeValues', // 隐藏字段：用于自动同步 productScopeValues
-      component: 'Input',
-      dependencies: {
-        triggerFields: ['productScope', 'productSpuIds', 'productCategoryIds'],
-        show: () => false,
-        trigger(values, form) {
-          syncProductScopeValues(values, (field, value) =>
-            form.setFieldValue(field, value),
-          );
-        },
-      },
     },
   ];
 }
