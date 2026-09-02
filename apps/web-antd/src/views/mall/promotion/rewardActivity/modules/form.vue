@@ -22,31 +22,42 @@ import { $t } from '#/locales';
 import { ProductCategorySelect } from '#/views/mall/product/category/components';
 import { SpuShowcase } from '#/views/mall/product/spu/components';
 
-import { useFormSchema } from '../data';
+import {
+  expandProductScopeValues,
+  getProductScopeValues,
+  useFormSchema,
+} from '../data';
 import RewardRule from './reward-rule.vue';
 
 const emit = defineEmits(['success']);
 
-const createDefaultFormData =
-  (): Partial<MallRewardActivityApi.RewardActivity> => ({
-    conditionType: PromotionConditionTypeEnum.PRICE.type,
-    productScope: PromotionProductScopeEnum.ALL.scope,
-    productScopeValues: [],
-    productCategoryIds: [],
-    productSpuIds: [],
-    rules: [],
-  });
+type RewardActivityFormValues = Omit<
+  Partial<MallRewardActivityApi.RewardActivity>,
+  'endTime' | 'productCategoryIds' | 'startAndEndTime' | 'startTime'
+> & {
+  endTime?: Date | string;
+  productCategoryIds?: number | number[];
+  startAndEndTime?: Array<string | undefined>;
+  startTime?: Date | string;
+};
 
-const formData = ref<Partial<MallRewardActivityApi.RewardActivity>>(
-  createDefaultFormData(),
-);
+const createDefaultFormData = (): RewardActivityFormValues => ({
+  conditionType: PromotionConditionTypeEnum.PRICE.type,
+  productScope: PromotionProductScopeEnum.ALL.scope,
+  productScopeValues: [],
+  productCategoryIds: [],
+  productSpuIds: [],
+  rules: [],
+});
+
+const editingId = ref<number>();
 const getTitle = computed(() => {
-  return formData.value?.id
+  return editingId.value
     ? $t('ui.actionTitle.edit', ['满减送'])
     : $t('ui.actionTitle.create', ['满减送']);
 });
 
-const [Form, formApi] = useVbenForm({
+const [Form, formApi] = useVbenForm<RewardActivityFormValues>({
   commonConfig: {
     componentProps: {
       class: 'w-full',
@@ -60,21 +71,6 @@ const [Form, formApi] = useVbenForm({
 
 const [Modal, modalApi] = useVbenModal({
   async onConfirm() {
-    // 在验证前同步 formData 中的值到表单中
-    await formApi.setFieldValue('rules', formData.value.rules || []);
-    // 同步商品/分类选择到表单，确保验证时能获取到值
-    if (formData.value.productSpuIds) {
-      await formApi.setFieldValue(
-        'productSpuIds',
-        formData.value.productSpuIds,
-      );
-    }
-    if (formData.value.productCategoryIds) {
-      await formApi.setFieldValue(
-        'productCategoryIds',
-        formData.value.productCategoryIds,
-      );
-    }
     const { valid } = await formApi.validate();
     if (!valid) {
       return;
@@ -83,8 +79,11 @@ const [Modal, modalApi] = useVbenModal({
     // 提交表单
     try {
       const values = await formApi.getValues();
-      // 使用 formData.value 作为基础，确保 rules 来自 formData
-      const data = { ...values, ...formData.value };
+      const data = {
+        ...values,
+        id: editingId.value,
+        productScopeValues: getProductScopeValues(values),
+      };
       if (data.startAndEndTime && Array.isArray(data.startAndEndTime)) {
         data.startTime = data.startAndEndTime[0];
         data.endTime = data.startAndEndTime[1];
@@ -114,14 +113,15 @@ const [Modal, modalApi] = useVbenModal({
   },
   async onOpenChange(isOpen: boolean) {
     if (!isOpen) {
-      formData.value = createDefaultFormData();
+      editingId.value = undefined;
+      await formApi.reset({ values: createDefaultFormData() });
       return;
     }
     // 加载数据
     const data = modalApi.getData() as MallRewardActivityApi.RewardActivity;
     if (!data || !data.id) {
-      formData.value = createDefaultFormData();
-      await formApi.setValues(formData.value);
+      editingId.value = undefined;
+      await formApi.reset({ values: createDefaultFormData() });
       return;
     }
     modalApi.lock();
@@ -129,7 +129,7 @@ const [Modal, modalApi] = useVbenModal({
       const result = {
         ...createDefaultFormData(),
         ...(await getReward(data.id)),
-      };
+      } as RewardActivityFormValues;
       result.startAndEndTime = [
         result.startTime ? String(result.startTime) : undefined,
         result.endTime ? String(result.endTime) : undefined,
@@ -140,9 +140,9 @@ const [Modal, modalApi] = useVbenModal({
           item.limit = formatToFraction(item.limit || 0);
         }
       });
-      formData.value = result;
+      editingId.value = result.id;
       // 设置到 values
-      await formApi.setValues(result);
+      await formApi.setValues(expandProductScopeValues(result));
     } finally {
       modalApi.unlock();
     }
@@ -154,16 +154,19 @@ const [Modal, modalApi] = useVbenModal({
   <Modal :title="getTitle" class="w-2/3">
     <Form class="mx-6">
       <!-- 自定义插槽：优惠规则 -->
-      <template #rules>
-        <RewardRule v-model="formData" />
+      <template #rules="slotProps">
+        <RewardRule
+          v-bind="slotProps.componentField"
+          :condition-type="slotProps.values.conditionType"
+        />
       </template>
       <!-- 自定义插槽：商品选择 -->
-      <template #productSpuIds>
-        <SpuShowcase v-model="formData.productSpuIds" />
+      <template #productSpuIds="slotProps">
+        <SpuShowcase v-bind="slotProps.componentField" />
       </template>
       <!-- 自定义插槽：分类选择 -->
-      <template #productCategoryIds>
-        <ProductCategorySelect v-model="formData.productCategoryIds" multiple />
+      <template #productCategoryIds="slotProps">
+        <ProductCategorySelect v-bind="slotProps.componentField" multiple />
       </template>
     </Form>
   </Modal>
