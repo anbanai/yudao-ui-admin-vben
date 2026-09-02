@@ -44,7 +44,7 @@ describe('web-antd form codecs', () => {
       openingTime: '09:00',
       closingTime: '18:00',
     });
-    expect(formValues.rangeTime[0].format('HH:mm')).toBe('09:00');
+    expect(formValues.rangeTime[0]?.format('HH:mm')).toBe('09:00');
     expect(codec.encode({ rangeTime: [undefined, dayjs('2026-01-01T18:00:00')] })).toEqual({
       closingTime: '18:00',
     });
