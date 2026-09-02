@@ -80,7 +80,7 @@ export const schema: VbenFormSchema[] = [
       addonAfter: () => '天提醒',
     }),
     dependencies: {
-      triggerFields: ['notifyEnabled'],
+      triggerFields: ['enabled', 'notifyEnabled'],
       resolve: ({ values }) => ({
         show: values.enabled && values.notifyEnabled,
       }),

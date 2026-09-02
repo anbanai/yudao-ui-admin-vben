@@ -96,7 +96,7 @@ export function useFormSchema({
       component: 'Select',
       rules: 'required',
       dependencies: {
-        triggerFields: ['customerId'],
+        triggerFields: ['customerId', 'id'],
         resolve: async ({ values, actions }) => {
           if (!values.customerId) {
             return {
@@ -136,7 +136,7 @@ export function useFormSchema({
       component: 'Select',
       rules: 'required',
       dependencies: {
-        triggerFields: ['contractId'],
+        triggerFields: ['customerId', 'contractId', 'id'],
         resolve: async ({ values, actions }) => {
           if (!values.contractId) {
             return {

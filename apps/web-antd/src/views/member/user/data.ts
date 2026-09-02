@@ -412,6 +412,22 @@ export function useBalanceFormSchema(): VbenFormSchema[] {
         buttonStyle: 'solid',
         optionType: 'button',
       },
+      dependencies: {
+        triggerFields: ['balance', 'changeBalance'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (changeType = 1) => {
+              actions.setFieldValue(
+                'balanceResult',
+                formatToFraction(
+                  convertToInteger(values.balance) +
+                    convertToInteger(values.changeBalance) * changeType,
+                ),
+              );
+            },
+          },
+        }),
+      },
       defaultValue: 1,
     },
     {
@@ -493,6 +509,19 @@ export function usePointFormSchema(): VbenFormSchema[] {
         ],
         buttonStyle: 'solid',
         optionType: 'button',
+      },
+      dependencies: {
+        triggerFields: ['point', 'changePoint'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (changeType = 1) => {
+              actions.setFieldValue(
+                'pointResult',
+                values.point + values.changePoint * changeType || values.point,
+              );
+            },
+          },
+        }),
       },
       defaultValue: 1,
     },

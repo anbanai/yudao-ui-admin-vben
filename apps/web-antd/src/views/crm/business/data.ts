@@ -9,6 +9,17 @@ import { getBusinessStatusTypeSimpleList } from '#/api/crm/business/status';
 import { getCustomerSimpleList } from '#/api/crm/customer';
 import { getSimpleUserList } from '#/api/system/user';
 
+export function calculateProductTotals(
+  totalProductPrice = 0,
+  discountPercent: null | number | undefined = 0,
+) {
+  const discountPrice =
+    discountPercent === null
+      ? 0
+      : (erpPriceMultiply(totalProductPrice, discountPercent / 100) ?? 0);
+  return { totalPrice: totalProductPrice - discountPrice, totalProductPrice };
+}
+
 /** 新增/修改的表单 */
 export function useFormSchema(): VbenFormSchema[] {
   const userStore = useUserStore();
@@ -129,14 +140,12 @@ export function useFormSchema(): VbenFormSchema[] {
         resolve: ({ values, actions }) => ({
           componentProps: {
             onChange: (totalProductPrice = 0) => {
-              const discountPrice =
-                erpPriceMultiply(
-                  totalProductPrice,
-                  (values.discountPercent ?? 0) / 100,
-                ) ?? 0;
               actions.setFieldValue(
                 'totalPrice',
-                totalProductPrice - discountPrice,
+                calculateProductTotals(
+                  totalProductPrice,
+                  values.discountPercent,
+                ).totalPrice,
               );
             },
           },
@@ -159,12 +168,12 @@ export function useFormSchema(): VbenFormSchema[] {
         resolve: ({ values, actions }) => ({
           componentProps: {
             onChange: (discountPercent = 0) => {
-              const totalProductPrice = values.totalProductPrice ?? 0;
-              const discountPrice =
-                erpPriceMultiply(totalProductPrice, discountPercent / 100) ?? 0;
               actions.setFieldValue(
                 'totalPrice',
-                totalProductPrice - discountPrice,
+                calculateProductTotals(
+                  values.totalProductPrice,
+                  discountPercent,
+                ).totalPrice,
               );
             },
           },

@@ -68,7 +68,10 @@ const [Modal, modalApi] = useVbenModal({
     try {
       formData.value = await getUser(data.id);
       // 设置到 values
-      await formApi.setValues(formData.value);
+      await formApi.setValues({
+        ...formData.value,
+        pointResult: formData.value.point,
+      });
     } finally {
       modalApi.unlock();
     }
