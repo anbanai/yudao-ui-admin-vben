@@ -30,6 +30,10 @@ import {
   isPrintTaskQueued,
 } from '../../logistics/sf/delivery-status';
 import {
+  isReadyPrintDevice,
+  selectReadyPrintDeviceId,
+} from '../../logistics/sf/devices/setup-state';
+import {
   getDeviceConnectionState,
   isBatchSizeValid,
   summarizeBatchResults,
@@ -51,7 +55,7 @@ const accountOptions = computed(() =>
 );
 const deviceOptions = computed(() =>
   devices.value
-    .filter((item) => item.status === 0 && item.id !== undefined)
+    .filter((item) => isReadyPrintDevice(item) && item.id !== undefined)
     .map((item) => ({ label: item.deviceName, value: item.id })),
 );
 const selectedDevice = computed(() =>
@@ -142,9 +146,7 @@ const [Modal, modalApi] = useVbenModal({
     accountId.value =
       accounts.value.find((item) => item.status === 0 && item.defaultFlag)
         ?.id ?? accounts.value.find((item) => item.status === 0)?.id;
-    deviceId.value =
-      devices.value.find((item) => item.status === 0 && item.defaultFlag)?.id ??
-      devices.value.find((item) => item.status === 0)?.id;
+    deviceId.value = selectReadyPrintDeviceId(devices.value);
   },
 });
 </script>

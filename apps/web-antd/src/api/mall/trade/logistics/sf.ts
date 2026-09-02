@@ -4,15 +4,12 @@ export namespace MallSfLogisticsApi {
   export interface Account {
     id?: number;
     name: string;
-    logisticsId: number;
-    endpoint: string;
     partnerId?: string;
     partnerIdMasked?: string;
     checkWord?: string;
     monthlyCard?: string;
     monthlyCardMasked?: string;
     serviceCode: string;
-    templateCode: string;
     senderName: string;
     senderPhone: string;
     senderProvince: string;
@@ -31,11 +28,14 @@ export namespace MallSfLogisticsApi {
     id?: number;
     deviceCode: string;
     deviceName: string;
+    printerName?: string;
+    pending?: boolean;
+    enrollmentExpiresTime?: string;
     defaultFlag: boolean;
     status: number;
     version?: string;
     lastPollTime?: string;
-    token?: string;
+    configFile?: string;
   }
 
   export interface PendingOrder {
@@ -116,10 +116,8 @@ export const getPrintDevices = () =>
   requestClient.get<MallSfLogisticsApi.Device[]>(`${baseUrl}/devices`);
 export const savePrintDevice = (data: MallSfLogisticsApi.Device) =>
   requestClient.post<MallSfLogisticsApi.Device>(`${baseUrl}/devices`, data);
-export const rotatePrintDeviceToken = (id: number) =>
-  requestClient.post<MallSfLogisticsApi.Device>(
-    `${baseUrl}/devices/${id}/rotate-token`,
-  );
+export const enrollPrintDevice = () =>
+  requestClient.post<MallSfLogisticsApi.Device>(`${baseUrl}/devices/enroll`);
 export const createDiagnosticPayload = (data: {
   paperHeightMm: number;
   paperWidthMm: number;

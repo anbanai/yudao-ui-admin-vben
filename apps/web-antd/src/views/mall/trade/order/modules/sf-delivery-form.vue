@@ -26,6 +26,10 @@ import {
   getPrintTaskErrorMessage,
   isPrintTaskQueued,
 } from '../../logistics/sf/delivery-status';
+import {
+  isReadyPrintDevice,
+  selectReadyPrintDeviceId,
+} from '../../logistics/sf/devices/setup-state';
 
 const emit = defineEmits(['success']);
 const order = ref<MallOrderApi.Order>();
@@ -42,7 +46,7 @@ const accountOptions = computed(() =>
 );
 const deviceOptions = computed(() =>
   devices.value
-    .filter((item) => item.status === 0)
+    .filter(isReadyPrintDevice)
     .map((item) => ({ label: item.deviceName, value: item.id })),
 );
 const selectedPaperSpec = computed(() => {
@@ -87,8 +91,11 @@ const [Modal, modalApi] = useVbenModal({
       getSfAccounts(),
       getPrintDevices(),
     ]);
-    accountId.value = accounts.value.find((item) => item.defaultFlag)?.id;
-    deviceId.value = devices.value.find((item) => item.defaultFlag)?.id;
+    const enabledAccounts = accounts.value.filter((item) => item.status === 0);
+    accountId.value =
+      enabledAccounts.find((item) => item.defaultFlag)?.id ??
+      enabledAccounts[0]?.id;
+    deviceId.value = selectReadyPrintDeviceId(devices.value);
   },
 });
 </script>

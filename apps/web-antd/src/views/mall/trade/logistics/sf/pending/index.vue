@@ -28,6 +28,10 @@ import {
   getPrintTaskErrorMessage,
   isPrintTaskQueued,
 } from '../delivery-status';
+import {
+  isReadyPrintDevice,
+  selectReadyPrintDeviceId,
+} from '../devices/setup-state';
 
 const loading = ref(false);
 const batchSubmitting = ref(false);
@@ -55,7 +59,7 @@ const accountOptions = computed(() =>
 );
 const deviceOptions = computed(() =>
   devices.value
-    .filter((item) => item.status === 0)
+    .filter(isReadyPrintDevice)
     .map((item) => ({ label: item.deviceName, value: item.id })),
 );
 
@@ -67,8 +71,13 @@ async function load() {
       getSfAccounts(),
       getPrintDevices(),
     ]);
-    accountId.value ||= accounts.value.find((item) => item.defaultFlag)?.id;
-    deviceId.value ||= devices.value.find((item) => item.defaultFlag)?.id;
+    const enabledAccounts = accounts.value.filter((item) => item.status === 0);
+    if (!enabledAccounts.some((item) => item.id === accountId.value)) {
+      accountId.value =
+        enabledAccounts.find((item) => item.defaultFlag)?.id ??
+        enabledAccounts[0]?.id;
+    }
+    deviceId.value = selectReadyPrintDeviceId(devices.value, deviceId.value);
   } finally {
     loading.value = false;
   }

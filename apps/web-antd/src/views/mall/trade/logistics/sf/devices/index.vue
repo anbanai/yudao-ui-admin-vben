@@ -5,28 +5,26 @@ import type { SfPaperSpecValue } from '../paper-spec';
 
 import type { MallSfLogisticsApi } from '#/api/mall/trade/logistics/sf';
 
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 
 import {
   Alert,
   Button,
   Descriptions,
-  Form,
-  Input,
+  Divider,
   message,
   Select,
   Space,
-  Switch,
-  Table,
   Tag,
 } from 'ant-design-vue';
 
 import {
   createDiagnosticPayload,
+  enrollPrintDevice,
   getPrintDevices,
-  rotatePrintDeviceToken,
   savePrintDevice,
 } from '#/api/mall/trade/logistics/sf';
 
@@ -35,91 +33,130 @@ import {
   getSfPaperSpec,
   SF_PAPER_SPEC_OPTIONS,
 } from '../paper-spec';
+import { getDeviceSetupState, isEnrollmentExpired } from './setup-state';
 
 type LocalPrinter = { isDefault?: boolean; name: string };
-type QueueJob = { jobId: string; message?: string; status: string };
-type PrinterInfo = {
-  dpi?: null | number;
-  papers: Array<{ heightMm: number; name?: string; widthMm: number }>;
-};
 
 const devices = ref<MallSfLogisticsApi.Device[]>([]);
-const form = reactive<MallSfLogisticsApi.Device>({
-  deviceCode: '',
-  deviceName: '',
-  defaultFlag: true,
-  status: 0,
-});
-const latestToken = ref('');
+const enrolling = ref(false);
+const loading = ref(false);
 const localConnected = ref(false);
-const agentStatus = ref('未检测');
+const detecting = ref(false);
 const localPrinters = ref<LocalPrinter[]>([]);
 const selectedPrinter = ref<string>();
-const queue = ref<QueueJob[]>([]);
-const diagnosticStatus = ref('');
+const selectedDeviceId = ref<number>();
 const diagnosticPaperSpec = ref<SfPaperSpecValue>(DEFAULT_SF_PAPER_SPEC.value);
-const printerInfo = ref<PrinterInfo>();
-const saving = ref(false);
-const rotatingId = ref<number>();
+const diagnosticStatus = ref('');
+const bindingPrinter = ref(false);
+const testing = ref(false);
 let client: PrintBridgeClientType | undefined;
+let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
-const columns = [
-  { title: '设备编号', dataIndex: 'deviceCode' },
-  { title: '设备名称', dataIndex: 'deviceName' },
-  { title: '最近轮询', dataIndex: 'lastPollTime' },
-  { title: '版本', dataIndex: 'version' },
-  { title: '状态', key: 'status' },
-  { title: '操作', key: 'actions' },
-];
+const managedDevices = computed(() =>
+  devices.value.filter(
+    (device) =>
+      device.status === 0 &&
+      (device.pending || device.lastPollTime || device.printerName),
+  ),
+);
+const setupState = computed(() => getDeviceSetupState(managedDevices.value));
+const pendingDevice = computed(() =>
+  managedDevices.value.find((device) => device.pending),
+);
+const pendingExpired = computed(() =>
+  pendingDevice.value ? isEnrollmentExpired(pendingDevice.value) : false,
+);
+const boundDevices = computed(() =>
+  managedDevices.value.filter(
+    (device) => !device.pending && device.lastPollTime && device.id,
+  ),
+);
+const selectedDevice = computed(() =>
+  boundDevices.value.find((device) => device.id === selectedDeviceId.value),
+);
 
-async function load() {
-  devices.value = await getPrintDevices();
+function isOnline(device?: MallSfLogisticsApi.Device) {
+  if (!device?.lastPollTime) return false;
+  return Date.now() - new Date(device.lastPollTime).getTime() < 60_000;
 }
-async function save() {
-  if (saving.value) return;
-  saving.value = true;
+
+function selectCurrentDevice() {
+  if (
+    selectedDeviceId.value &&
+    boundDevices.value.some((device) => device.id === selectedDeviceId.value)
+  ) {
+    selectedPrinter.value = selectedDevice.value?.printerName;
+    return;
+  }
+  selectedDeviceId.value =
+    boundDevices.value.find((device) => device.defaultFlag)?.id ??
+    boundDevices.value[0]?.id;
+  selectedPrinter.value = selectedDevice.value?.printerName;
+}
+
+async function load(silent = false) {
+  if (!silent) loading.value = true;
   try {
-    const result = await savePrintDevice(form);
-    latestToken.value = result.token || '';
-    message.success('设备已保存');
-    Object.assign(form, {
-      id: undefined,
-      deviceCode: '',
-      deviceName: '',
-      defaultFlag: false,
-      status: 0,
-    });
+    devices.value = await getPrintDevices();
+    selectCurrentDevice();
+  } finally {
+    if (!silent) loading.value = false;
+  }
+}
+
+function downloadConfig(configFile: string) {
+  const url = URL.createObjectURL(
+    new Blob([configFile], { type: 'application/json;charset=utf-8' }),
+  );
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'printbridge-config.json';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+async function enroll() {
+  if (enrolling.value) return;
+  enrolling.value = true;
+  try {
+    const result = await enrollPrintDevice();
+    if (!result.configFile) throw new Error('服务端未生成配置文件');
+    downloadConfig(result.configFile);
+    message.success('配置已下载；请在 PrintBridge 中导入，密码留空');
     await load();
   } finally {
-    saving.value = false;
+    enrolling.value = false;
   }
 }
-function editRecord(record: Record<string, any>) {
-  Object.assign(form, record as MallSfLogisticsApi.Device);
-}
-async function rotate(id: number) {
-  if (rotatingId.value) return;
-  rotatingId.value = id;
+
+async function bindPrinter(printerName: unknown, detected = false) {
+  if (
+    bindingPrinter.value ||
+    !selectedDevice.value?.id ||
+    typeof printerName !== 'string' ||
+    !printerName
+  ) {
+    return;
+  }
+  bindingPrinter.value = true;
   try {
-    const result = await rotatePrintDeviceToken(id);
-    latestToken.value = result.token || '';
-    message.success('Token 已轮换，旧 Token 立即失效');
+    await savePrintDevice({
+      ...selectedDevice.value,
+      printerName,
+    });
+    message.success(detected ? '已自动绑定默认打印机' : '打印机已切换');
+    await load();
   } finally {
-    rotatingId.value = undefined;
+    bindingPrinter.value = false;
   }
 }
-async function loadPrinterInfo(printerName?: string) {
-  printerInfo.value =
-    client?.isConnected() && printerName
-      ? await client.getPrinterInfo(printerName)
-      : undefined;
-}
-function handlePrinterChange(value: unknown) {
-  if (typeof value === 'string') {
-    void loadPrinterInfo(value);
-  }
-}
+
 async function detectLocal() {
+  if (detecting.value) return;
+  detecting.value = true;
+  diagnosticStatus.value = '';
   client?.disconnect();
   const { PrintBridgeClient } = await import('print-bridge-sdk');
   client = new PrintBridgeClient({
@@ -129,188 +166,213 @@ async function detectLocal() {
     requestTimeoutMs: 5000,
   });
   client.on('status', (event) => {
-    diagnosticStatus.value = `${event.status}${event.message ? `：${event.message}` : ''}`;
+    diagnosticStatus.value = event.message
+      ? `${event.status}：${event.message}`
+      : event.status;
   });
   try {
     await client.connect();
-    const pong = await client.ping();
+    await client.ping();
+    localConnected.value = true;
     localPrinters.value = await client.getPrintersList();
-    queue.value = await client.getPrintQueue();
+    if (localPrinters.value.length === 0) {
+      selectedPrinter.value = undefined;
+      message.error('未检测到打印机，请先安装得力官方驱动');
+      return;
+    }
+    const savedPrinter = selectedDevice.value?.printerName;
     selectedPrinter.value =
+      localPrinters.value.find((item) => item.name === savedPrinter)?.name ??
       localPrinters.value.find((item) => item.isDefault)?.name ??
       localPrinters.value[0]?.name;
-    await loadPrinterInfo(selectedPrinter.value);
-    agentStatus.value = pong.agentStatus;
-    localConnected.value = true;
-  } catch (error) {
+    if (selectedPrinter.value && selectedPrinter.value !== savedPrinter) {
+      await bindPrinter(selectedPrinter.value, true);
+    }
+  } catch {
     localConnected.value = false;
-    agentStatus.value = error instanceof Error ? error.message : '连接失败';
-    message.error(
-      '无法连接本机 PrintBridge，请检查 Agent、Origin 白名单和 17890 端口',
-    );
+    localPrinters.value = [];
+    selectedPrinter.value = undefined;
+    message.error('未连接到 PrintBridge，请确认软件已启动');
+  } finally {
+    detecting.value = false;
   }
 }
+
 async function testPrint() {
-  if (!client?.isConnected())
-    return message.warning('请先检测本机 PrintBridge');
-  const paperSpec = getSfPaperSpec(diagnosticPaperSpec.value);
-  const fileUrl = await createDiagnosticPayload({
-    paperHeightMm: paperSpec.heightMm,
-    paperWidthMm: paperSpec.widthMm,
-  });
-  const accepted = await client.print({
-    type: 'image',
-    fileUrl,
-    printerName: selectedPrinter.value,
-    copies: 1,
-    paper: {
-      heightMm: paperSpec.heightMm,
-      widthMm: paperSpec.widthMm,
-    },
-  });
-  diagnosticStatus.value = `${accepted.status}：${accepted.jobId}`;
+  if (!client?.isConnected() || !selectedPrinter.value) {
+    message.warning('请先检测本机打印机');
+    return;
+  }
+  testing.value = true;
+  diagnosticStatus.value = '';
+  try {
+    const paperSpec = getSfPaperSpec(diagnosticPaperSpec.value);
+    const fileUrl = await createDiagnosticPayload({
+      paperHeightMm: paperSpec.heightMm,
+      paperWidthMm: paperSpec.widthMm,
+    });
+    const accepted = await client.print({
+      type: 'image',
+      fileUrl,
+      printerName: selectedPrinter.value,
+      copies: 1,
+      paper: {
+        heightMm: paperSpec.heightMm,
+        widthMm: paperSpec.widthMm,
+      },
+    });
+    diagnosticStatus.value = accepted.status;
+    message.success('测试标签已提交');
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : '打印失败';
+    diagnosticStatus.value = detail;
+    message.error(
+      detail.includes('printer not configured')
+        ? '打印机尚未绑定，请重新检测'
+        : detail,
+    );
+  } finally {
+    testing.value = false;
+  }
 }
-onMounted(load);
-onBeforeUnmount(() => client?.disconnect());
+
+onMounted(async () => {
+  await load();
+  refreshTimer = setInterval(
+    () => void load(true).catch(() => undefined),
+    10_000,
+  );
+});
+onBeforeUnmount(() => {
+  client?.disconnect();
+  if (refreshTimer) clearInterval(refreshTimer);
+});
 </script>
 
 <template>
   <Page auto-content-height title="打印设备">
     <Alert
-      v-if="latestToken"
-      class="mb-4"
-      type="warning"
+      :type="setupState.type"
       show-icon
-      message="设备 Token 仅显示本次，请立即配置到 PrintBridge 后妥善保存。"
-      :description="latestToken"
-    />
-    <Form layout="inline" :model="form" class="mb-4">
-      <Form.Item label="设备编号" required>
-        <Input v-model:value="form.deviceCode" placeholder="packing-01" />
-      </Form.Item>
-      <Form.Item label="设备名称" required>
-        <Input v-model:value="form.deviceName" placeholder="打包台一号" />
-      </Form.Item>
-      <Form.Item>
-        <Switch
-          v-model:checked="form.defaultFlag"
-          checked-children="默认"
-          un-checked-children="非默认"
-        />
-      </Form.Item>
-      <Form.Item>
-        <Switch
-          :checked="form.status === 0"
-          checked-children="启用"
-          un-checked-children="停用"
-          @update:checked="
-            (checked) => (form.status = checked === true ? 0 : 1)
-          "
-        />
-      </Form.Item>
-      <Form.Item>
-        <Button type="primary" :loading="saving" @click="save">
-          保存设备
-        </Button>
-      </Form.Item>
-    </Form>
-    <Table
-      row-key="id"
-      :data-source="devices"
-      :columns="columns"
-      :pagination="false"
+      :message="setupState.title"
+      :description="setupState.description"
       class="mb-5"
-    >
-      <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'status'">
-          <Tag :color="record.status === 0 ? 'green' : 'default'">
-            {{ record.status === 0 ? '启用' : '停用' }}
-          </Tag>
-        </template>
-        <template v-else-if="column.key === 'actions'">
-          <Space>
-            <Button type="link" @click="editRecord(record)">编辑</Button>
-            <Button
-              type="link"
-              danger
-              :loading="rotatingId === record.id"
-              @click="rotate(record.id)"
-            >
-              轮换 Token
-            </Button>
-          </Space>
-        </template>
-      </template>
-    </Table>
+    />
 
-    <div class="border-t pt-5">
-      <div class="mb-3 flex items-center gap-3">
-        <h3 class="m-0 text-base font-medium">本机诊断</h3>
-        <Button @click="detectLocal">检测本机</Button>
-      </div>
-      <Descriptions bordered size="small" :column="2">
-        <Descriptions.Item label="连接状态">
-          <Tag :color="localConnected ? 'green' : 'default'">
-            {{ localConnected ? '已连接' : '未连接' }}
-          </Tag>
-        </Descriptions.Item>
-        <Descriptions.Item label="Agent 状态">
-          {{ agentStatus }}
-        </Descriptions.Item>
-        <Descriptions.Item label="打印机">
+    <Alert
+      v-if="pendingDevice"
+      type="info"
+      show-icon
+      message="在 PrintBridge 点击“导入配置”，密码留空；导入成功后请删除下载文件。"
+      class="mb-4"
+    />
+
+    <section class="flex flex-wrap items-center gap-3">
+      <Button
+        v-if="setupState.key === 'not-configured' || pendingExpired"
+        type="primary"
+        :loading="enrolling"
+        @click="enroll"
+      >
+        <template #icon>
+          <IconifyIcon icon="lucide:download" />
+        </template>
+        {{ pendingExpired ? '重新下载配置' : '下载 PrintBridge 配置' }}
+      </Button>
+      <Button
+        v-if="boundDevices.length > 0"
+        type="primary"
+        :loading="detecting"
+        @click="detectLocal"
+      >
+        <template #icon>
+          <IconifyIcon icon="lucide:scan-line" />
+        </template>
+        检测本机打印机
+      </Button>
+      <Button :loading="loading" @click="load()">
+        <template #icon>
+          <IconifyIcon icon="lucide:refresh-cw" />
+        </template>
+        刷新状态
+      </Button>
+      <Tag v-if="pendingDevice" color="gold">等待首次连接</Tag>
+    </section>
+
+    <template v-if="selectedDevice">
+      <Divider />
+
+      <section class="max-w-5xl">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 class="m-0 text-base font-medium">当前工作站</h3>
           <Select
-            v-model:value="selectedPrinter"
-            class="w-72"
+            v-if="boundDevices.length > 1"
+            v-model:value="selectedDeviceId"
+            class="w-64"
             :options="
-              localPrinters.map((item) => ({
-                label: `${item.name}${item.isDefault ? '（默认）' : ''}`,
-                value: item.name,
+              boundDevices.map((device) => ({
+                label: device.deviceName,
+                value: device.id,
               }))
             "
-            @change="handlePrinterChange"
+            @change="selectedPrinter = selectedDevice?.printerName"
           />
-        </Descriptions.Item>
-        <Descriptions.Item label="测试纸张">
+        </div>
+
+        <Descriptions bordered size="small" :column="{ xs: 1, sm: 2 }">
+          <Descriptions.Item label="设备">
+            {{ selectedDevice.deviceName }}
+          </Descriptions.Item>
+          <Descriptions.Item label="连接状态">
+            <Tag :color="isOnline(selectedDevice) ? 'green' : 'default'">
+              {{ isOnline(selectedDevice) ? '在线' : '离线' }}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Windows 打印机">
+            {{ selectedDevice.printerName || '待检测' }}
+          </Descriptions.Item>
+          <Descriptions.Item label="最近连接">
+            {{ selectedDevice.lastPollTime || '-' }}
+          </Descriptions.Item>
+        </Descriptions>
+      </section>
+
+      <Divider />
+
+      <section class="max-w-5xl">
+        <h3 class="mb-4 text-base font-medium">打印校准</h3>
+        <div class="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto]">
+          <Select
+            v-model:value="selectedPrinter"
+            placeholder="检测后自动选择系统默认打印机"
+            :disabled="bindingPrinter || !localConnected"
+            :options="
+              localPrinters.map((printer) => ({
+                label: `${printer.name}${printer.isDefault ? '（系统默认）' : ''}`,
+                value: printer.name,
+              }))
+            "
+            @change="(value) => bindPrinter(value)"
+          />
           <Select
             v-model:value="diagnosticPaperSpec"
-            class="w-72"
             :options="SF_PAPER_SPEC_OPTIONS"
           />
-        </Descriptions.Item>
-        <Descriptions.Item label="队列任务">
-          {{ queue.length }}
-        </Descriptions.Item>
-        <Descriptions.Item label="打印机 DPI">
-          {{ printerInfo?.dpi || '-' }}
-        </Descriptions.Item>
-        <Descriptions.Item label="可用纸张">
-          {{
-            printerInfo?.papers
-              .map(
-                (paper) =>
-                  `${paper.name || '自定义'} ${paper.widthMm}×${paper.heightMm}mm`,
-              )
-              .join('；') || '-'
-          }}
-        </Descriptions.Item>
-        <Descriptions.Item label="测试状态" :span="2">
-          {{ diagnosticStatus || '-' }}
-        </Descriptions.Item>
-      </Descriptions>
-      <Button
-        class="mt-3"
-        type="primary"
-        :disabled="!localConnected"
-        @click="testPrint"
-      >
-        打印 {{ getSfPaperSpec(diagnosticPaperSpec).label }}
-      </Button>
-      <Alert
-        class="mt-3"
-        type="info"
-        show-icon
-        message="此处 JSSDK 只打印测试标签，不读取正式订单面单，也不会触发订单发货。"
-      />
-    </div>
+          <Button
+            :disabled="!selectedPrinter || !localConnected"
+            :loading="testing"
+            @click="testPrint"
+          >
+            <template #icon>
+              <IconifyIcon icon="lucide:printer" />
+            </template>
+            测试打印
+          </Button>
+        </div>
+        <Space v-if="diagnosticStatus" class="mt-3" wrap>
+          <span class="text-sm text-gray-500">{{ diagnosticStatus }}</span>
+        </Space>
+      </section>
+    </template>
   </Page>
 </template>
