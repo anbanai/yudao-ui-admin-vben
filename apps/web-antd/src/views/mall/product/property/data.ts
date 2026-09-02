@@ -111,18 +111,18 @@ export function useValueFormSchema(): VbenFormSchema[] {
       fieldName: 'propertyId',
       label: '属性',
       component: 'ApiSelect',
-      componentProps: (values) => {
-        return {
-          api: getPropertySimpleList,
-          placeholder: '请选择属性',
-          labelField: 'name',
-          valueField: 'id',
-          disabled: !!values.id,
-        };
+      componentProps: {
+        api: getPropertySimpleList,
+        placeholder: '请选择属性',
+        labelField: 'name',
+        valueField: 'id',
       },
       rules: 'required',
       dependencies: {
-        triggerFields: [''],
+        triggerFields: ['id'],
+        resolve({ values }) {
+          return { componentProps: { disabled: !!values.id } };
+        },
       },
     },
     {

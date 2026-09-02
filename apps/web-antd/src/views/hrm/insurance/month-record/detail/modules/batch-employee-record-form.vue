@@ -160,9 +160,9 @@ defineExpose({
 <template>
   <Modal class="w-[960px]">
     <Form class="mx-4">
-      <template #schemeId="{ model, field }">
+      <template #schemeId="slotProps">
         <InsuranceSchemeSelect
-          v-model:model-value="model[field]"
+          v-bind="slotProps.componentProps"
           @change="handleSchemeChange"
         />
       </template>

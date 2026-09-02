@@ -177,16 +177,17 @@ defineExpose({
 <template>
   <Modal class="w-[960px]">
     <Form class="mx-4">
-      <template #schemeId="{ model, field }">
+      <template #schemeId="slotProps">
         <InsuranceSchemeSelect
-          v-model:model-value="model[field]"
+          v-bind="slotProps.componentProps"
           @change="handleSchemeChange"
         />
       </template>
-      <template #status="{ model, field }">
+      <template #status="slotProps">
         <DictTag
+          v-bind="slotProps.componentProps"
           :type="DICT_TYPE.HRM_INSURANCE_EMP_STATUS"
-          :value="model[field] ?? ''"
+          :value="slotProps.componentProps?.value ?? ''"
         />
       </template>
     </Form>
