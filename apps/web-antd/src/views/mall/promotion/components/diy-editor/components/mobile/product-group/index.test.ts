@@ -23,7 +23,7 @@ vi.mock('../product-list/index.vue', () => ({
   default: { template: '<div class="product-list-stub" />' },
 }));
 
-describe('ProductGroup', () => {
+describe('product group', () => {
   const hosts: HTMLDivElement[] = [];
 
   afterEach(() => {
