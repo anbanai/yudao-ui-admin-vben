@@ -45,6 +45,7 @@ const { closeOtherTabs, refreshTab } = useTabs();
 const notifications = ref<NotificationItem[]>([]);
 const unreadCount = ref(0);
 const showDot = computed(() => unreadCount.value > 0);
+const notificationPopupRef = ref<null | { toggle: () => void }>(null);
 
 const { isDark } = usePreferences();
 
@@ -120,6 +121,11 @@ function handleNotificationOpen(open: boolean) {
   }
   handleNotificationGetList();
   handleNotificationGetUnreadCount();
+}
+
+function handleNotificationToggle() {
+  notificationPopupRef.value?.toggle();
+  handleNotificationOpen(true);
 }
 
 /** 打开 IM 聊天 */
@@ -255,7 +261,22 @@ watch(
         :tag-text="userStore.userInfo?.username"
         @clear-preferences-and-logout="handleLogout"
         @logout="handleLogout"
-      />
+        @notification="handleNotificationToggle"
+      >
+        <template #notification>
+          <Notification
+            ref="notificationPopupRef"
+            :dot="showDot"
+            :notifications="notifications"
+            @clear="handleNotificationClear"
+            @make-all="handleNotificationMakeAll"
+            @view-all="handleNotificationViewAll"
+            @open="handleNotificationOpen"
+            @read="handleNotificationRead"
+            @on-click="handleClick"
+          />
+        </template>
+      </UserDropdown>
     </template>
     <template #notification>
       <Notification
