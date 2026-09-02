@@ -1,6 +1,8 @@
 import type { FormCodec, FormValues } from '@vben/common-ui';
 
-import dayjs, { type Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
+
+import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 
 dayjs.extend(customParseFormat);
@@ -33,19 +35,19 @@ export function createNumberRangeCodec(
     encode(values) {
       const result = copy(values);
       const range = values[rangeField] as NumberRange;
-      delete result[rangeField];
-      if (range?.[0] !== undefined) result[minField] = range[0];
-      else delete result[minField];
-      if (range?.[1] !== undefined) result[maxField] = range[1];
-      else delete result[maxField];
+      Reflect.deleteProperty(result, rangeField);
+      if (range?.[0] === undefined) Reflect.deleteProperty(result, minField);
+      else result[minField] = range[0];
+      if (range?.[1] === undefined) Reflect.deleteProperty(result, maxField);
+      else result[maxField] = range[1];
       return result;
     },
     decode(values) {
       const result = copy(values);
       const min = values[minField] as number | undefined;
       const max = values[maxField] as number | undefined;
-      delete result[minField];
-      delete result[maxField];
+      Reflect.deleteProperty(result, minField);
+      Reflect.deleteProperty(result, maxField);
       result[rangeField] =
         min === undefined && max === undefined ? undefined : [min, max];
       return result;
@@ -72,12 +74,12 @@ export function createDateRangeCodec(
         | [unknown, unknown]
         | null
         | undefined;
-      delete result[rangeField];
+      Reflect.deleteProperty(result, rangeField);
       const start = formatDate(range?.[0], format);
       const end = formatDate(range?.[1], format);
-      if (start === undefined) delete result[startField];
+      if (start === undefined) Reflect.deleteProperty(result, startField);
       else result[startField] = start;
-      if (end === undefined) delete result[endField];
+      if (end === undefined) Reflect.deleteProperty(result, endField);
       else result[endField] = end;
       return result;
     },
@@ -85,8 +87,8 @@ export function createDateRangeCodec(
       const result = copy(values);
       const start = values[startField] as string | undefined;
       const end = values[endField] as string | undefined;
-      delete result[startField];
-      delete result[endField];
+      Reflect.deleteProperty(result, startField);
+      Reflect.deleteProperty(result, endField);
       result[rangeField] =
         start === undefined && end === undefined
           ? undefined
@@ -104,12 +106,14 @@ export function composeFormCodecs(
 ): FormCodec<FormValues, FormValues> {
   return {
     encode(values) {
-      return codecs.reduce((current, codec) => codec.encode(current), copy(values));
+      let current = copy(values);
+      for (const codec of codecs) current = codec.encode(current);
+      return current;
     },
     decode(values) {
-      return codecs
-        .toReversed()
-        .reduce((current, codec) => codec.decode(current), copy(values));
+      let current = copy(values);
+      for (const codec of codecs.toReversed()) current = codec.decode(current);
+      return current;
     },
   };
 }
