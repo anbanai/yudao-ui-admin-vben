@@ -7,6 +7,9 @@ import { createApp, defineComponent, h, nextTick } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { scanSource } from '../../../../../scripts/vsh/src/check-web-antd-contracts/scanner';
 
+import AgeRangeField from '#/views/hrm/recruit/post/modules/age-range-field.vue';
+import SalaryRangeField from '#/views/hrm/recruit/post/modules/salary-range-field.vue';
+
 vi.mock('ant-design-vue', () => ({
   Checkbox: defineComponent({
     emits: ['update:checked'],
@@ -56,13 +59,11 @@ vi.mock('@vben/hooks', () => ({
   getDictOptions: () => [],
 }));
 
-import AgeRangeField from '#/views/hrm/recruit/post/modules/age-range-field.vue';
-import SalaryRangeField from '#/views/hrm/recruit/post/modules/salary-range-field.vue';
-
 function files(root: string): string[] {
   return fs.readdirSync(root, { withFileTypes: true }).flatMap((e) => {
     const p = path.join(root, e.name);
-    return e.isDirectory() ? files(p) : /\.(ts|vue)$/.test(e.name) ? [p] : [];
+    if (e.isDirectory()) return files(p);
+    return /\.(ts|vue)$/.test(e.name) ? [p] : [];
   });
 }
 function name(n: ts.ObjectLiteralElementLike) {
@@ -112,7 +113,7 @@ function problems(file: string): string[] {
         const declared = trigger.initializer.elements
           .filter(ts.isStringLiteral)
           .map((item) => item.text)
-          .sort();
+          .toSorted();
         const read = new Set<string>();
         function collect(current: ts.Node) {
           if (
@@ -137,11 +138,11 @@ function problems(file: string): string[] {
           ts.forEachChild(current, collect);
         }
         collect(resolver);
-        const actual = [...read].sort();
+        const actual = [...read].toSorted();
         if (
           declared.length === 0 ||
           declared.some((field) => !field) ||
-          declared.join() !== actual.join()
+          declared.join(',') !== actual.join(',')
         ) {
           out.push(
             `${location}:declared=${declared.join(',')}:read=${actual.join(',')}`,
@@ -154,7 +155,7 @@ function problems(file: string): string[] {
   visit(source);
   return out;
 }
-describe('Task 5 wave-three dependency migration', () => {
+describe('task 5 wave-three dependency migration', () => {
   const apps: Array<ReturnType<typeof createApp>> = [];
 
   afterEach(() => {
@@ -164,8 +165,8 @@ describe('Task 5 wave-three dependency migration', () => {
 
   it('uses atomic resolvers with exact triggers across erp/fms/hrm', () => {
     const root = path.resolve(import.meta.dirname, '..');
-    const out = ['erp', 'fms', 'hrm'].flatMap((d) =>
-      files(path.join(root, d)).flatMap(problems),
+    const out = ['erp', 'fms', 'hrm', 'iot', 'wms'].flatMap((d) =>
+      files(path.join(root, d)).flatMap((file) => problems(file)),
     );
     expect(out).toEqual([]);
   });

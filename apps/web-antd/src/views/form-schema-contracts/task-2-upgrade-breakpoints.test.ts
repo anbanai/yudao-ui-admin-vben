@@ -94,7 +94,7 @@ function rule(schema: VbenFormSchema[], name: string): ZodRule {
   return result;
 }
 
-describe('Task 2 form schema upgrade contracts', () => {
+describe('task 2 form schema upgrade contracts', () => {
   const apps: Array<ReturnType<typeof createApp>> = [];
   beforeEach(() => setActivePinia(createPinia()));
   afterEach(() => {
@@ -198,16 +198,19 @@ describe('Task 2 form schema upgrade contracts', () => {
     const control = host.querySelector(
       'output[data-placeholder="请输入模型类型"]',
     );
-    expect(control?.getAttribute('data-placeholder')).toBe('请输入模型类型');
-    expect(control?.getAttribute('data-disabled')).toBe('true');
+    expect(control?.dataset.placeholder).toBe('请输入模型类型');
+    expect(control?.dataset.disabled).toBe('true');
   });
   it('passes values through range resolvers without writes', () => {
-    const values = { minSalary: 1000 };
-    expect(resolve(post(), 'minSalary', values)).toMatchObject({
-      componentProps: { values },
+    const salaryValues = { minSalary: 1000 };
+    expect(resolve(post(), 'minSalary', salaryValues)).toMatchObject({
+      componentProps: { values: salaryValues },
     });
-    expect(resolve(post(), 'minAge', values)).toMatchObject({
-      componentProps: { values },
+    const ageValues = { minAge: 18, maxAge: 60, ageUnlimited: false };
+    expect(resolve(post(), 'minAge', ageValues)).toMatchObject({
+      componentProps: {
+        values: ageValues,
+      },
     });
   });
   it('accepts IPv4 and IPv6 and preserves the invalid IP message', () => {

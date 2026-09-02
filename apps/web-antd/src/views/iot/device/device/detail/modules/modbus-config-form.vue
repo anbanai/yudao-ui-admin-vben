@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import type { IotDeviceModbusConfigApi } from '#/api/iot/device/modbus/config';
 
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import {
@@ -24,14 +24,6 @@ const emit = defineEmits(['success']);
 
 const formData = ref<IotDeviceModbusConfigApi.ModbusConfig>();
 const deviceId = ref<number>(0);
-const protocolType = ref<string>('');
-
-const isClient = computed(
-  () => protocolType.value === ProtocolTypeEnum.MODBUS_TCP_CLIENT,
-); // 是否为 Client 模式
-const isServer = computed(
-  () => protocolType.value === ProtocolTypeEnum.MODBUS_TCP_SERVER,
-); // 是否为 Server 模式
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -194,7 +186,6 @@ const [Modal, modalApi] = useVbenModal({
       return;
     }
     deviceId.value = data.deviceId;
-    protocolType.value = data.protocolType;
     if (!data.config) {
       return;
     }
