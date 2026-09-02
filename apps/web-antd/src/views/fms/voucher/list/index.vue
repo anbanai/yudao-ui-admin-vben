@@ -22,6 +22,7 @@ import {
   getVoucherPrintList,
   updateVoucherReviewStatus,
 } from '#/api/fms/voucher';
+import { createNumberRangesCodec } from '#/utils/form-codec';
 import { useFmsStore } from '#/views/fms/store/fms';
 import { FMS_VOUCHER_STATUS } from '#/views/fms/utils/constants';
 import { formatMoney } from '#/views/fms/utils/format';
@@ -63,6 +64,9 @@ const [MoveFormModal, moveFormModalApi] = useVbenModal({
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
+    codec: createNumberRangesCodec([
+      { rangeField: 'amountRange', minField: 'minAmount', maxField: 'maxAmount' },
+    ]),
     schema: useGridFormSchema(),
     /** 重置为当前会计期间 */
     handleReset: async () => {

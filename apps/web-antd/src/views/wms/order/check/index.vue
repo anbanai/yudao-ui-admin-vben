@@ -33,6 +33,7 @@ import {
   getCheckOrderPage,
 } from '#/api/wms/order/check';
 import { $t } from '#/locales';
+import { createNumberRangesCodec } from '#/utils/form-codec';
 import {
   formatPrice,
   formatQuantity,
@@ -176,6 +177,11 @@ async function handleExport() {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
+    codec: createNumberRangesCodec([
+      { rangeField: 'totalQuantityRange', minField: 'totalQuantityMin', maxField: 'totalQuantityMax' },
+      { rangeField: 'totalPriceRange', minField: 'totalPriceMin', maxField: 'totalPriceMax' },
+      { rangeField: 'actualPriceRange', minField: 'actualPriceMin', maxField: 'actualPriceMax' },
+    ]),
     collapsed: true,
     schema: useGridFormSchema(),
   },

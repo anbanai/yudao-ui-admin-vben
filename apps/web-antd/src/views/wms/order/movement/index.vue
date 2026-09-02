@@ -33,6 +33,7 @@ import {
   getMovementOrderPage,
 } from '#/api/wms/order/movement';
 import { $t } from '#/locales';
+import { createNumberRangesCodec } from '#/utils/form-codec';
 import {
   formatPrice,
   formatQuantity,
@@ -176,6 +177,10 @@ async function handleExport() {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
+    codec: createNumberRangesCodec([
+      { rangeField: 'totalQuantityRange', minField: 'totalQuantityMin', maxField: 'totalQuantityMax' },
+      { rangeField: 'totalPriceRange', minField: 'totalPriceMin', maxField: 'totalPriceMax' },
+    ]),
     collapsed: true,
     schema: useGridFormSchema(),
   },

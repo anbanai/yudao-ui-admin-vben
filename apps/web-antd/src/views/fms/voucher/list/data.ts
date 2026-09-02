@@ -19,18 +19,6 @@ const voucherStatusOptions = getDictOptions(
   'number',
 );
 
-/** 拆分数字区间到最小/最大查询字段 */
-function splitNumberRange(minFieldName: string, maxFieldName: string) {
-  return (
-    value: [number | undefined, number | undefined] | undefined,
-    setValue: (fieldName: string, value: number | undefined) => void,
-  ) => {
-    setValue(minFieldName, value?.[0]);
-    setValue(maxFieldName, value?.[1]);
-    return undefined;
-  };
-}
-
 /** 列表搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
@@ -97,7 +85,6 @@ export function useGridFormSchema(): VbenFormSchema[] {
         minPlaceholder: '最小金额',
         maxPlaceholder: '最大金额',
       },
-      valueFormat: splitNumberRange('minAmount', 'maxAmount'),
     },
     {
       fieldName: 'creatorUserId',

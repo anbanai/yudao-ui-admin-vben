@@ -52,7 +52,7 @@ function getVisibleFields(field: 'activeVisible' | 'pendingEntryVisible') {
   return list.value.map((item) => ({ name: item.name, visible: item[field] }));
 }
 
-async function submitForm() {
+async function submit() {
   // 串行保存，避免并行写配置触发后端偶发「系统异常」
   await saveEmployeeCreateFieldConfig({
     entryStatus: HrmEmployeeEntryStatus.ACTIVE,
@@ -67,7 +67,7 @@ async function submitForm() {
 }
 
 onMounted(getList);
-defineExpose({ submitForm });
+defineExpose({ submit });
 </script>
 
 <template>

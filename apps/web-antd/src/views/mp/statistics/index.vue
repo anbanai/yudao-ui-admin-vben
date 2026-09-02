@@ -99,7 +99,7 @@ async function getSummary(values: Record<string, any>) {
 /** 公众号变化时查询数据 */
 function handleAccountChange(accountId: number) {
   queryFormApi.setValues({ accountId });
-  queryFormApi.submitForm();
+  queryFormApi.submit();
 }
 
 const [QueryForm, queryFormApi] = useVbenForm({

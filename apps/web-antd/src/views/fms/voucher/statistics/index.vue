@@ -17,6 +17,7 @@ import {
   exportVoucherStatistics,
   getVoucherStatisticsList,
 } from '#/api/fms/voucher/statistics';
+import { createNumberRangesCodec } from '#/utils/form-codec';
 import FmsPrintPreview from '#/views/fms/components/print/fms-print-preview.vue';
 import { useFmsStore } from '#/views/fms/store/fms';
 import {
@@ -45,6 +46,10 @@ const [PrintModal, printModalApi] = useVbenModal({
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
+    codec: createNumberRangesCodec([
+      { rangeField: 'voucherNumberRange', minField: 'minVoucherNumber', maxField: 'maxVoucherNumber' },
+      { rangeField: 'levelRange', minField: 'minLevel', maxField: 'maxLevel' },
+    ]),
     schema: useGridFormSchema(),
     /** 重置为当前会计期间和默认科目级次 */
     handleReset: async () => {

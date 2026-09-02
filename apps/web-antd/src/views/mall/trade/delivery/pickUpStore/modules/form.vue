@@ -6,7 +6,6 @@ import { computed, ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 
 import { Button, message } from 'ant-design-vue';
-import dayjs from 'dayjs';
 
 import { useVbenForm } from '#/adapter/form';
 import { getTradeConfig } from '#/api/mall/trade/config';
@@ -16,6 +15,7 @@ import {
   updateDeliveryPickUpStore,
 } from '#/api/mall/trade/delivery/pickUpStore';
 import { $t } from '#/locales';
+import { createDateRangeCodec } from '#/utils/form-codec';
 
 import { useFormSchema } from '../data';
 
@@ -78,7 +78,7 @@ const [Form, formApi] = useVbenForm({
     },
     labelWidth: 120,
   },
-  fieldMappingTime: [['rangeTime', ['openingTime', 'closingTime'], 'HH:mm']],
+  codec: createDateRangeCodec('rangeTime', 'openingTime', 'closingTime', 'HH:mm'),
   wrapperClass: 'grid-cols-2',
   layout: 'horizontal',
   schema: useFormSchema(),
@@ -123,12 +123,7 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.lock();
     try {
       formData.value = await getDeliveryPickUpStore(data.id);
-      formData.value.rangeTime = [
-        dayjs(formData.value.openingTime, 'HH:mm'),
-        dayjs(formData.value.closingTime, 'HH:mm'),
-      ];
-      // 设置到 values
-      await formApi.setValues(formData.value);
+      await formApi.setSubmitValues(formData.value);
     } finally {
       modalApi.unlock();
       // 初始化地图

@@ -1,7 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { DescriptionItemSchema } from '#/components/description';
-import type { NumberRangeValue } from '#/components/number-range-input';
 
 import { h, markRaw } from 'vue';
 
@@ -34,24 +33,12 @@ import {
 /** 表单类型 */
 export type FormType = 'create' | 'update';
 
-/** 拆分数量/金额区间字段，适配后端 Min/Max 查询参数 */
-function splitNumberRange(minFieldName: string, maxFieldName: string) {
-  return (
-    value: NumberRangeValue | undefined,
-    setValue: (fieldName: string, value: number | undefined) => void,
-  ) => {
-    setValue(minFieldName, value?.[0]);
-    setValue(maxFieldName, value?.[1]);
-    return undefined;
-  };
-}
-
 /** 构建允许负数的区间搜索项，盘库盈亏数量需要支持盘亏 */
 function buildSignedNumberRangeSchema(
   label: string,
   fieldName: string,
-  minFieldName: string,
-  maxFieldName: string,
+  _minFieldName: string,
+  _maxFieldName: string,
   precision: number,
 ): VbenFormSchema {
   return {
@@ -61,7 +48,6 @@ function buildSignedNumberRangeSchema(
     },
     fieldName,
     label,
-    valueFormat: splitNumberRange(minFieldName, maxFieldName),
   };
 }
 

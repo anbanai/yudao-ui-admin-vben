@@ -47,7 +47,7 @@ function handleRefresh() {
 /** 公众号变化时查询数据 */
 function handleAccountChange(accountId: number) {
   gridApi.formApi.setValues({ accountId });
-  gridApi.formApi.submitForm();
+  gridApi.formApi.submit();
 }
 
 /** 切换回复类型 */
