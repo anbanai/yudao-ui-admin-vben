@@ -92,6 +92,42 @@ describe('web-antd contract scanner', () => {
     expect(ruleIds(source)).toEqual(['VF004', 'VF004']);
   });
 
+  it('detects destructured form mutation aliases without flagging unrelated destructuring', () => {
+    const source = `
+      const schema = [{
+        dependencies: {
+          resolve: ({ formApi, controller }) => {
+            const { setValues } = formApi;
+            const { reset: resetFormValues } = controller;
+            const { reset } = cache;
+            setValues({ name: 'updated' });
+            resetFormValues();
+            reset();
+          },
+        },
+      }];
+    `;
+
+    expect(ruleIds(source)).toEqual(['VF004', 'VF004']);
+  });
+
+  it('detects destructured form mutation aliases from a resolver context', () => {
+    const source = `
+      const schema = [{
+        dependencies: {
+          resolve: (context) => {
+            const { setValues } = context.formApi;
+            const { reset: resetFormValues } = context.controller;
+            setValues({ name: 'updated' });
+            resetFormValues();
+          },
+        },
+      }];
+    `;
+
+    expect(ruleIds(source)).toEqual(['VF004', 'VF004']);
+  });
+
   it('rejects empty trigger field arrays', () => {
     const source = `
       const schema = [{

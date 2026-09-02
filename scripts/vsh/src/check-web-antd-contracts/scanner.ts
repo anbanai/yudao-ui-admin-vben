@@ -281,6 +281,7 @@ function scanTypeScript(
       const resolver = getFunctionLike(resolveProperty);
       if (resolver?.body) {
         const { aliases, contexts } = getResolverFormApiBindings(resolver);
+        const mutationAliases = new Set<string>();
 
         function inspectResolver(node: ts.Node, isResolverBody = false) {
           if (
@@ -300,10 +301,24 @@ function scanTypeScript(
             aliases.add(node.name.text);
           }
           if (
+            ts.isVariableDeclaration(node) &&
+            ts.isObjectBindingPattern(node.name) &&
+            isFormApiReceiver(node.initializer, aliases, contexts)
+          ) {
+            for (const element of node.name.elements) {
+              const methodName = getBindingElementPropertyName(element);
+              if (
+                methodName &&
+                RESOLVER_WRITE_METHODS.has(methodName) &&
+                ts.isIdentifier(element.name)
+              ) {
+                mutationAliases.add(element.name.text);
+              }
+            }
+          }
+          if (
             ts.isCallExpression(node) &&
-            ts.isPropertyAccessExpression(node.expression) &&
-            RESOLVER_WRITE_METHODS.has(node.expression.name.text) &&
-            isFormApiReceiver(node.expression.expression, aliases, contexts)
+            isResolverMutationCall(node, aliases, contexts, mutationAliases)
           ) {
             reportNode(
               node,
@@ -406,6 +421,31 @@ function scanTypeScript(
   }
 
   visit(sourceFile);
+}
+
+function getBindingElementPropertyName(
+  element: ts.BindingElement,
+): string | undefined {
+  if (element.propertyName && ts.isIdentifier(element.propertyName)) {
+    return element.propertyName.text;
+  }
+  return ts.isIdentifier(element.name) ? element.name.text : undefined;
+}
+
+function isResolverMutationCall(
+  node: ts.CallExpression,
+  aliases: Set<string>,
+  contexts: Set<string>,
+  mutationAliases: Set<string>,
+): boolean {
+  if (ts.isIdentifier(node.expression)) {
+    return mutationAliases.has(node.expression.text);
+  }
+  return (
+    ts.isPropertyAccessExpression(node.expression) &&
+    RESOLVER_WRITE_METHODS.has(node.expression.name.text) &&
+    isFormApiReceiver(node.expression.expression, aliases, contexts)
+  );
 }
 
 function getResolverFormApiBindings(
