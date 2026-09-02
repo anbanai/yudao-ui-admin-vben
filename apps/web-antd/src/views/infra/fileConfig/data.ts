@@ -12,10 +12,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -37,7 +34,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['id'],
-        disabled: (formValues) => formValues.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
     },
     {
@@ -59,8 +58,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) =>
-          formValues.storage >= 10 && formValues.storage <= 12,
+        resolve: ({ values }) => ({
+          show: values.storage >= 10 && values.storage <= 12,
+        }),
       },
     },
     {
@@ -73,8 +73,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) =>
-          formValues.storage >= 11 && formValues.storage <= 12,
+        resolve: ({ values }) => ({
+          show: values.storage >= 11 && values.storage <= 12,
+        }),
       },
     },
     {
@@ -89,8 +90,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) =>
-          formValues.storage >= 11 && formValues.storage <= 12,
+        resolve: ({ values }) => ({
+          show: values.storage >= 11 && values.storage <= 12,
+        }),
       },
     },
     {
@@ -103,8 +105,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) =>
-          formValues.storage >= 11 && formValues.storage <= 12,
+        resolve: ({ values }) => ({
+          show: values.storage >= 11 && values.storage <= 12,
+        }),
       },
     },
     {
@@ -117,8 +120,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) =>
-          formValues.storage >= 11 && formValues.storage <= 12,
+        resolve: ({ values }) => ({
+          show: values.storage >= 11 && values.storage <= 12,
+        }),
       },
     },
     {
@@ -136,7 +140,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) => formValues.storage === 11,
+        resolve: ({ values }) => ({
+          show: values.storage === 11,
+        }),
       },
     },
     // S3
@@ -150,7 +156,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) => formValues.storage === 20,
+        resolve: ({ values }) => ({
+          show: values.storage === 20,
+        }),
       },
     },
     {
@@ -163,7 +171,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) => formValues.storage === 20,
+        resolve: ({ values }) => ({
+          show: values.storage === 20,
+        }),
       },
     },
     {
@@ -176,7 +186,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) => formValues.storage === 20,
+        resolve: ({ values }) => ({
+          show: values.storage === 20,
+        }),
       },
     },
     {
@@ -189,7 +201,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) => formValues.storage === 20,
+        resolve: ({ values }) => ({
+          show: values.storage === 20,
+        }),
       },
     },
     {
@@ -207,7 +221,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) => formValues.storage === 20,
+        resolve: ({ values }) => ({
+          show: values.storage === 20,
+        }),
       },
       defaultValue: false,
     },
@@ -226,7 +242,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) => formValues.storage === 20,
+        resolve: ({ values }) => ({
+          show: values.storage === 20,
+        }),
       },
       defaultValue: false,
     },
@@ -239,7 +257,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) => formValues.storage === 20,
+        resolve: ({ values }) => ({
+          show: values.storage === 20,
+        }),
       },
     },
     // 通用
@@ -253,7 +273,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['storage'],
-        show: (formValues) => !!formValues.storage,
+        resolve: ({ values }) => ({
+          show: !!values.storage,
+        }),
       },
     },
   ];

@@ -22,10 +22,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'mobile',
@@ -429,24 +426,30 @@ export function useBalanceFormSchema(): VbenFormSchema[] {
         step: 0.1,
         placeholder: '请输入变动余额',
       },
+      dependencies: {
+        triggerFields: ['balance', 'changeType'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (changeBalance = 0) => {
+              actions.setFieldValue(
+                'balanceResult',
+                formatToFraction(
+                  convertToInteger(values.balance) +
+                    convertToInteger(changeBalance) * values.changeType,
+                ),
+              );
+            },
+          },
+        }),
+      },
       defaultValue: 0,
     },
     {
       fieldName: 'balanceResult',
       label: '变动后余额(元)',
       component: 'Input',
-      dependencies: {
-        triggerFields: ['balance', 'changeBalance', 'changeType'],
+      componentProps: {
         disabled: true,
-        trigger(values, form) {
-          form.setFieldValue(
-            'balanceResult',
-            formatToFraction(
-              convertToInteger(values.balance) +
-                convertToInteger(values.changeBalance) * values.changeType,
-            ),
-          );
-        },
       },
     },
   ];
@@ -504,24 +507,27 @@ export function usePointFormSchema(): VbenFormSchema[] {
         precision: 0,
         placeholder: '请输入变动积分',
       },
+      dependencies: {
+        triggerFields: ['point', 'changeType'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (changePoint = 0) => {
+              actions.setFieldValue(
+                'pointResult',
+                values.point + changePoint * values.changeType || values.point,
+              );
+            },
+          },
+        }),
+      },
     },
     {
       fieldName: 'pointResult',
       label: '变动后积分',
       component: 'Input',
       componentProps: {
-        placeholder: '',
-      },
-      dependencies: {
-        triggerFields: ['point', 'changePoint', 'changeType'],
         disabled: true,
-        trigger(values, form) {
-          form.setFieldValue(
-            'pointResult',
-            values.point + values.changePoint * values.changeType ||
-              values.point,
-          );
-        },
+        placeholder: '',
       },
       rules: z.number().min(0),
     },

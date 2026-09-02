@@ -28,16 +28,11 @@ export const EVENT_OPTIONS = [
 
 /** 新增/修改的表单 */
 export function useFormSchema(): VbenFormSchema[] {
-  let prevValueType: string | undefined;
-
   return [
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -69,6 +64,21 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '请选择类型',
         allowClear: true,
       },
+      dependencies: {
+        triggerFields: ['event'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (type?: string) => {
+              const options =
+                type === 'execution' ? EVENT_EXECUTION_OPTIONS : EVENT_OPTIONS;
+              const event = values.event;
+              if (event && !options.some((option) => option.value === event)) {
+                actions.setFieldValue('event', undefined);
+              }
+            },
+          },
+        }),
+      },
       rules: 'required',
     },
     {
@@ -83,23 +93,13 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['type'],
-        trigger: (values) => {
-          const options =
-            values.type === 'execution'
-              ? EVENT_EXECUTION_OPTIONS
-              : EVENT_OPTIONS;
-          if (
-            values.event &&
-            !options.some((opt) => opt.value === values.event)
-          ) {
-            values.event = undefined;
-          }
-        },
-        componentProps: (values) => ({
-          options:
-            values.type === 'execution'
-              ? EVENT_EXECUTION_OPTIONS
-              : EVENT_OPTIONS,
+        resolve: ({ values }) => ({
+          componentProps: {
+            options:
+              values.type === 'execution'
+                ? EVENT_EXECUTION_OPTIONS
+                : EVENT_OPTIONS,
+          },
         }),
       },
     },
@@ -115,6 +115,22 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '请选择值类型',
         allowClear: true,
       },
+      dependencies: {
+        triggerFields: ['valueType'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (valueType?: string) => {
+              if (
+                values.valueType &&
+                valueType &&
+                values.valueType !== valueType
+              ) {
+                actions.setFieldValue('value', undefined);
+              }
+            },
+          },
+        }),
+      },
       rules: 'required',
     },
     {
@@ -124,19 +140,11 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['valueType'],
-        trigger: (values) => {
-          if (
-            prevValueType &&
-            values.valueType &&
-            prevValueType !== values.valueType
-          ) {
-            values.value = undefined;
-          }
-          prevValueType = values.valueType;
-        },
-        componentProps: (values) => ({
-          placeholder:
-            values.valueType === 'class' ? '请输入类路径' : '请输入表达式',
+        resolve: ({ values }) => ({
+          componentProps: {
+            placeholder:
+              values.valueType === 'class' ? '请输入类路径' : '请输入表达式',
+          },
         }),
       },
     },

@@ -16,10 +16,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -37,7 +34,9 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'ApiSelect',
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
       componentProps: {
         api: getSimpleUserList,
@@ -62,7 +61,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.customerDefault,
+        resolve: ({ values }) => ({
+          disabled: values.customerDefault,
+        }),
       },
       rules: 'required',
     },
@@ -70,10 +71,7 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'contactId',
       label: '合同名称',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'statusTypeId',
@@ -88,7 +86,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
       rules: 'required',
     },
@@ -124,6 +124,24 @@ export function useFormSchema(): VbenFormSchema[] {
         disabled: true,
         placeholder: '请输入产品总金额',
       },
+      dependencies: {
+        triggerFields: ['discountPercent'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (totalProductPrice = 0) => {
+              const discountPrice =
+                erpPriceMultiply(
+                  totalProductPrice,
+                  (values.discountPercent ?? 0) / 100,
+                ) ?? 0;
+              actions.setFieldValue(
+                'totalPrice',
+                totalProductPrice - discountPrice,
+              );
+            },
+          },
+        }),
+      },
       rules: z.number().min(0).optional().default(0),
     },
     {
@@ -135,6 +153,22 @@ export function useFormSchema(): VbenFormSchema[] {
         min: 0,
         precision: 2,
         placeholder: '请输入整单折扣',
+      },
+      dependencies: {
+        triggerFields: ['totalProductPrice'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (discountPercent = 0) => {
+              const totalProductPrice = values.totalProductPrice ?? 0;
+              const discountPrice =
+                erpPriceMultiply(totalProductPrice, discountPercent / 100) ?? 0;
+              actions.setFieldValue(
+                'totalPrice',
+                totalProductPrice - discountPrice,
+              );
+            },
+          },
+        }),
       },
       rules: z.number().min(0).max(100).optional().default(0),
     },
@@ -148,20 +182,6 @@ export function useFormSchema(): VbenFormSchema[] {
         precision: 2,
         disabled: true,
         placeholder: '请输入折扣后金额',
-      },
-      dependencies: {
-        triggerFields: ['totalProductPrice', 'discountPercent'],
-        trigger(values, form) {
-          const discountPrice =
-            erpPriceMultiply(
-              values.totalProductPrice,
-              values.discountPercent / 100,
-            ) ?? 0;
-          form.setFieldValue(
-            'totalPrice',
-            values.totalProductPrice - discountPrice,
-          );
-        },
       },
     },
   ];

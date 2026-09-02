@@ -107,19 +107,14 @@ const formSchema = computed((): VbenFormSchema[] => {
           value: item.id.toString(),
         })),
         placeholder: $t('authentication.tenantTip'),
+        onChange: (tenantId: string) => {
+          if (tenantId) accessStore.setTenantId(Number(tenantId));
+        },
       },
       fieldName: 'tenantId',
       label: $t('authentication.tenant'),
       rules: z.string().min(1, { message: $t('authentication.tenantTip') }),
-      dependencies: {
-        triggerFields: ['tenantId'],
-        if: tenantEnable,
-        trigger(values) {
-          if (values.tenantId) {
-            accessStore.setTenantId(Number(values.tenantId));
-          }
-        },
-      },
+      hide: !tenantEnable,
     },
     {
       component: 'VbenInput',
@@ -160,16 +155,18 @@ const formSchema = computed((): VbenFormSchema[] => {
         placeholder: $t('authentication.confirmPassword'),
       },
       dependencies: {
-        rules(values) {
-          const { password } = values;
-          return z
-            .string({ error: $t('authentication.passwordTip') })
-            .min(1, { message: $t('authentication.passwordTip') })
-            .refine((value) => value === password, {
-              message: $t('authentication.confirmPasswordTip'),
-            });
-        },
         triggerFields: ['password'],
+        resolve: ({ values }) => {
+          const { password } = values;
+          return {
+            rules: z
+              .string({ error: $t('authentication.passwordTip') })
+              .min(1, { message: $t('authentication.passwordTip') })
+              .refine((value) => value === password, {
+                message: $t('authentication.confirmPasswordTip'),
+              }),
+          };
+        },
       },
       fieldName: 'confirmPassword',
       label: $t('authentication.confirmPassword'),

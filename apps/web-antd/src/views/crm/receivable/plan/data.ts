@@ -34,7 +34,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
       defaultValue: userStore.userInfo?.id,
       rules: 'required',
@@ -64,28 +66,35 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['customerId'],
-        disabled: (values) => !values.customerId,
-        async componentProps(values) {
+        resolve: async ({ values, actions }) => {
           if (!values.customerId) {
             return {
-              options: [],
-              placeholder: '请选择客户',
+              componentProps: {
+                options: [],
+                placeholder: '请选择客户',
+              },
+              disabled: !values.customerId,
             };
           }
           const res = await getContractSimpleList(values.customerId);
           return {
-            options: res.map((item) => ({
-              label: item.name,
-              value: item.id,
-            })),
-            placeholder: '请选择合同',
-            onChange: (value: number) => {
-              const contract = res.find((item) => item.id === value);
-              if (contract) {
-                values.price =
-                  contract.totalPrice - contract.totalReceivablePrice;
-              }
+            componentProps: {
+              options: res.map((item) => ({
+                label: item.name,
+                value: item.id,
+              })),
+              placeholder: '请选择合同',
+              onChange: (value: number) => {
+                const contract = res.find((item) => item.id === value);
+                if (contract) {
+                  actions.setFieldValue(
+                    'price',
+                    contract.totalPrice - contract.totalReceivablePrice,
+                  );
+                }
+              },
             },
+            disabled: !values.customerId,
           };
         },
       },

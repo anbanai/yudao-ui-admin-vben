@@ -20,18 +20,12 @@ export function useFormSchema(
     {
       component: 'Input',
       fieldName: 'bizId',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       component: 'Input',
       fieldName: 'bizType',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'type',

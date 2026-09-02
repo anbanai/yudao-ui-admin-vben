@@ -23,18 +23,15 @@ export async function resetContactCustomerValues(
   await formApi.setValues({ parentId: undefined });
 }
 
-export function useFormSchema(
-  { onCustomerChange }: ContactFormSchemaOptions = {},
-): VbenFormSchema[] {
+export function useFormSchema({
+  onCustomerChange,
+}: ContactFormSchemaOptions = {}): VbenFormSchema[] {
   const userStore = useUserStore();
   return [
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -52,7 +49,9 @@ export function useFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
       componentProps: {
         api: getSimpleUserList,
@@ -154,19 +153,24 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['customerId', 'id'],
-        disabled: (values) => !values.customerId,
-        async componentProps(values) {
+        resolve: async ({ values }) => {
           if (!values.customerId) {
-            return { options: [], placeholder: '请先选择客户' };
+            return {
+              componentProps: { options: [], placeholder: '请先选择客户' },
+              disabled: !values.customerId,
+            };
           }
           const contacts = await getContactListByCustomer(values.customerId);
           return {
-            options: contacts.map((item) => ({
-              disabled: item.id === values.id,
-              label: item.name,
-              value: item.id,
-            })),
-            placeholder: '请选择直属上级',
+            componentProps: {
+              options: contacts.map((item) => ({
+                disabled: item.id === values.id,
+                label: item.name,
+                value: item.id,
+              })),
+              placeholder: '请选择直属上级',
+            },
+            disabled: !values.customerId,
           };
         },
       },

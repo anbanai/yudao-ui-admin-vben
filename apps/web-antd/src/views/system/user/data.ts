@@ -19,10 +19,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'username',
@@ -40,7 +37,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['id'],
-        show: (values) => !values.id,
+        resolve: ({ values }) => ({
+          show: !values.id,
+        }),
       },
     },
     {
@@ -136,10 +135,7 @@ export function useResetPasswordFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       component: 'VbenInputPassword',
@@ -148,17 +144,17 @@ export function useResetPasswordFormSchema(): VbenFormSchema[] {
         placeholder: '请输入新密码',
       },
       dependencies: {
-        rules(values) {
-          return z
+        triggerFields: ['newPassword', 'oldPassword'],
+        resolve: ({ values }) => ({
+          rules: z
             .string({ message: '请输入新密码' })
             .min(5, '密码长度不能少于 5 个字符')
             .max(20, '密码长度不能超过 20 个字符')
             .refine(
               (value) => value !== values.oldPassword,
               '新旧密码不能相同',
-            );
-        },
-        triggerFields: ['newPassword', 'oldPassword'],
+            ),
+        }),
       },
       fieldName: 'newPassword',
       label: '新密码',
@@ -171,17 +167,17 @@ export function useResetPasswordFormSchema(): VbenFormSchema[] {
         placeholder: $t('authentication.confirmPassword'),
       },
       dependencies: {
-        rules(values) {
-          return z
+        triggerFields: ['newPassword', 'confirmPassword'],
+        resolve: ({ values }) => ({
+          rules: z
             .string({ message: '请输入确认密码' })
             .min(5, '密码长度不能少于 5 个字符')
             .max(20, '密码长度不能超过 20 个字符')
             .refine(
               (value) => value === values.newPassword,
               '新密码和确认密码不一致',
-            );
-        },
-        triggerFields: ['newPassword', 'confirmPassword'],
+            ),
+        }),
       },
       fieldName: 'confirmPassword',
       label: '确认密码',
@@ -196,10 +192,7 @@ export function useAssignRoleFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'username',

@@ -18,10 +18,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'platform',
@@ -115,9 +112,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => {
-          return [AiModelTypeEnum.CHAT].includes(values.type);
-        },
+        resolve: ({ values }) => ({
+          show: [AiModelTypeEnum.CHAT].includes(values.type),
+        }),
       },
       rules: 'required',
     },
@@ -133,9 +130,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => {
-          return [AiModelTypeEnum.CHAT].includes(values.type);
-        },
+        resolve: ({ values }) => ({
+          show: [AiModelTypeEnum.CHAT].includes(values.type),
+        }),
       },
       rules: 'required',
     },
@@ -151,9 +148,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => {
-          return [AiModelTypeEnum.CHAT].includes(values.type);
-        },
+        resolve: ({ values }) => ({
+          show: [AiModelTypeEnum.CHAT].includes(values.type),
+        }),
       },
       rules: 'required',
     },

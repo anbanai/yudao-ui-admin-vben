@@ -4,10 +4,7 @@ export const schema: VbenFormSchema[] = [
   {
     component: 'Input',
     fieldName: 'id',
-    dependencies: {
-      triggerFields: [''],
-      show: () => false,
-    },
+    hide: true,
   },
   {
     component: 'Switch',

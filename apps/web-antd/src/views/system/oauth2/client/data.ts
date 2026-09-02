@@ -12,10 +12,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'clientId',
@@ -122,13 +119,15 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['scopes'],
-        componentProps: (values) => ({
-          options: values.scopes
-            ? values.scopes.map((scope: string) => ({
-                label: scope,
-                value: scope,
-              }))
-            : [],
+        resolve: ({ values }) => ({
+          componentProps: {
+            options: values.scopes
+              ? values.scopes.map((scope: string) => ({
+                  label: scope,
+                  value: scope,
+                }))
+              : [],
+          },
         }),
       },
     },
