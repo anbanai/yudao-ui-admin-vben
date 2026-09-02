@@ -36,6 +36,7 @@ overrides:
   pinia: 'catalog:'
   vue: 'catalog:'
 catalog:
+  '@vue/compiler-sfc': ^3.5.40
   '@ast-grep/napi': ^0.44.1
   '@changesets/changelog-github': ^0.7.0
   '@changesets/cli': ^2.31.1

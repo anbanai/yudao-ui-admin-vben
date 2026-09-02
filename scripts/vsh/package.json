@@ -22,10 +22,14 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
+    "@vue/compiler-sfc": "catalog:",
     "@vben/node-utils": "workspace:*",
     "cac": "catalog:",
     "circular-dependency-scanner": "catalog:",
     "knip": "catalog:",
-    "publint": "catalog:"
+    "postcss": "catalog:",
+    "postcss-scss": "catalog:",
+    "publint": "catalog:",
+    "typescript": "catalog:"
   }
 }

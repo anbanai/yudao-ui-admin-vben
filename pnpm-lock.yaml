@@ -195,6 +195,9 @@ catalogs:
     '@vitejs/plugin-vue-jsx':
       specifier: ^5.1.6
       version: 5.1.6
+    '@vue/compiler-sfc':
+      specifier: ^3.5.40
+      version: 3.5.42
     '@vue/shared':
       specifier: ^3.5.40
       version: 3.5.42
@@ -2388,6 +2391,9 @@ importers:
       '@vben/node-utils':
         specifier: workspace:*
         version: link:../../internal/node-utils
+      '@vue/compiler-sfc':
+        specifier: 'catalog:'
+        version: 3.5.42
       cac:
         specifier: 'catalog:'
         version: 7.0.0
@@ -2397,9 +2403,18 @@ importers:
       knip:
         specifier: 'catalog:'
         version: 6.32.3
+      postcss:
+        specifier: 'catalog:'
+        version: 8.5.26
+      postcss-scss:
+        specifier: 'catalog:'
+        version: 4.0.9(postcss@8.5.26)
       publint:
         specifier: 'catalog:'
         version: 0.3.24
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
 packages:
 
