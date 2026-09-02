@@ -20,6 +20,36 @@ export function calculateProductTotals(
   return { totalPrice: totalProductPrice - discountPrice, totalProductPrice };
 }
 
+export async function applyProductUpdate<
+  T extends { discountPercent?: null | number },
+  P extends { totalPrice: number },
+>(
+  formApi: {
+    setValues: (
+      values: T & {
+        products: P[];
+        totalPrice: number;
+        totalProductPrice: number;
+      },
+    ) => Promise<void> | void;
+  },
+  formData: T,
+  products: P[],
+) {
+  const totalProductPrice = products.reduce(
+    (total, product) => total + product.totalPrice,
+    0,
+  );
+  const values = {
+    ...formData,
+    products,
+    ...calculateProductTotals(totalProductPrice, formData.discountPercent),
+  };
+  Object.assign(formData, values);
+  await formApi.setValues(values);
+  return values;
+}
+
 /** 新增/修改的表单 */
 export function useFormSchema(): VbenFormSchema[] {
   const userStore = useUserStore();
@@ -71,7 +101,7 @@ export function useFormSchema(): VbenFormSchema[] {
         allowClear: true,
       },
       dependencies: {
-        triggerFields: ['id'],
+        triggerFields: ['customerDefault'],
         resolve: ({ values }) => ({
           disabled: values.customerDefault,
         }),

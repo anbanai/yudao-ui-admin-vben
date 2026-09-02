@@ -16,7 +16,7 @@ import { BizTypeEnum } from '#/api/crm/permission';
 import { $t } from '#/locales';
 import { ProductEditTable } from '#/views/crm/product/components';
 
-import { calculateProductTotals, useFormSchema } from '../data';
+import { applyProductUpdate, useFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
 const formData = ref<CrmContractApi.Contract>();
@@ -27,20 +27,10 @@ const getTitle = computed(() => {
 });
 
 /** 更新产品列表 */
-function handleUpdateProducts(products: any) {
+async function handleUpdateProducts(products: any) {
   formData.value = modalApi.getData() as CrmContractApi.Contract;
-  formData.value!.products = products;
   if (formData.value) {
-    const totalProductPrice =
-      formData.value.products?.reduce(
-        (prev, curr) => prev + curr.totalPrice,
-        0,
-      ) ?? 0;
-    Object.assign(
-      formData.value,
-      calculateProductTotals(totalProductPrice, formData.value.discountPercent),
-    );
-    formApi.setValues(formData.value!);
+    await applyProductUpdate(formApi, formData.value, products);
   }
 }
 

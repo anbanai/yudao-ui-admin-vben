@@ -144,7 +144,7 @@ export function useResetPasswordFormSchema(): VbenFormSchema[] {
         placeholder: '请输入新密码',
       },
       dependencies: {
-        triggerFields: ['newPassword', 'oldPassword'],
+        triggerFields: ['oldPassword'],
         resolve: ({ values }) => ({
           rules: z
             .string({ message: '请输入新密码' })
@@ -167,7 +167,7 @@ export function useResetPasswordFormSchema(): VbenFormSchema[] {
         placeholder: $t('authentication.confirmPassword'),
       },
       dependencies: {
-        triggerFields: ['newPassword', 'confirmPassword'],
+        triggerFields: ['newPassword'],
         resolve: ({ values }) => ({
           rules: z
             .string({ message: '请输入确认密码' })
