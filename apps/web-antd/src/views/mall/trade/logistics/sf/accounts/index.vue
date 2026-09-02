@@ -1,7 +1,9 @@
 <script lang="ts" setup>
+import type { SfPaperSpecValue } from '../paper-spec';
+
 import type { MallSfLogisticsApi } from '#/api/mall/trade/logistics/sf';
 
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -21,6 +23,13 @@ import {
 import { getSimpleDeliveryExpressList } from '#/api/mall/trade/delivery/express';
 import { getSfAccounts, saveSfAccount } from '#/api/mall/trade/logistics/sf';
 
+import {
+  DEFAULT_SF_PAPER_SPEC,
+  getSfPaperSpec,
+  SF_PAPER_SPEC_OPTIONS,
+  toSfPaperSpecValue,
+} from '../paper-spec';
+
 const accounts = ref<MallSfLogisticsApi.Account[]>([]);
 const expressOptions = ref<Array<{ label: string; value: number }>>([]);
 const saving = ref(false);
@@ -36,8 +45,8 @@ const form = reactive<MallSfLogisticsApi.Account>({
   senderCity: '',
   senderAddress: '',
   defaultWeightKg: 1,
-  paperWidthMm: 100,
-  paperHeightMm: 150,
+  paperWidthMm: DEFAULT_SF_PAPER_SPEC.widthMm,
+  paperHeightMm: DEFAULT_SF_PAPER_SPEC.heightMm,
   dpi: 203,
   defaultFlag: true,
   status: 0,
@@ -48,9 +57,21 @@ const columns = [
   { title: '月结卡', dataIndex: 'monthlyCardMasked' },
   { title: '产品类型', dataIndex: 'serviceCode' },
   { title: '模板', dataIndex: 'templateCode' },
+  { title: '纸张', key: 'paperSpec' },
   { title: '状态', key: 'status' },
   { title: '操作', key: 'actions' },
 ];
+const paperSpecValue = computed<SfPaperSpecValue>({
+  get: () =>
+    toSfPaperSpecValue(form.paperWidthMm, form.paperHeightMm) ??
+    DEFAULT_SF_PAPER_SPEC.value,
+  set: (value) => {
+    const spec = getSfPaperSpec(value);
+    form.paperWidthMm = spec.widthMm;
+    form.paperHeightMm = spec.heightMm;
+    form.dpi = spec.dpi;
+  },
+});
 
 async function load() {
   const [data, expresses] = await Promise.all([
@@ -88,8 +109,8 @@ function reset() {
     senderDistrict: '',
     senderAddress: '',
     defaultWeightKg: 1,
-    paperWidthMm: 100,
-    paperHeightMm: 150,
+    paperWidthMm: DEFAULT_SF_PAPER_SPEC.widthMm,
+    paperHeightMm: DEFAULT_SF_PAPER_SPEC.heightMm,
     dpi: 203,
     defaultFlag: accounts.value.length === 0,
     status: 0,
@@ -140,7 +161,13 @@ onMounted(load);
         <Form.Item label="产品类型">
           <Input v-model:value="form.serviceCode" />
         </Form.Item>
-        <Form.Item label="100×150 模板代码" required>
+        <Form.Item label="面单纸张" required>
+          <Select
+            v-model:value="paperSpecValue"
+            :options="SF_PAPER_SPEC_OPTIONS"
+          />
+        </Form.Item>
+        <Form.Item label="顺丰云打印模板代码" required>
           <Input v-model:value="form.templateCode" />
         </Form.Item>
         <Form.Item label="API 地址">
@@ -200,6 +227,9 @@ onMounted(load);
           <Tag :color="record.status === 0 ? 'green' : 'default'">
             {{ record.status === 0 ? '启用' : '停用' }}
           </Tag>
+        </template>
+        <template v-else-if="column.key === 'paperSpec'">
+          {{ record.paperWidthMm }}×{{ record.paperHeightMm }} mm
         </template>
         <template v-else-if="column.key === 'actions'">
           <Button type="link" @click="editRecord(record)"> 编辑 </Button>

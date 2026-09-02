@@ -120,8 +120,10 @@ export const rotatePrintDeviceToken = (id: number) =>
   requestClient.post<MallSfLogisticsApi.Device>(
     `${baseUrl}/devices/${id}/rotate-token`,
   );
-export const createDiagnosticPayload = () =>
-  requestClient.post<string>(`${baseUrl}/diagnostics/test-payload`);
+export const createDiagnosticPayload = (data: {
+  paperHeightMm: number;
+  paperWidthMm: number;
+}) => requestClient.post<string>(`${baseUrl}/diagnostics/test-payload`, data);
 export const getPendingLogisticsOrders = () =>
   requestClient.get<MallSfLogisticsApi.PendingOrder[]>(`${baseUrl}/pending`);
 export const createSfWaybill = (data: {

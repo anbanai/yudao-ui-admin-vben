@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import type { PrintBridgeClient as PrintBridgeClientType } from 'print-bridge-sdk';
 
+import type { SfPaperSpecValue } from '../paper-spec';
+
 import type { MallSfLogisticsApi } from '#/api/mall/trade/logistics/sf';
 
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
@@ -28,6 +30,12 @@ import {
   savePrintDevice,
 } from '#/api/mall/trade/logistics/sf';
 
+import {
+  DEFAULT_SF_PAPER_SPEC,
+  getSfPaperSpec,
+  SF_PAPER_SPEC_OPTIONS,
+} from '../paper-spec';
+
 type LocalPrinter = { isDefault?: boolean; name: string };
 type QueueJob = { jobId: string; message?: string; status: string };
 type PrinterInfo = {
@@ -49,6 +57,7 @@ const localPrinters = ref<LocalPrinter[]>([]);
 const selectedPrinter = ref<string>();
 const queue = ref<QueueJob[]>([]);
 const diagnosticStatus = ref('');
+const diagnosticPaperSpec = ref<SfPaperSpecValue>(DEFAULT_SF_PAPER_SPEC.value);
 const printerInfo = ref<PrinterInfo>();
 const saving = ref(false);
 const rotatingId = ref<number>();
@@ -144,13 +153,20 @@ async function detectLocal() {
 async function testPrint() {
   if (!client?.isConnected())
     return message.warning('请先检测本机 PrintBridge');
-  const fileUrl = await createDiagnosticPayload();
+  const paperSpec = getSfPaperSpec(diagnosticPaperSpec.value);
+  const fileUrl = await createDiagnosticPayload({
+    paperHeightMm: paperSpec.heightMm,
+    paperWidthMm: paperSpec.widthMm,
+  });
   const accepted = await client.print({
     type: 'image',
     fileUrl,
     printerName: selectedPrinter.value,
     copies: 1,
-    paper: { widthMm: 100, heightMm: 150 },
+    paper: {
+      heightMm: paperSpec.heightMm,
+      widthMm: paperSpec.widthMm,
+    },
   });
   diagnosticStatus.value = `${accepted.status}：${accepted.jobId}`;
 }
@@ -254,6 +270,13 @@ onBeforeUnmount(() => client?.disconnect());
             @change="handlePrinterChange"
           />
         </Descriptions.Item>
+        <Descriptions.Item label="测试纸张">
+          <Select
+            v-model:value="diagnosticPaperSpec"
+            class="w-72"
+            :options="SF_PAPER_SPEC_OPTIONS"
+          />
+        </Descriptions.Item>
         <Descriptions.Item label="队列任务">
           {{ queue.length }}
         </Descriptions.Item>
@@ -280,7 +303,7 @@ onBeforeUnmount(() => client?.disconnect());
         :disabled="!localConnected"
         @click="testPrint"
       >
-        打印 100×150 测试标签
+        打印 {{ getSfPaperSpec(diagnosticPaperSpec).label }}
       </Button>
       <Alert
         class="mt-3"

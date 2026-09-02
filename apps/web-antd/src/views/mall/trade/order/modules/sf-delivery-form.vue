@@ -45,6 +45,12 @@ const deviceOptions = computed(() =>
     .filter((item) => item.status === 0)
     .map((item) => ({ label: item.deviceName, value: item.id })),
 );
+const selectedPaperSpec = computed(() => {
+  const account = accounts.value.find((item) => item.id === accountId.value);
+  return account
+    ? `${account.paperWidthMm}×${account.paperHeightMm} mm`
+    : '账号配置的标签尺寸';
+});
 
 const [Modal, modalApi] = useVbenModal({
   confirmText: '创建顺丰运单',
@@ -112,7 +118,7 @@ const [Modal, modalApi] = useVbenModal({
       v-if="!result"
       type="info"
       show-icon
-      message="创建成功后，PrintBridge 将自动拉取 100×150 面单；只有打印回执 success 才会自动发货。"
+      :message="`创建成功后，PrintBridge 将自动拉取 ${selectedPaperSpec} 面单；只有打印回执 success 才会自动发货。`"
     />
     <Result
       v-else-if="isPrintTaskQueued(result.printStatus)"
