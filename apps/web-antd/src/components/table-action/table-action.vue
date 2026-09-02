@@ -202,7 +202,7 @@ watch(
                 <div
                   :class="
                     action.disabled === true
-                      ? 'cursor-not-allowed text-gray-300'
+                      ? 'cursor-not-allowed text-muted-foreground'
                       : ''
                   "
                 >
@@ -217,7 +217,7 @@ watch(
               <div
                 :class="
                   action.disabled === true
-                    ? 'cursor-not-allowed text-gray-300'
+                    ? 'cursor-not-allowed text-muted-foreground'
                     : ''
                 "
               >

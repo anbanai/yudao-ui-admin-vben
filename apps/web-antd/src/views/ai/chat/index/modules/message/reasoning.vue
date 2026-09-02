@@ -38,16 +38,16 @@ function toggleExpanded() {
   <div v-if="shouldShowComponent" class="mt-2.5">
     <!-- 标题栏 -->
     <div
-      class="flex cursor-pointer items-center justify-between rounded-t-lg border border-b-0 border-gray-200/60 bg-gradient-to-r from-blue-50 to-purple-50 p-2 transition-all duration-200 hover:from-blue-100 hover:to-purple-100"
+      class="flex cursor-pointer items-center justify-between rounded-t-lg border border-b-0 border-border/60 bg-gradient-to-r from-blue-50 to-purple-50 p-2 transition-all duration-200 hover:from-blue-100 hover:to-purple-100"
       @click="toggleExpanded"
     >
-      <div class="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+      <div class="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
         <IconifyIcon icon="lucide:brain" class="text-blue-600" :size="16" />
         <span>{{ titleText }}</span>
       </div>
       <IconifyIcon
         icon="lucide:chevron-down"
-        class="text-gray-500 transition-transform duration-200"
+        class="text-muted-foreground transition-transform duration-200"
         :class="{ 'rotate-180': isExpanded }"
         :size="14"
       />
@@ -55,11 +55,11 @@ function toggleExpanded() {
     <!-- 内容区 -->
     <div
       v-show="isExpanded"
-      class="scrollbar-thin max-h-[300px] overflow-y-auto rounded-b-lg border border-t-0 border-gray-200/60 bg-white/70 p-3 shadow-sm backdrop-blur-sm"
+      class="scrollbar-thin max-h-[300px] overflow-y-auto rounded-b-lg border border-t-0 border-border/60 bg-background/70 p-3 shadow-sm backdrop-blur-sm"
     >
       <MarkdownView
         v-if="props.reasoningContent"
-        class="text-sm leading-relaxed text-gray-700"
+        class="text-sm leading-relaxed text-muted-foreground"
         :content="props.reasoningContent"
       />
     </div>
@@ -77,10 +77,10 @@ function toggleExpanded() {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  @apply rounded-sm bg-gray-400/40;
+  @apply rounded-sm bg-muted/40;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400/60;
+  @apply bg-muted/60;
 }
 </style>

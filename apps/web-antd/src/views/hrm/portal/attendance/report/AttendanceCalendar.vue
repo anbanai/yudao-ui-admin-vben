@@ -105,7 +105,7 @@ function isCurrentMonth(date: string) {
           class="flex w-full items-center justify-between px-2 py-2 text-base font-semibold"
         >
           <span>{{ formatDate(selectedMonth, 'YYYY年MM月') }}考勤明细</span>
-          <div class="flex gap-4 text-xs font-normal text-gray-500">
+          <div class="flex gap-4 text-xs font-normal text-muted-foreground">
             <span class="flex items-center gap-1">
               <i class="inline-block h-2 w-2 rounded-full bg-green-500"></i>
               正常
@@ -115,7 +115,7 @@ function isCurrentMonth(date: string) {
               异常
             </span>
             <span class="flex items-center gap-1">
-              <i class="inline-block h-2 w-2 rounded-full bg-gray-400"></i>
+              <i class="inline-block h-2 w-2 rounded-full bg-muted"></i>
               休息
             </span>
           </div>
@@ -146,10 +146,10 @@ function isCurrentMonth(date: string) {
               v-for="clock in getDailyDetail(date.format('YYYY-MM-DD'))
                 ?.clockList || []"
               :key="clock.id || `${clock.type}-${clock.clockTime}`"
-              class="mt-1 flex justify-between text-xs text-gray-500"
+              class="mt-1 flex justify-between text-xs text-muted-foreground"
             >
               <span>{{ clock.type === 2 ? '下班' : '上班' }}</span>
-              <strong class="text-gray-800">
+              <strong class="text-muted-foreground">
                 {{ formatDate(clock.clockTime, 'HH:mm') || '--:--' }}
               </strong>
               <em
@@ -180,7 +180,7 @@ function isCurrentMonth(date: string) {
                 !(getDailyDetail(date.format('YYYY-MM-DD'))?.clockList || [])
                   .length
               "
-              class="mt-3 text-center text-xs text-gray-400"
+              class="mt-3 text-center text-xs text-muted-foreground"
             >
               暂无打卡
             </div>

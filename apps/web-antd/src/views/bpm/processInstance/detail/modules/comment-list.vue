@@ -83,10 +83,10 @@ defineExpose({ getList });
 <template>
   <div v-loading="props.loading || commentLoading" class="min-h-full px-7 py-6">
     <div class="flex items-center gap-3 border-b pb-4">
-      <div class="text-lg font-bold text-gray-900 dark:text-gray-100">
+      <div class="text-lg font-bold text-muted-foreground dark:text-muted-foreground">
         流程评论
       </div>
-      <div class="text-sm text-gray-500">共 {{ comments.length }} 条</div>
+      <div class="text-sm text-muted-foreground">共 {{ comments.length }} 条</div>
     </div>
     <Empty v-if="comments.length === 0" description="暂无评论" />
     <div v-else class="mt-6 pl-2">
@@ -96,10 +96,10 @@ defineExpose({ getList });
         class="group relative flex gap-4 pb-7 last:pb-0"
       >
         <div
-          class="absolute bottom-0 left-4 top-8 w-px bg-gray-200 group-last:hidden"
+          class="absolute bottom-0 left-4 top-8 w-px bg-muted group-last:hidden"
         ></div>
         <div
-          class="z-10 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-white text-sm font-bold text-white shadow"
+          class="z-10 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-border text-sm font-bold text-primary-foreground shadow"
           :style="{ backgroundColor: getCommentColor(comment.type) }"
         >
           {{ getCommentText(comment.type) }}
@@ -120,7 +120,7 @@ defineExpose({ getList });
             <DictTag :type="DICT_TYPE.BPM_COMMENT_TYPE" :value="comment.type" />
             <div
               v-if="comment.task?.name"
-              class="inline-flex h-6 min-w-0 max-w-lg items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2 text-sm text-gray-700 dark:border-blue-900 dark:bg-blue-950 dark:text-gray-200"
+              class="inline-flex h-6 min-w-0 max-w-lg items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2 text-sm text-muted-foreground dark:border-blue-900 dark:bg-blue-950 dark:text-muted-foreground"
             >
               <span
                 class="inline-flex shrink-0 items-center gap-1 font-medium text-blue-500"
@@ -129,17 +129,17 @@ defineExpose({ getList });
                 任务
               </span>
               <span
-                class="truncate font-medium text-gray-900 dark:text-gray-100"
+                class="truncate font-medium text-muted-foreground dark:text-muted-foreground"
               >
                 {{ comment.task.name }}
               </span>
             </div>
-            <span class="ml-auto shrink-0 text-sm text-gray-500">
+            <span class="ml-auto shrink-0 text-sm text-muted-foreground">
               {{ formatDateTime(comment.createTime) }}
             </span>
           </div>
           <div
-            class="mt-2 whitespace-pre-wrap break-words rounded-md bg-gray-50 px-3.5 py-3 leading-6 text-gray-700 dark:bg-gray-900 dark:text-gray-200"
+            class="mt-2 whitespace-pre-wrap break-words rounded-md bg-muted px-3.5 py-3 leading-6 text-muted-foreground dark:bg-muted dark:text-muted-foreground"
           >
             {{ comment.message }}
           </div>

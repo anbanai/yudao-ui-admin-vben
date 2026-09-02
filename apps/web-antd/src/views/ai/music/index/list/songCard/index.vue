@@ -29,7 +29,7 @@ function playSong() {
     <div class="relative" @click="playSong">
       <Image :src="songInfo.imageUrl" class="w-20 flex-none" />
       <div
-        class="absolute left-0 top-0 flex h-full w-full cursor-pointer items-center justify-center bg-black bg-opacity-40"
+        class="absolute left-0 top-0 flex h-full w-full cursor-pointer items-center justify-center bg-foreground bg-opacity-40"
       >
         <IconifyIcon
           :icon="

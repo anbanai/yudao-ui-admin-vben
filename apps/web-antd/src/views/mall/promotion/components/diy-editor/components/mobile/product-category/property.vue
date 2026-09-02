@@ -124,13 +124,13 @@ onMounted(async () => {
             tree-default-expand-all
             placeholder="请选择商品分类"
           />
-          <div class="mt-1 text-xs text-gray-500">
+          <div class="mt-1 text-xs text-muted-foreground">
             最多选择 {{ PRODUCT_CATEGORY_LIMIT }} 个分类
           </div>
         </FormItem>
 
         <div v-if="selectedCategories.length" class="mt-2">
-          <div class="mb-2 text-xs text-gray-500">拖动调整菜单顺序</div>
+          <div class="mb-2 text-xs text-muted-foreground">拖动调整菜单顺序</div>
           <VueDraggable
             v-model="formData.categoryIds"
             :animation="200"
@@ -139,11 +139,11 @@ onMounted(async () => {
           >
             <template #item="{ element }">
               <div
-                class="mb-2 flex h-9 items-center gap-2 rounded border border-gray-200 bg-secondary px-2"
+                class="mb-2 flex h-9 items-center gap-2 rounded border border-border bg-secondary px-2"
               >
                 <IconifyIcon
                   icon="lucide:grip-vertical"
-                  class="category-drag-handle cursor-move text-gray-400"
+                  class="category-drag-handle cursor-move text-muted-foreground"
                 />
                 <span class="min-w-0 flex-1 truncate text-sm">
                   {{

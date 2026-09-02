@@ -358,7 +358,7 @@ function cropImage(file: File, aspectRatio: string | undefined) {
                 h(
                   'span',
                   {
-                    class: `${aspectRatio ? '' : 'hidden'} ml-2 text-sm text-gray-400 font-normal`,
+                    class: `${aspectRatio ? '' : 'hidden'} ml-2 text-sm text-muted-foreground font-normal`,
                   },
                   $t('ui.crop.titleTip', [aspectRatio]),
                 ),

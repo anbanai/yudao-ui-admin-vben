@@ -119,7 +119,7 @@ function deleteMaterial() {
           </Select>
         </div>
         <div
-          class="mt-5 rounded-[5px] bg-white p-[20px_10px]"
+          class="mt-5 rounded-[5px] bg-background p-[20px_10px]"
           v-if="menu.type === 'view'"
         >
           <span>跳转链接：</span>
@@ -131,7 +131,7 @@ function deleteMaterial() {
           />
         </div>
         <div
-          class="mt-5 rounded-[5px] bg-white p-[20px_10px]"
+          class="mt-5 rounded-[5px] bg-background p-[20px_10px]"
           v-if="menu.type === 'miniprogram'"
         >
           <div class="mb-5 flex items-center">
@@ -166,7 +166,7 @@ function deleteMaterial() {
           </p>
         </div>
         <div
-          class="mt-5 rounded-[5px] bg-white p-[20px_10px]"
+          class="mt-5 rounded-[5px] bg-background p-[20px_10px]"
           v-if="menu.type === 'article_view_limited'"
         >
           <Row>

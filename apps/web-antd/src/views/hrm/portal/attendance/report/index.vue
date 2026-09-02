@@ -147,7 +147,7 @@ onActivated(async () => {
             picker="month"
             @change="handleMonthChange"
           />
-          <span class="text-sm text-gray-500">
+          <span class="text-sm text-muted-foreground">
             考勤周期（{{ attendanceCycle }}）
           </span>
           <Button
@@ -169,11 +169,11 @@ onActivated(async () => {
             class="min-h-20 px-4 py-3"
             :class="index < summaryItems.length - 1 ? 'border-r' : ''"
           >
-            <span class="mb-1 block text-xs text-gray-500">{{
+            <span class="mb-1 block text-xs text-muted-foreground">{{
               item.label
             }}</span>
             <strong class="text-2xl font-medium">{{ item.value }}</strong>
-            <small class="ml-1 text-gray-500">{{ item.unit }}</small>
+            <small class="ml-1 text-muted-foreground">{{ item.unit }}</small>
           </div>
         </div>
 

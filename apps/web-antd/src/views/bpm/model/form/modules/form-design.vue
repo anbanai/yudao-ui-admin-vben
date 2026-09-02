@@ -134,7 +134,7 @@ defineExpose({ validate });
         >
           <IconifyIcon
             icon="lucide:circle-help"
-            class="ml-1 size-5 text-gray-900"
+            class="ml-1 size-5 text-muted-foreground"
           />
         </Tooltip>
       </div>
@@ -156,7 +156,7 @@ defineExpose({ validate });
         >
           <IconifyIcon
             icon="lucide:circle-help"
-            class="ml-1 size-5 text-gray-900"
+            class="ml-1 size-5 text-muted-foreground"
           />
         </Tooltip>
       </div>
@@ -168,7 +168,7 @@ defineExpose({ validate });
         modelData.formId &&
         formPreview.rule.length > 0
       "
-      class="mb-5 mt-7 rounded-sm border border-solid border-gray-200 p-5"
+      class="mb-5 mt-7 rounded-sm border border-solid border-border p-5"
     >
       <div class="mb-4 flex items-center">
         <div class="mr-2 h-4 w-1 bg-blue-500"></div>

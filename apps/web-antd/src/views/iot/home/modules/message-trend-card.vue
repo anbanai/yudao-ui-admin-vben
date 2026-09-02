@@ -143,16 +143,16 @@ onMounted(() => {
   <Card class="h-full">
     <template #title>
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <span class="text-base font-medium text-gray-600">消息量统计</span>
+        <span class="text-base font-medium text-muted-foreground">消息量统计</span>
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-3">
-            <span class="whitespace-nowrap text-sm text-gray-500">
+            <span class="whitespace-nowrap text-sm text-muted-foreground">
               时间范围
             </span>
             <ShortcutDateRangePicker @change="handleDateRangeChange" />
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500">时间间隔</span>
+            <span class="text-sm text-muted-foreground">时间间隔</span>
             <Select
               v-model:value="queryParams.interval"
               :options="intervalOptions"

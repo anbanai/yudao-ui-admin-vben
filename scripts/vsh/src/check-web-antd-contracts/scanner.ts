@@ -179,6 +179,7 @@ function scanThemeLiteral(
     const literal = match[0]!.endsWith('(')
       ? getColorFunctionLiteral(value, match.index ?? 0)
       : match[0]!;
+    if (isSemanticColorFunctionLiteral(literal)) continue;
     addViolation(
       context,
       'TH002',
@@ -188,6 +189,12 @@ function scanThemeLiteral(
       literal,
     );
   }
+}
+
+function isSemanticColorFunctionLiteral(value: string): boolean {
+  return /^(?:hsl|hsla|rgb|rgba)\(\s*var\(\s*--[\w-]+\s*\)(?:\s*\/[^)]*)?\s*\)$/i.test(
+    value,
+  );
 }
 
 function getColorFunctionLiteral(value: string, start: number): string {

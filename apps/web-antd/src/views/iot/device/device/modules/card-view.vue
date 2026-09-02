@@ -129,13 +129,13 @@ onMounted(() => {
             <!-- 顶部标题区域 -->
             <div class="mb-3 flex items-center">
               <div
-                class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#40a9ff] to-[#1890ff] text-white"
+                class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#40a9ff] to-[#1890ff] text-primary-foreground"
               >
                 <IconifyIcon icon="mdi:chip" class="text-xl" />
               </div>
               <div class="ml-3 min-w-0 flex-1">
                 <div
-                  class="truncate text-[15px] font-semibold leading-9 dark:text-white/85"
+                  class="truncate text-[15px] font-semibold leading-9 dark:text-primary-foreground/85"
                 >
                   {{ item.deviceName }}
                 </div>
@@ -150,7 +150,7 @@ onMounted(() => {
             <div class="mb-3 flex items-start">
               <div class="flex-1">
                 <div class="mb-2 flex items-center text-[13px]">
-                  <span class="mr-2 shrink-0 opacity-65 dark:text-white/65">
+                  <span class="mr-2 shrink-0 opacity-65 dark:text-primary-foreground/65">
                     所属产品
                   </span>
                   <a
@@ -166,7 +166,7 @@ onMounted(() => {
                   </a>
                 </div>
                 <div class="mb-2 flex items-center text-[13px]">
-                  <span class="mr-2 shrink-0 opacity-65 dark:text-white/65">
+                  <span class="mr-2 shrink-0 opacity-65 dark:text-primary-foreground/65">
                     设备类型
                   </span>
                   <DictTag
@@ -176,7 +176,7 @@ onMounted(() => {
                   />
                 </div>
                 <div class="flex items-center text-[13px]">
-                  <span class="mr-2 shrink-0 opacity-65 dark:text-white/65">
+                  <span class="mr-2 shrink-0 opacity-65 dark:text-primary-foreground/65">
                     备注名称
                   </span>
                   <Tooltip
@@ -184,7 +184,7 @@ onMounted(() => {
                     placement="top"
                   >
                     <span
-                      class="inline-block max-w-[150px] cursor-pointer truncate align-middle text-xs opacity-85 dark:text-white/75"
+                      class="inline-block max-w-[150px] cursor-pointer truncate align-middle text-xs opacity-85 dark:text-primary-foreground/75"
                     >
                       {{ item.nickname || item.deviceName }}
                     </span>
@@ -213,7 +213,7 @@ onMounted(() => {
               <Button
                 v-if="hasAccessByCodes(['iot:device:update'])"
                 size="small"
-                class="!h-8 min-w-0 flex-1 rounded-md !border-[#1890ff] !text-[13px] !text-[#1890ff] transition-all duration-200 hover:!bg-[#1890ff] hover:!text-white"
+                class="!h-8 min-w-0 flex-1 rounded-md !border-[#1890ff] !text-[13px] !text-[#1890ff] transition-all duration-200 hover:!bg-[#1890ff] hover:!text-primary-foreground"
                 @click="emit('edit', item)"
               >
                 <IconifyIcon icon="lucide:edit" class="mr-1" />
@@ -222,7 +222,7 @@ onMounted(() => {
               <Button
                 v-if="hasAccessByCodes(['iot:device:query'])"
                 size="small"
-                class="!h-8 min-w-0 flex-1 rounded-md !border-[#52c41a] !text-[13px] !text-[#52c41a] transition-all duration-200 hover:!bg-[#52c41a] hover:!text-white"
+                class="!h-8 min-w-0 flex-1 rounded-md !border-[#52c41a] !text-[13px] !text-[#52c41a] transition-all duration-200 hover:!bg-[#52c41a] hover:!text-primary-foreground"
                 @click="emit('detail', item.id!)"
               >
                 <IconifyIcon icon="lucide:eye" class="mr-1" />
@@ -231,7 +231,7 @@ onMounted(() => {
               <Button
                 v-if="hasAccessByCodes(['iot:device:query'])"
                 size="small"
-                class="!h-8 min-w-0 flex-1 rounded-md !border-[#fa8c16] !text-[13px] !text-[#fa8c16] transition-all duration-200 hover:!bg-[#fa8c16] hover:!text-white"
+                class="!h-8 min-w-0 flex-1 rounded-md !border-[#fa8c16] !text-[13px] !text-[#fa8c16] transition-all duration-200 hover:!bg-[#fa8c16] hover:!text-primary-foreground"
                 @click="emit('model', item.id!)"
               >
                 <IconifyIcon icon="lucide:database" class="mr-1" />

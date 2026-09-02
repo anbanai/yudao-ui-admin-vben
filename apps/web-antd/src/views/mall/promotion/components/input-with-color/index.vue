@@ -27,7 +27,7 @@ const { modelValue, color } = useVModels(props, emit);
     <input
       v-model="color"
       type="color"
-      class="h-8 w-10 cursor-pointer rounded border border-gray-300"
+      class="h-8 w-10 cursor-pointer rounded border border-border"
     />
   </div>
 </template>

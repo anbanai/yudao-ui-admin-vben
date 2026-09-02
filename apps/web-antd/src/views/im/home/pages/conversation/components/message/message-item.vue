@@ -1012,7 +1012,7 @@ async function handleDelete() {
         class="flex gap-2 items-center px-3.5 py-2 text-sm rounded-lg cursor-pointer"
         :class="
           message.selfSend
-            ? 'text-black bg-[#95ec69]'
+            ? 'text-muted-foreground bg-[#95ec69]'
             : 'text-[var(--ant-color-text)] bg-[var(--ant-color-fill-secondary)]'
         "
         @click="handleRtcCallBubbleClick"

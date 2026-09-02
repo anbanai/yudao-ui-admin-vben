@@ -196,7 +196,7 @@ onUnmounted(() => {
               backgroundColor: stateColorMap[item.value],
             }"
           ></span>
-          <span class="text-gray-500">{{ item.label }}</span>
+          <span class="text-muted-foreground">{{ item.label }}</span>
         </span>
       </div>
     </template>

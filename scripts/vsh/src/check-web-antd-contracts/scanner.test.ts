@@ -312,15 +312,15 @@ const color = '#fff';
     expect(ruleIds(source)).toEqual(['TH002', 'TH002']);
   });
 
-  it('preserves nested CSS color function literals for exception matching', () => {
-    const violations = scanSource(
-      `const color = 'hsl(var(--primary))';`,
-      'src/theme.ts',
-    );
-
-    expect(violations).toContainEqual(
-      expect.objectContaining({ literal: 'hsl(var(--primary))' }),
-    );
+  it('accepts semantic CSS variable color functions while retaining literal detection', () => {
+    expect(
+      scanSource(
+        `const color = 'hsl(var(--primary) / 10%)';\nconst border = 'rgb(12 34 56)';`,
+        'src/theme.ts',
+      ),
+    ).toEqual([
+      expect.objectContaining({ literal: 'rgb(12 34 56)' }),
+    ]);
   });
 
   it('scans dynamic template class and style expressions', () => {

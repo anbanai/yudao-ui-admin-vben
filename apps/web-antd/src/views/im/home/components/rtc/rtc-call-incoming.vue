@@ -45,7 +45,7 @@ const callMembers = useGroupCallMembers(
     私聊：左头像 + 中（邀请人 + 文案两行）+ 右下角拒绝 / 接听
   -->
   <div
-    class="fixed top-5 right-5 rounded-2xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.4)] z-[9999] flex gap-3 items-end p-3 text-white bg-[#2a2a2c]"
+    class="fixed top-5 right-5 rounded-2xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.4)] z-[9999] flex gap-3 items-end p-3 text-primary-foreground bg-[#2a2a2c]"
     :class="isGroup ? 'w-[360px]' : 'w-[340px]'"
   >
     <!-- 左：邀请者头像 -->
@@ -65,18 +65,18 @@ const callMembers = useGroupCallMembers(
         <span class="font-medium">{{
           payload?.inviterNickname || '对方'
         }}</span>
-        <span class="ml-1 text-white/60">{{ tipText }}</span>
+        <span class="ml-1 text-primary-foreground/60">{{ tipText }}</span>
       </div>
       <template v-else>
         <div class="text-sm font-medium truncate">
           {{ payload?.inviterNickname || '对方' }}
         </div>
-        <div class="text-13px text-white/60 truncate">{{ tipText }}</div>
+        <div class="text-13px text-primary-foreground/60 truncate">{{ tipText }}</div>
       </template>
 
       <!-- 群通话成员行；私聊无；接入中的人半透明展示 -->
       <template v-if="isGroup && callMembers.length > 0">
-        <div class="mt-1 text-xs text-white/45">通话成员</div>
+        <div class="mt-1 text-xs text-primary-foreground/45">通话成员</div>
         <div class="flex flex-wrap gap-1">
           <UserAvatar
             v-for="member in callMembers"
@@ -98,7 +98,7 @@ const callMembers = useGroupCallMembers(
     <!-- 右下角：拒绝 / 接听 -->
     <div class="flex flex-shrink-0 gap-2 items-center">
       <button
-        class="flex flex-shrink-0 justify-center items-center w-10 h-10 text-white rounded-full transition-opacity bg-[#f04a4a] hover:opacity-90"
+        class="flex flex-shrink-0 justify-center items-center w-10 h-10 text-primary-foreground rounded-full transition-opacity bg-[#f04a4a] hover:opacity-90"
         :class="{ 'opacity-60 cursor-not-allowed': rejectDisabled }"
         :disabled="rejectDisabled"
         @click="$emit('reject')"
@@ -110,7 +110,7 @@ const callMembers = useGroupCallMembers(
         />
       </button>
       <button
-        class="flex flex-shrink-0 justify-center items-center w-10 h-10 text-white rounded-full transition-opacity bg-[#2ec27e] hover:opacity-90"
+        class="flex flex-shrink-0 justify-center items-center w-10 h-10 text-primary-foreground rounded-full transition-opacity bg-[#2ec27e] hover:opacity-90"
         :class="{ 'opacity-60 cursor-not-allowed': acceptDisabled }"
         :disabled="acceptDisabled"
         @click="$emit('accept')"

@@ -154,7 +154,7 @@ function bubbleClass(variant: 'file' | 'text' | 'voice'): string[] {
       return [
         side,
         'message-bubble--text',
-        isSelf ? 'text-black bg-[#95ec69]' : 'text-[var(--ant-color-text)]',
+        isSelf ? 'text-muted-foreground bg-[#95ec69]' : 'text-[var(--ant-color-text)]',
       ];
     }
     case 'voice': {
@@ -213,7 +213,7 @@ onBeforeUnmount(() => {
     />
     <div
       v-if="isUploading"
-      class="absolute inset-0 flex items-center justify-center text-sm text-white bg-black bg-opacity-45 rounded pointer-events-none"
+      class="absolute inset-0 flex items-center justify-center text-sm text-primary-foreground bg-foreground bg-opacity-45 rounded pointer-events-none"
     >
       {{ uploadProgressText }}
     </div>
@@ -283,7 +283,7 @@ onBeforeUnmount(() => {
   <!-- 视频：原生 controls 内嵌播放，poster 走后端封面；上传中半透明遮罩 -->
   <div v-else-if="isVideo && videoPayload?.url" class="relative inline-block">
     <video
-      class="max-w-[280px] max-h-[320px] rounded bg-black"
+      class="max-w-[280px] max-h-[320px] rounded bg-foreground"
       :src="videoPayload.url"
       :poster="videoPayload.coverUrl"
       :controls="!isUploading"
@@ -291,7 +291,7 @@ onBeforeUnmount(() => {
     ></video>
     <div
       v-if="isUploading"
-      class="absolute inset-0 flex items-center justify-center text-sm text-white bg-black bg-opacity-45 rounded pointer-events-none"
+      class="absolute inset-0 flex items-center justify-center text-sm text-primary-foreground bg-foreground bg-opacity-45 rounded pointer-events-none"
     >
       {{ uploadProgressText }}
     </div>

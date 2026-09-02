@@ -135,7 +135,7 @@ onMounted(() => {
         <div
           class="whitespace-pre-wrap border-l-4 border-blue-500 px-2.5 py-5 leading-5"
         >
-          <div class="mb-2 text-sm font-bold text-gray-600">完整内容：</div>
+          <div class="mb-2 text-sm font-bold text-muted-foreground">完整内容：</div>
           {{ row.content }}
         </div>
       </template>

@@ -61,7 +61,7 @@ const getSearchProp = computed(() => (cell: NavigationBarCellProperty) => {
 </script>
 <template>
   <div
-    class="flex h-[50px] items-center justify-between bg-white px-[6px]"
+    class="flex h-[50px] items-center justify-between bg-background px-[6px]"
     :style="bgStyle"
   >
     <div class="flex h-full w-full items-center">

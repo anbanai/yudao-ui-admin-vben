@@ -82,7 +82,7 @@ const mainTabs = computed(() => [
           {{ item.label }}
           <i
             v-if="item.count"
-            class="bg-primary ml-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[11px] text-white not-italic"
+            class="bg-primary ml-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[11px] text-primary-foreground not-italic"
           >
             {{ item.count }}
           </i>

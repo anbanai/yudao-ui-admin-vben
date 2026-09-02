@@ -50,7 +50,7 @@ function handleIconError(index: number) {
   <div v-if="webSearchPages && webSearchPages.length > 0" class="mt-2.5">
     <!-- 标题栏：可点击展开/收起 -->
     <div
-      class="mb-2 flex cursor-pointer items-center justify-between text-sm text-gray-600 transition-colors hover:text-blue-500"
+      class="mb-2 flex cursor-pointer items-center justify-between text-sm text-muted-foreground transition-colors hover:text-blue-500"
       @click="toggleExpanded"
     >
       <div class="flex items-center gap-1.5">
@@ -72,7 +72,7 @@ function handleIconError(index: number) {
       <div
         v-for="(page, index) in webSearchPages"
         :key="index"
-        class="cursor-pointer rounded-md bg-white p-2.5 transition-all hover:bg-blue-50"
+        class="cursor-pointer rounded-md bg-background p-2.5 transition-all hover:bg-blue-50"
         @click="handleClick(page)"
       >
         <div class="flex items-start gap-2">
@@ -88,13 +88,13 @@ function handleIconError(index: number) {
             <IconifyIcon
               v-else
               icon="lucide:link"
-              class="h-full w-full text-gray-600"
+              class="h-full w-full text-muted-foreground"
             />
           </div>
           <!-- 内容区域 -->
           <div class="min-w-0 flex-1">
             <!-- 网站名称 -->
-            <div class="mb-1 truncate text-xs text-gray-400">
+            <div class="mb-1 truncate text-xs text-muted-foreground">
               {{ page.name }}
             </div>
             <!-- 主标题 -->
@@ -104,7 +104,7 @@ function handleIconError(index: number) {
               {{ page.title }}
             </div>
             <!-- 描述 -->
-            <div class="mb-1 line-clamp-2 text-xs leading-snug text-gray-600">
+            <div class="mb-1 line-clamp-2 text-xs leading-snug text-muted-foreground">
               {{ page.snippet }}
             </div>
             <!-- URL -->
@@ -131,14 +131,14 @@ function handleIconError(index: number) {
             <IconifyIcon
               v-else
               icon="lucide:link"
-              class="h-full w-full text-gray-600"
+              class="h-full w-full text-muted-foreground"
             />
           </div>
           <div class="min-w-0 flex-1">
-            <div class="mb-2 text-lg font-bold text-gray-900">
+            <div class="mb-2 text-lg font-bold text-muted-foreground">
               {{ selectedResult.title }}
             </div>
-            <div class="mb-1 text-sm text-gray-500">
+            <div class="mb-1 text-sm text-muted-foreground">
               {{ selectedResult.name }}
             </div>
             <div class="break-all text-sm text-green-700">
@@ -150,18 +150,18 @@ function handleIconError(index: number) {
         <div class="space-y-4">
           <!-- 简短描述 -->
           <div>
-            <div class="mb-2 text-sm font-semibold text-gray-900">简短描述</div>
+            <div class="mb-2 text-sm font-semibold text-muted-foreground">简短描述</div>
             <div
-              class="rounded-lg bg-gray-50 p-3 text-sm leading-relaxed text-gray-700"
+              class="rounded-lg bg-muted p-3 text-sm leading-relaxed text-muted-foreground"
             >
               {{ selectedResult.snippet }}
             </div>
           </div>
           <!-- 内容摘要 -->
           <div v-if="selectedResult.summary">
-            <div class="mb-2 text-sm font-semibold text-gray-900">内容摘要</div>
+            <div class="mb-2 text-sm font-semibold text-muted-foreground">内容摘要</div>
             <div
-              class="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-lg bg-gray-50 p-3 text-sm leading-relaxed text-gray-900"
+              class="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-lg bg-muted p-3 text-sm leading-relaxed text-muted-foreground"
             >
               {{ selectedResult.summary }}
             </div>

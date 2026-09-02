@@ -122,9 +122,9 @@ function handleSubmit() {
   <DefineTab v-slot="{ active, text, itemClick }">
     <span
       :class="
-        active ? 'bg-primary-600 text-white shadow-md' : 'hover:bg-primary-200'
+        active ? 'bg-primary-600 text-primary-foreground shadow-md' : 'hover:bg-primary-200'
       "
-      class="relative z-10 inline-block w-1/2 cursor-pointer rounded-full text-center leading-7 hover:text-black"
+      class="relative z-10 inline-block w-1/2 cursor-pointer rounded-full text-center leading-7 hover:text-muted-foreground"
       @click="itemClick"
     >
       {{ text }}

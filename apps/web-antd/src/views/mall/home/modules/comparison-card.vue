@@ -50,7 +50,7 @@ const formattedReference = computed(() => {
 <template>
   <Card :bordered="false" class="h-full">
     <div class="flex flex-col gap-2">
-      <div class="flex items-center justify-between text-gray-500">
+      <div class="flex items-center justify-between text-muted-foreground">
         <span>{{ title }}</span>
         <Tag v-if="tag">{{ tag }}</Tag>
       </div>
@@ -67,9 +67,9 @@ const formattedReference = computed(() => {
           />
         </span>
       </div>
-      <div class="mt-2 border-t border-gray-200 pt-2">
+      <div class="mt-2 border-t border-border pt-2">
         <div class="flex items-center justify-between text-sm">
-          <span class="text-gray-500">昨日数据</span>
+          <span class="text-muted-foreground">昨日数据</span>
           <span>{{ prefix }}{{ formattedReference }}</span>
         </div>
       </div>

@@ -73,7 +73,7 @@ function handleActive() {
   <!-- 模态背景：展开时显示，点击后折叠 -->
   <div
     v-if="expanded"
-    class="absolute left-[calc(50%-375px/2)] top-0 z-[11] h-full w-[375px] bg-black/40"
+    class="absolute left-[calc(50%-375px/2)] top-0 z-[11] h-full w-[375px] bg-foreground/40"
     @click="handleToggleFab"
   ></div>
 </template>

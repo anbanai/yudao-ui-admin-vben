@@ -184,7 +184,7 @@ onMounted(() => {
           @press-enter="handleSearch"
         >
           <template #prefix>
-            <span class="text-gray-400">产品名称</span>
+            <span class="text-muted-foreground">产品名称</span>
           </template>
         </Input>
         <Input
@@ -195,7 +195,7 @@ onMounted(() => {
           @press-enter="handleSearch"
         >
           <template #prefix>
-            <span class="text-gray-400">ProductKey</span>
+            <span class="text-muted-foreground">ProductKey</span>
           </template>
         </Input>
         <Button type="primary" @click="handleSearch">

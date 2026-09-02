@@ -56,8 +56,8 @@ function isImageAttachment(url: string) {
     v-if="hasEvidence"
     :class="
       compact
-        ? 'flex flex-col items-center gap-1 text-xs text-gray-500'
-        : 'mt-1 w-full rounded-md bg-gray-100 p-2 text-sm text-gray-500'
+        ? 'flex flex-col items-center gap-1 text-xs text-muted-foreground'
+        : 'mt-1 w-full rounded-md bg-muted p-2 text-sm text-muted-foreground'
     "
   >
     <div v-if="reasonText" class="w-full">
@@ -68,11 +68,11 @@ function isImageAttachment(url: string) {
       v-if="attachmentList.length > 0"
       class="w-full"
       :class="{
-        'mt-2 border-t border-dashed border-gray-300 pt-2':
+        'mt-2 border-t border-dashed border-border pt-2':
           reasonText && !compact,
       }"
     >
-      <div v-if="!compact" class="mb-1 text-xs font-semibold text-gray-400">
+      <div v-if="!compact" class="mb-1 text-xs font-semibold text-muted-foreground">
         附件列表：
       </div>
       <div
@@ -84,7 +84,7 @@ function isImageAttachment(url: string) {
           :key="attachment"
           :href="attachment"
           target="_blank"
-          class="inline-flex max-w-[220px] items-center gap-1 rounded border border-solid border-gray-200 bg-white px-2 py-1 text-blue-500 hover:text-blue-600 hover:underline"
+          class="inline-flex max-w-[220px] items-center gap-1 rounded border border-solid border-border bg-background px-2 py-1 text-blue-500 hover:text-blue-600 hover:underline"
           :title="getFileNameFromUrl(attachment)"
         >
           <img
@@ -92,7 +92,7 @@ function isImageAttachment(url: string) {
             :src="attachment"
             class="size-5 rounded object-cover"
           />
-          <IconifyIcon v-else icon="lucide:file-text" class="text-gray-400" />
+          <IconifyIcon v-else icon="lucide:file-text" class="text-muted-foreground" />
           <span class="truncate">{{ getFileNameFromUrl(attachment) }}</span>
         </a>
       </div>
@@ -102,18 +102,18 @@ function isImageAttachment(url: string) {
       v-if="signPicUrlValue"
       class="w-full"
       :class="{
-        'mt-2 border-t border-dashed border-gray-300 pt-2':
+        'mt-2 border-t border-dashed border-border pt-2':
           (reasonText || attachmentList.length) && !compact,
       }"
     >
-      <div class="mb-1 text-xs font-semibold text-gray-400">签名：</div>
+      <div class="mb-1 text-xs font-semibold text-muted-foreground">签名：</div>
       <a :href="signPicUrlValue" target="_blank" title="查看签名">
         <img
           :src="signPicUrlValue"
-          class="max-h-[60px] max-w-[180px] rounded border border-solid border-gray-200 bg-white object-contain"
+          class="max-h-[60px] max-w-[180px] rounded border border-solid border-border bg-background object-contain"
         />
       </a>
     </div>
   </div>
-  <span v-else-if="compact" class="text-gray-400">{{ emptyText }}</span>
+  <span v-else-if="compact" class="text-muted-foreground">{{ emptyText }}</span>
 </template>

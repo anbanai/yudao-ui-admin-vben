@@ -198,7 +198,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             :alt="`文章 ${index + 1} 封面图`"
           />
         </div>
-        <span v-else class="text-gray-400">-</span>
+        <span v-else class="text-muted-foreground">-</span>
       </template>
       <template #title="{ row }">
         <div
@@ -215,7 +215,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             </Typography.Link>
           </div>
         </div>
-        <span v-else class="text-gray-400">-</span>
+        <span v-else class="text-muted-foreground">-</span>
       </template>
       <template #actions="{ row }">
         <TableAction

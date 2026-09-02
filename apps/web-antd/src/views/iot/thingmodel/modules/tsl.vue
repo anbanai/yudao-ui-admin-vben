@@ -64,7 +64,7 @@ watch(tslString, (newValue) => {
       <!-- 代码视图：只读展示（pre / code 必须紧贴，避免显示出空白） -->
       <div
         v-if="viewMode === 'view'"
-        class="max-h-[600px] overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
+        class="max-h-[600px] overflow-y-auto rounded border border-border bg-muted p-3 dark:border-border dark:bg-muted"
       >
         <pre
           class="m-0 whitespace-pre-wrap break-words font-mono text-[13px] leading-normal"

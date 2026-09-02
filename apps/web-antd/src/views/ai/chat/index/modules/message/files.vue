@@ -25,12 +25,12 @@ function handleFileClick(url: string) {
       <div
         v-for="(url, index) in validAttachmentUrls"
         :key="index"
-        class="max-w-70 flex min-w-40 cursor-pointer items-center rounded-lg border border-transparent bg-gray-100 p-3 transition-all duration-200 hover:-translate-y-1 hover:bg-gray-200 hover:shadow-lg"
+        class="max-w-70 flex min-w-40 cursor-pointer items-center rounded-lg border border-transparent bg-muted p-3 transition-all duration-200 hover:-translate-y-1 hover:bg-muted hover:shadow-lg"
         @click="handleFileClick(url)"
       >
         <div class="mr-3 flex-shrink-0">
           <div
-            class="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br font-bold text-white"
+            class="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br font-bold text-primary-foreground"
             :class="getFileTypeClass(getFileNameFromUrl(url))"
           >
             <IconifyIcon
@@ -41,7 +41,7 @@ function handleFileClick(url: string) {
         </div>
         <div class="min-w-0 flex-1">
           <div
-            class="mb-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium leading-tight text-gray-800"
+            class="mb-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium leading-tight text-muted-foreground"
             :title="getFileNameFromUrl(url)"
           >
             {{ getFileNameFromUrl(url) }}

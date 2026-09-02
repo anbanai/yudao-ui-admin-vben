@@ -30,7 +30,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
 <template>
   <!-- 主叫等待对方接听的悬浮窗；1v1 私聊 320×540；群通话切大窗 720×560 -->
   <div
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.35)] z-[1000] flex flex-col text-white bg-gradient-to-b from-[#2a2a2c] to-[#1a1a1c]"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.35)] z-[1000] flex flex-col text-primary-foreground bg-gradient-to-b from-[#2a2a2c] to-[#1a1a1c]"
     :class="isGroup ? 'w-[720px] h-[560px]' : 'w-[320px] h-[540px]'"
   >
     <div class="flex relative flex-1 justify-center items-center">
@@ -55,7 +55,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
           :clickable="false"
         />
         <div class="text-[17px] font-medium">{{ peerNickname || '对方' }}</div>
-        <div class="text-13px text-white/60">等待对方接受邀请……</div>
+        <div class="text-13px text-primary-foreground/60">等待对方接受邀请……</div>
       </div>
     </div>
 
@@ -71,7 +71,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
         <span
           class="flex justify-center items-center w-12 h-12 rounded-full"
           :class="
-            micEnabled ? 'bg-white text-[#1a1a1c]' : 'bg-white/15 text-white'
+            micEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -83,7 +83,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
             :size="22"
           />
         </span>
-        <span class="text-xs text-white/70 whitespace-nowrap">
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
           {{ micEnabled ? '麦克风已开' : '麦克风已关' }}
         </span>
       </div>
@@ -92,7 +92,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
         @click="$emit('cancel')"
       >
         <span
-          class="flex justify-center items-center w-12 h-12 text-white rounded-full bg-[#f04a4a]"
+          class="flex justify-center items-center w-12 h-12 text-primary-foreground rounded-full bg-[#f04a4a]"
         >
           <Icon
             icon="ant-design:phone-outlined"
@@ -100,7 +100,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
             class="rotate-[135deg]"
           />
         </span>
-        <span class="text-xs text-white/70 whitespace-nowrap">取消</span>
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">取消</span>
       </div>
       <div
         v-if="isVideo"
@@ -110,7 +110,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
         <span
           class="flex justify-center items-center w-12 h-12 rounded-full"
           :class="
-            cameraEnabled ? 'bg-white text-[#1a1a1c]' : 'bg-white/15 text-white'
+            cameraEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -122,7 +122,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
             :size="22"
           />
         </span>
-        <span class="text-xs text-white/70 whitespace-nowrap">
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
           {{ cameraEnabled ? '摄像头已开' : '摄像头已关' }}
         </span>
       </div>
@@ -135,8 +135,8 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
           class="flex justify-center items-center w-12 h-12 rounded-full"
           :class="
             speakerEnabled
-              ? 'bg-white text-[#1a1a1c]'
-              : 'bg-white/15 text-white'
+              ? 'bg-background text-[#1a1a1c]'
+              : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -146,7 +146,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
             :size="22"
           />
         </span>
-        <span class="text-xs text-white/70 whitespace-nowrap">
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
           {{ speakerEnabled ? '扬声器已开' : '扬声器已关' }}
         </span>
       </div>

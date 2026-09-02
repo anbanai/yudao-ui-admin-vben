@@ -78,7 +78,7 @@ function scrollCards(direction: -1 | 1) {
           :key="metric.key"
           class="border-border bg-card hover:border-primary h-[108px] w-[220px] flex-none rounded-md border px-5 text-left shadow-sm transition-all"
           :class="{
-            'border-primary bg-primary text-white shadow-md':
+            'border-primary bg-primary text-primary-foreground shadow-md':
               selectedMetricKey === metric.key,
           }"
           type="button"

@@ -138,7 +138,7 @@ function emitActivityChange() {
         class="flex h-[60px] w-[60px] cursor-pointer items-center justify-center rounded-lg border-2 border-dashed transition-colors hover:border-primary hover:bg-primary/5"
         @click="handleOpenActivitySelect"
       >
-        <PlusOutlined class="text-xl text-gray-400" />
+        <PlusOutlined class="text-xl text-muted-foreground" />
       </div>
     </Tooltip>
   </div>

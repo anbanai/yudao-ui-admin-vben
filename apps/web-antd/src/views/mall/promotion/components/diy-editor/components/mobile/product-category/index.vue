@@ -192,7 +192,7 @@ onUnmounted(() => {
   <div class="min-h-[30px] w-full">
     <div
       v-if="showTabs"
-      class="relative z-20 isolate bg-white"
+      class="relative z-20 isolate bg-background"
       :class="property.sticky ? 'sticky top-0' : ''"
     >
       <Tabs v-model:active-key="activeKey" size="small" :animated="false">

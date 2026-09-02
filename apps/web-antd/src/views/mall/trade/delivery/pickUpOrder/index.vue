@@ -257,7 +257,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
                   {{ property.propertyName }}: {{ property.valueName }}
                 </Tag>
               </div>
-              <span class="text-xs text-gray-500">
+              <span class="text-xs text-muted-foreground">
                 {{ fenToYuan(item.price!) }} 元 x {{ item.count }}
               </span>
             </div>

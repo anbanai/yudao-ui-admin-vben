@@ -273,7 +273,7 @@ watch(
           <Tooltip content="多个值用逗号分隔，如：1,2,3" placement="top">
             <IconifyIcon
               icon="ep:question-filled"
-              class="cursor-help text-gray-400"
+              class="cursor-help text-muted-foreground"
             />
           </Tooltip>
         </template>

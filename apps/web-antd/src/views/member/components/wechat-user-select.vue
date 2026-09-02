@@ -128,7 +128,7 @@ defineExpose({ userMap });
           {{ displayName(option.user).slice(0, 1) }}
         </Avatar>
         <span class="flex-shrink-0">{{ displayName(option.user) }}</span>
-        <span class="min-w-0 truncate text-xs text-gray-400">
+        <span class="min-w-0 truncate text-xs text-muted-foreground">
           openid：{{ option.user.openid }}
         </span>
       </div>

@@ -66,7 +66,7 @@ const setAudioRef = useMediaStreamElement<HTMLAudioElement>(
 
     <!-- 左下角名字胶囊 -->
     <div
-      class="flex absolute bottom-3 left-3 gap-1.5 items-center py-[3px] pr-2.5 pl-[3px] text-13px text-white rounded-full bg-black/45 max-w-[calc(100%-60px)]"
+      class="flex absolute bottom-3 left-3 gap-1.5 items-center py-[3px] pr-2.5 pl-[3px] text-13px text-primary-foreground rounded-full bg-foreground/45 max-w-[calc(100%-60px)]"
     >
       <UserAvatar
         :url="participant.avatar"
@@ -87,11 +87,11 @@ const setAudioRef = useMediaStreamElement<HTMLAudioElement>(
         <span
           v-for="i in 3"
           :key="i"
-          class="tile-dot w-1.5 h-1.5 rounded-full bg-white/60"
+          class="tile-dot w-1.5 h-1.5 rounded-full bg-background/60"
           :style="{ animationDelay: `${(i - 1) * 0.2}s` }"
         ></span>
       </div>
-      <span class="text-xs text-white/70">接入中</span>
+      <span class="text-xs text-primary-foreground/70">接入中</span>
     </div>
   </div>
 </template>

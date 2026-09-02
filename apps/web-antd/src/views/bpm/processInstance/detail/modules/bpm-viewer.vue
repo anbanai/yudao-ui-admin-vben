@@ -50,7 +50,7 @@ watch(
 <template>
   <div
     v-loading="loading"
-    class="h-full w-full overflow-auto rounded-lg border border-gray-200 bg-white p-4"
+    class="h-full w-full overflow-auto rounded-lg border border-border bg-background p-4"
   >
     <MyProcessViewer
       key="processViewer"

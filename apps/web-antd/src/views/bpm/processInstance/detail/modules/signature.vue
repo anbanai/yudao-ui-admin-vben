@@ -56,7 +56,7 @@ const [Modal, modalApi] = useVbenModal({
         </Tooltip>
       </div>
       <Vue3Signature
-        class="h-full flex-1 border border-solid border-gray-300"
+        class="h-full flex-1 border border-solid border-border"
         ref="signature"
       />
     </div>

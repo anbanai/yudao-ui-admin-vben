@@ -253,7 +253,7 @@ watch(
   <div class="-mx-2">
     <div class="mb-2 flex items-center justify-between">
       <span class="flex items-center">
-        <IconifyIcon icon="ep:menu" class="mr-2 text-gray-600" />
+        <IconifyIcon icon="ep:menu" class="mr-2 text-muted-foreground" />
         消息列表
       </span>
       <Button
@@ -289,10 +289,10 @@ watch(
       </template>
     </MessageGrid>
     <div
-      class="mb-2 mt-2 flex items-center justify-between border-t border-gray-200 pt-2"
+      class="mb-2 mt-2 flex items-center justify-between border-t border-border pt-2"
     >
       <span class="flex items-center">
-        <IconifyIcon icon="ep:menu" class="mr-2 text-gray-600" />
+        <IconifyIcon icon="ep:menu" class="mr-2 text-muted-foreground" />
         信号列表
       </span>
       <Button

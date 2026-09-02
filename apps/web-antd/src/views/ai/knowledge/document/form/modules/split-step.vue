@@ -179,7 +179,7 @@ onMounted(async () => {
             </template>
             <IconifyIcon
               icon="lucide:circle-alert"
-              class="ml-1 text-gray-400"
+              class="ml-1 text-muted-foreground"
             />
           </Tooltip>
         </div>
@@ -214,7 +214,7 @@ onMounted(async () => {
             <span>{{ currentFile?.name || '请选择文件' }}</span>
             <span
               v-if="currentFile?.segments"
-              class="ml-1 text-sm text-gray-500"
+              class="ml-1 text-sm text-muted-foreground"
             >
               ({{ currentFile.segments.length }}个分片)
             </span>
@@ -228,14 +228,14 @@ onMounted(async () => {
                 @click="selectFile(index)"
               >
                 {{ file.name }}
-                <span v-if="file.segments" class="ml-1 text-sm text-gray-500">
+                <span v-if="file.segments" class="ml-1 text-sm text-muted-foreground">
                   ({{ file.segments.length }} 个分片)
                 </span>
               </Menu.Item>
             </Menu>
           </template>
         </Dropdown>
-        <div v-else class="text-gray-400">暂无上传文件</div>
+        <div v-else class="text-muted-foreground">暂无上传文件</div>
       </div>
       <!-- 文件内容预览 -->
       <div class="max-h-[600px] overflow-y-auto rounded-md p-4">
@@ -255,7 +255,7 @@ onMounted(async () => {
             :key="index"
             class="mb-2.5"
           >
-            <div class="mb-1 text-sm text-gray-500">
+            <div class="mb-1 text-sm text-muted-foreground">
               分片-{{ Number(index) + 1 }} ·
               {{ segment.contentLength || 0 }} 字符数 ·
               {{ segment.tokens || 0 }} Token

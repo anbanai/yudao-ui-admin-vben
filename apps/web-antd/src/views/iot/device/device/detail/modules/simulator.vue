@@ -529,7 +529,7 @@ watch([activeTab, upstreamTab, downstreamTab], () => {
                         </template>
                       </Table>
                       <div class="mt-4 flex items-center justify-between">
-                        <span class="text-sm text-gray-600">
+                        <span class="text-sm text-muted-foreground">
                           设置属性值后，点击「发送属性上报」按钮
                         </span>
                         <Button type="primary" @click="handlePropertyPost">
@@ -673,7 +673,7 @@ watch([activeTab, upstreamTab, downstreamTab], () => {
                         </template>
                       </Table>
                       <div class="mt-4 flex items-center justify-between">
-                        <span class="text-sm text-gray-600">
+                        <span class="text-sm text-muted-foreground">
                           设置属性值后，点击「发送属性设置」按钮
                         </span>
                         <Button type="primary" @click="handlePropertySet">

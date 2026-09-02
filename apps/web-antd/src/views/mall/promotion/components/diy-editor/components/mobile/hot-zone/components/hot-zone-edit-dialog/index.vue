@@ -196,7 +196,7 @@ const handleAppLinkChange = (appLink: AppLink) => {
         </span>
         <IconifyIcon
           icon="lucide:x"
-          class="absolute right-0 top-0 hidden cursor-pointer rounded-bl-[80%] p-[2px_2px_6px_6px] text-right text-white group-hover:block"
+          class="absolute right-0 top-0 hidden cursor-pointer rounded-bl-[80%] p-[2px_2px_6px_6px] text-right text-primary-foreground group-hover:block"
           :style="{ backgroundColor: 'hsl(var(--primary))' }"
           :size="14"
           @mousedown.stop.prevent
@@ -205,7 +205,7 @@ const handleAppLinkChange = (appLink: AppLink) => {
 
         <!-- 8 个控制点 -->
         <span
-          class="ctrl-dot absolute z-[11] h-2 w-2 rounded-full bg-white"
+          class="ctrl-dot absolute z-[11] h-2 w-2 rounded-full bg-background"
           v-for="(dot, dotIndex) in CONTROL_DOT_LIST"
           :key="dotIndex"
           :style="{ ...dot.style, border: 'inherit' }"

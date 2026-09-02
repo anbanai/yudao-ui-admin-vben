@@ -23,7 +23,7 @@ function handleActive(index: number) {
   <div
     v-for="(item, index) in props.property.list"
     :key="index"
-    class="absolute bottom-1/2 right-1/2 h-[454px] w-[292px] rounded border border-gray-300 bg-white p-0.5"
+    class="absolute bottom-1/2 right-1/2 h-[454px] w-[292px] rounded border border-border bg-background p-0.5"
     :style="{
       zIndex: 100 + index + (activeIndex === index ? 100 : 0),
       marginRight: `${-146 - index * 20}px`,

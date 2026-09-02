@@ -122,7 +122,7 @@ function handleHotAreaSelected(
             width="56px"
             :show-description="false"
           />
-          <span class="text-xs text-gray-500">建议尺寸 56*56</span>
+          <span class="text-xs text-muted-foreground">建议尺寸 56*56</span>
         </FormItem>
         <FormItem :name="`cell[${cellIndex}].url`" label="链接">
           <AppLinkInput v-model="cell.url" />

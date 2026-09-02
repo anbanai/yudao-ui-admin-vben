@@ -449,7 +449,7 @@ defineExpose({ initData, validate });
                   >
                     <IconifyIcon
                       icon="lucide:circle-help"
-                      class="ml-1 size-4 text-gray-500"
+                      class="ml-1 size-4 text-muted-foreground"
                     />
                   </Tooltip>
                 </div>

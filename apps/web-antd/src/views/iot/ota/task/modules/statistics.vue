@@ -30,7 +30,7 @@ const items = computed(() => [
   {
     label: dictLabel(IoTOtaTaskRecordStatusEnum.PENDING.value),
     span: 3,
-    color: 'text-gray-400',
+    color: 'text-muted-foreground',
     value: props.statistics[IoTOtaTaskRecordStatusEnum.PENDING.value] || 0,
   },
   {
@@ -60,7 +60,7 @@ const items = computed(() => [
   {
     label: dictLabel(IoTOtaTaskRecordStatusEnum.CANCELED.value),
     span: 3,
-    color: 'text-gray-400',
+    color: 'text-muted-foreground',
     value: props.statistics[IoTOtaTaskRecordStatusEnum.CANCELED.value] || 0,
   },
 ]);
@@ -71,12 +71,12 @@ const items = computed(() => [
     <Row :gutter="20" class="py-5">
       <Col v-for="item in items" :key="item.label" :span="item.span">
         <div
-          class="rounded border border-solid border-gray-200 bg-gray-50 p-5 text-center"
+          class="rounded border border-solid border-border bg-muted p-5 text-center"
         >
           <div class="mb-2 text-3xl font-bold" :class="item.color">
             {{ item.value }}
           </div>
-          <div class="text-sm text-gray-600">{{ item.label }}</div>
+          <div class="text-sm text-muted-foreground">{{ item.label }}</div>
         </div>
       </Col>
     </Row>

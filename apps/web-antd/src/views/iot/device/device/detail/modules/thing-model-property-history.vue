@@ -358,7 +358,7 @@ defineExpose({ open }); // 提供 open 方法，用于打开弹窗
         <Space :size="12" class="w-full" wrap>
           <!-- 时间选择 -->
           <div class="flex items-center gap-3">
-            <span class="whitespace-nowrap text-sm text-gray-500">
+            <span class="whitespace-nowrap text-sm text-muted-foreground">
               时间范围
             </span>
             <ShortcutDateRangePicker @change="handleDateRangeChange" />
@@ -397,7 +397,7 @@ defineExpose({ open }); // 提供 open 方法，用于打开弹窗
         </Space>
 
         <!-- 数据统计信息 -->
-        <div v-if="list.length > 0" class="mt-3 text-sm text-gray-600">
+        <div v-if="list.length > 0" class="mt-3 text-sm text-muted-foreground">
           <Space :size="16">
             <span>共 {{ total }} 条数据</span>
             <span v-if="viewMode === 'chart' && canShowChart">

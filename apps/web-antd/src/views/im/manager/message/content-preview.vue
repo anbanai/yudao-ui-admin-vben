@@ -160,7 +160,7 @@ function openVideo() {
       class="size-4"
     />
     <span class="max-w-52 truncate">{{ payload.name }}</span>
-    <span v-if="payload.size > 0" class="text-xs text-gray-400">
+    <span v-if="payload.size > 0" class="text-xs text-muted-foreground">
       {{ formatFileSize(payload.size) }}
     </span>
   </span>
@@ -185,7 +185,7 @@ function openVideo() {
     >
       <img :src="payload.coverUrl" class="size-full object-cover" />
       <IconifyIcon
-        class="absolute inset-0 m-auto size-6 text-white drop-shadow"
+        class="absolute inset-0 m-auto size-6 text-primary-foreground drop-shadow"
         icon="ant-design:play-circle-filled"
       />
     </button>
@@ -193,10 +193,10 @@ function openVideo() {
       <IconifyIcon class="size-4" icon="ant-design:video-camera-filled" />
       <span>[视频]</span>
     </span>
-    <span v-if="payload.duration" class="text-xs text-gray-400">
+    <span v-if="payload.duration" class="text-xs text-muted-foreground">
       {{ formatSeconds(payload.duration) }}
     </span>
-    <span v-if="payload.size > 0" class="text-xs text-gray-400">
+    <span v-if="payload.size > 0" class="text-xs text-muted-foreground">
       {{ formatFileSize(payload.size) }}
     </span>
   </span>
@@ -229,36 +229,36 @@ function openVideo() {
     <span
       v-for="(line, index) in mergePreviewLines"
       :key="index"
-      class="truncate text-xs text-gray-400"
+      class="truncate text-xs text-muted-foreground"
     >
       {{ line }}
     </span>
   </span>
 
-  <span v-else-if="type === ImContentType.RECALL" class="text-xs text-gray-400">
+  <span v-else-if="type === ImContentType.RECALL" class="text-xs text-muted-foreground">
     [消息已撤回]
   </span>
-  <span v-else-if="type === ImContentType.READ" class="text-xs text-gray-400">
+  <span v-else-if="type === ImContentType.READ" class="text-xs text-muted-foreground">
     [已读回执]
   </span>
   <span
     v-else-if="type === ImContentType.RECEIPT"
-    class="text-xs text-gray-400"
+    class="text-xs text-muted-foreground"
   >
     [回执]
   </span>
   <span
     v-else-if="isGroupNotification(type ?? -1)"
-    class="text-xs text-gray-400"
+    class="text-xs text-muted-foreground"
   >
     {{ groupTipText }}
   </span>
-  <span v-else-if="isFriendChatTip(type ?? -1)" class="text-xs text-gray-400">
+  <span v-else-if="isFriendChatTip(type ?? -1)" class="text-xs text-muted-foreground">
     {{ friendTipText }}
   </span>
   <span
     v-else-if="isRtcCallTip(type ?? -1)"
-    class="inline-flex items-center gap-1.5 text-xs text-gray-400"
+    class="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
   >
     <IconifyIcon
       class="size-4 rotate-[135deg]"

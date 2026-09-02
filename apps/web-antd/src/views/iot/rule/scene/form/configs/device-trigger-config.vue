@@ -110,7 +110,7 @@ function removeConditionGroup() {
                 class="gap-[8px] text-[14px] font-semibold flex items-center text-green-700 dark:text-green-300"
               >
                 <div
-                  class="w-[22px] h-[22px] text-[12px] flex items-center justify-center rounded-full bg-green-500 font-bold text-white"
+                  class="w-[22px] h-[22px] text-[12px] flex items-center justify-center rounded-full bg-green-500 font-bold text-primary-foreground"
                 >
                   主
                 </div>
@@ -144,7 +144,7 @@ function removeConditionGroup() {
               class="gap-[8px] text-[14px] font-semibold flex items-center text-green-700 dark:text-green-300"
             >
               <div
-                class="w-[22px] h-[22px] text-[12px] flex items-center justify-center rounded-full bg-green-500 font-bold text-white"
+                class="w-[22px] h-[22px] text-[12px] flex items-center justify-center rounded-full bg-green-500 font-bold text-primary-foreground"
               >
                 组
               </div>
@@ -199,7 +199,7 @@ function removeConditionGroup() {
                       class="gap-[8px] text-[14px] font-semibold flex items-center text-orange-700 dark:text-orange-300"
                     >
                       <div
-                        class="w-[22px] h-[22px] text-[12px] flex items-center justify-center rounded-full bg-orange-500 font-bold text-white"
+                        class="w-[22px] h-[22px] text-[12px] flex items-center justify-center rounded-full bg-orange-500 font-bold text-primary-foreground"
                       >
                         {{ subGroupIndex + 1 }}
                       </div>

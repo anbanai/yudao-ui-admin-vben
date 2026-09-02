@@ -128,7 +128,7 @@ const customRequest: UploadProps['customRequest'] = async function (options) {
         选择视频
       </Button>
     </Upload>
-    <div class="mb-4 ml-1 text-sm text-gray-500">
+    <div class="mb-4 ml-1 text-sm text-muted-foreground">
       格式支持 MP4，文件大小不超过 10MB
     </div>
 

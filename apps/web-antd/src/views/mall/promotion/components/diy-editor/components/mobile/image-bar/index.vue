@@ -15,7 +15,7 @@ defineProps<{ property: ImageBarProperty }>();
     class="flex h-12 items-center justify-center bg-card"
     v-if="!property.imgUrl"
   >
-    <IconifyIcon icon="lucide:image" class="text-3xl text-gray-600" />
+    <IconifyIcon icon="lucide:image" class="text-3xl text-muted-foreground" />
   </div>
   <Image
     class="block h-full min-h-8 w-full"

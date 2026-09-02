@@ -54,9 +54,9 @@ function handleClick(doc: any) {
   <!-- 知识引用列表 -->
   <div
     v-if="segments && segments.length > 0"
-    class="mt-2 rounded-lg bg-gray-50 p-2"
+    class="mt-2 rounded-lg bg-muted p-2"
   >
-    <div class="mb-2 flex items-center text-sm text-gray-400">
+    <div class="mb-2 flex items-center text-sm text-muted-foreground">
       <IconifyIcon icon="lucide:file-text" class="mr-1" /> 知识引用
     </div>
     <div class="flex flex-wrap gap-2">
@@ -66,9 +66,9 @@ function handleClick(doc: any) {
         class="cursor-pointer rounded-lg bg-card p-2 px-3 transition-all hover:bg-blue-50"
         @click="handleClick(doc)"
       >
-        <div class="mb-1 text-sm text-gray-600">
+        <div class="mb-1 text-sm text-muted-foreground">
           {{ doc.title }}
-          <span class="ml-1 text-xs text-gray-300">
+          <span class="ml-1 text-xs text-muted-foreground">
             （{{ doc.segments.length }} 条）
           </span>
         </div>
@@ -83,14 +83,14 @@ function handleClick(doc: any) {
         <div
           v-for="(segment, index) in document?.segments"
           :key="index"
-          class="border-b-solid border-b-gray-200 p-3 last:border-b-0"
+          class="border-b-solid border-border p-3 last:border-b-0"
         >
           <div
-            class="mb-2 block w-fit rounded-sm px-2 py-1 text-xs text-gray-400"
+            class="mb-2 block w-fit rounded-sm px-2 py-1 text-xs text-muted-foreground"
           >
             分段 {{ segment.id }}
           </div>
-          <div class="mt-2 text-sm leading-[1.6] text-gray-600">
+          <div class="mt-2 text-sm leading-[1.6] text-muted-foreground">
             {{ segment.content }}
           </div>
         </div>

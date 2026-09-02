@@ -197,7 +197,7 @@ async function handleJoin() {
         class="inline-flex gap-2 items-center px-2.5 py-1 text-13px rounded-full cursor-pointer select-none transition-colors duration-150 bg-[var(--ant-color-success-bg)] text-[var(--ant-color-text)] hover:bg-[var(--ant-color-success-bg-hover)]"
       >
         <span
-          class="inline-flex flex-shrink-0 justify-center items-center w-[18px] h-[18px] text-white rounded-full bg-[#07c160]"
+          class="inline-flex flex-shrink-0 justify-center items-center w-[18px] h-[18px] text-primary-foreground rounded-full bg-[#07c160]"
         >
           <Icon icon="ant-design:phone-filled" :size="14" />
         </span>

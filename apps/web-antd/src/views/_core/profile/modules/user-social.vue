@@ -174,10 +174,10 @@ onMounted(() => {
             />
             <div class="flex flex-1 items-center justify-between">
               <div class="flex flex-col">
-                <h4 class="mb-1 text-sm text-black/85 dark:text-white/85">
+                <h4 class="mb-1 text-sm text-muted-foreground/85 dark:text-primary-foreground/85">
                   {{ getDictLabel(DICT_TYPE.SYSTEM_SOCIAL_TYPE, item.type) }}
                 </h4>
-                <span class="text-black/45 dark:text-white/45">
+                <span class="text-muted-foreground/45 dark:text-primary-foreground/45">
                   <template v-if="item.socialUser">
                     {{ item.socialUser?.nickname || item.socialUser?.openid }}
                   </template>

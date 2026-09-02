@@ -280,7 +280,7 @@ defineExpose({ open });
         v-else
         class="mt-[10px] flex h-[400px] w-full items-center justify-center"
       >
-        <span class="text-gray-400">地图加载中...</span>
+        <span class="text-muted-foreground">地图加载中...</span>
       </div>
     </div>
     <div class="mt-4 flex justify-end gap-2">

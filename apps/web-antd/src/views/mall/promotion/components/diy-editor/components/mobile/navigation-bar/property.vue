@@ -105,7 +105,7 @@ watch(
           height="56px"
           :show-description="false"
         />
-        <span class="mb-2 ml-2 text-xs text-gray-400">建议宽度：750</span>
+        <span class="mb-2 ml-2 text-xs text-muted-foreground">建议宽度：750</span>
       </div>
     </FormItem>
     <Card class="property-group" :bordered="false">

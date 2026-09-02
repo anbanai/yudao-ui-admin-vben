@@ -100,7 +100,7 @@ const [Modal, modalApi] = useVbenModal<{ headers: string }>({
             class="w-48"
             allow-clear
           />
-          <span class="font-medium text-gray-600">:</span>
+          <span class="font-medium text-muted-foreground">:</span>
           <Input
             v-model:value="item.value"
             placeholder="请输入参数值 (支持表达式 ${变量名})"

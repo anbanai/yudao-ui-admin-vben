@@ -740,7 +740,7 @@ watch(
             @click="handleNotFriendClick"
           >
             <span
-              class="inline-flex items-center justify-center w-4 h-4 rounded-full text-white bg-[var(--ant-color-warning)] flex-shrink-0"
+              class="inline-flex items-center justify-center w-4 h-4 rounded-full text-primary-foreground bg-[var(--ant-color-warning)] flex-shrink-0"
             >
               <Icon icon="ant-design:user-outlined" :size="11" />
             </span>
@@ -787,7 +787,7 @@ watch(
         <transition name="message-panel__jump-fade">
           <div
             v-if="conversationStore.activeMentionMessageId"
-            class="message-panel__jump-mention sticky bottom-12 left-1/2 inline-flex gap-1.5 items-center w-fit mx-auto px-3.5 py-1.5 text-xs text-[#f56c6c] bg-[var(--ant-color-bg-elevated)] rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.12)] cursor-pointer hover:text-white hover:bg-[#f56c6c]"
+            class="message-panel__jump-mention sticky bottom-12 left-1/2 inline-flex gap-1.5 items-center w-fit mx-auto px-3.5 py-1.5 text-xs text-[#f56c6c] bg-[var(--ant-color-bg-elevated)] rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.12)] cursor-pointer hover:text-primary-foreground hover:bg-[#f56c6c]"
             @click="handleLocateMention"
           >
             <span>查看 @消息</span>
@@ -798,7 +798,7 @@ watch(
         <transition name="message-panel__jump-fade">
           <div
             v-if="showJumpToBottom"
-            class="message-panel__jump-bottom sticky bottom-3 left-1/2 inline-flex gap-1.5 items-center w-fit mx-auto px-3.5 py-1.5 text-xs text-[#409eff] bg-[var(--ant-color-bg-elevated)] rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.12)] cursor-pointer hover:text-white hover:bg-[#409eff]"
+            class="message-panel__jump-bottom sticky bottom-3 left-1/2 inline-flex gap-1.5 items-center w-fit mx-auto px-3.5 py-1.5 text-xs text-[#409eff] bg-[var(--ant-color-bg-elevated)] rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.12)] cursor-pointer hover:text-primary-foreground hover:bg-[#409eff]"
             @click="scrollToBottom(true)"
           >
             <Icon icon="ant-design:down-outlined" :size="14" />

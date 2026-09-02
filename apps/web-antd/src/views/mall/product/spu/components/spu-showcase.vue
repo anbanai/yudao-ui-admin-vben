@@ -133,7 +133,7 @@ function emitSpuChange() {
         class="flex h-[60px] w-[60px] cursor-pointer items-center justify-center rounded-lg border-2 border-dashed transition-colors hover:border-primary hover:bg-primary/5"
         @click="handleOpenSpuSelect"
       >
-        <IconifyIcon icon="lucide:plus" class="text-xl text-gray-400" />
+        <IconifyIcon icon="lucide:plus" class="text-xl text-muted-foreground" />
       </div>
     </Tooltip>
   </div>

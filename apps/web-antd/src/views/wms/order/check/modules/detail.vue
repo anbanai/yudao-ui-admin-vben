@@ -97,7 +97,7 @@ const [Modal, modalApi] = useVbenModal({
         <VxeColumn title="商品信息" min-width="200">
           <template #default="{ row }">
             <div>{{ row.itemName || '-' }}</div>
-            <div v-if="row.itemCode" class="text-xs text-gray-500">
+            <div v-if="row.itemCode" class="text-xs text-muted-foreground">
               商品编号：{{ row.itemCode }}
             </div>
           </template>
@@ -105,7 +105,7 @@ const [Modal, modalApi] = useVbenModal({
         <VxeColumn title="规格信息" min-width="200">
           <template #default="{ row }">
             <div>{{ row.skuName || '-' }}</div>
-            <div v-if="row.skuCode" class="text-xs text-gray-500">
+            <div v-if="row.skuCode" class="text-xs text-muted-foreground">
               规格编号：{{ row.skuCode }}
             </div>
           </template>

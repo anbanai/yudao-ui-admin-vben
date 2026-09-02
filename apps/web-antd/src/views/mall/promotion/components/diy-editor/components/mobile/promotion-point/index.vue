@@ -211,7 +211,7 @@ function calculateWidth() {
           :style="{
             background: `linear-gradient(to right, ${property.btnBuy.bgBeginColor}, ${property.btnBuy.bgEndColor}`,
           }"
-          class="rounded-full px-3 py-1 text-sm text-white"
+          class="rounded-full px-3 py-1 text-sm text-primary-foreground"
         >
           {{ property.btnBuy.text }}
         </span>

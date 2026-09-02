@@ -98,7 +98,7 @@ const customRequest: UploadProps['customRequest'] = async function (options) {
       </div>
     </template>
   </Upload>
-  <div v-if="$slots.default" class="ml-1 text-sm text-gray-500">
+  <div v-if="$slots.default" class="ml-1 text-sm text-muted-foreground">
     <slot></slot>
   </div>
 </template>

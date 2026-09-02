@@ -64,14 +64,14 @@ function getNickname(sendFrom: number) {
         <div
           class="flex items-center justify-between rounded-t-[5px] border-b border-[#eee] bg-[#f8f8f8] px-[15px] py-[5px]"
         >
-          <div class="text-xs text-gray-500">
+          <div class="text-xs text-muted-foreground">
             {{ formatDateTime(item.createTime) }}
           </div>
         </div>
         <div
           class="overflow-hidden rounded-b-[5px] p-[15px] text-sm text-[#333]"
           :class="
-            item.sendFrom === SendFrom.MpBot ? 'bg-[#6BED72]' : 'bg-white'
+            item.sendFrom === SendFrom.MpBot ? 'bg-[#6BED72]' : 'bg-background'
           "
         >
           <Msg :item="item" />

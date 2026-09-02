@@ -130,7 +130,7 @@ function onChildDragEnd({ newIndex }: { newIndex: number }) {
   >
     <template #item="{ element: parent, index: x }">
       <div
-        class="relative float-left box-border block w-[85.5px] cursor-pointer border border-[#ebedee] bg-white text-center"
+        class="relative float-left box-border block w-[85.5px] cursor-pointer border border-[#ebedee] bg-background text-center"
       >
         <!-- 一级菜单 -->
         <div
@@ -155,7 +155,7 @@ function onChildDragEnd({ newIndex }: { newIndex: number }) {
           >
             <template #item="{ element: child, index: y }">
               <div
-                class="relative float-left box-border block w-[85.5px] cursor-pointer border border-[#ebedee] bg-white text-center"
+                class="relative float-left box-border block w-[85.5px] cursor-pointer border border-[#ebedee] bg-background text-center"
               >
                 <div
                   class="box-border h-[44px] text-center leading-[44px]"
@@ -172,7 +172,7 @@ function onChildDragEnd({ newIndex }: { newIndex: number }) {
           </draggable>
           <!-- 二级菜单加号， 当长度 小于 5 才显示二级菜单的加号  -->
           <div
-            class="relative float-left box-border block flex h-[46px] w-[85.5px] cursor-pointer items-center justify-center border border-[#ebedee] bg-white text-center leading-[46px]"
+            class="relative float-left box-border block flex h-[46px] w-[85.5px] cursor-pointer items-center justify-center border border-[#ebedee] bg-background text-center leading-[46px]"
             v-if="!parent.children || parent.children.length < 5"
             @click="addSubMenu(x, parent)"
           >
@@ -185,7 +185,7 @@ function onChildDragEnd({ newIndex }: { newIndex: number }) {
 
   <!-- 一级菜单加号 -->
   <div
-    class="relative float-left box-border block flex h-[46px] w-[85.5px] cursor-pointer items-center justify-center border border-[#ebedee] bg-white text-center leading-[46px]"
+    class="relative float-left box-border block flex h-[46px] w-[85.5px] cursor-pointer items-center justify-center border border-[#ebedee] bg-background text-center leading-[46px]"
     v-if="menuList.length < 3"
     @click="addMenu"
   >

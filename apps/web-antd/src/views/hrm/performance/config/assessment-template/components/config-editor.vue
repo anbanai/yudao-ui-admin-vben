@@ -190,12 +190,12 @@ defineExpose({ validate });
     <div class="mb-3 flex items-center justify-between">
       <div>
         <span class="font-semibold">考核维度</span>
-        <span class="ml-4 text-sm text-gray-500">
+        <span class="ml-4 text-sm text-muted-foreground">
           当前维度权重合计：
           <span
             :class="
               !model.dimensions?.length
-                ? 'text-gray-500'
+                ? 'text-muted-foreground'
                 : isHundred(dimensionWeightTotal)
                   ? 'text-green-600'
                   : 'text-red-500'
@@ -221,7 +221,7 @@ defineExpose({ validate });
       class="mb-4 overflow-hidden rounded border"
     >
       <div
-        class="flex items-center justify-between border-b bg-gray-50 px-4 py-3"
+        class="flex items-center justify-between border-b bg-muted px-4 py-3"
       >
         <div>
           <div class="flex items-center gap-3">
@@ -233,7 +233,7 @@ defineExpose({ validate });
             </span>
             <Tag v-if="dimension.allowEdit" color="success">允许员工填写</Tag>
           </div>
-          <div v-if="dimension.remark" class="mt-1 text-xs text-gray-500">
+          <div v-if="dimension.remark" class="mt-1 text-xs text-muted-foreground">
             {{ dimension.remark }}
           </div>
         </div>
@@ -257,7 +257,7 @@ defineExpose({ validate });
       </div>
       <div class="p-4">
         <div class="mb-3 flex items-center justify-between">
-          <span class="text-sm text-gray-500">
+          <span class="text-sm text-muted-foreground">
             指标权重合计：
             <span
               :class="
@@ -318,7 +318,7 @@ defineExpose({ validate });
                   :precision="2"
                   class="w-full"
                 />
-                <span class="text-gray-500">%</span>
+                <span class="text-muted-foreground">%</span>
               </div>
             </template>
             <template v-else-if="column.key === 'scoreType'">

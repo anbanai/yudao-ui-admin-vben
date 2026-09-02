@@ -335,31 +335,31 @@ function getValue() {
 .upload-drag-area {
   padding: 20px;
   text-align: center;
-  background-color: #fafafa;
-  border: 2px dashed #d9d9d9;
+  background-color: hsl(var(--muted));
+  border: 2px dashed hsl(var(--border));
   border-radius: 8px;
   transition: border-color 0.3s;
 }
 
 .upload-drag-area:hover {
-  border-color: #1890ff;
+  border-color: hsl(var(--primary));
 }
 
 .ant-upload-drag-icon {
   margin-bottom: 16px;
   font-size: 48px;
-  color: #d9d9d9;
+  color: hsl(var(--muted-foreground));
 }
 
 .ant-upload-text {
   margin-bottom: 8px;
   font-size: 16px;
-  color: #666;
+  color: hsl(var(--foreground));
 }
 
 .ant-upload-hint {
   font-size: 14px;
-  color: #999;
+  color: hsl(var(--muted-foreground));
 }
 </style>
 

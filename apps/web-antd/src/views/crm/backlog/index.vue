@@ -99,7 +99,7 @@ onMounted(() => {
           <template #renderItem="{ item }">
             <List.Item
               @click="sideClick(item)"
-              class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+              class="cursor-pointer hover:bg-muted dark:hover:bg-muted"
             >
               <List.Item.Meta>
                 <template #title>

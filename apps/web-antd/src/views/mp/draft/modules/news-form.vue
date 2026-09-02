@@ -89,7 +89,7 @@ function plusNews() {
       <div class="mx-auto mb-[10px] w-[60%] border border-[#eaeaea] p-[10px]">
         <div v-for="(news, index) in newsList" :key="index">
           <div
-            class="group relative mx-auto mb-[10px] w-full cursor-pointer border-[2px] bg-white"
+            class="group relative mx-auto mb-[10px] w-full cursor-pointer border-[2px] bg-background"
             v-if="index === 0"
             :class="
               activeNewsIndex === index
@@ -104,7 +104,7 @@ function plusNews() {
                 :src="news.thumbUrl"
               />
               <div
-                class="absolute bottom-0 left-0 mb-[5px] ml-[5px] inline-block h-[25px] w-[100%] overflow-hidden text-ellipsis whitespace-nowrap p-[1%] text-[18px] text-white"
+                class="absolute bottom-0 left-0 mb-[5px] ml-[5px] inline-block h-[25px] w-[100%] overflow-hidden text-ellipsis whitespace-nowrap p-[1%] text-[18px] text-primary-foreground"
               >
                 {{ news.title }}
               </div>
@@ -134,7 +134,7 @@ function plusNews() {
             </div>
           </div>
           <div
-            class="group relative mx-auto mb-[10px] cursor-pointer border-[2px] bg-white"
+            class="group relative mx-auto mb-[10px] cursor-pointer border-[2px] bg-background"
             v-if="index > 0"
             :class="
               activeNewsIndex === index
@@ -203,7 +203,7 @@ function plusNews() {
         </Row>
       </div>
     </Layout.Sider>
-    <Layout.Content class="bg-white">
+    <Layout.Content class="bg-background">
       <div v-if="newsList.length > 0 && activeNewsItem">
         <!-- 标题、作者、原文地址 -->
         <Row :gutter="20">

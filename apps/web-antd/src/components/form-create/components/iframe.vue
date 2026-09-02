@@ -74,7 +74,7 @@ const showPreview = computed(() => {
 
 .iframe-preview {
   overflow: hidden;
-  border: 1px solid #d9d9d9;
+  border: 1px solid hsl(var(--border));
   border-radius: 4px;
 }
 
@@ -88,8 +88,8 @@ const showPreview = computed(() => {
   align-items: center;
   justify-content: center;
   min-height: 200px;
-  background-color: #fafafa;
-  border: 1px dashed #d9d9d9;
+  background-color: hsl(var(--muted));
+  border: 1px dashed hsl(var(--border));
   border-radius: 4px;
 }
 </style>

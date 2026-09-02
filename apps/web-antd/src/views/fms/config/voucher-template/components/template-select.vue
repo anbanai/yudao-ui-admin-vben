@@ -161,6 +161,6 @@ defineExpose({ open });
         </template>
       </template>
     </Table>
-    <div class="mt-2.5 text-xs text-gray-400">双击模板可直接套用到当前凭证</div>
+    <div class="mt-2.5 text-xs text-muted-foreground">双击模板可直接套用到当前凭证</div>
   </Modal>
 </template>

@@ -288,7 +288,7 @@ defineExpose({
     :destroy-on-close="true"
     @ok="handleConfirm"
   >
-    <div v-if="props.currentId" class="mb-2 text-sm text-gray-400">
+    <div v-if="props.currentId" class="mb-2 text-sm text-muted-foreground">
       当前链接参数编号：{{ props.currentId }}，重新选择后自动替换
     </div>
     <Grid />

@@ -25,7 +25,7 @@ const formData = useVModel(props, 'modelValue', emit);
 <template>
   <ComponentContainerProperty v-model="formData.style">
     <p class="text-base font-bold">菜单设置</p>
-    <p class="text-xs text-gray-500">拖动左侧的小圆点可以调整顺序</p>
+    <p class="text-xs text-muted-foreground">拖动左侧的小圆点可以调整顺序</p>
     <Form
       :label-col="{ style: { width: '60px' } }"
       :model="formData"

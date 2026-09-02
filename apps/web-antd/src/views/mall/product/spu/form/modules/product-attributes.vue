@@ -216,7 +216,7 @@ async function getAttributeOptions(propertyId: number) {
       <Tag
         v-show="!inputVisible(index)"
         @click="showInput(index)"
-        class="mx-1 border-dashed bg-gray-100"
+        class="mx-1 border-dashed bg-muted"
       >
         <div class="flex items-center">
           <IconifyIcon class="mr-2" icon="lucide:plus" />

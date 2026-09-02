@@ -530,7 +530,7 @@ watch(
       <Divider />
       <div class="mb-2 flex justify-between">
         <span class="flex items-center">
-          <IconifyIcon icon="ep:menu" class="mr-2 text-gray-600" />
+          <IconifyIcon icon="ep:menu" class="mr-2 text-muted-foreground" />
           注入字段
         </span>
         <Button

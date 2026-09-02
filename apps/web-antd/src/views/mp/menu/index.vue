@@ -314,11 +314,11 @@ function menuToBackend(menu: any) {
           :style="{ backgroundImage: `url(${iphoneBackImg})` }"
         >
           <div
-            class="relative bottom-[426px] left-0 h-[64px] w-[300px] bg-[length:100%] bg-[position:0_0] bg-no-repeat text-center text-white"
+            class="relative bottom-[426px] left-0 h-[64px] w-[300px] bg-[length:100%] bg-[position:0_0] bg-no-repeat text-center text-primary-foreground"
             :style="{ backgroundImage: `url(${menuHeadImg})` }"
           >
             <div
-              class="absolute left-0 top-[33px] w-full text-center text-sm text-white"
+              class="absolute left-0 top-[33px] w-full text-center text-sm text-primary-foreground"
             >
               {{ accountName }}
             </div>

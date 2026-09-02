@@ -118,7 +118,7 @@ function selectMaterial(item: any) {
               v-else
               icon="lucide:plus"
               :size="40"
-              class="text-gray-400"
+              class="text-muted-foreground"
             />
           </div>
           <div class="flex items-center justify-center">

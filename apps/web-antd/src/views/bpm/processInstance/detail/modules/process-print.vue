@@ -517,7 +517,7 @@ function getPrintTemplateHTML() {
     const headTr = document.createElement('tr');
     const headTd = document.createElement('td');
     headTd.setAttribute('colspan', '2');
-    headTd.setAttribute('class', 'border border-black p-1.5 text-center');
+    headTd.setAttribute('class', 'border border-border p-1.5 text-center');
     headTd.textContent = '流程记录';
     headTr.append(headTd);
     processRecordTable.append(headTr);
@@ -525,10 +525,10 @@ function getPrintTemplateHTML() {
     printData.value?.tasks.forEach((item) => {
       const tr = document.createElement('tr');
       const td1 = document.createElement('td');
-      td1.setAttribute('class', 'border border-black p-1.5');
+      td1.setAttribute('class', 'border border-border p-1.5');
       td1.textContent = item.name;
       const td2 = document.createElement('td');
-      td2.setAttribute('class', 'border border-black p-1.5');
+      td2.setAttribute('class', 'border border-border p-1.5');
       td2.textContent = item.description;
       tr.append(td1);
       tr.append(td2);
@@ -568,22 +568,22 @@ function getPrintTemplateHTML() {
         <table class="mt-3 w-full border-collapse">
           <tbody>
             <tr>
-              <td class="w-1/4 border border-black p-1.5">发起人</td>
-              <td class="w-1/4 border border-black p-1.5">
+              <td class="w-1/4 border border-border p-1.5">发起人</td>
+              <td class="w-1/4 border border-border p-1.5">
                 {{ printData.processInstance.startUser?.nickname }}
               </td>
-              <td class="w-1/4 border border-black p-1.5">发起时间</td>
-              <td class="w-1/4 border border-black p-1.5">
+              <td class="w-1/4 border border-border p-1.5">发起时间</td>
+              <td class="w-1/4 border border-border p-1.5">
                 {{ formatDate(printData.processInstance.startTime) }}
               </td>
             </tr>
             <tr>
-              <td class="w-1/4 border border-black p-1.5">所属部门</td>
-              <td class="w-1/4 border border-black p-1.5">
+              <td class="w-1/4 border border-border p-1.5">所属部门</td>
+              <td class="w-1/4 border border-border p-1.5">
                 {{ printData.processInstance.startUser?.deptName }}
               </td>
-              <td class="w-1/4 border border-black p-1.5">流程状态</td>
-              <td class="w-1/4 border border-black p-1.5">
+              <td class="w-1/4 border border-border p-1.5">流程状态</td>
+              <td class="w-1/4 border border-border p-1.5">
                 {{
                   getDictLabel(
                     DICT_TYPE.BPM_PROCESS_INSTANCE_STATUS,
@@ -594,17 +594,17 @@ function getPrintTemplateHTML() {
             </tr>
             <tr>
               <td
-                class="w-full border border-black p-1.5 text-center"
+                class="w-full border border-border p-1.5 text-center"
                 colspan="4"
               >
                 <h4>表单内容</h4>
               </td>
             </tr>
             <tr v-for="item in formFields" :key="item.id">
-              <td class="w-1/5 border border-black p-1.5">
+              <td class="w-1/5 border border-border p-1.5">
                 {{ item.name }}
               </td>
-              <td class="w-4/5 border border-black p-1.5" colspan="3">
+              <td class="w-4/5 border border-border p-1.5" colspan="3">
                 <div v-html="item.html"></div>
               </td>
             </tr>
@@ -626,17 +626,17 @@ function getPrintTemplateHTML() {
           <tbody>
             <tr>
               <td
-                class="w-full border border-black p-1.5 text-center"
+                class="w-full border border-border p-1.5 text-center"
                 colspan="4"
               >
                 <h4>流程记录</h4>
               </td>
             </tr>
             <tr v-for="item in printData.tasks" :key="item.id">
-              <td class="w-1/5 border border-black p-1.5">
+              <td class="w-1/5 border border-border p-1.5">
                 {{ item.name }}
               </td>
-              <td class="w-4/5 border border-black p-1.5" colspan="3">
+              <td class="w-4/5 border border-border p-1.5" colspan="3">
                 {{ item.description }}
                 <div v-if="item.signPicUrl && item.signPicUrl.length > 0">
                   <img class="h-10 w-[90px]" :src="item.signPicUrl" alt="" />

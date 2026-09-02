@@ -61,7 +61,7 @@ const [Grid] = useVbenVxeGrid({
       <template #itemInfo="{ row }">
         <div class="flex flex-col gap-1 py-1 leading-5">
           <div class="text-sm">{{ row.itemName || '-' }}</div>
-          <div v-if="row.itemCode" class="break-all text-xs text-gray-500">
+          <div v-if="row.itemCode" class="break-all text-xs text-muted-foreground">
             商品编号：{{ row.itemCode }}
           </div>
         </div>
@@ -69,7 +69,7 @@ const [Grid] = useVbenVxeGrid({
       <template #skuInfo="{ row }">
         <div class="flex flex-col gap-1 py-1 leading-5">
           <div class="text-sm">{{ row.skuName || '-' }}</div>
-          <div v-if="row.skuCode" class="break-all text-xs text-gray-500">
+          <div v-if="row.skuCode" class="break-all text-xs text-muted-foreground">
             规格编号：{{ row.skuCode }}
           </div>
         </div>

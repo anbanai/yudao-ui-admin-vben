@@ -30,7 +30,7 @@ const color = computed({
     <input
       v-model="color"
       type="color"
-      class="h-8 w-12 cursor-pointer rounded border border-gray-300"
+      class="h-8 w-12 cursor-pointer rounded border border-border"
     />
     <Input v-model:value="color" class="flex-1" placeholder="请输入颜色值" />
   </div>

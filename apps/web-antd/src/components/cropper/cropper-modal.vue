@@ -133,7 +133,7 @@ async function handleOk() {
       <div class="h-full w-3/5">
         <!-- 裁剪器容器 -->
         <div
-          class="relative h-[300px] bg-gradient-to-b from-neutral-50 to-neutral-200"
+          class="relative h-[300px] bg-gradient-to-b from-muted to-muted"
         >
           <CropperImage
             v-if="src"
@@ -276,7 +276,7 @@ async function handleOk() {
       <div class="h-full w-2/5">
         <!-- 预览区域 -->
         <div
-          class="mx-auto h-56 w-56 overflow-hidden rounded-full border border-gray-200"
+          class="mx-auto h-56 w-56 overflow-hidden rounded-full border border-border"
         >
           <img
             v-if="previewSource"
@@ -288,7 +288,7 @@ async function handleOk() {
         <!-- 头像组合预览 -->
         <template v-if="previewSource">
           <div
-            class="mt-2 flex items-center justify-around border-t border-gray-200 pt-2"
+            class="mt-2 flex items-center justify-around border-t border-border pt-2"
           >
             <Avatar :src="previewSource" size="large" />
             <Avatar :size="48" :src="previewSource" />

@@ -111,7 +111,7 @@ defineExpose({ validate });
 <template>
   <div class="w-full">
     <div class="mb-3 flex items-center justify-between gap-4">
-      <span class="text-sm text-gray-500">
+      <span class="text-sm text-muted-foreground">
         分数区间须从 0 到 100 连续且不重叠；绩效系数不小于
         0，分数和系数最多保留两位小数。
       </span>

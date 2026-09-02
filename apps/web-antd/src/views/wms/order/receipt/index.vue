@@ -243,7 +243,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           <VxeColumn title="商品信息" min-width="220">
             <template #default="{ row: detail }">
               <div>{{ detail.itemName || '-' }}</div>
-              <div v-if="detail.itemCode" class="text-xs text-gray-500">
+              <div v-if="detail.itemCode" class="text-xs text-muted-foreground">
                 商品编号：{{ detail.itemCode }}
               </div>
             </template>
@@ -251,7 +251,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           <VxeColumn title="规格信息" min-width="220">
             <template #default="{ row: detail }">
               <div>{{ detail.skuName || '-' }}</div>
-              <div v-if="detail.skuCode" class="text-xs text-gray-500">
+              <div v-if="detail.skuCode" class="text-xs text-muted-foreground">
                 规格编号：{{ detail.skuCode }}
               </div>
             </template>
@@ -298,7 +298,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           单号：
           <a class="text-primary" @click="handleDetail(row)">{{ row.no }}</a>
         </div>
-        <div v-if="row.bizOrderNo" class="text-xs text-gray-500">
+        <div v-if="row.bizOrderNo" class="text-xs text-muted-foreground">
           业务：{{ row.bizOrderNo }}
         </div>
       </template>

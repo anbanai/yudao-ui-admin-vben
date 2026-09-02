@@ -348,8 +348,8 @@ onMounted(() => {
           <div
             v-for="item in typeList"
             :key="item.id"
-            :class="item.id === currentAuxiliaryType?.id ? 'bg-gray-100' : ''"
-            class="mb-1 flex cursor-pointer items-center justify-between rounded px-2 py-1.5 hover:bg-gray-100"
+            :class="item.id === currentAuxiliaryType?.id ? 'bg-muted' : ''"
+            class="mb-1 flex cursor-pointer items-center justify-between rounded px-2 py-1.5 hover:bg-muted"
             @click="handleTypeChange(item)"
           >
             <div class="flex min-w-0 items-center">

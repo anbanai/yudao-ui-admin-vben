@@ -74,8 +74,8 @@ const goProfile = () => router.push({ name: 'Profile' });
       <div
         v-for="item in tabs"
         :key="item.name"
-        class="flex items-center justify-center w-10 h-10 rounded-lg text-[#a0a0a0] cursor-pointer transition-all hover:text-white hover:bg-white/10"
-        :class="{ 'bg-white/15 text-white': isActive(item.name) }"
+        class="flex items-center justify-center w-10 h-10 rounded-lg text-[#a0a0a0] cursor-pointer transition-all hover:text-primary-foreground hover:bg-background/10"
+        :class="{ 'bg-background/15 text-primary-foreground': isActive(item.name) }"
         @click="goTab(item.name)"
       >
         <Badge
@@ -101,7 +101,7 @@ const goProfile = () => router.push({ name: 'Profile' });
     <!-- 底部设置按钮：点击跳个人中心 -->
     <div class="flex flex-col items-center gap-2 w-full">
       <div
-        class="flex items-center justify-center w-10 h-10 rounded-lg text-[#a0a0a0] cursor-pointer transition-all hover:text-white hover:bg-white/10"
+        class="flex items-center justify-center w-10 h-10 rounded-lg text-[#a0a0a0] cursor-pointer transition-all hover:text-primary-foreground hover:bg-background/10"
         @click="goProfile"
       >
         <Icon icon="ant-design:setting-outlined" class="tool-bar__icon" />

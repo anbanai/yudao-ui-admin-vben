@@ -42,7 +42,7 @@ function openDetail(spuId: number) {
 
 <template>
   <div
-    class="mb-2.5 flex w-full cursor-pointer items-center rounded-lg bg-gray-500/30 p-2.5"
+    class="mb-2.5 flex w-full cursor-pointer items-center rounded-lg bg-muted/30 p-2.5"
     @click.stop="openDetail(spuId)"
   >
     <!-- 左侧商品图片-->

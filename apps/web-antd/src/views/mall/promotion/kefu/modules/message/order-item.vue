@@ -29,7 +29,7 @@ function openDetail(id: number) {
 /** 格式化订单状态的颜色 */
 function formatOrderColor(order: any) {
   if (order.status === 0) {
-    return 'text-gray-500';
+    return 'text-muted-foreground';
   }
   if (
     order.status === 10 ||
@@ -72,7 +72,7 @@ function formatOrderStatus(order: any) {
   <div
     v-if="isObject(getMessageContent)"
     :key="getMessageContent.id"
-    class="mb-2 rounded-md bg-gray-500/30 p-2"
+    class="mb-2 rounded-md bg-muted/30 p-2"
   >
     <div class="flex h-6 items-center justify-between px-1 font-bold">
       <div class="flex flex-row text-sm">
@@ -94,7 +94,7 @@ function formatOrderStatus(order: any) {
     <div
       v-for="item in getMessageContent.items"
       :key="item.id"
-      class="border-b border-gray-200"
+      class="border-b border-border"
     >
       <ProductItem
         :num="item.count"

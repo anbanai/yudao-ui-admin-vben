@@ -451,7 +451,7 @@ defineExpose({ showCopyTaskNodeConfig }); // 暴露方法给父组件
           <div class="mb-4 text-base font-bold">字段权限</div>
 
           <!-- 表头 -->
-          <Row class="border border-gray-200 px-4 py-3">
+          <Row class="border border-border px-4 py-3">
             <Col :span="8" class="font-bold">字段名称</Col>
             <Col :span="16">
               <Row>
@@ -485,7 +485,7 @@ defineExpose({ showCopyTaskNodeConfig }); // 暴露方法给父组件
 
           <!-- 表格内容 -->
           <div v-for="(item, index) in fieldsPermissionConfig" :key="index">
-            <Row class="border border-t-0 border-gray-200 px-4 py-2">
+            <Row class="border border-t-0 border-border px-4 py-2">
               <Col :span="8" class="flex items-center truncate">
                 {{ item.title }}
               </Col>

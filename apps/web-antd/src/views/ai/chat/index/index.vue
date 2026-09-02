@@ -635,11 +635,11 @@ onMounted(async () => {
                 />
                 <div class="flex items-center">
                   <Switch v-model:checked="enableContext" size="small" />
-                  <span class="ml-1 text-sm text-gray-400">上下文</span>
+                  <span class="ml-1 text-sm text-muted-foreground">上下文</span>
                 </div>
                 <div class="flex items-center">
                   <Switch v-model:checked="enableWebSearch" size="small" />
-                  <span class="ml-1 text-sm text-gray-400">联网搜索</span>
+                  <span class="ml-1 text-sm text-muted-foreground">联网搜索</span>
                 </div>
               </div>
               <Button

@@ -16,7 +16,7 @@ defineProps<{ property: MenuListProperty }>();
     <div
       v-for="(item, index) in property.list"
       :key="index"
-      class="flex h-10 flex-row items-center justify-between gap-1 border-t border-gray-200 px-3 first:border-t-0"
+      class="flex h-10 flex-row items-center justify-between gap-1 border-t border-border px-3 first:border-t-0"
     >
       <div class="flex flex-1 flex-row items-center gap-2">
         <Image

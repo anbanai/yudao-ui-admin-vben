@@ -237,7 +237,7 @@ function eachCube(callback: (x: number, y: number, cube: Cube) => void) {
       >
         <IconifyIcon
           icon="lucide:x"
-          class="inset-0 items-center bg-primary text-white"
+          class="inset-0 items-center bg-primary text-primary-foreground"
         />
       </div>
       <span v-if="hotArea.width">

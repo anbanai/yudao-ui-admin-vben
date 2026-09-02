@@ -101,7 +101,7 @@ const formattedDuration = computed(() =>
 <template>
   <!-- 通话进行中的悬浮窗；1v1 私聊 320×540；群通话切大窗 720×560 -->
   <div
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.35)] z-[1000] flex flex-col text-white bg-[#1a1a1c]"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.35)] z-[1000] flex flex-col text-primary-foreground bg-[#1a1a1c]"
     :class="isGroup ? 'w-[720px] h-[560px]' : 'w-[320px] h-[540px]'"
   >
     <!-- 重连中横幅；网络抖动时显示，直到 Reconnected 事件清除 -->
@@ -149,7 +149,7 @@ const formattedDuration = computed(() =>
             :clickable="false"
           />
           <div class="text-[17px] font-medium">{{ peerNickname }}</div>
-          <div class="text-13px text-white/60">等待对方开启摄像头……</div>
+          <div class="text-13px text-primary-foreground/60">等待对方开启摄像头……</div>
         </div>
         <div
           v-if="localStream"
@@ -176,7 +176,7 @@ const formattedDuration = computed(() =>
             :clickable="false"
           />
           <div class="text-[17px] font-medium">{{ peerNickname }}</div>
-          <div class="text-13px text-white/60">{{ formattedDuration }}</div>
+          <div class="text-13px text-primary-foreground/60">{{ formattedDuration }}</div>
         </div>
       </template>
       <audio
@@ -189,7 +189,7 @@ const formattedDuration = computed(() =>
 
     <!-- 底部操作区：麦克风 / 扬声器 / 摄像头 / (群聊：共享屏幕 / 添加成员) / 挂断 -->
     <div
-      class="flex flex-shrink-0 gap-3 justify-around items-center pt-4 px-4 pb-5 bg-black/20"
+      class="flex flex-shrink-0 gap-3 justify-around items-center pt-4 px-4 pb-5 bg-foreground/20"
     >
       <div
         class="flex flex-col gap-2 items-center cursor-pointer select-none min-w-[64px]"
@@ -198,7 +198,7 @@ const formattedDuration = computed(() =>
         <span
           class="flex justify-center items-center w-[52px] h-[52px] rounded-full"
           :class="
-            micEnabled ? 'bg-white text-[#1a1a1c]' : 'bg-white/15 text-white'
+            micEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -210,7 +210,7 @@ const formattedDuration = computed(() =>
             :size="22"
           />
         </span>
-        <span class="text-xs text-white/70 whitespace-nowrap">
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
           {{ micEnabled ? '麦克风已开' : '麦克风已关' }}
         </span>
       </div>
@@ -222,8 +222,8 @@ const formattedDuration = computed(() =>
           class="flex justify-center items-center w-[52px] h-[52px] rounded-full"
           :class="
             speakerEnabled
-              ? 'bg-white text-[#1a1a1c]'
-              : 'bg-white/15 text-white'
+              ? 'bg-background text-[#1a1a1c]'
+              : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -233,7 +233,7 @@ const formattedDuration = computed(() =>
             :size="22"
           />
         </span>
-        <span class="text-xs text-white/70 whitespace-nowrap">
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
           {{ speakerEnabled ? '扬声器已开' : '扬声器已关' }}
         </span>
       </div>
@@ -246,7 +246,7 @@ const formattedDuration = computed(() =>
         <span
           class="flex justify-center items-center w-[52px] h-[52px] rounded-full"
           :class="
-            cameraEnabled ? 'bg-white text-[#1a1a1c]' : 'bg-white/15 text-white'
+            cameraEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -258,7 +258,7 @@ const formattedDuration = computed(() =>
             :size="22"
           />
         </span>
-        <span class="text-xs text-white/70 whitespace-nowrap">
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
           {{ cameraEnabled ? '摄像头已开' : '摄像头已关' }}
         </span>
       </div>
@@ -272,8 +272,8 @@ const formattedDuration = computed(() =>
             class="flex justify-center items-center w-[52px] h-[52px] rounded-full"
             :class="
               screenShareEnabled
-                ? 'bg-[#07c160] text-white'
-                : 'bg-white/15 text-white'
+                ? 'bg-[#07c160] text-primary-foreground'
+                : 'bg-background/15 text-primary-foreground'
             "
           >
             <Icon
@@ -285,7 +285,7 @@ const formattedDuration = computed(() =>
               :size="22"
             />
           </span>
-          <span class="text-xs text-white/70 whitespace-nowrap">
+          <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
             {{ screenShareEnabled ? '停止共享' : '共享屏幕' }}
           </span>
         </div>
@@ -294,11 +294,11 @@ const formattedDuration = computed(() =>
           @click="$emit('addMember')"
         >
           <span
-            class="flex justify-center items-center w-[52px] h-[52px] text-white rounded-full bg-white/15"
+            class="flex justify-center items-center w-[52px] h-[52px] text-primary-foreground rounded-full bg-background/15"
           >
             <Icon icon="ant-design:plus-outlined" :size="22" />
           </span>
-          <span class="text-xs text-white/70 whitespace-nowrap">添加成员</span>
+          <span class="text-xs text-primary-foreground/70 whitespace-nowrap">添加成员</span>
         </div>
       </template>
       <div
@@ -307,7 +307,7 @@ const formattedDuration = computed(() =>
         @click="$emit('hangup')"
       >
         <span
-          class="flex justify-center items-center w-[52px] h-[52px] text-white rounded-full bg-[#f04a4a]"
+          class="flex justify-center items-center w-[52px] h-[52px] text-primary-foreground rounded-full bg-[#f04a4a]"
         >
           <Icon
             icon="ant-design:phone-outlined"
@@ -315,7 +315,7 @@ const formattedDuration = computed(() =>
             class="rotate-[135deg]"
           />
         </span>
-        <span class="text-xs text-white/70 whitespace-nowrap">挂断</span>
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">挂断</span>
       </div>
     </div>
   </div>

@@ -124,7 +124,7 @@ function useFormSchema(): VbenFormSchema[] {
         }
         return h(
           'span',
-          { class: 'text-gray-400' },
+          { class: 'text-muted-foreground' },
           `0x${Number(addr).toString(16).toUpperCase().padStart(4, '0')}`,
         );
       },

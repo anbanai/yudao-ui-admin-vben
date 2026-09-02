@@ -246,7 +246,7 @@ onMounted(async () => {
     >
       <template #title>
         <div class="flex items-center gap-4">
-          <span class="text-gray-500">编号：{{ id || '-' }}</span>
+          <span class="text-muted-foreground">编号：{{ id || '-' }}</span>
           <IconifyIcon
             icon="lucide:printer"
             class="cursor-pointer hover:text-primary"
@@ -271,7 +271,7 @@ onMounted(async () => {
 
           <div class="mb-2.5 flex h-12 items-center gap-5 text-sm">
             <div
-              class="flex items-center gap-2 rounded-3xl bg-gray-100 px-2.5 py-1 dark:bg-gray-600"
+              class="flex items-center gap-2 rounded-3xl bg-muted px-2.5 py-1 dark:bg-muted"
             >
               <Avatar
                 :size="28"
@@ -288,7 +288,7 @@ onMounted(async () => {
                 {{ processInstance?.startUser?.nickname }}
               </span>
             </div>
-            <div class="text-gray-500">
+            <div class="text-muted-foreground">
               {{ formatDateTime(processInstance?.startTime) }} 提交
             </div>
           </div>

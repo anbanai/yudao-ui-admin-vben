@@ -187,7 +187,7 @@ defineExpose({ settingValues });
           fit="contain"
           @click="handleModelClick(model)"
         />
-        <div class="text-sm font-bold text-gray-600">
+        <div class="text-sm font-bold text-muted-foreground">
           {{ model.name }}
         </div>
       </div>
@@ -211,7 +211,7 @@ defineExpose({ settingValues });
           fit="contain"
           @click="handleStyleClick(imageStyle)"
         />
-        <div class="text-sm font-bold text-gray-600">
+        <div class="text-sm font-bold text-muted-foreground">
           {{ imageStyle.name }}
         </div>
       </div>
@@ -230,12 +230,12 @@ defineExpose({ settingValues });
         <div
           class="flex h-12 w-12 flex-col items-center justify-center rounded-lg border bg-card p-0"
           :class="[
-            selectSize === imageSize.key ? 'border-blue-500' : 'border-white',
+            selectSize === imageSize.key ? 'border-blue-500' : 'border-border',
           ]"
         >
           <div :style="imageSize.style"></div>
         </div>
-        <div class="text-sm font-bold text-gray-600">
+        <div class="text-sm font-bold text-muted-foreground">
           {{ imageSize.name }}
         </div>
       </div>

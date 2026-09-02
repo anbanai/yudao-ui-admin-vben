@@ -146,7 +146,7 @@ onMounted(() => {
                 class="gap-[8px] text-[14px] font-semibold flex items-center text-green-700 dark:text-green-300"
               >
                 <div
-                  class="w-[22px] h-[22px] text-[12px] flex items-center justify-center rounded-full bg-green-500 font-bold text-white"
+                  class="w-[22px] h-[22px] text-[12px] flex items-center justify-center rounded-full bg-green-500 font-bold text-primary-foreground"
                 >
                   {{ index + 1 }}
                 </div>

@@ -79,7 +79,7 @@ function handleMenuClick(routerName: string) {
       >
         <div
           :class="menu.bgColor"
-          class="flex h-12 w-12 items-center justify-center rounded text-white"
+          class="flex h-12 w-12 items-center justify-center rounded text-primary-foreground"
         >
           <IconifyIcon :icon="menu.icon" class="text-2xl" />
         </div>

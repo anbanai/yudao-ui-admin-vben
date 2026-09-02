@@ -91,7 +91,7 @@ function handleCloneComponent(component: DiyComponent<any>) {
             >
               <IconifyIcon
                 :icon="element.icon"
-                class="mb-1 size-8 text-gray-500"
+                class="mb-1 size-8 text-muted-foreground"
               />
               <span class="mt-1 text-xs">{{ element.name }}</span>
             </div>

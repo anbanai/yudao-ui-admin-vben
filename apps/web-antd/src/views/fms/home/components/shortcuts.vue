@@ -83,7 +83,7 @@ function goTo(path: string) {
         @click="goTo(shortcut.path)"
       >
         <span
-          class="bg-primary flex h-[42px] w-[42px] flex-none items-center justify-center rounded-lg text-[22px] text-white shadow"
+          class="bg-primary flex h-[42px] w-[42px] flex-none items-center justify-center rounded-lg text-[22px] text-primary-foreground shadow"
         >
           <IconifyIcon :icon="shortcut.icon" />
         </span>

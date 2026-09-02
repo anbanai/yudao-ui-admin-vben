@@ -260,14 +260,14 @@ function handleContextMenu(e: MouseEvent) {
       <!-- 数字徽标：非免打扰且有未读时显示具体条数 -->
       <span
         v-show="!conversation.silent && conversation.unreadCount > 0"
-        class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1.5 text-11px leading-[18px] text-white text-center bg-[#f56c6c] border border-solid border-white dark:border-[var(--ant-color-bg-container)] rounded-full box-border whitespace-nowrap"
+        class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1.5 text-11px leading-[18px] text-primary-foreground text-center bg-[#f56c6c] border border-solid border-border dark:border-[var(--ant-color-bg-container)] rounded-full box-border whitespace-nowrap"
       >
         {{ conversation.unreadCount > 99 ? '99+' : conversation.unreadCount }}
       </span>
       <!-- 小红点：免打扰且有未读时提示存在新消息 -->
       <span
         v-show="conversation.silent && conversation.unreadCount > 0"
-        class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#f56c6c] border border-solid border-white dark:border-[var(--ant-color-bg-container)] rounded-full box-border"
+        class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#f56c6c] border border-solid border-border dark:border-[var(--ant-color-bg-container)] rounded-full box-border"
       ></span>
     </div>
 

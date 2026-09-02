@@ -256,7 +256,7 @@ const reviewColumns = [
               v-else-if="
                 targetConfirmationStage.type === HrmPerformanceRaterType.SELF
               "
-              class="text-gray-500"
+              class="text-muted-foreground"
             >
               当前被考核员工
             </span>
@@ -340,7 +340,7 @@ const reviewColumns = [
                 :disabled="disabled"
                 placeholder="请选择评分人"
               />
-              <span v-else class="text-gray-500">当前被考核员工</span>
+              <span v-else class="text-muted-foreground">当前被考核员工</span>
             </template>
             <template v-else-if="column.key === 'weight'">
               <div class="flex items-center gap-1">
@@ -353,7 +353,7 @@ const reviewColumns = [
                   :precision="2"
                   class="w-full"
                 />
-                <span class="text-gray-500">%</span>
+                <span class="text-muted-foreground">%</span>
               </div>
             </template>
             <template v-else-if="column.key === 'scoringType'">

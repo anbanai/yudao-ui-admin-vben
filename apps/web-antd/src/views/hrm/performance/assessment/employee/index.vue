@@ -139,7 +139,7 @@ onMounted(loadPlanOptions);
           <div class="text-lg font-semibold">
             {{ employeeInfo.employeeName }}
           </div>
-          <div class="text-sm text-gray-500">
+          <div class="text-sm text-muted-foreground">
             {{ employeeInfo.deptName }} / {{ employeeInfo.postName }} /
             {{ employeeInfo.jobNumber }} /
             {{

@@ -16,7 +16,7 @@ const props = defineProps<{
 /** 计算环比 */
 function calcRatio(today: number, yesterday: number) {
   if (!yesterday) {
-    return { label: '无昨日数据', className: 'text-gray-400' };
+    return { label: '无昨日数据', className: 'text-muted-foreground' };
   }
   const diff = ((today - yesterday) / yesterday) * 100;
   const sign = diff >= 0 ? '+' : '';
@@ -60,7 +60,7 @@ const cards = computed(() => {
       color: '#f59e0b',
       metaLabel: '周/月活',
       metaValue: `${overview.activeUserWeekly || 0} / ${overview.activeUserMonthly || 0}`,
-      metaClass: 'text-gray-500',
+      metaClass: 'text-muted-foreground',
     },
     {
       title: '今日消息',
@@ -88,7 +88,7 @@ const cards = computed(() => {
           class="mr-3 flex size-12 shrink-0 items-center justify-center rounded"
           :style="{ backgroundColor: card.color }"
         >
-          <IconifyIcon :icon="card.icon" class="size-6 text-white" />
+          <IconifyIcon :icon="card.icon" class="size-6 text-primary-foreground" />
         </div>
         <div class="min-w-0 flex-1">
           <div class="mb-1 text-sm text-muted-foreground">{{ card.title }}</div>
@@ -96,12 +96,12 @@ const cards = computed(() => {
             {{ card.value }}
             <span
               v-if="card.suffix"
-              class="ml-1 text-xs font-normal text-gray-400"
+              class="ml-1 text-xs font-normal text-muted-foreground"
             >
               {{ card.suffix }}
             </span>
           </div>
-          <div class="mt-2 text-xs text-gray-400">
+          <div class="mt-2 text-xs text-muted-foreground">
             {{ card.metaLabel }}：
             <span :class="card.metaClass">{{ card.metaValue }}</span>
           </div>

@@ -94,7 +94,7 @@ onMounted(() => {
           <h3 class="m-2 text-lg font-semibold leading-none tracking-tight">
             召回测试
           </h3>
-          <div class="m-2 text-sm text-gray-500">
+          <div class="m-2 text-sm text-muted-foreground">
             根据给定的查询文本测试召回效果。
           </div>
         </div>
@@ -105,12 +105,12 @@ onMounted(() => {
               :rows="8"
               placeholder="请输入文本"
             />
-            <div class="absolute bottom-2 right-2 text-sm text-gray-400">
+            <div class="absolute bottom-2 right-2 text-sm text-muted-foreground">
               {{ queryParams.content?.length }} / 200
             </div>
           </div>
           <div class="m-2 flex items-center">
-            <span class="w-16 text-gray-500">topK:</span>
+            <span class="w-16 text-muted-foreground">topK:</span>
             <InputNumber
               v-model:value="queryParams.topK"
               :min="1"
@@ -119,7 +119,7 @@ onMounted(() => {
             />
           </div>
           <div class="m-2 flex items-center">
-            <span class="w-16 text-gray-500">相似度:</span>
+            <span class="w-16 text-muted-foreground">相似度:</span>
             <InputNumber
               v-model:value="queryParams.similarityThreshold"
               class="w-full"
@@ -155,10 +155,10 @@ onMounted(() => {
             <div
               v-for="(segment, index) in segments"
               :key="index"
-              class="mt-2 rounded border border-solid border-gray-200 px-2 py-2"
+              class="mt-2 rounded border border-solid border-border px-2 py-2"
             >
               <div
-                class="mb-2 flex items-center justify-between gap-8 text-sm text-gray-500"
+                class="mb-2 flex items-center justify-between gap-8 text-sm text-muted-foreground"
               >
                 <span>
                   分段({{ segment.id }}) · {{ segment.contentLength }} 字符数 ·
@@ -171,7 +171,7 @@ onMounted(() => {
                 </span>
               </div>
               <div
-                class="mb-2 overflow-hidden whitespace-pre-wrap rounded bg-gray-50 text-sm transition-all duration-100"
+                class="mb-2 overflow-hidden whitespace-pre-wrap rounded bg-muted text-sm transition-all duration-100"
                 :class="{
                   'line-clamp-2 max-h-40': !segment.expanded,
                   'max-h-[1500px]': segment.expanded,
@@ -180,7 +180,7 @@ onMounted(() => {
                 {{ segment.content }}
               </div>
               <div class="flex items-center justify-between gap-8">
-                <div class="flex items-center gap-1 text-sm text-gray-500">
+                <div class="flex items-center gap-1 text-sm text-muted-foreground">
                   <IconifyIcon icon="lucide:file-text" />
                   <span>{{ segment.documentName || '未知文档' }}</span>
                 </div>

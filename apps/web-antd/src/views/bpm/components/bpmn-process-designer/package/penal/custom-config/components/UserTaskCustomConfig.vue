@@ -557,7 +557,7 @@ onMounted(async () => {
     <div class="mt-2 text-sm">
       <!-- 头部标题行 -->
       <div
-        class="flex items-center justify-between border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-900"
+        class="flex items-center justify-between border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground"
       >
         <div class="w-28 text-left">操作按钮</div>
         <div class="w-40 pl-2 text-left">显示名称</div>
@@ -568,7 +568,7 @@ onMounted(async () => {
       <div
         v-for="(item, index) in buttonsSetting"
         :key="index"
-        class="flex items-center justify-between border border-t-0 border-slate-200 px-3 py-2 text-sm"
+        class="flex items-center justify-between border border-t-0 border-border px-3 py-2 text-sm"
       >
         <div class="w-28 truncate text-left">
           {{ OPERATION_BUTTON_NAME.get(item.id) }}
@@ -604,7 +604,7 @@ onMounted(async () => {
     <div v-if="formType === BpmModelFormType.NORMAL" class="mt-2 text-sm">
       <!-- 头部标题行 -->
       <div
-        class="flex items-center justify-between border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-900"
+        class="flex items-center justify-between border border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground"
       >
         <div class="w-28 text-left">字段名称</div>
         <div class="flex flex-1 justify-between">
@@ -633,7 +633,7 @@ onMounted(async () => {
       <div
         v-for="(item, index) in fieldsPermissionEl"
         :key="index"
-        class="flex items-center justify-between border border-t-0 border-slate-200 px-3 py-2 text-sm"
+        class="flex items-center justify-between border border-t-0 border-border px-3 py-2 text-sm"
       >
         <div class="w-28 truncate text-left" :title="item.title">
           {{ item.title }}

@@ -96,7 +96,7 @@ onMounted(() => {
     >
       <!-- 商品 -->
       <div
-        class="relative box-content flex flex-row flex-wrap overflow-hidden bg-white"
+        class="relative box-content flex flex-row flex-wrap overflow-hidden bg-background"
         :style="{
           borderTopLeftRadius: `${property.borderRadiusTop}px`,
           borderTopRightRadius: `${property.borderRadiusTop}px`,

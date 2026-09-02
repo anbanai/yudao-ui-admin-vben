@@ -641,7 +641,7 @@ onMounted(() => {
     <PreviewModal title="商城 H5 预览" class="w-[700px]">
       <div class="flex flex-wrap justify-around gap-8">
         <div
-          class="relative h-[667px] w-96 overflow-hidden rounded-lg border-4 border-solid bg-white p-0.5"
+          class="relative h-[667px] w-96 overflow-hidden rounded-lg border-4 border-solid bg-background p-0.5"
         >
           <iframe
             :key="previewUrl"
@@ -657,18 +657,18 @@ onMounted(() => {
           ></iframe>
           <div
             v-if="previewStatus !== 'loaded'"
-            class="absolute inset-0 flex flex-col gap-4 bg-white p-6"
+            class="absolute inset-0 flex flex-col gap-4 bg-background p-6"
             role="status"
             aria-live="polite"
           >
-            <div class="h-8 w-3/5 animate-pulse rounded bg-gray-200"></div>
-            <div class="h-32 animate-pulse rounded bg-gray-100"></div>
-            <div class="h-4 w-4/5 animate-pulse rounded bg-gray-200"></div>
-            <div class="h-4 w-3/5 animate-pulse rounded bg-gray-200"></div>
-            <div class="h-48 animate-pulse rounded bg-gray-100"></div>
+            <div class="h-8 w-3/5 animate-pulse rounded bg-muted"></div>
+            <div class="h-32 animate-pulse rounded bg-muted"></div>
+            <div class="h-4 w-4/5 animate-pulse rounded bg-muted"></div>
+            <div class="h-4 w-3/5 animate-pulse rounded bg-muted"></div>
+            <div class="h-48 animate-pulse rounded bg-muted"></div>
             <div
               v-if="previewStatus === 'failed'"
-              class="absolute inset-x-4 top-1/2 -translate-y-1/2 text-center text-sm text-gray-500"
+              class="absolute inset-x-4 top-1/2 -translate-y-1/2 text-center text-sm text-muted-foreground"
             >
               当前预览地址不可用，请检查配置后重试
             </div>

@@ -223,7 +223,7 @@ function handleCategorySelected(category?: { id: number; name: string }) {
     <div class="flex h-[500px] gap-2">
       <!-- 左侧分组列表 -->
       <div
-        class="flex h-full flex-col overflow-y-auto border-r border-gray-200 pr-2"
+        class="flex h-full flex-col overflow-y-auto border-r border-border pr-2"
         ref="groupScrollbar"
       >
         <Button
@@ -247,7 +247,7 @@ function handleCategorySelected(category?: { id: number; name: string }) {
         <div
           v-for="(group, groupIndex) in APP_LINK_GROUP_LIST"
           :key="groupIndex"
-          class="mb-4 border-b border-gray-100 pb-4 last:mb-0 last:border-b-0"
+          class="mb-4 border-b border-border pb-4 last:mb-0 last:border-b-0"
         >
           <!-- 分组标题 -->
           <div class="mb-2 font-bold" ref="groupTitleRefs">

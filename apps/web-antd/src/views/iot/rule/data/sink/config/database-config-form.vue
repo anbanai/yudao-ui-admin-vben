@@ -118,12 +118,12 @@ onMounted(() => {
   </Form.Item>
   <div
     v-if="showSqlTip"
-    class="mt-2 overflow-hidden rounded border border-gray-200 dark:border-gray-700"
+    class="mt-2 overflow-hidden rounded border border-border dark:border-border"
   >
     <div
-      class="flex items-center justify-between bg-gray-100 px-3 py-2 dark:bg-gray-800"
+      class="flex items-center justify-between bg-muted px-3 py-2 dark:bg-muted"
     >
-      <span class="text-xs text-gray-600 dark:text-gray-300">
+      <span class="text-xs text-muted-foreground dark:text-muted-foreground">
         目标数据库需包含以下结构的表，才能正常接收数据流转的消息
       </span>
       <Button size="small" @click="handleCopySql">
@@ -135,7 +135,7 @@ onMounted(() => {
       </Button>
     </div>
     <pre
-      class="m-0 overflow-x-auto bg-gray-50 p-3 font-mono text-[12px] leading-normal text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+      class="m-0 overflow-x-auto bg-muted p-3 font-mono text-[12px] leading-normal text-muted-foreground dark:bg-muted dark:text-muted-foreground"
     ><code>{{ TABLE_SQL }}</code></pre>
   </div>
 </template>

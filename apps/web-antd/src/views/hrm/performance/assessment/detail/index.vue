@@ -288,20 +288,20 @@ onMounted(getDetail);
               }}
             </Tag>
           </div>
-          <div class="mt-1 text-gray-500">
+          <div class="mt-1 text-muted-foreground">
             {{ detail.employeeName || '-' }} · {{ detail.jobNumber || '-' }}
           </div>
         </div>
       </div>
       <div class="flex shrink-0 items-center gap-8 text-center">
         <div>
-          <div class="text-sm text-gray-500">绩效得分</div>
+          <div class="text-sm text-muted-foreground">绩效得分</div>
           <div class="mt-1 text-2xl font-semibold">
             {{ detail.score ?? '-' }}
           </div>
         </div>
         <div>
-          <div class="text-sm text-gray-500">考核结果</div>
+          <div class="text-sm text-muted-foreground">考核结果</div>
           <div class="mt-1 text-lg font-semibold">
             {{ detail.resultLevel || '-' }}
             <span

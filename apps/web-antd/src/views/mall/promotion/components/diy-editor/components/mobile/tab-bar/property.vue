@@ -92,7 +92,7 @@ const handleThemeChange = () => {
       </FormItem>
 
       <div class="mb-2 text-base">图标设置</div>
-      <div class="mb-2 text-xs text-gray-500">
+      <div class="mb-2 text-xs text-muted-foreground">
         拖动左上角的小圆点可对其排序, 图标建议尺寸 44*44
       </div>
       <Draggable v-model="formData.items" :limit="5">

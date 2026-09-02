@@ -118,10 +118,10 @@ function handleAppLinkChange(appLink: AppLink) {
       <div
         v-for="(item, index) in formData.list"
         :key="index"
-        class="mb-3 border border-solid border-gray-200 p-3"
+        class="mb-3 border border-solid border-border p-3"
       >
         <div class="mb-2 flex items-center gap-2">
-          <span class="shrink-0 text-xs text-gray-500">热区 {{ index + 1 }}</span>
+          <span class="shrink-0 text-xs text-muted-foreground">热区 {{ index + 1 }}</span>
           <Input
             v-model:value="item.name"
             size="small"
@@ -134,7 +134,7 @@ function handleAppLinkChange(appLink: AppLink) {
           </Tooltip>
         </div>
 
-        <div class="mb-2 break-all text-xs text-gray-500">
+        <div class="mb-2 break-all text-xs text-muted-foreground">
           {{ item.url || '尚未选择链接' }}
         </div>
 

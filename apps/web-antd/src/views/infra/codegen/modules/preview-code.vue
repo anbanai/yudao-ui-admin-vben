@@ -212,7 +212,7 @@ const [Modal, modalApi] = useVbenModal({
     <div class="flex h-full" v-loading="loading">
       <!-- 文件树 -->
       <div
-        class="h-full w-1/3 overflow-auto border-r border-gray-200 pr-4 dark:border-gray-700"
+        class="h-full w-1/3 overflow-auto border-r border-border pr-4 dark:border-border"
       >
         <DirectoryTree
           v-if="fileTree.length > 0"
@@ -236,7 +236,7 @@ const [Modal, modalApi] = useVbenModal({
             :tab="key.split('/').pop()"
           >
             <div
-              class="h-full rounded-md bg-gray-50 !p-0 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+              class="h-full rounded-md bg-muted !p-0 text-muted-foreground dark:bg-muted dark:text-muted-foreground"
             >
               <CodeEditor
                 class="max-h-200"

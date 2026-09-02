@@ -58,7 +58,7 @@ watch(
 <template>
   <div class="px-2 py-1">
     <div class="flex items-start gap-2">
-      <div class="w-20 pt-1 text-sm text-gray-700">元素文档：</div>
+      <div class="w-20 pt-1 text-sm text-muted-foreground">元素文档：</div>
       <div class="flex-1">
         <Textarea
           v-model:value="documentation"

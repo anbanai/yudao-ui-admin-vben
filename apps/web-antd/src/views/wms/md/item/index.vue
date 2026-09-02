@@ -204,13 +204,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
           <template #itemInfo="{ row }">
             <div class="flex flex-col gap-1 py-1 leading-5">
               <div class="text-sm">{{ row.itemName || '-' }}</div>
-              <div v-if="row.itemCode" class="text-xs text-gray-500">
+              <div v-if="row.itemCode" class="text-xs text-muted-foreground">
                 {{ row.itemCode }}
               </div>
-              <div v-if="row.brandName" class="text-xs text-gray-500">
+              <div v-if="row.brandName" class="text-xs text-muted-foreground">
                 品牌：{{ row.brandName }}
               </div>
-              <div v-if="row.categoryName" class="text-xs text-gray-500">
+              <div v-if="row.categoryName" class="text-xs text-muted-foreground">
                 分类：{{ row.categoryName }}
               </div>
             </div>
@@ -218,10 +218,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
           <template #skuInfo="{ row }">
             <div class="flex flex-col gap-1 py-1 leading-5">
               <div class="text-sm">{{ row.name || '-' }}</div>
-              <div v-if="row.code" class="text-xs text-gray-500">
+              <div v-if="row.code" class="text-xs text-muted-foreground">
                 编号：{{ row.code }}
               </div>
-              <div v-if="row.barCode" class="text-xs text-gray-500">
+              <div v-if="row.barCode" class="text-xs text-muted-foreground">
                 条码：{{ row.barCode }}
               </div>
             </div>

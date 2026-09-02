@@ -233,7 +233,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         <Card :body-style="{ padding: '12px 16px' }">
           <div class="flex items-center">
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center text-xl text-white mr-3 bg-gradient-to-br from-indigo-500 to-purple-600"
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-xl text-primary-foreground mr-3 bg-gradient-to-br from-indigo-500 to-purple-600"
             >
               <IconifyIcon icon="ant-design:file-text-outlined" />
             </div>
@@ -250,7 +250,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         <Card :body-style="{ padding: '12px 16px' }">
           <div class="flex items-center">
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center text-xl text-white mr-3 bg-gradient-to-br from-pink-400 to-red-500"
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-xl text-primary-foreground mr-3 bg-gradient-to-br from-pink-400 to-red-500"
             >
               <IconifyIcon icon="ant-design:check-outlined" />
             </div>
@@ -267,7 +267,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         <Card :body-style="{ padding: '12px 16px' }">
           <div class="flex items-center">
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center text-xl text-white mr-3 bg-gradient-to-br from-cyan-400 to-blue-500"
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-xl text-primary-foreground mr-3 bg-gradient-to-br from-cyan-400 to-blue-500"
             >
               <IconifyIcon icon="ant-design:close-outlined" />
             </div>
@@ -284,7 +284,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         <Card :body-style="{ padding: '12px 16px' }">
           <div class="flex items-center">
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center text-xl text-white mr-3 bg-gradient-to-br from-green-400 to-teal-400"
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-xl text-primary-foreground mr-3 bg-gradient-to-br from-green-400 to-teal-400"
             >
               <IconifyIcon icon="lucide:timer" />
             </div>

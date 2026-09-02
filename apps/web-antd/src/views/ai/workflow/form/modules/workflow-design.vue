@@ -220,9 +220,9 @@ defineExpose({ validate });
 
     <Drawer title="工作流测试">
       <fieldset
-        class="min-inline-size-auto m-0 rounded-lg border border-gray-200 px-3 py-4"
+        class="min-inline-size-auto m-0 rounded-lg border border-border px-3 py-4"
       >
-        <legend class="ml-2 px-2.5 text-base font-semibold text-gray-600">
+        <legend class="ml-2 px-2.5 text-base font-semibold text-muted-foreground">
           <h3>运行参数配置</h3>
         </legend>
         <div class="p-2">
@@ -259,9 +259,9 @@ defineExpose({ validate });
       </fieldset>
 
       <fieldset
-        class="m-0 mt-10 rounded-lg border border-gray-200 bg-card px-3 py-4"
+        class="m-0 mt-10 rounded-lg border border-border bg-card px-3 py-4"
       >
-        <legend class="ml-2 px-2.5 text-base font-semibold text-gray-600">
+        <legend class="ml-2 px-2.5 text-base font-semibold text-muted-foreground">
           <h3>运行结果</h3>
         </legend>
         <div class="p-2">
@@ -269,17 +269,17 @@ defineExpose({ validate });
           <div v-else-if="error" class="text-danger">{{ error }}</div>
           <pre
             v-else-if="testResult"
-            class="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-white p-3 font-mono text-sm leading-5"
+            class="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-background p-3 font-mono text-sm leading-5"
           >
             {{ JSON.stringify(testResult, null, 2) }}
           </pre>
-          <div v-else class="text-gray-400">点击运行查看结果</div>
+          <div v-else class="text-muted-foreground">点击运行查看结果</div>
         </div>
       </fieldset>
 
       <Button
         size="large"
-        class="mt-2 w-full bg-green-500 text-white"
+        class="mt-2 w-full bg-green-500 text-primary-foreground"
         @click="goRun"
       >
         运行流程

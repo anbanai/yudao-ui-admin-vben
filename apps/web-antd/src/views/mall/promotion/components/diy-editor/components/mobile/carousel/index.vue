@@ -22,13 +22,13 @@ const handleIndexChange = (index: number) => {
 <template>
   <!-- 无图片 -->
   <div
-    class="flex items-center justify-center bg-gray-300"
+    class="flex items-center justify-center bg-muted"
     :style="{
       height: property.items.length === 0 ? '250px' : `${property.height}px`,
     }"
     v-if="property.items.length === 0"
   >
-    <IconifyIcon icon="tdesign:image" class="text-[120px] text-gray-800" />
+    <IconifyIcon icon="tdesign:image" class="text-[120px] text-muted-foreground" />
   </div>
   <div v-else class="relative">
     <Carousel
@@ -48,7 +48,7 @@ const handleIndexChange = (index: number) => {
     </Carousel>
     <div
       v-if="property.indicator === 'number'"
-      class="absolute bottom-[10px] right-[10px] rounded-xl bg-black px-[8px] py-[2px] text-[10px] text-white opacity-40"
+      class="absolute bottom-[10px] right-[10px] rounded-xl bg-foreground px-[8px] py-[2px] text-[10px] text-primary-foreground opacity-40"
     >
       {{ currentIndex }} / {{ property.items.length }}
     </div>
