@@ -61,7 +61,7 @@ describe('productCategory', () => {
     getCategoryListMock
       .mockRejectedValueOnce(new Error('network error'))
       .mockResolvedValueOnce([{ id: 1, name: '绿茶', parentId: 0, status: 0 }]);
-    const property = reactive({
+    const property = reactive<ProductCategoryProperty>({
       badge: { imgUrl: '', show: false },
       borderRadiusBottom: 8,
       borderRadiusTop: 8,
@@ -77,7 +77,7 @@ describe('productCategory', () => {
       space: 8,
       sticky: false,
       style: {} as ProductCategoryProperty['style'],
-    } satisfies ProductCategoryProperty);
+    });
     const { host } = mountProductCategory(property);
     await flushAsyncUpdates();
 
@@ -103,7 +103,7 @@ describe('productCategory', () => {
             resolveCategories = resolve;
           }),
       );
-    const property = reactive({
+    const property = reactive<ProductCategoryProperty>({
       badge: { imgUrl: '', show: false },
       borderRadiusBottom: 8,
       borderRadiusTop: 8,
@@ -119,7 +119,7 @@ describe('productCategory', () => {
       space: 8,
       sticky: false,
       style: {} as ProductCategoryProperty['style'],
-    } satisfies ProductCategoryProperty);
+    });
     const { host } = mountProductCategory(property);
     await flushAsyncUpdates();
     property.pageSize = 11;

@@ -9,15 +9,14 @@ import type { DbClient } from './db';
  */
 
 /** 增量拉取游标：上次拉到的位置 */
-interface PullCursor {
-  lastUpdateTime?: number;
-  lastId?: number;
-}
+type PullCursor =
+  | { lastId: number; lastUpdateTime: number }
+  | { lastId?: null | undefined; lastUpdateTime?: null | undefined };
 
 /** 可作为游标的拉取记录：服务端按 update_time + id 返回，客户端取最后一条推进游标 */
 interface PullRecord {
   id: number;
-  updateTime?: number;
+  updateTime?: number | null;
 }
 
 /** 单次拉取条数（与后端 limit 上限对齐） */
@@ -53,9 +52,10 @@ export async function runIncrementalPull<T extends PullRecord>(
   apply: (records: T[]) => boolean | Promise<boolean>,
 ): Promise<void> {
   const storedCursor = await getPullCursor(db, cursorKey);
-  const highWater = { ...storedCursor };
-  let cursor =
-    storedCursor.lastUpdateTime === null
+  const highWater: PullCursor = storedCursor;
+  let cursor: PullCursor =
+    (storedCursor.lastUpdateTime === null ||
+      storedCursor.lastUpdateTime === undefined)
       ? {}
       : {
           lastUpdateTime: Math.max(
@@ -66,8 +66,8 @@ export async function runIncrementalPull<T extends PullRecord>(
         };
   for (let page = 0; page < PULL_MAX_PAGES; page++) {
     const list = await fetchPage({
-      lastUpdateTime: cursor.lastUpdateTime,
-      lastId: cursor.lastId,
+      lastUpdateTime: cursor.lastUpdateTime ?? undefined,
+      lastId: cursor.lastId ?? undefined,
       limit: PULL_PAGE_SIZE,
     });
     if (list.length > 0) {
@@ -77,12 +77,13 @@ export async function runIncrementalPull<T extends PullRecord>(
       }
       // 推进游标到本页最后一条并持久化：下次从这里接着拉
       const last = list[list.length - 1]!;
-      if (last.updateTime === null) {
+      if (last.updateTime === null || last.updateTime === undefined) {
         return;
       }
       cursor = { lastUpdateTime: last.updateTime, lastId: last.id };
       if (
         highWater.lastUpdateTime === null ||
+        highWater.lastUpdateTime === undefined ||
         cursor.lastUpdateTime > highWater.lastUpdateTime ||
         (cursor.lastUpdateTime === highWater.lastUpdateTime &&
           cursor.lastId > (highWater.lastId ?? 0))
@@ -146,7 +147,7 @@ export async function runMinIdPull<T extends { id?: number }>(options: {
       return;
     }
     // 无有效 id，或游标没前进（后端契约是 id > minId，理论不会出现）：停，防御死翻
-    if (nextMinId === null || nextMinId <= minId) {
+    if (nextMinId === null || nextMinId === undefined || nextMinId <= minId) {
       return;
     }
     minId = nextMinId;

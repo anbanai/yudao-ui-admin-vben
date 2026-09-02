@@ -190,7 +190,7 @@ defineExpose({ open });
           <div>
             <span class="text-muted-foreground">性别：</span>
             <DictTag
-              v-if="detail?.sex !== null"
+              v-if="detail && detail.sex != null"
               :type="DICT_TYPE.SYSTEM_USER_SEX"
               :value="detail.sex"
             />
@@ -211,7 +211,7 @@ defineExpose({ open });
           <div>
             <span class="text-muted-foreground">员工状态：</span>
             <DictTag
-              v-if="detail?.employeeStatus !== null"
+              v-if="detail && detail.employeeStatus != null"
               :type="DICT_TYPE.HRM_EMPLOYEE_STATUS"
               :value="detail.employeeStatus"
             />

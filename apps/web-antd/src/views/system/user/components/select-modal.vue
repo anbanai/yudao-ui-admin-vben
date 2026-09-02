@@ -39,6 +39,10 @@ interface Props {
   value?: number[];
 }
 
+interface UserSelectModalData {
+  userIds?: number[];
+}
+
 defineOptions({ name: 'UserSelectModal' });
 
 withDefaults(defineProps<Props>(), {
@@ -67,7 +71,7 @@ const deptSearchKeys = ref('');
 const userList = ref<SystemUserApi.User[]>([]); // 存储所有已知用户
 const selectedUserIds = ref<string[]>([]);
 
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<UserSelectModalData>({
   onCancel: handleCancel,
   onClosed: handleClosed,
   async onOpenChange(isOpen: boolean) {

@@ -17,11 +17,13 @@ const emit = defineEmits<{
   updateCondition: [condition: object];
 }>();
 
-const conditionData = ref<{
+interface ConditionData {
   conditionExpression?: string;
   conditionGroups?: ConditionGroup;
   conditionType: ConditionType;
-}>({
+}
+
+const conditionData = ref<ConditionData>({
   conditionType: ConditionType.RULE,
   conditionGroups: cloneDeep(DEFAULT_CONDITION_GROUP_VALUE),
 });
@@ -29,7 +31,7 @@ const conditionData = ref<{
 // 条件组件的引用
 const conditionRef = ref();
 
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<ConditionData>({
   title: '条件配置',
   destroyOnClose: true,
   draggable: true,

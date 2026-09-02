@@ -1,25 +1,23 @@
 /* eslint-disable vue/one-component-per-file */
 import type { VbenFormSchema } from '#/adapter/form';
 
-import { PromotionProductScopeEnum } from '@vben/constants';
-import { globalShareState } from '@vben/common-ui';
-import { createPinia, setActivePinia } from 'pinia';
 import { createApp, defineComponent, h, nextTick } from 'vue';
+
+import { globalShareState } from '@vben/common-ui';
+import { PromotionProductScopeEnum } from '@vben/constants';
+
+import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  COMPONENT_BIND_EVENT_MAP,
-  COMPONENT_MAP,
-} from '../../../../../packages/@core/ui-kit/form-ui/src/config';
 import { initSetupVbenForm, useVbenForm } from '#/adapter/form';
 import { useFormSchema as ai } from '#/views/ai/model/model/data';
 import {
-  resetContactCustomerValues,
   useFormSchema as contact,
+  resetContactCustomerValues,
 } from '#/views/crm/contact/data';
 import {
-  resetReceivableCustomerValues,
   useFormSchema as receivable,
+  resetReceivableCustomerValues,
 } from '#/views/crm/receivable/data';
 import { useFormSchema as post } from '#/views/hrm/recruit/post/data';
 import { useValueFormSchema as property } from '#/views/mall/product/property/data';
@@ -30,6 +28,11 @@ import {
   useDataFormSchema as dictData,
   useTypeFormSchema as dictType,
 } from '#/views/system/dict/data';
+
+import {
+  COMPONENT_BIND_EVENT_MAP,
+  COMPONENT_MAP,
+} from '../../../../../packages/@core/ui-kit/form-ui/src/config';
 
 vi.mock('#/api/ai/model/apiKey', () => ({
   getApiKeySimpleList: vi.fn().mockResolvedValue([]),
@@ -195,7 +198,7 @@ describe('task 2 form schema upgrade contracts', () => {
     await formApi.setValues({ id: 1 });
     await nextTick();
     await nextTick();
-    const control = host.querySelector(
+    const control = host.querySelector<HTMLElement>(
       'output[data-placeholder="请输入模型类型"]',
     );
     expect(control?.dataset.placeholder).toBe('请输入模型类型');

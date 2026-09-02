@@ -17,9 +17,13 @@ import { useFormSchema, useGridColumns } from './send-form-data';
 async function handleSendCoupon(row: MallCouponTemplateApi.CouponTemplate) {
   modalApi.lock();
   try {
+    const data = modalApi.getData();
+    if (!data) {
+      return;
+    }
     await sendCoupon({
       templateId: row.id,
-      userIds: modalApi.getData().userIds,
+      userIds: data.userIds,
     });
     message.success('发送成功');
     await modalApi.close();
@@ -59,7 +63,7 @@ const [Grid] = useVbenVxeGrid({
   } as VxeGridProps<MallCouponTemplateApi.CouponTemplate>,
 });
 
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<{ userIds: number[] }>({
   showCancelButton: false,
   showConfirmButton: false,
 });
