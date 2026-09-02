@@ -18,10 +18,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -82,7 +79,7 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['padded'],
-        show: (values) => values.padded === true,
+        resolve: ({ values }) => ({ show: values.padded === true }),
       },
       rules: 'required',
     },
@@ -100,7 +97,7 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['padded'],
-        show: (values) => values.padded === true,
+        resolve: ({ values }) => ({ show: values.padded === true }),
       },
       rules: 'required',
     },
@@ -231,18 +228,12 @@ export function usePartFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'ruleId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'sort',
@@ -295,7 +286,9 @@ export function usePartFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesAutoCodePartTypeEnum.DATE,
+        resolve: ({ values }) => ({
+          show: values.type === MesAutoCodePartTypeEnum.DATE,
+        }),
       },
       rules: 'selectRequired',
     },
@@ -308,7 +301,9 @@ export function usePartFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesAutoCodePartTypeEnum.FIX,
+        resolve: ({ values }) => ({
+          show: values.type === MesAutoCodePartTypeEnum.FIX,
+        }),
       },
       rules: 'required',
     },
@@ -323,7 +318,9 @@ export function usePartFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesAutoCodePartTypeEnum.SERIAL,
+        resolve: ({ values }) => ({
+          show: values.type === MesAutoCodePartTypeEnum.SERIAL,
+        }),
       },
       rules: 'required',
     },
@@ -338,7 +335,9 @@ export function usePartFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesAutoCodePartTypeEnum.SERIAL,
+        resolve: ({ values }) => ({
+          show: values.type === MesAutoCodePartTypeEnum.SERIAL,
+        }),
       },
       rules: 'required',
     },
@@ -352,7 +351,9 @@ export function usePartFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesAutoCodePartTypeEnum.SERIAL,
+        resolve: ({ values }) => ({
+          show: values.type === MesAutoCodePartTypeEnum.SERIAL,
+        }),
       },
       rules: z.boolean().default(false),
     },
@@ -369,10 +370,12 @@ export function usePartFormSchema(): VbenFormSchema[] {
         placeholder: '请选择循环方式',
       },
       dependencies: {
-        triggerFields: ['type', 'cycleFlag'],
-        show: (values) =>
-          values.type === MesAutoCodePartTypeEnum.SERIAL &&
-          values.cycleFlag === true,
+        triggerFields: ['cycleFlag', 'type'],
+        resolve: ({ values }) => ({
+          show:
+            values.type === MesAutoCodePartTypeEnum.SERIAL &&
+            values.cycleFlag === true,
+        }),
       },
       rules: 'selectRequired',
     },

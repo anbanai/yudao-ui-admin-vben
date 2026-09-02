@@ -48,18 +48,12 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -138,7 +132,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesWmStockTakingTypeEnum.DYNAMIC,
+        resolve: ({ values }) => ({
+          show: values.type === MesWmStockTakingTypeEnum.DYNAMIC,
+        }),
       },
     },
     {
@@ -152,7 +148,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesWmStockTakingTypeEnum.DYNAMIC,
+        resolve: ({ values }) => ({
+          show: values.type === MesWmStockTakingTypeEnum.DYNAMIC,
+        }),
       },
     },
     {
@@ -506,7 +504,7 @@ export function useResultFormSchema(
       // 选中盘点清单后，物料由清单带出且禁止改动
       dependencies: {
         triggerFields: ['lineId'],
-        disabled: (values) => values.lineId !== null,
+        resolve: ({ values }) => ({ disabled: values.lineId !== null }),
       },
     },
     {
@@ -519,7 +517,7 @@ export function useResultFormSchema(
       // 选中盘点清单后，批次由清单带出且禁止改动
       dependencies: {
         triggerFields: ['lineId'],
-        disabled: (values) => values.lineId !== null,
+        resolve: ({ values }) => ({ disabled: values.lineId !== null }),
       },
     },
     {
@@ -550,7 +548,7 @@ export function useResultFormSchema(
       // 选中盘点清单后，仓库由清单带出且禁止改动
       dependencies: {
         triggerFields: ['lineId'],
-        disabled: (values) => values.lineId !== null,
+        resolve: ({ values }) => ({ disabled: values.lineId !== null }),
       },
     },
     {
@@ -559,14 +557,15 @@ export function useResultFormSchema(
       component: markRaw(WmWarehouseLocationSelect),
       rules: 'selectRequired',
       dependencies: {
-        triggerFields: ['warehouseId', 'lineId'],
-        show: (values) => !!values.warehouseId,
-        // 选中盘点清单后，库区由清单带出且禁止改动
-        disabled: (values) => values.lineId !== null,
-        componentProps: (values) => ({
-          onChange: () => formApi?.setFieldValue('areaId', undefined),
-          placeholder: '请选择库区',
-          warehouseId: values.warehouseId,
+        triggerFields: ['lineId', 'warehouseId'],
+        resolve: ({ values }) => ({
+          show: !!values.warehouseId,
+          componentProps: {
+            onChange: () => formApi?.setFieldValue('areaId', undefined),
+            placeholder: '请选择库区',
+            warehouseId: values.warehouseId,
+          },
+          disabled: values.lineId !== null,
         }),
       },
     },
@@ -576,13 +575,14 @@ export function useResultFormSchema(
       component: markRaw(WmWarehouseAreaSelect),
       rules: 'selectRequired',
       dependencies: {
-        triggerFields: ['locationId', 'lineId'],
-        show: (values) => !!values.locationId,
-        // 选中盘点清单后，库位由清单带出且禁止改动
-        disabled: (values) => values.lineId !== null,
-        componentProps: (values) => ({
-          locationId: values.locationId,
-          placeholder: '请选择库位',
+        triggerFields: ['lineId', 'locationId'],
+        resolve: ({ values }) => ({
+          show: !!values.locationId,
+          componentProps: {
+            locationId: values.locationId,
+            placeholder: '请选择库位',
+          },
+          disabled: values.lineId !== null,
         }),
       },
     },

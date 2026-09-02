@@ -68,12 +68,12 @@ const [Form, formApi] = useVbenForm({
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'itemId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'title',

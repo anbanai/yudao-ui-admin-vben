@@ -34,7 +34,7 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -185,12 +185,12 @@ export function useRouteProcessFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'routeId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'sort',
@@ -389,12 +389,12 @@ export function useRouteProductFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'routeId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     // 产品物料：使用业务自定义选择器，change 回填编码/名称/规格/单位
     {
@@ -463,22 +463,22 @@ export function useRouteProductBomFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'routeId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'processId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'productId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     // BOM 物料：依赖产品物料，使用业务自定义选择器
     {

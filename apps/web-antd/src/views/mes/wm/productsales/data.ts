@@ -69,18 +69,12 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -215,10 +209,7 @@ export function useFormSchema(
         disabled: formType !== 'shipping',
         placeholder: '请输入承运商',
       },
-      dependencies: {
-        triggerFields: [''],
-        if: () => showShippingInfo(formType),
-      },
+      hide: !showShippingInfo(formType),
     },
     {
       fieldName: 'shippingNumber',
@@ -228,10 +219,7 @@ export function useFormSchema(
         disabled: formType !== 'shipping',
         placeholder: '请输入运输单号',
       },
-      dependencies: {
-        triggerFields: [''],
-        if: () => showShippingInfo(formType),
-      },
+      hide: !showShippingInfo(formType),
     },
   ];
 }
@@ -449,10 +437,7 @@ export function useLineFormSchema(
     {
       fieldName: 'noticeId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'noticeLineId',
@@ -471,9 +456,11 @@ export function useLineFormSchema(
       },
       dependencies: {
         triggerFields: ['noticeId'],
-        if: () => hasNotice,
-        componentProps: (values) => ({
-          noticeId: values.noticeId,
+        resolve: ({ values }) => ({
+          if: hasNotice,
+          componentProps: {
+            noticeId: values.noticeId,
+          },
         }),
       },
     },
@@ -487,9 +474,11 @@ export function useLineFormSchema(
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['noticeLineId'],
-        componentProps: (values) => ({
-          disabled: !!values.noticeLineId,
-          placeholder: '请选择产品',
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: !!values.noticeLineId,
+            placeholder: '请选择产品',
+          },
         }),
       },
     },
@@ -581,18 +570,12 @@ export function useDetailFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
     {
       fieldName: 'quantityMax',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'batchId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'itemId',
@@ -622,10 +605,12 @@ export function useDetailFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       rules: 'selectRequired',
       dependencies: {
-        triggerFields: ['itemId', 'batchId'],
-        componentProps: (values) => ({
-          batchId: values.batchId,
-          itemId: values.itemId,
+        triggerFields: ['batchId', 'itemId'],
+        resolve: ({ values }) => ({
+          componentProps: {
+            batchId: values.batchId,
+            itemId: values.itemId,
+          },
         }),
       },
     },
@@ -642,12 +627,14 @@ export function useDetailFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['quantityMax'],
-        componentProps: (values) => ({
-          class: '!w-full',
-          max: values.quantityMax,
-          min: 0,
-          placeholder: '请输入数量',
-          precision: 2,
+        resolve: ({ values }) => ({
+          componentProps: {
+            class: '!w-full',
+            max: values.quantityMax,
+            min: 0,
+            placeholder: '请输入数量',
+            precision: 2,
+          },
         }),
       },
     },
@@ -668,9 +655,11 @@ export function useDetailFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['warehouseId'],
-        componentProps: (values) => ({
-          disabled: true,
-          warehouseId: values.warehouseId,
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: true,
+            warehouseId: values.warehouseId,
+          },
         }),
       },
     },
@@ -683,9 +672,11 @@ export function useDetailFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['locationId'],
-        componentProps: (values) => ({
-          disabled: true,
-          locationId: values.locationId,
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: true,
+            locationId: values.locationId,
+          },
         }),
       },
     },

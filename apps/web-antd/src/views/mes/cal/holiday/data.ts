@@ -11,10 +11,7 @@ export function useHolidayFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'day',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'dayDisplay',

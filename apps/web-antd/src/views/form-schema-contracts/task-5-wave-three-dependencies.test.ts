@@ -165,10 +165,21 @@ describe('task 5 wave-three dependency migration', () => {
 
   it('uses atomic resolvers with exact triggers across erp/fms/hrm', () => {
     const root = path.resolve(import.meta.dirname, '..');
-    const out = ['erp', 'fms', 'hrm', 'iot', 'wms'].flatMap((d) =>
+    const parityOut = ['erp', 'fms', 'hrm'].flatMap((d) =>
       files(path.join(root, d)).flatMap((file) => problems(file)),
     );
-    expect(out).toEqual([]);
+    const scannerOut = ['iot', 'wms'].flatMap((d) =>
+      files(path.join(root, d)).flatMap((file) =>
+        scanSource(
+          fs.readFileSync(file, 'utf8'),
+          path.relative(process.cwd(), file),
+        )
+          .filter((violation) => ['VF001', 'VF003'].includes(violation.ruleId))
+          .map((violation) => `${violation.ruleId}:${violation.line}`),
+      ),
+    );
+    expect(parityOut).toEqual([]);
+    expect(scannerOut).toEqual([]);
   });
 
   async function mountField(

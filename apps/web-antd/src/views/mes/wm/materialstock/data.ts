@@ -50,16 +50,12 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: markRaw(WmWarehouseLocationSelect),
       dependencies: {
         triggerFields: ['warehouseId'],
-        componentProps: (values) => ({
-          warehouseId: values.warehouseId,
-          placeholder: '请选择库区',
+        resolve: ({ values }) => ({
+          componentProps: {
+            warehouseId: values.warehouseId,
+            placeholder: '请选择库区',
+          },
         }),
-        // 仓库切换时清空库区，避免旧库区条件残留
-        trigger: (values, formApi) => {
-          if (values.locationId !== undefined) {
-            formApi.setFieldValue('locationId', undefined);
-          }
-        },
       },
     },
     {
@@ -200,16 +196,12 @@ export function useSelectGridFormSchema(): VbenFormSchema[] {
       component: markRaw(WmWarehouseLocationSelect),
       dependencies: {
         triggerFields: ['warehouseId'],
-        componentProps: (values) => ({
-          warehouseId: values.warehouseId,
-          placeholder: '请选择库区',
+        resolve: ({ values }) => ({
+          componentProps: {
+            warehouseId: values.warehouseId,
+            placeholder: '请选择库区',
+          },
         }),
-        // 仓库切换时清空库区
-        trigger: (values, formApi) => {
-          if (values.locationId !== undefined) {
-            formApi.setFieldValue('locationId', undefined);
-          }
-        },
       },
     },
     {
@@ -217,17 +209,13 @@ export function useSelectGridFormSchema(): VbenFormSchema[] {
       label: '库位',
       component: markRaw(WmWarehouseAreaSelect),
       dependencies: {
-        triggerFields: ['warehouseId', 'locationId'],
-        componentProps: (values) => ({
-          locationId: values.locationId,
-          placeholder: '请选择库位',
+        triggerFields: ['locationId'],
+        resolve: ({ values }) => ({
+          componentProps: {
+            locationId: values.locationId,
+            placeholder: '请选择库位',
+          },
         }),
-        // 仓库或库区切换时清空库位
-        trigger: (values, formApi) => {
-          if (values.areaId !== undefined) {
-            formApi.setFieldValue('areaId', undefined);
-          }
-        },
       },
     },
   ];

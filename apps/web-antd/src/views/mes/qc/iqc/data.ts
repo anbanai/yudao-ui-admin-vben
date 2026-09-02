@@ -28,34 +28,22 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'sourceDocId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'sourceLineId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -101,7 +89,7 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['sourceDocType'],
-        show: (values) => !!values.sourceDocType,
+        resolve: ({ values }) => ({ show: !!values.sourceDocType }),
       },
     },
     {
@@ -113,8 +101,10 @@ export function useFormSchema(
         placeholder: '来源单据编号',
       },
       dependencies: {
-        triggerFields: ['sourceDocType', 'sourceDocId'],
-        show: (values) => !!values.sourceDocType && !!values.sourceDocId,
+        triggerFields: ['sourceDocId', 'sourceDocType'],
+        resolve: ({ values }) => ({
+          show: !!values.sourceDocType && !!values.sourceDocId,
+        }),
       },
     },
     {
@@ -127,9 +117,11 @@ export function useFormSchema(
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['id', 'sourceDocId'],
-        componentProps: (values) => ({
-          disabled: !!values.id || !!values.sourceDocId,
-          placeholder: '请选择产品物料',
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: !!values.id || !!values.sourceDocId,
+            placeholder: '请选择产品物料',
+          },
         }),
       },
     },
@@ -143,9 +135,11 @@ export function useFormSchema(
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['sourceDocId'],
-        componentProps: (values) => ({
-          disabled: !!values.sourceDocId,
-          placeholder: '请选择供应商',
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: !!values.sourceDocId,
+            placeholder: '请选择供应商',
+          },
         }),
       },
     },
@@ -170,12 +164,14 @@ export function useFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['sourceDocId'],
-        componentProps: (values) => ({
-          class: '!w-full',
-          disabled: !!values.sourceDocId,
-          min: 0,
-          precision: 2,
-          placeholder: '请输入本次接收数量',
+        resolve: ({ values }) => ({
+          componentProps: {
+            class: '!w-full',
+            disabled: !!values.sourceDocId,
+            min: 0,
+            precision: 2,
+            placeholder: '请输入本次接收数量',
+          },
         }),
       },
     },

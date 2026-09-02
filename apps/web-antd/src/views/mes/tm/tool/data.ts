@@ -32,19 +32,13 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       // 选中工具类型是否「编码管理」，用于锁定库存数量为 1（隐藏字段）
       fieldName: 'codeFlag',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -55,7 +49,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({ disabled: !!values.id }),
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
+        }),
       },
       rules: 'required',
       suffix:
@@ -139,8 +135,10 @@ export function useFormSchema(
       // 编码管理类型库存数量锁定为 1，禁止修改
       dependencies: {
         triggerFields: ['codeFlag'],
-        componentProps: (values) => ({
-          disabled: values.codeFlag === true,
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: values.codeFlag === true,
+          },
         }),
       },
     },
@@ -187,7 +185,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['maintenType'],
-        show: (values) => values.maintenType === MesMaintenTypeEnum.REGULAR,
+        resolve: ({ values }) => ({
+          show: values.maintenType === MesMaintenTypeEnum.REGULAR,
+        }),
       },
     },
     {
@@ -201,7 +201,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['maintenType'],
-        show: (values) => values.maintenType === MesMaintenTypeEnum.USAGE,
+        resolve: ({ values }) => ({
+          show: values.maintenType === MesMaintenTypeEnum.USAGE,
+        }),
       },
     },
     {

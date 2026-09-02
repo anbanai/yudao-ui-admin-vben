@@ -39,18 +39,12 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -358,11 +352,13 @@ export function useLineFormSchema(
       },
       dependencies: {
         triggerFields: ['itemId'],
-        componentProps: (values) => ({
-          clientId,
-          itemId: values.itemId,
-          placeholder: '请选择批次',
-          salesOrderCode,
+        resolve: ({ values }) => ({
+          componentProps: {
+            clientId,
+            itemId: values.itemId,
+            placeholder: '请选择批次',
+            salesOrderCode,
+          },
         }),
       },
     },
@@ -465,13 +461,15 @@ export function useDetailFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['warehouseId'],
-        componentProps: (values) => ({
-          // 切换库区后清空库位
-          onChange: async () => {
-            await formApi?.setFieldValue('areaId', undefined);
+        resolve: async ({ values }) => ({
+          componentProps: {
+            // 切换库区后清空库位
+            onChange: async () => {
+              await formApi?.setFieldValue('areaId', undefined);
+            },
+            placeholder: '请选择库区',
+            warehouseId: values.warehouseId,
           },
-          placeholder: '请选择库区',
-          warehouseId: values.warehouseId,
         }),
       },
     },
@@ -485,9 +483,11 @@ export function useDetailFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['locationId'],
-        componentProps: (values) => ({
-          locationId: values.locationId,
-          placeholder: '请选择库位',
+        resolve: ({ values }) => ({
+          componentProps: {
+            locationId: values.locationId,
+            placeholder: '请选择库位',
+          },
         }),
       },
     },

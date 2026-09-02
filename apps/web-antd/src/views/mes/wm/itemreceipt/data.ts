@@ -47,18 +47,12 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -302,10 +296,7 @@ export function useLineFormSchema(
     {
       fieldName: 'noticeId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'arrivalNoticeLineId',
@@ -324,9 +315,11 @@ export function useLineFormSchema(
       },
       dependencies: {
         triggerFields: ['noticeId'],
-        if: () => hasNotice,
-        componentProps: (values) => ({
-          noticeId: values.noticeId,
+        resolve: ({ values }) => ({
+          if: hasNotice,
+          componentProps: {
+            noticeId: values.noticeId,
+          },
         }),
       },
     },
@@ -340,9 +333,11 @@ export function useLineFormSchema(
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['arrivalNoticeLineId'],
-        componentProps: (values) => ({
-          disabled: !!values.arrivalNoticeLineId,
-          placeholder: '请选择物料',
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: !!values.arrivalNoticeLineId,
+            placeholder: '请选择物料',
+          },
         }),
       },
     },
@@ -485,13 +480,15 @@ export function useDetailFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['warehouseId'],
-        componentProps: (values) => ({
-          // 切换库区后清空库位
-          onChange: async () => {
-            await formApi?.setFieldValue('areaId', undefined);
+        resolve: async ({ values }) => ({
+          componentProps: {
+            // 切换库区后清空库位
+            onChange: async () => {
+              await formApi?.setFieldValue('areaId', undefined);
+            },
+            placeholder: '请选择库区',
+            warehouseId: values.warehouseId,
           },
-          placeholder: '请选择库区',
-          warehouseId: values.warehouseId,
         }),
       },
     },
@@ -505,9 +502,11 @@ export function useDetailFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['locationId'],
-        componentProps: (values) => ({
-          locationId: values.locationId,
-          placeholder: '请选择库位',
+        resolve: ({ values }) => ({
+          componentProps: {
+            locationId: values.locationId,
+            placeholder: '请选择库位',
+          },
         }),
       },
     },

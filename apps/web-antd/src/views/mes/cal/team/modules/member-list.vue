@@ -44,10 +44,7 @@ const [Form, formApi] = useVbenForm({
     {
       fieldName: 'teamId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'userId',

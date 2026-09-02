@@ -50,12 +50,12 @@ const [Form, formApi] = useVbenForm({
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'workstationId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'toolTypeId',
@@ -70,7 +70,7 @@ const [Form, formApi] = useVbenForm({
       },
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => !!values.id,
+        resolve: ({ values }) => ({ disabled: !!values.id }),
       },
       rules: 'selectRequired',
     },

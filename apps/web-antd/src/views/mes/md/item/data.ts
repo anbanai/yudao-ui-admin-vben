@@ -31,10 +31,7 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -158,7 +155,7 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['safeStockFlag'],
-        show: (values) => Boolean(values.safeStockFlag),
+        resolve: ({ values }) => ({ show: Boolean(values.safeStockFlag) }),
       },
       rules: z.number().default(0),
     },
@@ -173,7 +170,7 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['safeStockFlag'],
-        show: (values) => Boolean(values.safeStockFlag),
+        resolve: ({ values }) => ({ show: Boolean(values.safeStockFlag) }),
       },
       rules: z.number().default(0),
     },
@@ -190,10 +187,7 @@ export function useFormSchema(
     {
       fieldName: 'itemOrProduct',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
   ];
 }

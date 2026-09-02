@@ -34,10 +34,7 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -95,7 +92,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesWmStockTakingTypeEnum.DYNAMIC,
+        resolve: ({ values }) => ({
+          show: values.type === MesWmStockTakingTypeEnum.DYNAMIC,
+        }),
       },
     },
     {
@@ -109,7 +108,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesWmStockTakingTypeEnum.DYNAMIC,
+        resolve: ({ values }) => ({
+          show: values.type === MesWmStockTakingTypeEnum.DYNAMIC,
+        }),
       },
     },
     {
@@ -326,22 +327,24 @@ export function useParamFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       component: markRaw(StockTakingPlanConditionValueInput),
       // 条件值控件内部按条件类型切换选择器，仅选择类型后展示
       dependencies: {
-        triggerFields: ['type'],
-        if: (values) => values.type !== null,
-        componentProps: (values) => ({
-          type: values.type,
-          valueCode: values.valueCode,
-          // 条件值控件回填 valueId / valueCode / valueName
-          onValueChange: async (payload: {
-            valueCode?: string;
-            valueId?: number;
-            valueName?: string;
-          }) => {
-            await formApi?.setValues({
-              valueCode: payload.valueCode ?? '',
-              valueId: payload.valueId,
-              valueName: payload.valueName ?? '',
-            });
+        triggerFields: ['type', 'valueCode'],
+        resolve: async ({ values }) => ({
+          if: values.type !== null,
+          componentProps: {
+            type: values.type,
+            valueCode: values.valueCode,
+            // 条件值控件回填 valueId / valueCode / valueName
+            onValueChange: async (payload: {
+              valueCode?: string;
+              valueId?: number;
+              valueName?: string;
+            }) => {
+              await formApi?.setValues({
+                valueCode: payload.valueCode ?? '',
+                valueId: payload.valueId,
+                valueName: payload.valueName ?? '',
+              });
+            },
           },
         }),
       },
@@ -350,19 +353,13 @@ export function useParamFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       // 条件值编码：由条件值控件回写，隐藏字段
       fieldName: 'valueCode',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       // 条件值名称：由条件值控件回写，隐藏字段
       fieldName: 'valueName',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'remark',

@@ -31,10 +31,7 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -45,7 +42,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({ disabled: !!values.id }),
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
+        }),
       },
       rules: 'required',
       suffix:
@@ -131,10 +130,7 @@ export function useFormSchema(
         showTime: true,
         valueFormat: 'x',
       },
-      dependencies: {
-        triggerFields: ['id'],
-        show: () => formType === 'detail',
-      },
+      hide: !(formType === 'detail'),
     },
     {
       fieldName: 'lastMaintenTime',
@@ -147,10 +143,7 @@ export function useFormSchema(
         showTime: true,
         valueFormat: 'x',
       },
-      dependencies: {
-        triggerFields: ['id'],
-        show: () => formType === 'detail',
-      },
+      hide: !(formType === 'detail'),
     },
     {
       fieldName: 'remark',

@@ -23,10 +23,7 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -103,11 +100,13 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       // 按结果值类型在组件内部切换文件类型 RadioGroup / 字典类型 ApiSelect
       dependencies: {
         triggerFields: ['resultType'],
-        if: (values) =>
-          values.resultType === MesQcResultValueType.FILE ||
-          values.resultType === MesQcResultValueType.DICT,
-        componentProps: (values) => ({
-          resultType: values.resultType,
+        resolve: ({ values }) => ({
+          if:
+            values.resultType === MesQcResultValueType.FILE ||
+            values.resultType === MesQcResultValueType.DICT,
+          componentProps: {
+            resultType: values.resultType,
+          },
         }),
       },
       rules: 'required',

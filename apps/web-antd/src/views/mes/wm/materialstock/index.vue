@@ -89,6 +89,14 @@ async function handleFrozenChange(
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
+    handleValuesChange: (_values, changedFields) => {
+      if (changedFields.includes('warehouseId')) {
+        void gridApi.formApi.setFieldValue('locationId', undefined);
+      }
+      if (changedFields.includes('locationId')) {
+        void gridApi.formApi.setFieldValue('areaId', undefined);
+      }
+    },
     schema: useGridFormSchema(),
   },
   gridOptions: {

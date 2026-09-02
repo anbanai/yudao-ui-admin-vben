@@ -15,10 +15,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'format',
@@ -40,8 +37,10 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({
-          disabled: !!values.id, // 编辑时业务类型不允许变更
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: !!values.id, // 编辑时业务类型不允许变更
+          },
         }),
       },
       rules: 'required',

@@ -49,34 +49,22 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'sourceDocId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'sourceLineId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -133,7 +121,7 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['sourceDocType'],
-        show: (values) => !!values.sourceDocType,
+        resolve: ({ values }) => ({ show: !!values.sourceDocType }),
       },
     },
     {
@@ -145,8 +133,10 @@ export function useFormSchema(
         placeholder: '来源单据编号',
       },
       dependencies: {
-        triggerFields: ['sourceDocType', 'sourceDocId'],
-        show: (values) => !!values.sourceDocType && !!values.sourceDocId,
+        triggerFields: ['sourceDocId', 'sourceDocType'],
+        resolve: ({ values }) => ({
+          show: !!values.sourceDocType && !!values.sourceDocId,
+        }),
       },
     },
     {
@@ -162,11 +152,13 @@ export function useFormSchema(
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['sourceDocId'],
-        componentProps: (values) => ({
-          disabled: !!values.sourceDocId,
-          placeholder: '请选择生产工单',
-          status: MesProWorkOrderStatusEnum.CONFIRMED,
-          onChange: () => formApi?.setFieldValue('taskId', undefined),
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: !!values.sourceDocId,
+            placeholder: '请选择生产工单',
+            status: MesProWorkOrderStatusEnum.CONFIRMED,
+            onChange: () => formApi?.setFieldValue('taskId', undefined),
+          },
         }),
       },
     },
@@ -180,9 +172,11 @@ export function useFormSchema(
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['sourceDocId'],
-        componentProps: (values) => ({
-          disabled: !!values.sourceDocId,
-          placeholder: '请选择工位',
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: !!values.sourceDocId,
+            placeholder: '请选择工位',
+          },
         }),
       },
     },
@@ -196,12 +190,14 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['sourceDocId', 'workOrderId', 'workstationId'],
-        componentProps: (values) => ({
-          disabled: !!values.sourceDocId || !values.workOrderId,
-          placeholder: '请选择生产任务',
-          statuses: [MesProTaskStatusEnum.PREPARE],
-          workOrderId: values.workOrderId,
-          workstationId: values.workstationId,
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: !!values.sourceDocId || !values.workOrderId,
+            placeholder: '请选择生产任务',
+            statuses: [MesProTaskStatusEnum.PREPARE],
+            workOrderId: values.workOrderId,
+            workstationId: values.workstationId,
+          },
         }),
       },
     },
@@ -218,12 +214,14 @@ export function useFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['sourceDocId'],
-        componentProps: (values) => ({
-          class: '!w-full',
-          disabled: !!values.sourceDocId,
-          min: 0,
-          placeholder: '请输入检测数量',
-          precision: 2,
+        resolve: ({ values }) => ({
+          componentProps: {
+            class: '!w-full',
+            disabled: !!values.sourceDocId,
+            min: 0,
+            placeholder: '请输入检测数量',
+            precision: 2,
+          },
         }),
       },
     },
@@ -266,8 +264,11 @@ export function useFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['unqualifiedQuantity'],
-        show: (values) =>
-          values.unqualifiedQuantity !== null && values.unqualifiedQuantity > 0,
+        resolve: ({ values }) => ({
+          show:
+            values.unqualifiedQuantity !== null &&
+            values.unqualifiedQuantity > 0,
+        }),
       },
     },
     {
@@ -285,8 +286,11 @@ export function useFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['unqualifiedQuantity'],
-        show: (values) =>
-          values.unqualifiedQuantity !== null && values.unqualifiedQuantity > 0,
+        resolve: ({ values }) => ({
+          show:
+            values.unqualifiedQuantity !== null &&
+            values.unqualifiedQuantity > 0,
+        }),
       },
     },
     {
@@ -304,8 +308,11 @@ export function useFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['unqualifiedQuantity'],
-        show: (values) =>
-          values.unqualifiedQuantity !== null && values.unqualifiedQuantity > 0,
+        resolve: ({ values }) => ({
+          show:
+            values.unqualifiedQuantity !== null &&
+            values.unqualifiedQuantity > 0,
+        }),
       },
     },
     {

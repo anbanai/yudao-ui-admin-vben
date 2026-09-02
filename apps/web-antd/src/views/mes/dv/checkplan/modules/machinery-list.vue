@@ -40,10 +40,7 @@ const [Form, formApi] = useVbenForm({
     {
       fieldName: 'planId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'machineryId',
