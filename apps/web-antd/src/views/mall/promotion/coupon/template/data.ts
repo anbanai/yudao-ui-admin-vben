@@ -11,6 +11,7 @@ import {
   PromotionProductScopeEnum,
 } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
+import { convertToInteger, formatToFraction } from '@vben/utils';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
@@ -19,6 +20,32 @@ export interface ProductScopeFormValues {
   productScope?: number;
   productScopeValues?: number[];
   productSpuIds?: number[];
+}
+
+export type CouponTemplateFormValues = Omit<
+  Partial<MallCouponTemplateApi.CouponTemplate>,
+  'discountLimitPrice' | 'discountPrice' | 'usePrice'
+> & {
+  discountLimitPrice?: number | string;
+  discountPrice?: number | string;
+  productCategoryIds?: number | number[];
+  productSpuIds?: number[];
+  usePrice?: number | string;
+  validTimes?: Date[];
+};
+
+type CouponTemplateLoadData = Pick<
+  MallCouponTemplateApi.CouponTemplate,
+  'discountLimitPrice' | 'discountPrice' | 'usePrice'
+> &
+  Partial<MallCouponTemplateApi.CouponTemplate>;
+
+export function createDefaultCouponFormData(): CouponTemplateFormValues {
+  return {
+    productCategoryIds: undefined,
+    productScope: PromotionProductScopeEnum.ALL.scope,
+    productSpuIds: [],
+  };
 }
 
 function normalizeIds(value: number | number[] | undefined): number[] {
@@ -59,6 +86,98 @@ export function expandProductScopeValues<T extends ProductScopeFormValues>(
   } as T;
 }
 
+export function processCouponLoadData(
+  data: CouponTemplateLoadData,
+): CouponTemplateFormValues {
+  return expandProductScopeValues({
+    ...data,
+    discountPrice: formatToFraction(data.discountPrice),
+    discountPercent:
+      data.discountPercent === undefined
+        ? undefined
+        : data.discountPercent / 10,
+    discountLimitPrice: formatToFraction(data.discountLimitPrice),
+    usePrice: formatToFraction(data.usePrice),
+    validTimes:
+      data.validStartTime && data.validEndTime
+        ? [data.validStartTime, data.validEndTime]
+        : [],
+  });
+}
+
+export function processCouponSubmitData(
+  formValues: CouponTemplateFormValues,
+): MallCouponTemplateApi.CouponTemplate {
+  return {
+    ...formValues,
+    productScopeValues: getProductScopeValues(formValues),
+    discountPrice: convertToInteger(formValues.discountPrice),
+    discountPercent:
+      formValues.discountPercent === undefined
+        ? undefined
+        : formValues.discountPercent * 10,
+    discountLimitPrice: convertToInteger(formValues.discountLimitPrice),
+    usePrice: convertToInteger(formValues.usePrice),
+    validStartTime:
+      formValues.validTimes?.length === 2
+        ? formValues.validTimes[0]
+        : undefined,
+    validEndTime:
+      formValues.validTimes?.length === 2
+        ? formValues.validTimes[1]
+        : undefined,
+    totalCount:
+      formValues.takeType === CouponTemplateTakeTypeEnum.USER.type
+        ? formValues.totalCount
+        : -1,
+    takeLimitCount:
+      formValues.takeType === CouponTemplateTakeTypeEnum.USER.type
+        ? formValues.takeLimitCount
+        : -1,
+  } as MallCouponTemplateApi.CouponTemplate;
+}
+
+export function createCouponFormController() {
+  const controller = {
+    locked: false,
+    metrics: { resolves: 0, writes: 0 },
+    values: createDefaultCouponFormData(),
+    async changeProductScope(productScope: number) {
+      controller.metrics.resolves++;
+      controller.values = {
+        ...controller.values,
+        productCategoryIds: undefined,
+        productScope,
+        productSpuIds: [],
+      };
+      controller.metrics.writes++;
+    },
+    async close() {
+      controller.values = createDefaultCouponFormData();
+    },
+    async hydrate(data: CouponTemplateLoadData) {
+      controller.values = processCouponLoadData(data);
+    },
+    async open() {
+      controller.values = createDefaultCouponFormData();
+    },
+    async submit(
+      request: (data: MallCouponTemplateApi.CouponTemplate) => Promise<unknown>,
+    ) {
+      controller.locked = true;
+      try {
+        await request(processCouponSubmitData(controller.values));
+      } finally {
+        controller.locked = false;
+      }
+    },
+    async toPayload() {
+      return processCouponSubmitData(controller.values);
+    },
+  };
+  return controller;
+}
+
 import {
   discountFormat,
   remainedCountFormat,
@@ -68,15 +187,14 @@ import {
 } from '../formatter';
 
 /** 新增/修改的表单 */
-export function useFormSchema(): VbenFormSchema[] {
+export function useFormSchema(
+  onProductScopeChange?: (productScope: number) => Promise<void> | void,
+): VbenFormSchema[] {
   return [
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -101,6 +219,9 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RadioGroup',
       componentProps: {
         options: getDictOptions(DICT_TYPE.PROMOTION_PRODUCT_SCOPE, 'number'),
+        onChange: async (productScope: number) => {
+          await onProductScopeChange?.(productScope);
+        },
       },
       rules: 'required',
       defaultValue: PromotionProductScopeEnum.ALL.scope,
@@ -157,8 +278,11 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['discountType'],
-        show: (model) =>
-          model.discountType === PromotionDiscountTypeEnum.PRICE.type,
+        resolve({ values }) {
+          return {
+            show: values.discountType === PromotionDiscountTypeEnum.PRICE.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -176,8 +300,12 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['discountType'],
-        show: (model) =>
-          model.discountType === PromotionDiscountTypeEnum.PERCENT.type,
+        resolve({ values }) {
+          return {
+            show:
+              values.discountType === PromotionDiscountTypeEnum.PERCENT.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -194,8 +322,12 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['discountType'],
-        show: (model) =>
-          model.discountType === PromotionDiscountTypeEnum.PERCENT.type,
+        resolve({ values }) {
+          return {
+            show:
+              values.discountType === PromotionDiscountTypeEnum.PERCENT.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -234,8 +366,11 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['takeType'],
-        show: (model) =>
-          model.takeType === CouponTemplateTakeTypeEnum.USER.type,
+        resolve({ values }) {
+          return {
+            show: values.takeType === CouponTemplateTakeTypeEnum.USER.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -251,7 +386,11 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['takeType'],
-        show: (model) => model.takeType === 1,
+        resolve({ values }) {
+          return {
+            show: values.takeType === 1,
+          };
+        },
       },
       rules: 'required',
     },
@@ -278,8 +417,12 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['validityType'],
-        show: (model) =>
-          model.validityType === CouponTemplateValidityTypeEnum.DATE.type,
+        resolve({ values }) {
+          return {
+            show:
+              values.validityType === CouponTemplateValidityTypeEnum.DATE.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -296,8 +439,12 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['validityType'],
-        show: (model) =>
-          model.validityType === CouponTemplateValidityTypeEnum.TERM.type,
+        resolve({ values }) {
+          return {
+            show:
+              values.validityType === CouponTemplateValidityTypeEnum.TERM.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -313,8 +460,12 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['validityType'],
-        show: (model) =>
-          model.validityType === CouponTemplateValidityTypeEnum.TERM.type,
+        resolve({ values }) {
+          return {
+            show:
+              values.validityType === CouponTemplateValidityTypeEnum.TERM.type,
+          };
+        },
       },
       rules: 'required',
     },

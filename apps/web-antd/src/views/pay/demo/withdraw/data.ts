@@ -9,10 +9,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'subject',
@@ -57,25 +54,29 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['type'],
-        componentProps: (values) => {
-          const type = values.type;
-          let placeholder = '请输入收款人账号';
-          switch (type) {
-            case 1: {
-              placeholder = '请输入支付宝账号';
-              break;
-            }
-            case 2: {
-              placeholder = '请输入微信 openid';
-              break;
-            }
-            case 3: {
-              placeholder = '请输入钱包编号';
-              break;
-            }
-          }
+        resolve({ values }) {
           return {
-            placeholder,
+            componentProps: (() => {
+              const type = values.type;
+              let placeholder = '请输入收款人账号';
+              switch (type) {
+                case 1: {
+                  placeholder = '请输入支付宝账号';
+                  break;
+                }
+                case 2: {
+                  placeholder = '请输入微信 openid';
+                  break;
+                }
+                case 3: {
+                  placeholder = '请输入钱包编号';
+                  break;
+                }
+              }
+              return {
+                placeholder,
+              };
+            })(),
           };
         },
       },

@@ -184,10 +184,7 @@ export function useAppFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -262,28 +259,19 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       label: '应用编号',
       fieldName: 'appId',
       component: 'Input',
-      dependencies: {
-        show: () => false,
-        triggerFields: [''],
-      },
+      hide: true,
     },
     {
       label: '渠道编码',
       fieldName: 'code',
       component: 'Input',
-      dependencies: {
-        show: () => false,
-        triggerFields: [''],
-      },
+      hide: true,
     },
     {
       label: '渠道费率',
@@ -399,10 +387,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
           rows: 3,
         },
         dependencies: {
-          show(values: any) {
-            return values?.config?.mode === 1;
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.mode === 1;
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -417,10 +409,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
         }),
         rules: 'required',
         dependencies: {
-          show(values: any) {
-            return values?.config?.mode === 2;
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.mode === 2;
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -435,10 +431,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
         }),
         rules: 'required',
         dependencies: {
-          show(values: any) {
-            return values?.config?.mode === 2;
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.mode === 2;
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -453,10 +453,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
         }),
         rules: 'required',
         dependencies: {
-          show(values: any) {
-            return values?.config?.mode === 2;
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.mode === 2;
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -486,10 +490,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
         component: 'Input',
         rules: 'required',
         dependencies: {
-          show(values: any) {
-            return values?.config?.encryptType === 'AES';
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.encryptType === 'AES';
+              })(),
+            };
           },
-          triggerFields: ['config.encryptType', 'encryptType', 'config'],
         },
       },
     );
@@ -544,10 +552,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
           placeholder: '请输入商户密钥',
         },
         dependencies: {
-          show(values: any) {
-            return values?.config?.apiVersion === 'v2';
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.apiVersion === 'v2';
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -565,10 +577,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
         }),
         rules: 'required',
         dependencies: {
-          show(values: any) {
-            return values?.config?.apiVersion === 'v2';
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.apiVersion === 'v2';
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -580,10 +596,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
           placeholder: '请输入 API V3 密钥',
         },
         dependencies: {
-          show(values: any) {
-            return values?.config?.apiVersion === 'v3';
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.apiVersion === 'v3';
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -601,10 +621,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
         }),
         rules: 'required',
         dependencies: {
-          show(values: any) {
-            return values?.config?.apiVersion === 'v3';
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.apiVersion === 'v3';
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -617,10 +641,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
           placeholder: '请输入证书序列号',
         },
         dependencies: {
-          show(values: any) {
-            return values?.config?.apiVersion === 'v3';
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.apiVersion === 'v3';
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -637,10 +665,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
           },
         }),
         dependencies: {
-          show(values: any) {
-            return values?.config?.apiVersion === 'v3';
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.apiVersion === 'v3';
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
       {
@@ -653,10 +685,14 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
           placeholder: '请输入公钥 ID',
         },
         dependencies: {
-          show(values: any) {
-            return values?.config?.apiVersion === 'v3';
+          triggerFields: ['config'],
+          resolve({ values }) {
+            return {
+              show: (() => {
+                return values?.config?.apiVersion === 'v3';
+              })(),
+            };
           },
-          triggerFields: ['config.mode', 'mode', 'config'],
         },
       },
     );

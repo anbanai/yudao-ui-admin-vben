@@ -11,10 +11,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'spuId',
@@ -34,7 +31,11 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['spuId'],
-        show: (values) => !!values.spuId,
+        resolve({ values }) {
+          return {
+            show: !!values.spuId,
+          };
+        },
       },
       rules: 'required',
     },

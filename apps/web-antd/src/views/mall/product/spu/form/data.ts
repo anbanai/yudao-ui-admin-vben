@@ -15,10 +15,7 @@ export function useInfoFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -127,10 +124,7 @@ export function useSkuFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'subCommissionType',
@@ -177,8 +171,11 @@ export function useSkuFormSchema(
       component: 'Input',
       dependencies: {
         triggerFields: ['specType'],
-        // 当 specType 为 false（单规格）时显示
-        show: (values) => values.specType === false,
+        resolve({ values }) {
+          return {
+            show: values.specType === false,
+          };
+        },
       },
     },
     // 多规格时显示的商品属性（占位，实际通过插槽渲染）
@@ -188,8 +185,11 @@ export function useSkuFormSchema(
       component: 'Input',
       dependencies: {
         triggerFields: ['specType'],
-        // 当 specType 为 true（多规格）时显示
-        show: (values) => values.specType === true,
+        resolve({ values }) {
+          return {
+            show: values.specType === true,
+          };
+        },
       },
     },
     // 多规格 - 批量设置
@@ -199,9 +199,12 @@ export function useSkuFormSchema(
       component: 'Input',
       dependencies: {
         triggerFields: ['specType'],
-        // 当 specType 为 true（多规格）且 propertyList 有数据时显示，且非详情模式
-        show: (values) =>
-          values.specType === true && propertyList.length > 0 && !isDetail,
+        resolve({ values }) {
+          return {
+            show:
+              values.specType === true && propertyList.length > 0 && !isDetail,
+          };
+        },
       },
     },
     // 多规格 - 规格列表
@@ -211,8 +214,11 @@ export function useSkuFormSchema(
       component: 'Input',
       dependencies: {
         triggerFields: ['specType'],
-        // 当 specType 为 true（多规格）且 propertyList 有数据时显示
-        show: (values) => values.specType === true && propertyList.length > 0,
+        resolve({ values }) {
+          return {
+            show: values.specType === true && propertyList.length > 0,
+          };
+        },
       },
     },
   ];
@@ -224,10 +230,7 @@ export function useDeliveryFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'deliveryTypes',
@@ -249,9 +252,13 @@ export function useDeliveryFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['deliveryTypes'],
-        show: (values) =>
-          !!values.deliveryTypes &&
-          values.deliveryTypes.includes(DeliveryTypeEnum.EXPRESS.type),
+        resolve({ values }) {
+          return {
+            show:
+              !!values.deliveryTypes &&
+              values.deliveryTypes.includes(DeliveryTypeEnum.EXPRESS.type),
+          };
+        },
       },
       rules: 'required',
     },
@@ -266,10 +273,7 @@ export function useDescriptionFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'description',
@@ -291,10 +295,7 @@ export function useOtherFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'sort',

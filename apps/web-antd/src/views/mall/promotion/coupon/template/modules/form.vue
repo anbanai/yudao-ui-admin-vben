@@ -4,11 +4,7 @@ import type { MallCouponTemplateApi } from '#/api/mall/promotion/coupon/couponTe
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import {
-  CouponTemplateTakeTypeEnum,
-  PromotionProductScopeEnum,
-} from '@vben/constants';
-import { convertToInteger, formatToFraction } from '@vben/utils';
+import {} from '@vben/constants';
 
 import { message } from 'ant-design-vue';
 
@@ -23,24 +19,14 @@ import { ProductCategorySelect } from '#/views/mall/product/category/components'
 import { SpuShowcase } from '#/views/mall/product/spu/components';
 
 import {
-  expandProductScopeValues,
-  getProductScopeValues,
+  createDefaultCouponFormData,
+  type CouponTemplateFormValues,
+  processCouponLoadData,
+  processCouponSubmitData,
   useFormSchema,
 } from '../data';
 
 const emit = defineEmits(['success']);
-type CouponTemplateFormValues = Omit<
-  Partial<MallCouponTemplateApi.CouponTemplate>,
-  'discountLimitPrice' | 'discountPrice' | 'usePrice'
-> & {
-  discountLimitPrice?: number | string;
-  discountPrice?: number | string;
-  productCategoryIds?: number | number[];
-  productSpuIds?: number[];
-  usePrice?: number | string;
-  validTimes?: Date[];
-};
-
 const editingId = ref<number>();
 const getTitle = computed(() => {
   return editingId.value
@@ -57,7 +43,13 @@ const [Form, formApi] = useVbenForm<CouponTemplateFormValues>({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useFormSchema(async (productScope) => {
+    await formApi.setValues({
+      productCategoryIds: undefined,
+      productScope,
+      productSpuIds: [],
+    });
+  }),
   showDefaultActions: false,
 });
 
@@ -70,7 +62,7 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.lock();
     // 提交表单
     const formValues = await formApi.getValues();
-    const data = await processSubmitData(formValues);
+    const data = processCouponSubmitData(formValues);
     try {
       await (editingId.value
         ? updateCouponTemplate(data)
@@ -86,21 +78,21 @@ const [Modal, modalApi] = useVbenModal({
   async onOpenChange(isOpen: boolean) {
     if (!isOpen) {
       editingId.value = undefined;
-      await formApi.reset({ values: createDefaultFormData() });
+      await formApi.reset({ values: createDefaultCouponFormData() });
       return;
     }
     // 加载数据
     const data = modalApi.getData() as MallCouponTemplateApi.CouponTemplate;
     if (!data || !data.id) {
       editingId.value = undefined;
-      await formApi.reset({ values: createDefaultFormData() });
+      await formApi.reset({ values: createDefaultCouponFormData() });
       return;
     }
     modalApi.lock();
     try {
       const result = await getCouponTemplate(data.id);
       editingId.value = result.id;
-      const processedData = await processLoadData(result);
+      const processedData = processCouponLoadData(result);
       // 设置到表单
       await formApi.setValues(processedData);
     } finally {
@@ -108,72 +100,6 @@ const [Modal, modalApi] = useVbenModal({
     }
   },
 });
-
-/** 处理提交数据 */
-async function processSubmitData(
-  formValues: CouponTemplateFormValues,
-): Promise<MallCouponTemplateApi.CouponTemplate> {
-  return {
-    ...formValues,
-    productScopeValues: getProductScopeValues(formValues),
-    // 金额转换：元转分
-    discountPrice: convertToInteger(formValues.discountPrice),
-    discountPercent:
-      formValues.discountPercent === undefined
-        ? undefined
-        : formValues.discountPercent * 10,
-    discountLimitPrice: convertToInteger(formValues.discountLimitPrice),
-    usePrice: convertToInteger(formValues.usePrice),
-    // 处理有效期时间
-    validStartTime:
-      formValues.validTimes && formValues.validTimes.length === 2
-        ? formValues.validTimes[0]
-        : undefined,
-    validEndTime:
-      formValues.validTimes && formValues.validTimes.length === 2
-        ? formValues.validTimes[1]
-        : undefined,
-    // 处理发放数量和限领数量
-    totalCount:
-      formValues.takeType === CouponTemplateTakeTypeEnum.USER.type
-        ? formValues.totalCount
-        : -1,
-    takeLimitCount:
-      formValues.takeType === CouponTemplateTakeTypeEnum.USER.type
-        ? formValues.takeLimitCount
-        : -1,
-  } as MallCouponTemplateApi.CouponTemplate;
-}
-
-/** 处理加载的数据 */
-async function processLoadData(
-  data: MallCouponTemplateApi.CouponTemplate,
-): Promise<CouponTemplateFormValues> {
-  return expandProductScopeValues({
-    ...data,
-    // 金额转换：分转元
-    discountPrice: formatToFraction(data.discountPrice),
-    discountPercent:
-      data.discountPercent === undefined
-        ? undefined
-        : data.discountPercent / 10,
-    discountLimitPrice: formatToFraction(data.discountLimitPrice),
-    usePrice: formatToFraction(data.usePrice),
-    // 处理有效期时间
-    validTimes:
-      data.validStartTime && data.validEndTime
-        ? [data.validStartTime, data.validEndTime]
-        : [],
-  });
-}
-
-function createDefaultFormData() {
-  return {
-    productCategoryIds: undefined,
-    productScope: PromotionProductScopeEnum.ALL.scope,
-    productSpuIds: [],
-  };
-}
 </script>
 
 <template>
