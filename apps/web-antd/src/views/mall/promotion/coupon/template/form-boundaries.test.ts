@@ -126,6 +126,8 @@ describe('coupon template real form boundaries', () => {
       .querySelector<HTMLButtonElement>(`button[data-scope="${scope}"]`)
       ?.click();
     await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
     await nextTick();
   }
 
@@ -202,13 +204,43 @@ describe('coupon template real form boundaries', () => {
     const second = handler({
       target: { value: PromotionProductScopeEnum.CATEGORY.scope },
     });
-    await Promise.resolve();
+    while (releases.length < 1) await Promise.resolve();
     releases[0]?.();
     await first;
-    await Promise.resolve();
+    while (releases.length < 2) await Promise.resolve();
     releases[1]?.();
     await second;
     expect(state.productScope).toBe(PromotionProductScopeEnum.CATEGORY.scope);
+  });
+
+  it('recovers after a rejected scope write and handles empty and repeated events', async () => {
+    const scopes: number[] = [];
+    let writes = 0;
+    const handler = createCouponScopeChangeHandler({
+      async setValues(values) {
+        writes++;
+        if (writes === 2) throw new Error('scope write failed');
+        scopes.push(values.productScope!);
+      },
+    });
+    const results = await Promise.allSettled([
+      handler({ target: { value: PromotionProductScopeEnum.SPU.scope } }),
+      handler({ target: { value: PromotionProductScopeEnum.SPU.scope } }),
+      handler({ target: { value: null } }),
+      handler({ target: { value: PromotionProductScopeEnum.CATEGORY.scope } }),
+    ]);
+    expect(results.map(({ status }) => status)).toEqual([
+      'fulfilled',
+      'rejected',
+      'fulfilled',
+      'fulfilled',
+    ]);
+    expect(writes).toBe(4);
+    expect(scopes).toEqual([
+      PromotionProductScopeEnum.SPU.scope,
+      PromotionProductScopeEnum.ALL.scope,
+      PromotionProductScopeEnum.CATEGORY.scope,
+    ]);
   });
 
   it('keeps real lifecycle codecs for hydrate and exact submit payload', () => {

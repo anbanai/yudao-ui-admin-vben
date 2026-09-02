@@ -35,7 +35,7 @@ export type CouponTemplateFormValues = Omit<
 };
 
 export interface CouponScopeChangeEvent {
-  target: { value: number };
+  target: { value: null | number | undefined };
 }
 
 interface CouponScopeFormApi {
@@ -170,15 +170,19 @@ export function processCouponSubmitData(
 export function createCouponScopeChangeHandler(formApi: CouponScopeFormApi) {
   let pending = Promise.resolve();
   return (event: CouponScopeChangeEvent) => {
-    const productScope = event.target.value;
-    pending = pending.then(async () => {
-      await formApi.setValues({
-        productCategoryIds: undefined,
-        productScope,
-        productSpuIds: [],
+    const productScope =
+      event.target.value ?? PromotionProductScopeEnum.ALL.scope;
+    const operation = pending
+      .catch(() => undefined)
+      .then(async () => {
+        await formApi.setValues({
+          productCategoryIds: undefined,
+          productScope,
+          productSpuIds: [],
+        });
       });
-    });
-    return pending;
+    pending = operation;
+    return operation;
   };
 }
 

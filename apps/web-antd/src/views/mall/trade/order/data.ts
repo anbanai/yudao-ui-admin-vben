@@ -313,20 +313,23 @@ interface OrderPriceFormApi {
 
 export function createOrderPriceChangeHandler(formApi: OrderPriceFormApi) {
   let pending = Promise.resolve();
-  return (adjustPrice: number) => {
-    pending = pending.then(async () => {
-      const values = await formApi.getValues();
-      await formApi.setFieldValue(
-        'newPayPrice',
-        calculateNewPayPrice(values.payPrice ?? 0, adjustPrice),
-      );
-    });
-    return pending;
+  return (adjustPrice: null | number) => {
+    const operation = pending
+      .catch(() => undefined)
+      .then(async () => {
+        const values = await formApi.getValues();
+        await formApi.setFieldValue(
+          'newPayPrice',
+          calculateNewPayPrice(values.payPrice ?? 0, adjustPrice ?? 0),
+        );
+      });
+    pending = operation;
+    return operation;
   };
 }
 
 export function usePriceFormSchema(
-  onAdjustPriceChange?: (adjustPrice: number) => Promise<void> | void,
+  onAdjustPriceChange?: (adjustPrice: null | number) => Promise<void> | void,
 ): VbenFormSchema[] {
   return [
     {
@@ -353,7 +356,7 @@ export function usePriceFormSchema(
         placeholder: '请输入订单调价',
         step: 0.1,
         precision: 2,
-        onChange: async (adjustPrice: number) => {
+        onChange: async (adjustPrice: null | number) => {
           await onAdjustPriceChange?.(adjustPrice);
         },
       },

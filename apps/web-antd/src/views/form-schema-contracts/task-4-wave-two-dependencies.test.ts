@@ -162,16 +162,15 @@ function dependencyProblems(file: string): string[] {
             : undefined;
         if (functionNode?.body) {
           let hasAwait = false;
-          let returnedObject: ts.ObjectLiteralExpression | undefined;
+          const variables = new Map<string, ts.Expression>();
           function inspect(current: ts.Node) {
             if (ts.isAwaitExpression(current)) hasAwait = true;
             if (
-              !returnedObject &&
-              ts.isReturnStatement(current) &&
-              current.expression &&
-              ts.isObjectLiteralExpression(current.expression)
+              ts.isVariableDeclaration(current) &&
+              ts.isIdentifier(current.name) &&
+              current.initializer
             ) {
-              returnedObject = current.expression;
+              variables.set(current.name.text, current.initializer);
             }
             ts.forEachChild(current, inspect);
           }
@@ -181,24 +180,58 @@ function dependencyProblems(file: string): string[] {
           );
           if (hasAwait && !isAsync)
             problems.push(`${location} await without async`);
-          if (returnedObject) {
-            const expectedOrder = [
-              'if',
-              'show',
-              'componentProps',
-              'rules',
-              'disabled',
-              'required',
-            ];
-            const actual = returnedObject.properties
-              .map(propertyName)
-              .filter((key): key is string => Boolean(key));
-            const sorted = [...actual].sort(
-              (a, b) => expectedOrder.indexOf(a) - expectedOrder.indexOf(b),
-            );
-            if (actual.join() !== sorted.join()) {
-              problems.push(`${location} result order=${actual.join(',')}`);
+          const expectedOrder = [
+            'if',
+            'show',
+            'componentProps',
+            'rules',
+            'disabled',
+            'required',
+          ];
+          function inspectResult(expression: ts.Expression) {
+            if (ts.isParenthesizedExpression(expression)) {
+              inspectResult(expression.expression);
+            } else if (ts.isConditionalExpression(expression)) {
+              inspectResult(expression.whenTrue);
+              inspectResult(expression.whenFalse);
+            } else if (ts.isIdentifier(expression)) {
+              const initializer = variables.get(expression.text);
+              if (initializer) inspectResult(initializer);
+            } else if (ts.isObjectLiteralExpression(expression)) {
+              const actual = expression.properties
+                .map(propertyName)
+                .filter((key): key is string => Boolean(key));
+              for (const key of actual) {
+                if (!expectedOrder.includes(key)) {
+                  problems.push(`${location} unsupported result key=${key}`);
+                }
+              }
+              const sorted = [...actual].sort(
+                (a, b) => expectedOrder.indexOf(a) - expectedOrder.indexOf(b),
+              );
+              if (actual.join() !== sorted.join()) {
+                problems.push(`${location} result order=${actual.join(',')}`);
+              }
             }
+          }
+          const body = functionNode.body;
+          if (ts.isBlock(body)) {
+            function inspectReturns(current: ts.Node) {
+              if (
+                current !== body &&
+                (ts.isArrowFunction(current) ||
+                  ts.isFunctionExpression(current))
+              ) {
+                return;
+              }
+              if (ts.isReturnStatement(current) && current.expression) {
+                inspectResult(current.expression);
+              }
+              ts.forEachChild(current, inspectReturns);
+            }
+            inspectReturns(body);
+          } else {
+            inspectResult(body);
           }
         }
       }
@@ -218,6 +251,41 @@ describe('Task 4 wave-two dependency migration', () => {
       sourceFiles(path.join(views, directory)).flatMap(dependencyProblems),
     );
     expect(problems).toEqual([]);
+  });
+
+  it('audits every supported resolver result shape and async contract', () => {
+    const root = fs.mkdtempSync(path.join(process.cwd(), '.task-4-audit-'));
+    const valid = path.join(root, 'valid.ts');
+    const invalid = path.join(root, 'invalid.ts');
+    try {
+      fs.writeFileSync(
+        valid,
+        `const schemas = [
+          { dependencies: { triggerFields: ['mode'], resolve: ({ values }) => ({ show: values.mode === 1 }) } },
+          { dependencies: { triggerFields: ['mode'], resolve({ values }) { if (values.mode === 1) return { show: true }; return { show: false }; } } },
+          { dependencies: { triggerFields: ['mode'], resolve({ values }) { const result = { show: values.mode === 1, disabled: false }; return result; } } },
+          { dependencies: { triggerFields: ['mode'], async resolve({ values }) { await Promise.resolve(); return { show: values.mode === 1 }; } } },
+        ];`,
+      );
+      fs.writeFileSync(
+        invalid,
+        `const schemas = [
+          { dependencies: { triggerFields: ['mode'], resolve: ({ values }) => ({ visible: values.mode === 1 }) } },
+          { dependencies: { triggerFields: ['mode'], resolve({ values }) { const result = { show: values.mode === 1, mystery: true }; return result; } } },
+          { dependencies: { triggerFields: ['mode'], resolve({ values }) { await Promise.resolve(); return { show: values.mode === 1 }; } } },
+        ];`,
+      );
+      expect(dependencyProblems(valid)).toEqual([]);
+      expect(dependencyProblems(invalid)).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('unsupported result key=visible'),
+          expect.stringContaining('unsupported result key=mystery'),
+          expect.stringContaining('await without async'),
+        ]),
+      );
+    } finally {
+      fs.rmSync(root, { force: true, recursive: true });
+    }
   });
 
   it('serializes real async order price reads and writes so the latest event wins', async () => {
@@ -246,5 +314,36 @@ describe('Task 4 wave-two dependency migration', () => {
     expect(reads).toBe(3);
     expect(writes).toEqual(['11.00', '8.00', '13.00']);
     expect(writes.at(-1)).toBe(calculateNewPayPrice('10.00', 3));
+  });
+
+  it('recovers after a rejected order write and handles null and repeated values', async () => {
+    const writes: string[] = [];
+    let attempts = 0;
+    const handler = createOrderPriceChangeHandler({
+      async getValues() {
+        await Promise.resolve();
+        return { payPrice: '10.00' };
+      },
+      async setFieldValue(_field, value) {
+        attempts++;
+        if (attempts === 2) throw new Error('price write failed');
+        writes.push(value);
+      },
+    });
+    const results = await Promise.allSettled([
+      handler(1),
+      handler(null),
+      handler(null),
+      handler(3),
+    ]);
+    expect(results.map(({ status }) => status)).toEqual([
+      'fulfilled',
+      'rejected',
+      'fulfilled',
+      'fulfilled',
+    ]);
+    expect(attempts).toBe(4);
+    expect(writes).toEqual(['11.00', '10.00', '13.00']);
+    expect(writes.at(-1)).toBe('13.00');
   });
 });
