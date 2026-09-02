@@ -10,14 +10,7 @@ import { useRouter } from 'vue-router';
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { formatDateTime } from '@vben/utils';
 
-import {
-  Badge,
-  Button,
-  DatePicker,
-  message,
-  Select,
-  Tabs,
-} from 'ant-design-vue';
+import { Badge, Button, DatePicker, message, Select, Tabs } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getProjectMemberList } from '#/api/pms/pm/project/member';

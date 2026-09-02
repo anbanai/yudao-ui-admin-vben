@@ -11,13 +11,15 @@ import { Page, useVbenDrawer } from '@vben/common-ui';
 import { formatDateTime } from '@vben/utils';
 
 import {
-  Badge,
-  Button,
-  DatePicker,
-  message,
-  Select,
-  Tabs,
-} from 'ant-design-vue';
+  ElBadge,
+  ElButton,
+  ElDatePicker,
+  ElMessage,
+  ElOption,
+  ElSelect,
+  ElTabPane,
+  ElTabs,
+} from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getProjectMemberList } from '#/api/pms/pm/project/member';
@@ -121,11 +123,11 @@ function handleDocumentPointerDown(event: PointerEvent) {
     return;
   }
   const activeEditor = document.querySelector(
-    '.pms-workbench-table .ant-select, .pms-workbench-table .ant-picker',
+    '.pms-workbench-table .el-select, .pms-workbench-table .el-date-editor',
   );
   const isEditorClick = activeEditor?.contains(event.target);
   const isPopupClick = event.target.closest(
-    '.ant-select-dropdown, .ant-picker-dropdown',
+    '.el-select-dropdown, .el-picker-panel',
   );
   if (!isEditorClick && !isPopupClick) {
     cancelQuickEdit();
@@ -264,7 +266,7 @@ async function handleStatusChange(item: PmsWorkbenchApi.WorkbenchWorkItem) {
   cancelQuickEdit();
   try {
     await updateWorkItemStatus(item.id, item.statusId);
-    message.success('状态已更新');
+    ElMessage.success('状态已更新');
   } finally {
     await refreshWorkbench();
   }
@@ -281,7 +283,7 @@ async function handleQuickUpdate(
     const workItem = await getWorkItem(item.id);
     // 2. 合并并提交当前字段
     await updateWorkItem({ ...workItem, [field]: item[field] });
-    message.success('工作项已更新');
+    ElMessage.success('工作项已更新');
   } finally {
     await refreshWorkbench();
   }
@@ -346,145 +348,148 @@ onBeforeUnmount(() => {
     <Grid class="pms-workbench-table">
       <template #toolbar-actions>
         <!-- 工作项类型 -->
-        <Tabs
-          v-model:active-key="activeTab"
+        <ElTabs
+          v-model="activeTab"
           class="workbench-tabs w-full"
-          @change="handleTabChange"
+          @tab-change="handleTabChange"
         >
-          <Tabs.TabPane v-for="tab in tabs" :key="tab.value">
-            <template #tab>
-              <Badge
-                :count="
+          <ElTabPane v-for="tab in tabs" :key="tab.value" :name="tab.value">
+            <template #label>
+              <ElBadge
+                :hidden="
                   displayCountData[
                     tab.countKey as keyof typeof displayCountData
                   ] === 0
-                    ? 0
-                    : displayCountData[
-                        tab.countKey as keyof typeof displayCountData
-                      ]
                 "
-                :show-zero="false"
+                :value="
+                  displayCountData[
+                    tab.countKey as keyof typeof displayCountData
+                  ]
+                "
               >
                 <span class="px-1.5">{{ tab.label }}</span>
-              </Badge>
+              </ElBadge>
             </template>
-          </Tabs.TabPane>
-        </Tabs>
+          </ElTabPane>
+        </ElTabs>
       </template>
       <template #serialNumber="{ row }"> #{{ row.serialNumber }} </template>
       <template #name="{ row }">
-        <Button type="link" @click="openWorkItem(row)">
+        <ElButton link type="primary" @click="openWorkItem(row)">
           {{ row.name }}
-        </Button>
+        </ElButton>
       </template>
       <template #priority="{ row }">
-        <Select
+        <ElSelect
           v-if="isQuickEditing(row, 'priority')"
-          v-model:value="row.priority"
-          :options="
-            priorityOptions.map((item) => ({
-              label: item.label,
-              value: item.value,
-            }))
-          "
+          v-model="row.priority"
           @blur="cancelQuickEdit"
           @change="handleQuickUpdate(row, 'priority')"
           @keyup.esc.stop="cancelQuickEdit"
-        />
-        <Button
+        >
+          <ElOption
+            v-for="option in priorityOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </ElSelect>
+        <ElButton
           v-else-if="row.writeStatus"
-          type="link"
+          link
           @click="startQuickEdit(row, 'priority')"
         >
           {{ getPriorityName(row.priority) }}
-        </Button>
+        </ElButton>
         <span v-else>{{ getPriorityName(row.priority) }}</span>
       </template>
       <template #statusId="{ row }">
-        <Select
+        <ElSelect
           v-if="isQuickEditing(row, 'statusId')"
-          v-model:value="row.statusId"
-          :options="
-            getStatusOptionList(row).map((status) => ({
-              label: status.name,
-              value: status.id,
-            }))
-          "
+          v-model="row.statusId"
           @blur="cancelQuickEdit"
-          @dropdown-visible-change="getStatusOptions(row, $event)"
+          @visible-change="getStatusOptions(row, $event)"
           @change="handleStatusChange(row)"
           @keyup.esc.stop="cancelQuickEdit"
-        />
-        <Button
+        >
+          <ElOption
+            v-for="status in getStatusOptionList(row)"
+            :key="status.id"
+            :label="status.name"
+            :value="status.id"
+          />
+        </ElSelect>
+        <ElButton
           v-else-if="row.writeStatus"
-          type="link"
+          link
           @click="startQuickEdit(row, 'statusId')"
         >
           {{ row.statusName }}
-        </Button>
+        </ElButton>
         <span v-else>{{ row.statusName }}</span>
       </template>
       <template #assigneeUserId="{ row }">
-        <Select
+        <ElSelect
           v-if="isQuickEditing(row, 'assigneeUserId')"
-          v-model:value="row.assigneeUserId"
-          allow-clear
-          :options="
-            getMemberOptionList(row).map((member) => ({
-              label: member.nickname,
-              value: member.userId,
-            }))
-          "
-          option-filter-prop="label"
-          show-search
+          v-model="row.assigneeUserId"
+          clearable
+          filterable
           @blur="cancelQuickEdit"
-          @dropdown-visible-change="getMemberOptions(row.projectId, $event)"
+          @visible-change="getMemberOptions(row.projectId, $event)"
           @change="handleQuickUpdate(row, 'assigneeUserId')"
           @keyup.esc.stop="cancelQuickEdit"
-        />
-        <Button
+        >
+          <ElOption
+            v-for="member in getMemberOptionList(row)"
+            :key="member.userId"
+            :label="member.nickname"
+            :value="member.userId"
+          />
+        </ElSelect>
+        <ElButton
           v-else-if="row.writeStatus"
-          type="link"
+          link
           @click="startQuickEdit(row, 'assigneeUserId')"
         >
           {{ row.assigneeUserName || '未分配' }}
-        </Button>
+        </ElButton>
         <span v-else>{{ row.assigneeUserName || '-' }}</span>
       </template>
       <template #endTime="{ row }">
-        <DatePicker
+        <ElDatePicker
           v-if="isQuickEditing(row, 'endTime')"
-          v-model:value="row.endTime as any"
-          allow-clear
+          v-model="row.endTime"
           class="!w-[170px]"
+          clearable
           placeholder="截止日期"
-          show-time
+          type="datetime"
           value-format="x"
           @blur="cancelQuickEdit"
           @change="handleQuickUpdate(row, 'endTime')"
           @keyup.esc.stop="cancelQuickEdit"
         />
-        <Button
+        <ElButton
           v-else-if="row.writeStatus"
-          type="link"
+          link
           @click="startQuickEdit(row, 'endTime')"
         >
           {{ formatDateTime(row.endTime) || '未设置' }}
-        </Button>
+        </ElButton>
         <span v-else>{{ formatDateTime(row.endTime) || '-' }}</span>
       </template>
       <template #createTime="{ row }">
         {{ formatDateTime(row.createTime) }}
       </template>
       <template #iterationName="{ row }">
-        <Button
-          type="link"
+        <ElButton
+          link
+          type="primary"
           @click="
             openIteration(row as unknown as PmsWorkbenchApi.WorkbenchIteration)
           "
         >
           {{ row.name }}
-        </Button>
+        </ElButton>
       </template>
       <template #iterationStatus="{ row }">
         {{ getIterationStatusName(row.status) }}
@@ -504,7 +509,7 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .workbench-tabs {
-  :deep(.ant-tabs-nav) {
+  :deep(.el-tabs__header) {
     margin-bottom: 0;
   }
 }
