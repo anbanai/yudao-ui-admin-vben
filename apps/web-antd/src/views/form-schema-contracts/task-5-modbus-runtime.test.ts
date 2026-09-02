@@ -23,6 +23,11 @@ const formState = vi.hoisted(() => ({
   options: undefined as { schema: FormSchema[] } | undefined,
 }));
 const modalState = vi.hoisted(() => ({
+  data: {
+    config: { ip: '127.0.0.1', port: 502 },
+    deviceId: 7,
+    protocolType: 'modbus_tcp_client',
+  },
   options: undefined as
     | { onOpenChange?: (open: boolean) => Promise<void> | void }
     | undefined,
@@ -54,7 +59,12 @@ vi.doMock('@vben/common-ui', () => ({
           return () => h('section', slots.default?.());
         },
       }),
-      { close: vi.fn(), getData: vi.fn(), lock: vi.fn(), unlock: vi.fn() },
+      {
+        close: vi.fn(),
+        getData: vi.fn(() => modalState.data),
+        lock: vi.fn(),
+        unlock: vi.fn(),
+      },
     ] as const;
   },
 }));
@@ -98,7 +108,11 @@ describe('modbus form dependency runtime contract', () => {
     );
     expect(modalState.options?.onOpenChange).toBeTypeOf('function');
     await modalState.options?.onOpenChange?.(true);
-    expect(formState.api.setFieldValue).not.toHaveBeenCalled();
+    expect(formState.api.setValues).toHaveBeenCalledWith(modalState.data.config);
+    expect(formState.api.setFieldValue).toHaveBeenCalledWith(
+      'protocolType',
+      modalState.data.protocolType,
+    );
 
     const resolve = (fieldName: string, protocolType: string) => {
       const field = schema?.find((item) => item.fieldName === fieldName);
