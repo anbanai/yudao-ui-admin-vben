@@ -43,3 +43,11 @@ No hidden writes were found. The focused test calls each resolver with form acti
 ## Self-review and Concerns
 
 The static props remain static; only state-dependent props are produced by atomic resolvers. Form writes occur only in returned change handlers. The HRM slot-only change has no practical component test fixture, so it is covered by the app typecheck. The typecheck remains red solely because of the 47 unrelated baseline errors listed above.
+
+## Review Round 1
+
+RED: factory handlers and atomic reset helpers were absent; the mounted-form assertion also failed until dependency evaluation completed.
+
+GREEN: the focused suite passes 7/7. Contact and receivable receive async customer handlers from explicit schema factories; each awaits one atomic `setValues` reset. Delayed-promise coverage proves handler completion waits for the reset, and a mounted Vben Form verifies static placeholder props survive a resolved disabled overlay.
+
+The report is local ignored scratch state and is removed from tracked content. The review fix follows the intervening user commit `98f9fd80d`.

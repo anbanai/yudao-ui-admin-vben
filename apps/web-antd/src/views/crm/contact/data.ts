@@ -1,4 +1,4 @@
-import type { VbenFormSchema } from '#/adapter/form';
+import type { VbenFormApi, VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 
 import { markRaw } from 'vue';
@@ -13,7 +13,19 @@ import { getSimpleUserList } from '#/api/system/user';
 import { AreaCascader } from '#/components/area';
 
 /** 新增/修改的表单 */
-export function useFormSchema(): VbenFormSchema[] {
+export interface ContactFormSchemaOptions {
+  onCustomerChange?: () => Promise<void>;
+}
+
+export async function resetContactCustomerValues(
+  formApi: Pick<VbenFormApi, 'setValues'>,
+) {
+  await formApi.setValues({ parentId: undefined });
+}
+
+export function useFormSchema(
+  { onCustomerChange }: ContactFormSchemaOptions = {},
+): VbenFormSchema[] {
   const userStore = useUserStore();
   return [
     {
@@ -60,16 +72,7 @@ export function useFormSchema(): VbenFormSchema[] {
         labelField: 'name',
         valueField: 'id',
         placeholder: '请选择客户',
-      },
-      dependencies: {
-        triggerFields: ['customerId'],
-        resolve({ actions }) {
-          return {
-            componentProps: {
-              onChange: () => actions.setFieldValue('parentId', undefined),
-            },
-          };
-        },
+        onChange: onCustomerChange,
       },
     },
     {

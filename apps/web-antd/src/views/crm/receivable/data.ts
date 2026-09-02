@@ -1,4 +1,4 @@
-import type { VbenFormSchema } from '#/adapter/form';
+import type { VbenFormApi, VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 
 import { DICT_TYPE } from '@vben/constants';
@@ -14,7 +14,25 @@ import {
 import { getSimpleUserList } from '#/api/system/user';
 
 /** 新增/修改的表单 */
-export function useFormSchema(): VbenFormSchema[] {
+export interface ReceivableFormSchemaOptions {
+  onCustomerChange?: () => Promise<void>;
+}
+
+export async function resetReceivableCustomerValues(
+  formApi: Pick<VbenFormApi, 'setValues'>,
+) {
+  await formApi.setValues({
+    contractId: undefined,
+    planId: undefined,
+    price: undefined,
+    returnTime: undefined,
+    returnType: undefined,
+  });
+}
+
+export function useFormSchema(
+  { onCustomerChange }: ReceivableFormSchemaOptions = {},
+): VbenFormSchema[] {
   const userStore = useUserStore();
   return [
     {
@@ -62,21 +80,13 @@ export function useFormSchema(): VbenFormSchema[] {
         labelField: 'name',
         valueField: 'id',
         placeholder: '请选择客户',
+        onChange: onCustomerChange,
       },
       dependencies: {
-        triggerFields: ['customerId', 'id'],
-        resolve({ values, actions }) {
+        triggerFields: ['id'],
+        resolve({ values }) {
           return {
             disabled: !!values.id,
-            componentProps: {
-              onChange: () => {
-                actions.setFieldValue('contractId', undefined);
-                actions.setFieldValue('planId', undefined);
-                actions.setFieldValue('price', undefined);
-                actions.setFieldValue('returnTime', undefined);
-                actions.setFieldValue('returnType', undefined);
-              },
-            },
           };
         },
       },

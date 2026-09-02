@@ -15,7 +15,7 @@ import {
 } from '#/api/crm/receivable';
 import { $t } from '#/locales';
 
-import { useFormSchema } from '../data';
+import { resetReceivableCustomerValues, useFormSchema } from '../data';
 
 type ReceivablePrefillData = Partial<
   Pick<
@@ -45,9 +45,13 @@ const [Form, formApi] = useVbenForm({
   },
   wrapperClass: 'grid-cols-2',
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useFormSchema({ onCustomerChange: handleCustomerChange }),
   showDefaultActions: false,
 });
+
+async function handleCustomerChange() {
+  await resetReceivableCustomerValues(formApi);
+}
 
 /** 构建新增回款的预填表单 */
 async function buildCreateFormData(
