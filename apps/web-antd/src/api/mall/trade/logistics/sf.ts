@@ -73,6 +73,7 @@ export namespace MallSfLogisticsApi {
       | 'UNKNOWN';
     jobId?: string;
     deviceId?: number;
+    reused: boolean;
     errorCode?: string;
     errorMessage?: string;
     createTime?: string;

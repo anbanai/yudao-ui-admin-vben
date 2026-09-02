@@ -2,6 +2,7 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MallOrderApi } from '#/api/mall/trade/order';
 
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
@@ -12,16 +13,18 @@ import {
 } from '@vben/constants';
 import { fenToYuan } from '@vben/utils';
 
-import { Image, List, Tag } from 'ant-design-vue';
+import { Image, List, message, Tag } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getOrderPage } from '#/api/mall/trade/order';
 import { DictTag } from '#/components/dict-tag';
 import { $t } from '#/locales';
 
+import { isBatchSfOrderSelectable, isBatchSizeValid } from './batch-shipping';
 import { useGridColumns, useGridFormSchema } from './data';
 import DeliveryForm from './modules/delivery-form.vue';
 import RemarkForm from './modules/remark-form.vue';
+import SfBatchDeliveryForm from './modules/sf-batch-delivery-form.vue';
 import SfDeliveryForm from './modules/sf-delivery-form.vue';
 import { getOrderRemarkItems } from './remark-display';
 
@@ -41,6 +44,13 @@ const [SfDeliveryFormModal, sfDeliveryFormModalApi] = useVbenModal({
   connectedComponent: SfDeliveryForm,
   destroyOnClose: true,
 });
+
+const [SfBatchDeliveryFormModal, sfBatchDeliveryFormModalApi] = useVbenModal({
+  connectedComponent: SfBatchDeliveryForm,
+  destroyOnClose: true,
+});
+
+const selectedOrders = ref<MallOrderApi.Order[]>([]);
 
 /** 刷新表格 */
 function handleRefresh() {
@@ -62,6 +72,18 @@ function handleSfDelivery(row: MallOrderApi.Order) {
   sfDeliveryFormModalApi.setData(row).open();
 }
 
+function handleBatchSfDelivery() {
+  if (!isBatchSizeValid(selectedOrders.value.length)) {
+    message.warning('请选择 1 至 100 个待发货快递订单');
+    return;
+  }
+  sfBatchDeliveryFormModalApi.setData({ orders: selectedOrders.value }).open();
+}
+
+function handleSelectionChange() {
+  selectedOrders.value = gridApi.grid?.getCheckboxRecords() || [];
+}
+
 /** 备注 */
 function handleRemark(row: MallOrderApi.Order) {
   remarkFormModalApi.setData(row).open();
@@ -78,11 +100,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
       padding: true,
     },
     columns: useGridColumns(),
+    checkboxConfig: {
+      checkMethod: ({ row }: { row: MallOrderApi.Order }) =>
+        isBatchSfOrderSelectable(row),
+    },
     height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
+          selectedOrders.value = [];
+          await gridApi.grid?.clearCheckboxRow();
           return await getOrderPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
@@ -100,6 +128,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   } as VxeTableGridOptions<MallOrderApi.Order>,
+  gridEvents: {
+    checkboxChange: handleSelectionChange,
+    checkboxAll: handleSelectionChange,
+  },
 });
 </script>
 
@@ -118,8 +150,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
     <DeliveryFormModal @success="handleRefresh" />
     <SfDeliveryFormModal @success="handleRefresh" />
+    <SfBatchDeliveryFormModal @success="handleRefresh" />
     <RemarkFormModal @success="handleRefresh" />
     <Grid table-title="订单列表">
+      <template #toolbar-tools>
+        <TableAction
+          :actions="[
+            {
+              label: `批量发货${selectedOrders.length ? ` (${selectedOrders.length})` : ''}`,
+              type: 'primary',
+              icon: ACTION_ICON.AUDIT,
+              auth: ['trade:logistics:sf-waybill:create'],
+              disabled:
+                selectedOrders.length === 0 || selectedOrders.length > 100,
+              onClick: handleBatchSfDelivery,
+            },
+          ]"
+        />
+      </template>
       <template #expand_content="{ row }">
         <List item-layout="vertical" :data-source="row.items">
           <template #renderItem="{ item }">

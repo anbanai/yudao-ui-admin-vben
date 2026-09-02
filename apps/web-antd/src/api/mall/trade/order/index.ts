@@ -44,6 +44,7 @@ export namespace MallOrderApi {
     receiverDetailAddress?: string; // 收件人详细地址
     afterSaleStatus?: number; // 售后状态
     refundPrice?: number; // 退款金额
+    refundStatus?: number; // 退款状态：0-未退款，10-部分退款，20-全部退款
     couponId?: number; // 优惠劵编号
     couponPrice?: number; // 优惠劵减免金额
     pointPrice?: number; // 积分抵扣的金额

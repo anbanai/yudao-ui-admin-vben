@@ -159,6 +159,11 @@ export function useGridFormSchema(): VbenFormSchema[] {
 export function useGridColumns(): VxeGridPropTypes.Columns {
   return [
     {
+      type: 'checkbox',
+      width: 48,
+      fixed: 'left',
+    },
+    {
       type: 'expand',
       width: 80,
       slots: { content: 'expand_content' },
