@@ -1,7 +1,5 @@
 /* eslint-disable vue/one-component-per-file */
-import type { FormDependenciesResolveContext, FormDependenciesResolvedState, FormValues } from '@vben/common-ui';
 import type { VbenFormSchema } from '#/adapter/form';
-import type { ZodType } from 'zod';
 
 import { PromotionProductScopeEnum } from '@vben/constants';
 import { globalShareState } from '@vben/common-ui';
@@ -30,15 +28,21 @@ const originalSelect = COMPONENT_MAP.Select;
 const originalInputEvent = COMPONENT_BIND_EVENT_MAP.Input;
 const originalSelectEvent = COMPONENT_BIND_EVENT_MAP.Select;
 
+type Dependencies = NonNullable<VbenFormSchema['dependencies']>;
+type Resolver = NonNullable<Extract<Dependencies, { resolve: unknown }>['resolve']>;
+type ResolverContext = Parameters<Resolver>[0];
+type ResolverResult = ReturnType<Resolver>;
+type ZodRule = Exclude<NonNullable<VbenFormSchema['rules']>, string>;
+
 function field(schema: VbenFormSchema[], name: string): VbenFormSchema {
   const found = schema.find((item) => item.fieldName === name);
   if (!found) throw new Error(`Missing ${name}`);
   return found;
 }
-function resolve(schema: VbenFormSchema[], name: string, values: FormValues): FormDependenciesResolvedState | undefined {
+function resolve(schema: VbenFormSchema[], name: string, values: ResolverContext['values']): ResolverResult {
   const dependencies = field(schema, name).dependencies;
   if (!dependencies || !('resolve' in dependencies) || !dependencies.resolve) throw new Error(`Missing resolver for ${name}`);
-  const context = { actions: {} as FormDependenciesResolveContext['actions'], controller: {} as FormDependenciesResolveContext['controller'], schema: {}, values } satisfies FormDependenciesResolveContext;
+  const context = { actions: {} as ResolverContext['actions'], controller: {} as ResolverContext['controller'], schema: {}, values } satisfies ResolverContext;
   const result = dependencies.resolve(context);
   if (result instanceof Promise) throw new Error('Expected synchronous resolver');
   return result;
@@ -48,7 +52,7 @@ function props(schema: VbenFormSchema[], name: string) {
   if (!result || typeof result === 'function') throw new Error(`Missing static props for ${name}`);
   return result;
 }
-function rule(schema: VbenFormSchema[], name: string): ZodType {
+function rule(schema: VbenFormSchema[], name: string): ZodRule {
   const result = field(schema, name).rules;
   if (!result || typeof result === 'string') throw new Error(`Missing Zod rule for ${name}`);
   return result;
