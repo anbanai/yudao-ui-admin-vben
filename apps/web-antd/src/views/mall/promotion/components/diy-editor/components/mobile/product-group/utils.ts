@@ -4,7 +4,10 @@ import type {
   ProductGroupSortType,
 } from './config';
 
-import { PRODUCT_GROUP_MENU_DEFAULTS } from './config';
+import {
+  component as PRODUCT_GROUP_COMPONENT,
+  PRODUCT_GROUP_MENU_DEFAULTS,
+} from './config';
 
 export const PRODUCT_GROUP_LIMIT = 15;
 export const PRODUCT_GROUP_PAGE_SIZE_MAX = 50;
@@ -20,25 +23,55 @@ interface ProductGroupLike {
   id?: number;
 }
 
-type LegacyProductGroupProperty = Omit<ProductGroupProperty, 'menu'> & {
+type LegacyProductGroupProperty = Partial<
+  Omit<ProductGroupProperty, 'menu'>
+> & {
+  categoryIds?: number[];
   menu?: Partial<ProductGroupMenuProperty>;
 };
 
 export function normalizeProductGroupProperty(
-  property: LegacyProductGroupProperty,
+  property: LegacyProductGroupProperty = {},
 ): ProductGroupProperty {
+  const defaults = PRODUCT_GROUP_COMPONENT.property;
   return {
+    ...defaults,
     ...property,
+    badge: {
+      ...defaults.badge,
+      ...property.badge,
+    },
+    fields: {
+      name: {
+        ...defaults.fields.name,
+        ...property.fields?.name,
+      },
+      price: {
+        ...defaults.fields.price,
+        ...property.fields?.price,
+      },
+    },
+    groupIds: normalizeGroupIds(property.groupIds),
     menu: {
       ...PRODUCT_GROUP_MENU_DEFAULTS,
       ...property.menu,
     },
+    style: {
+      ...defaults.style,
+      ...property.style,
+    },
   };
 }
 
-export function normalizeGroupIds(groupIds: number[]) {
+export function normalizeGroupIds(groupIds: unknown): number[] {
+  if (!Array.isArray(groupIds)) return [];
   return [
-    ...new Set(groupIds.filter((id) => Number.isInteger(id) && id > 0)),
+    ...new Set(
+      groupIds.filter(
+        (id): id is number =>
+          typeof id === 'number' && Number.isInteger(id) && id > 0,
+      ),
+    ),
   ].slice(0, PRODUCT_GROUP_LIMIT);
 }
 
@@ -51,7 +84,7 @@ export function clampProductGroupPageSize(pageSize: number) {
 }
 
 export function orderSelectedGroups<T extends ProductGroupLike>(
-  groupIds: number[],
+  groupIds: unknown,
   groups: T[],
 ) {
   const groupMap = new Map(

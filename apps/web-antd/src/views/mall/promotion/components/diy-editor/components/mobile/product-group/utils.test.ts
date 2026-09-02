@@ -8,6 +8,7 @@ import {
   createRequestGuard,
   getProductGroupValidationError,
   normalizeGroupIds,
+  normalizeProductGroupProperty,
   orderSelectedGroups,
 } from './utils';
 
@@ -39,6 +40,18 @@ describe('product group configuration', () => {
         ...Array.from({ length: 20 }, (_, i) => i + 3),
       ]),
     ).toEqual(Array.from({ length: 15 }, (_, i) => i + 1));
+  });
+
+  it('normalizes missing group ids in legacy product group data', () => {
+    expect(normalizeGroupIds(undefined)).toEqual([]);
+    expect(orderSelectedGroups(undefined, [{ id: 1 }])).toEqual([]);
+    expect(
+      normalizeProductGroupProperty({
+        groupIds: undefined,
+      }),
+    ).toMatchObject({
+      groupIds: [],
+    });
   });
 
   it('restores groups to the configured order and drops unavailable values', () => {
