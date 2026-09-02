@@ -10,6 +10,7 @@ describe('getComponentOverflow', () => {
   it('allows sticky product group menus to escape the component clip', () => {
     expect(getComponentOverflow('ProductGroup', true)).toBe('visible');
     expect(getComponentOverflow('ProductGroup', false)).toBe('hidden');
+    expect(getComponentOverflow('ProductCategory', true)).toBe('visible');
     expect(getComponentOverflow('ProductList', true)).toBe('hidden');
   });
 });

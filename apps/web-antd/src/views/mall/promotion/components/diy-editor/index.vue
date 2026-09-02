@@ -23,12 +23,19 @@ import draggable from 'vuedraggable';
 import ComponentContainer from './components/component-container.vue';
 import ComponentLibrary from './components/component-library.vue';
 import { componentConfigs, components } from './components/mobile';
+import { migrateLegacyProductGroupComponent } from './components/mobile/component-migration';
 import {
   isNavigationBarAlwaysShow,
   isNavigationBarShowType,
   component as NAVIGATION_BAR_COMPONENT,
 } from './components/mobile/navigation-bar/config';
 import { component as PAGE_CONFIG_COMPONENT } from './components/mobile/page-config/config';
+import {
+  clampProductCategoryPageSize,
+  getProductCategoryValidationError,
+  normalizeCategoryIds,
+  normalizeProductCategoryProperty,
+} from './components/mobile/product-category/utils';
 import {
   clampProductGroupPageSize,
   getProductGroupValidationError,
@@ -122,11 +129,14 @@ watch(
       (typeof modelValue !== 'string' && modelValue?.components) ||
       []
     ).map((item: any) => {
-      const component = componentConfigs[item.id];
-      const property =
-        item.id === 'ProductGroup'
-          ? normalizeProductGroupProperty(item.property)
-          : item.property;
+      const migratedItem = migrateLegacyProductGroupComponent(item);
+      const component = componentConfigs[migratedItem.id];
+      let property = migratedItem.property;
+      if (migratedItem.id === 'ProductGroup') {
+        property = normalizeProductGroupProperty(migratedItem.property);
+      } else if (migratedItem.id === 'ProductCategory') {
+        property = normalizeProductCategoryProperty(migratedItem.property);
+      }
       return { ...component, property };
     });
   },
@@ -156,14 +166,26 @@ watch(
 /** 保存 */
 function handleSave() {
   for (const [index, component] of pageComponents.value.entries()) {
-    if (component.id !== 'ProductGroup') continue;
-    component.property.groupIds = normalizeGroupIds(
-      component.property.groupIds || [],
-    );
-    component.property.pageSize = clampProductGroupPageSize(
-      component.property.pageSize,
-    );
-    const validationError = getProductGroupValidationError(component.property);
+    let validationError: string | undefined;
+    if (component.id === 'ProductGroup') {
+      component.property.groupIds = normalizeGroupIds(
+        component.property.groupIds || [],
+      );
+      component.property.pageSize = clampProductGroupPageSize(
+        component.property.pageSize,
+      );
+      validationError = getProductGroupValidationError(component.property);
+    } else if (component.id === 'ProductCategory') {
+      component.property.categoryIds = normalizeCategoryIds(
+        component.property.categoryIds || [],
+      );
+      component.property.pageSize = clampProductCategoryPageSize(
+        component.property.pageSize,
+      );
+      validationError = getProductCategoryValidationError(component.property);
+    } else {
+      continue;
+    }
     if (validationError) {
       handleComponentSelected(component, index);
       message.warning(validationError);
