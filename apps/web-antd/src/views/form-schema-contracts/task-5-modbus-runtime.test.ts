@@ -27,6 +27,10 @@ const modalState = vi.hoisted(() => ({
     config: { ip: '127.0.0.1', port: 502 },
     deviceId: 7,
     protocolType: 'modbus_tcp_client',
+  } as {
+    config?: { ip: string; port: number };
+    deviceId: number;
+    protocolType: string;
   },
   options: undefined as
     | { onOpenChange?: (open: boolean) => Promise<void> | void }
@@ -113,6 +117,20 @@ describe('modbus form dependency runtime contract', () => {
       'protocolType',
       modalState.data.protocolType,
     );
+
+    formState.api.setFieldValue.mockClear();
+    formState.api.setValues.mockClear();
+    modalState.data = {
+      config: undefined,
+      deviceId: 8,
+      protocolType: 'modbus_tcp_server',
+    };
+    await modalState.options?.onOpenChange?.(true);
+    expect(formState.api.setFieldValue).toHaveBeenCalledWith(
+      'protocolType',
+      'modbus_tcp_server',
+    );
+    expect(formState.api.setValues).not.toHaveBeenCalled();
 
     const resolve = (fieldName: string, protocolType: string) => {
       const field = schema?.find((item) => item.fieldName === fieldName);

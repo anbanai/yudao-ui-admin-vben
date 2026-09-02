@@ -186,13 +186,11 @@ const [Modal, modalApi] = useVbenModal({
       return;
     }
     deviceId.value = data.deviceId;
-    if (!data.config) {
-      return;
-    }
+    await formApi.setFieldValue('protocolType', data.protocolType);
+    if (!data.config) return;
     // 设置到 values
     formData.value = { ...data.config };
     await formApi.setValues(formData.value);
-    await formApi.setFieldValue('protocolType', data.protocolType);
   },
 });
 </script>
