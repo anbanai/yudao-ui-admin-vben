@@ -34,6 +34,36 @@ export type CouponTemplateFormValues = Omit<
   validTimes?: Date[];
 };
 
+export interface CouponScopeChangeEvent {
+  target: { value: number };
+}
+
+interface CouponScopeFormApi {
+  setValues(values: CouponTemplateFormValues): Promise<unknown>;
+}
+
+interface CouponSubmitFormApi {
+  getValues(): Promise<CouponTemplateFormValues>;
+  validate(): Promise<{ valid: boolean }>;
+}
+
+interface CouponSubmitModalApi {
+  close(): Promise<unknown>;
+  lock(): void;
+  unlock(): void;
+}
+
+interface CouponOpenFormApi {
+  reset(options: { values: CouponTemplateFormValues }): Promise<unknown>;
+  setValues(values: CouponTemplateFormValues): Promise<unknown>;
+}
+
+interface CouponOpenModalApi {
+  getData(): unknown;
+  lock(): void;
+  unlock(): void;
+}
+
 type CouponTemplateLoadData = Pick<
   MallCouponTemplateApi.CouponTemplate,
   'discountLimitPrice' | 'discountPrice' | 'usePrice'
@@ -137,45 +167,86 @@ export function processCouponSubmitData(
   } as MallCouponTemplateApi.CouponTemplate;
 }
 
-export function createCouponFormController() {
-  const controller = {
-    locked: false,
-    metrics: { resolves: 0, writes: 0 },
-    values: createDefaultCouponFormData(),
-    async changeProductScope(productScope: number) {
-      controller.metrics.resolves++;
-      controller.values = {
-        ...controller.values,
+export function createCouponScopeChangeHandler(formApi: CouponScopeFormApi) {
+  let pending = Promise.resolve();
+  return (event: CouponScopeChangeEvent) => {
+    const productScope = event.target.value;
+    pending = pending.then(async () => {
+      await formApi.setValues({
         productCategoryIds: undefined,
         productScope,
         productSpuIds: [],
-      };
-      controller.metrics.writes++;
-    },
-    async close() {
-      controller.values = createDefaultCouponFormData();
-    },
-    async hydrate(data: CouponTemplateLoadData) {
-      controller.values = processCouponLoadData(data);
-    },
-    async open() {
-      controller.values = createDefaultCouponFormData();
-    },
-    async submit(
-      request: (data: MallCouponTemplateApi.CouponTemplate) => Promise<unknown>,
-    ) {
-      controller.locked = true;
-      try {
-        await request(processCouponSubmitData(controller.values));
-      } finally {
-        controller.locked = false;
-      }
-    },
-    async toPayload() {
-      return processCouponSubmitData(controller.values);
-    },
+      });
+    });
+    return pending;
   };
-  return controller;
+}
+
+export async function submitCouponTemplateForm({
+  createCouponTemplate,
+  editingId,
+  formApi,
+  modalApi,
+  onSuccess,
+  updateCouponTemplate,
+}: {
+  createCouponTemplate: (
+    data: MallCouponTemplateApi.CouponTemplate,
+  ) => Promise<unknown>;
+  editingId: number | undefined;
+  formApi: CouponSubmitFormApi;
+  modalApi: CouponSubmitModalApi;
+  onSuccess: () => void;
+  updateCouponTemplate: (
+    data: MallCouponTemplateApi.CouponTemplate,
+  ) => Promise<unknown>;
+}) {
+  const { valid } = await formApi.validate();
+  if (!valid) return false;
+  modalApi.lock();
+  try {
+    const data = processCouponSubmitData(await formApi.getValues());
+    await (editingId ? updateCouponTemplate(data) : createCouponTemplate(data));
+    await modalApi.close();
+    onSuccess();
+    return true;
+  } finally {
+    modalApi.unlock();
+  }
+}
+
+export async function syncCouponTemplateFormOpen({
+  formApi,
+  getCouponTemplate,
+  isOpen,
+  modalApi,
+  setEditingId,
+}: {
+  formApi: CouponOpenFormApi;
+  getCouponTemplate: (id: number) => Promise<CouponTemplateLoadData>;
+  isOpen: boolean;
+  modalApi: CouponOpenModalApi;
+  setEditingId: (id: number | undefined) => void;
+}) {
+  if (!isOpen) {
+    setEditingId(undefined);
+    await formApi.reset({ values: createDefaultCouponFormData() });
+    return;
+  }
+  const data = modalApi.getData() as { id?: number } | undefined;
+  if (!data?.id) {
+    setEditingId(undefined);
+    await formApi.reset({ values: createDefaultCouponFormData() });
+    return;
+  }
+  modalApi.lock();
+  try {
+    const result = await getCouponTemplate(data.id);
+    setEditingId(result.id);
+    await formApi.setValues(processCouponLoadData(result));
+  } finally {
+    modalApi.unlock();
+  }
 }
 
 import {
@@ -188,7 +259,9 @@ import {
 
 /** 新增/修改的表单 */
 export function useFormSchema(
-  onProductScopeChange?: (productScope: number) => Promise<void> | void,
+  onProductScopeChange?: (
+    event: CouponScopeChangeEvent,
+  ) => Promise<void> | void,
 ): VbenFormSchema[] {
   return [
     {
@@ -219,8 +292,8 @@ export function useFormSchema(
       component: 'RadioGroup',
       componentProps: {
         options: getDictOptions(DICT_TYPE.PROMOTION_PRODUCT_SCOPE, 'number'),
-        onChange: async (productScope: number) => {
-          await onProductScopeChange?.(productScope);
+        onChange: async (event: CouponScopeChangeEvent) => {
+          await onProductScopeChange?.(event);
         },
       },
       rules: 'required',

@@ -1,11 +1,7 @@
 <script lang="ts" setup>
-import type { MallCouponTemplateApi } from '#/api/mall/promotion/coupon/couponTemplate';
-
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import {} from '@vben/constants';
-
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
@@ -19,10 +15,10 @@ import { ProductCategorySelect } from '#/views/mall/product/category/components'
 import { SpuShowcase } from '#/views/mall/product/spu/components';
 
 import {
-  createDefaultCouponFormData,
+  createCouponScopeChangeHandler,
   type CouponTemplateFormValues,
-  processCouponLoadData,
-  processCouponSubmitData,
+  submitCouponTemplateForm,
+  syncCouponTemplateFormOpen,
   useFormSchema,
 } from '../data';
 
@@ -34,6 +30,12 @@ const getTitle = computed(() => {
     : $t('ui.actionTitle.create', ['优惠券模板']);
 });
 
+const handleProductScopeChange = createCouponScopeChangeHandler({
+  async setValues(values) {
+    await formApi.setValues(values);
+  },
+});
+
 const [Form, formApi] = useVbenForm<CouponTemplateFormValues>({
   commonConfig: {
     componentProps: {
@@ -43,61 +45,34 @@ const [Form, formApi] = useVbenForm<CouponTemplateFormValues>({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: useFormSchema(async (productScope) => {
-    await formApi.setValues({
-      productCategoryIds: undefined,
-      productScope,
-      productSpuIds: [],
-    });
-  }),
+  schema: useFormSchema(handleProductScopeChange),
   showDefaultActions: false,
 });
 
 const [Modal, modalApi] = useVbenModal({
   async onConfirm() {
-    const { valid } = await formApi.validate();
-    if (!valid) {
-      return;
-    }
-    modalApi.lock();
-    // 提交表单
-    const formValues = await formApi.getValues();
-    const data = processCouponSubmitData(formValues);
-    try {
-      await (editingId.value
-        ? updateCouponTemplate(data)
-        : createCouponTemplate(data));
-      // 关闭并提示
-      await modalApi.close();
-      emit('success');
-      message.success($t('ui.actionMessage.operationSuccess'));
-    } finally {
-      modalApi.unlock();
-    }
+    await submitCouponTemplateForm({
+      createCouponTemplate,
+      editingId: editingId.value,
+      formApi,
+      modalApi,
+      onSuccess() {
+        emit('success');
+        message.success($t('ui.actionMessage.operationSuccess'));
+      },
+      updateCouponTemplate,
+    });
   },
   async onOpenChange(isOpen: boolean) {
-    if (!isOpen) {
-      editingId.value = undefined;
-      await formApi.reset({ values: createDefaultCouponFormData() });
-      return;
-    }
-    // 加载数据
-    const data = modalApi.getData() as MallCouponTemplateApi.CouponTemplate;
-    if (!data || !data.id) {
-      editingId.value = undefined;
-      await formApi.reset({ values: createDefaultCouponFormData() });
-      return;
-    }
-    modalApi.lock();
-    try {
-      const result = await getCouponTemplate(data.id);
-      editingId.value = result.id;
-      const processedData = processCouponLoadData(result);
-      // 设置到表单
-      await formApi.setValues(processedData);
-    } finally {
-      modalApi.unlock();
-    }
+    await syncCouponTemplateFormOpen({
+      formApi,
+      getCouponTemplate,
+      isOpen,
+      modalApi,
+      setEditingId(id) {
+        editingId.value = id;
+      },
+    });
   },
 });
 </script>

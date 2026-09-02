@@ -11,7 +11,7 @@ import { updateOrderPrice } from '#/api/mall/trade/order';
 import { $t } from '#/locales';
 import { withOperationFeedback } from '#/utils/operation-feedback';
 
-import { calculateNewPayPrice, usePriceFormSchema } from '../data';
+import { createOrderPriceChangeHandler, usePriceFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
 
@@ -20,6 +20,15 @@ const formData = ref({
   payPrice: '0',
   adjustPrice: '0',
   newPayPrice: '0',
+});
+
+const handleAdjustPriceChange = createOrderPriceChangeHandler({
+  async getValues() {
+    return await formApi.getValues();
+  },
+  async setFieldValue(fieldName, value) {
+    await formApi.setFieldValue(fieldName, value);
+  },
 });
 
 const [Form, formApi] = useVbenForm({
@@ -31,13 +40,7 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: usePriceFormSchema(async (adjustPrice) => {
-    const values = await formApi.getValues();
-    await formApi.setFieldValue(
-      'newPayPrice',
-      calculateNewPayPrice(values.payPrice, adjustPrice),
-    );
-  }),
+  schema: usePriceFormSchema(handleAdjustPriceChange),
   showDefaultActions: false,
 });
 

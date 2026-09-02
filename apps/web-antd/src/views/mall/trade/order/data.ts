@@ -306,6 +306,25 @@ export function calculateNewPayPrice(
   );
 }
 
+interface OrderPriceFormApi {
+  getValues(): Promise<{ payPrice?: number | string }>;
+  setFieldValue(fieldName: 'newPayPrice', value: string): Promise<unknown>;
+}
+
+export function createOrderPriceChangeHandler(formApi: OrderPriceFormApi) {
+  let pending = Promise.resolve();
+  return (adjustPrice: number) => {
+    pending = pending.then(async () => {
+      const values = await formApi.getValues();
+      await formApi.setFieldValue(
+        'newPayPrice',
+        calculateNewPayPrice(values.payPrice ?? 0, adjustPrice),
+      );
+    });
+    return pending;
+  };
+}
+
 export function usePriceFormSchema(
   onAdjustPriceChange?: (adjustPrice: number) => Promise<void> | void,
 ): VbenFormSchema[] {

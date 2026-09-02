@@ -5,12 +5,15 @@ import ts from 'typescript';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { scanSource } from '../../../../../scripts/vsh/src/check-web-antd-contracts/scanner';
+
 vi.mock('#/api/mall/trade/delivery/pickUpStore', () => ({
   getSimpleDeliveryPickUpStoreList: vi.fn().mockResolvedValue([]),
 }));
 
 import {
   calculateNewPayPrice,
+  createOrderPriceChangeHandler,
   usePriceFormSchema,
 } from '#/views/mall/trade/order/data';
 
@@ -45,6 +48,16 @@ function dependencyProblems(file: string): string[] {
     ts.ScriptKind.TS,
   );
   const problems: string[] = [];
+  problems.push(
+    ...scanSource(raw, path.relative(process.cwd(), file))
+      .filter(({ ruleId }) =>
+        ['VF001', 'VF002', 'VF003', 'VF004'].includes(ruleId),
+      )
+      .map(
+        ({ column, line, ruleId }) =>
+          `${path.relative(process.cwd(), file)}:${line}:${column} ${ruleId}`,
+      ),
+  );
 
   function visit(node: ts.Node) {
     if (
@@ -72,8 +85,18 @@ function dependencyProblems(file: string): string[] {
           'show',
         ].includes(propertyName(item) ?? ''),
       );
+      const unsupported = properties.filter(
+        (item) =>
+          !['resolve', 'triggerFields'].includes(propertyName(item) ?? ''),
+      );
+      if (unsupported.length > 0) {
+        problems.push(`${location} unsupported dependency shape`);
+      }
       if (legacy.length > 0 || (trigger && !resolver)) {
         problems.push(`${location} legacy dependency callbacks`);
+      }
+      if (resolver && !trigger) {
+        problems.push(`${location} resolver missing trigger fields`);
       }
       if (
         trigger &&
@@ -129,6 +152,56 @@ function dependencyProblems(file: string): string[] {
           );
         }
       }
+      if (resolver) {
+        const functionNode = ts.isMethodDeclaration(resolver)
+          ? resolver
+          : ts.isPropertyAssignment(resolver) &&
+              (ts.isArrowFunction(resolver.initializer) ||
+                ts.isFunctionExpression(resolver.initializer))
+            ? resolver.initializer
+            : undefined;
+        if (functionNode?.body) {
+          let hasAwait = false;
+          let returnedObject: ts.ObjectLiteralExpression | undefined;
+          function inspect(current: ts.Node) {
+            if (ts.isAwaitExpression(current)) hasAwait = true;
+            if (
+              !returnedObject &&
+              ts.isReturnStatement(current) &&
+              current.expression &&
+              ts.isObjectLiteralExpression(current.expression)
+            ) {
+              returnedObject = current.expression;
+            }
+            ts.forEachChild(current, inspect);
+          }
+          inspect(functionNode.body);
+          const isAsync = functionNode.modifiers?.some(
+            ({ kind }) => kind === ts.SyntaxKind.AsyncKeyword,
+          );
+          if (hasAwait && !isAsync)
+            problems.push(`${location} await without async`);
+          if (returnedObject) {
+            const expectedOrder = [
+              'if',
+              'show',
+              'componentProps',
+              'rules',
+              'disabled',
+              'required',
+            ];
+            const actual = returnedObject.properties
+              .map(propertyName)
+              .filter((key): key is string => Boolean(key));
+            const sorted = [...actual].sort(
+              (a, b) => expectedOrder.indexOf(a) - expectedOrder.indexOf(b),
+            );
+            if (actual.join() !== sorted.join()) {
+              problems.push(`${location} result order=${actual.join(',')}`);
+            }
+          }
+        }
+      }
     }
     ts.forEachChild(node, visit);
   }
@@ -147,11 +220,21 @@ describe('Task 4 wave-two dependency migration', () => {
     expect(problems).toEqual([]);
   });
 
-  it('writes derived order prices only at the rapid user-change boundary', async () => {
+  it('serializes real async order price reads and writes so the latest event wins', async () => {
     const writes: string[] = [];
-    const schema = usePriceFormSchema(async (adjustPrice) => {
-      writes.push(calculateNewPayPrice('10.00', adjustPrice));
+    let reads = 0;
+    const handler = createOrderPriceChangeHandler({
+      async getValues() {
+        reads++;
+        await Promise.resolve();
+        return { payPrice: '10.00' };
+      },
+      async setFieldValue(_field, value) {
+        await Promise.resolve();
+        writes.push(value);
+      },
     });
+    const schema = usePriceFormSchema(handler);
     const props = schema.find(({ fieldName }) => fieldName === 'adjustPrice')
       ?.componentProps as { onChange?: (value: number) => Promise<void> };
     expect(writes).toEqual([]);
@@ -160,6 +243,8 @@ describe('Task 4 wave-two dependency migration', () => {
       props.onChange?.(-2),
       props.onChange?.(3),
     ]);
+    expect(reads).toBe(3);
     expect(writes).toEqual(['11.00', '8.00', '13.00']);
+    expect(writes.at(-1)).toBe(calculateNewPayPrice('10.00', 3));
   });
 });
