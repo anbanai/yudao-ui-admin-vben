@@ -216,7 +216,7 @@ watch(
             }}
           </template>
           <div v-if="!selectedTeamId">
-            <div class="py-8 text-center text-gray-400">
+            <div class="py-8 text-center text-muted-foreground">
               请点击左侧班组查看成员
             </div>
           </div>

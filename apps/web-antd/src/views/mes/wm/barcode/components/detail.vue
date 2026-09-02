@@ -129,7 +129,7 @@ async function handleGenerate() {
   <Modal v-model:open="open" title="查看条码" width="500px">
     <div>
       <div
-        class="mb-5 flex min-h-50 items-center justify-center rounded bg-gray-100 p-5"
+        class="mb-5 flex min-h-50 items-center justify-center rounded bg-muted p-5"
       >
         <div
           v-if="barcodeData.content"

@@ -71,7 +71,7 @@ onMounted(loadGanttData);
     </template>
 
     <div class="mb-3 flex items-center justify-between">
-      <span class="text-sm text-gray-500">
+      <span class="text-sm text-muted-foreground">
         可直接拖拽/拉伸任务条，或双击编辑开始时间和时长，修改后点击「批量保存」
       </span>
       <div class="flex items-center gap-3">

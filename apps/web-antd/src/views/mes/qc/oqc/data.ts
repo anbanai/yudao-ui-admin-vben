@@ -171,7 +171,7 @@ export function useFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['sourceDocId'],
-        resolve: async ({ values }) => ({
+        resolve: ({ values }) => ({
           componentProps: {
             class: '!w-full',
             disabled: !!values.sourceDocId,

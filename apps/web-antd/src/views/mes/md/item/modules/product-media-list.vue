@@ -234,13 +234,13 @@ watch(
           />
           <div
             v-else
-            class="flex h-40 w-full items-center justify-center bg-gray-100 text-gray-400"
+            class="flex h-40 w-full items-center justify-center bg-muted text-muted-foreground"
           >
             暂无图片
           </div>
           <div class="p-3">
             <div class="mb-1 truncate text-sm font-bold">{{ item.title }}</div>
-            <div v-if="item.description" class="truncate text-xs text-gray-500">
+            <div v-if="item.description" class="truncate text-xs text-muted-foreground">
               {{ item.description }}
             </div>
             <div v-if="!isReadOnly" class="mt-2 flex justify-end">

@@ -55,7 +55,7 @@ function handleColorChange(event: Event) {
   block-size: 28px;
   padding: 2px;
   cursor: pointer;
-  border: 1px solid var(--ant-color-border, #d9d9d9);
+  border: 1px solid var(--ant-color-border, hsl(var(--border)));
   border-radius: 4px;
 }
 

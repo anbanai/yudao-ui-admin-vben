@@ -128,7 +128,7 @@ const hasFestivalDay = computed(() => {
       <div
         v-for="shift in displayShifts"
         :key="shift.key"
-        class="block w-full truncate rounded-sm px-1 py-px text-[11px] leading-normal text-white"
+        class="block w-full truncate rounded-sm px-1 py-px text-[11px] leading-normal text-primary-foreground"
         :class="shift.bgClass"
       >
         {{ shift.label }}

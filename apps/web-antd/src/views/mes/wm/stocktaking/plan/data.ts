@@ -328,7 +328,7 @@ export function useParamFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       // 条件值控件内部按条件类型切换选择器，仅选择类型后展示
       dependencies: {
         triggerFields: ['type', 'valueCode'],
-        resolve: async ({ values }) => ({
+        resolve: ({ values }) => ({
           if: values.type !== null,
           componentProps: {
             type: values.type,

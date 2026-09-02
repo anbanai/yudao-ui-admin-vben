@@ -376,7 +376,7 @@ export function useLineFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['warehouseId'],
-        resolve: async ({ values }) => ({
+        resolve: ({ values }) => ({
           componentProps: {
             // 切换库区后清空库位
             onChange: async () => {
