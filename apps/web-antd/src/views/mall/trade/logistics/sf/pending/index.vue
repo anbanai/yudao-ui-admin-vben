@@ -32,6 +32,7 @@ import {
   isReadyPrintDevice,
   selectReadyPrintDeviceId,
 } from '../devices/setup-state';
+import { createLatestRequestGuard, removePendingOrders } from './pending-state';
 
 const loading = ref(false);
 const batchSubmitting = ref(false);
@@ -42,6 +43,7 @@ const devices = ref<MallSfLogisticsApi.Device[]>([]);
 const selected = ref<Array<number | string>>([]);
 const accountId = ref<number>();
 const deviceId = ref<number>();
+const loadGuard = createLatestRequestGuard();
 
 const columns = [
   { title: '订单号', dataIndex: 'no' },
@@ -64,13 +66,18 @@ const deviceOptions = computed(() =>
 );
 
 async function load() {
+  const requestId = loadGuard.begin();
   loading.value = true;
   try {
-    [orders.value, accounts.value, devices.value] = await Promise.all([
+    const [nextOrders, nextAccounts, nextDevices] = await Promise.all([
       getPendingLogisticsOrders(),
       getSfAccounts(),
       getPrintDevices(),
     ]);
+    if (!loadGuard.isLatest(requestId)) return;
+    orders.value = nextOrders;
+    accounts.value = nextAccounts;
+    devices.value = nextDevices;
     const enabledAccounts = accounts.value.filter((item) => item.status === 0);
     if (!enabledAccounts.some((item) => item.id === accountId.value)) {
       accountId.value =
@@ -79,7 +86,9 @@ async function load() {
     }
     deviceId.value = selectReadyPrintDeviceId(devices.value, deviceId.value);
   } finally {
-    loading.value = false;
+    if (loadGuard.isLatest(requestId)) {
+      loading.value = false;
+    }
   }
 }
 
@@ -108,6 +117,7 @@ async function createOne(orderId: number) {
       return;
     }
     message.success(`运单 ${result.waybillNo} 已进入打印队列`);
+    orders.value = removePendingOrders(orders.value, [result.orderId]);
     await load();
   } finally {
     const next = new Set(submittingOrderIds.value);
@@ -138,6 +148,10 @@ async function createBatch() {
     const failed = results.filter(
       (item) => !isPrintTaskQueued(item.printStatus),
     );
+    const queuedOrderIds = results
+      .filter((item) => isPrintTaskQueued(item.printStatus))
+      .map((item) => item.orderId);
+    orders.value = removePendingOrders(orders.value, queuedOrderIds);
     failed.length > 0
       ? message.warning(
           `${failed.length} 个订单未生成打印任务，请到运单管理查看`,
