@@ -27,6 +27,7 @@ export namespace InfraFileConfigApi {
     name: string;
     storage?: number;
     master: boolean;
+    private: boolean;
     visible: boolean;
     config: FileClientConfig;
     remark: string;

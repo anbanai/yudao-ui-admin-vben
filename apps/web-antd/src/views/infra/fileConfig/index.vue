@@ -7,7 +7,7 @@ import { ref } from 'vue';
 import { confirm, Page, useVbenModal } from '@vben/common-ui';
 import { isEmpty, openWindow } from '@vben/utils';
 
-import { message } from 'ant-design-vue';
+import { message, Tag } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -42,7 +42,7 @@ function handleEdit(row: InfraFileConfigApi.FileConfig) {
   formModalApi.setData(row).open();
 }
 
-/** 设为主配置 */
+/** 设为所属访问类型的默认配置 */
 async function handleMaster(row: InfraFileConfigApi.FileConfig) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.updating', [row.name]),
@@ -180,6 +180,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
           ]"
         />
       </template>
+      <template #access-type="{ row }">
+        <Tag :color="row.private ? 'orange' : 'blue'">
+          {{ row.private ? '私有' : '公开' }}
+        </Tag>
+      </template>
+      <template #master-status="{ row }">
+        <Tag :color="row.master ? 'green' : 'default'">
+          {{ row.master ? `${row.private ? '私有' : '公开'}默认` : '非默认' }}
+        </Tag>
+      </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
@@ -198,13 +208,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
               onClick: handleTest.bind(null, row),
             },
             {
-              label: '主配置',
+              label: `设为${row.private ? '私有' : '公开'}默认`,
               type: 'link',
               icon: ACTION_ICON.ADD,
               auth: ['infra:file-config:update'],
               disabled: row.master,
               popConfirm: {
-                title: `是否要将${row.name}设为主配置？`,
+                title: `是否要将${row.name}设为${row.private ? '私有' : '公开'}默认存储？`,
                 confirm: handleMaster.bind(null, row),
               },
             },

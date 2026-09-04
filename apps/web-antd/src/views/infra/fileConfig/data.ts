@@ -344,13 +344,16 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       minWidth: 150,
     },
     {
-      field: 'master',
-      title: '主配置',
+      field: 'private',
+      title: '访问方式',
       minWidth: 100,
-      cellRender: {
-        name: 'CellDict',
-        props: { type: DICT_TYPE.INFRA_BOOLEAN_STRING },
-      },
+      slots: { default: 'access-type' },
+    },
+    {
+      field: 'master',
+      title: '默认状态',
+      minWidth: 120,
+      slots: { default: 'master-status' },
     },
     {
       field: 'createTime',
@@ -360,7 +363,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       title: '操作',
-      width: 240,
+      width: 300,
       fixed: 'right',
       slots: { default: 'actions' },
     },
