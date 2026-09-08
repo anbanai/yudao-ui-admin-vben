@@ -38,16 +38,6 @@ export namespace MallSfLogisticsApi {
     configFile?: string;
   }
 
-  export interface PendingOrder {
-    id: number;
-    no: string;
-    receiverName: string;
-    receiverMobile: string;
-    productCount: number;
-    payPrice: number;
-    createTime: number | string;
-  }
-
   export interface Waybill {
     id: number;
     orderId: number;
@@ -122,8 +112,6 @@ export const createDiagnosticPayload = (data: {
   paperHeightMm: number;
   paperWidthMm: number;
 }) => requestClient.post<string>(`${baseUrl}/diagnostics/test-payload`, data);
-export const getPendingLogisticsOrders = () =>
-  requestClient.get<MallSfLogisticsApi.PendingOrder[]>(`${baseUrl}/pending`);
 export const createSfWaybill = (data: {
   accountId?: number;
   deviceId?: number;
