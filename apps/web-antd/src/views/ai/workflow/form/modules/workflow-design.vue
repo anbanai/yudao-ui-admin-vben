@@ -222,7 +222,9 @@ defineExpose({ validate });
       <fieldset
         class="min-inline-size-auto m-0 rounded-lg border border-border px-3 py-4"
       >
-        <legend class="ml-2 px-2.5 text-base font-semibold text-muted-foreground">
+        <legend
+          class="ml-2 px-2.5 text-base font-semibold text-muted-foreground"
+        >
           <h3>运行参数配置</h3>
         </legend>
         <div class="p-2">
@@ -261,7 +263,9 @@ defineExpose({ validate });
       <fieldset
         class="m-0 mt-10 rounded-lg border border-border bg-card px-3 py-4"
       >
-        <legend class="ml-2 px-2.5 text-base font-semibold text-muted-foreground">
+        <legend
+          class="ml-2 px-2.5 text-base font-semibold text-muted-foreground"
+        >
           <h3>运行结果</h3>
         </legend>
         <div class="p-2">

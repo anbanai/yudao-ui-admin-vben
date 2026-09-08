@@ -1,3 +1,4 @@
+// oxlint-disable unicorn/no-array-callback-reference, unicorn/no-array-sort, unicorn/require-array-join-separator, vitest/prefer-lowercase-title, no-nested-ternary
 import type { VbenFormSchema } from '#/adapter/form';
 
 import fs from 'node:fs';
@@ -11,8 +12,8 @@ import { useFormSchema as aiModelSchema } from '#/views/ai/model/model/data';
 import { useFormSchema as listenerSchema } from '#/views/bpm/processListener/data';
 import {
   applyProductUpdate as applyBusinessProductUpdate,
-  calculateProductTotals as calculateBusinessTotals,
   useFormSchema as businessSchema,
+  calculateProductTotals as calculateBusinessTotals,
 } from '#/views/crm/business/data';
 import { schema as contractConfigSchema } from '#/views/crm/contract/config/data';
 import {
@@ -83,7 +84,7 @@ function onChange(result: Awaited<ReturnType<typeof resolve>>) {
   }
   const handler = Reflect.get(componentProps, 'onChange');
   if (typeof handler !== 'function') throw new Error('Missing change handler');
-  return handler as (value?: number | string | boolean) => void | Promise<void>;
+  return handler as (value?: boolean | number | string) => Promise<void> | void;
 }
 
 function actionsWith(setFieldValue: ReturnType<typeof vi.fn>) {

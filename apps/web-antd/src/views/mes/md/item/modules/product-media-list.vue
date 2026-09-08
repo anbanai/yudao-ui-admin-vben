@@ -240,7 +240,10 @@ watch(
           </div>
           <div class="p-3">
             <div class="mb-1 truncate text-sm font-bold">{{ item.title }}</div>
-            <div v-if="item.description" class="truncate text-xs text-muted-foreground">
+            <div
+              v-if="item.description"
+              class="truncate text-xs text-muted-foreground"
+            >
               {{ item.description }}
             </div>
             <div v-if="!isReadOnly" class="mt-2 flex justify-end">

@@ -1,14 +1,17 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import type { Component } from 'vue';
 
-import ts from 'typescript';
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { createApp, defineComponent, h, nextTick } from 'vue';
+
+import ts from 'typescript';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { scanSource } from '../../../../../scripts/vsh/src/check-web-antd-contracts/scanner';
 
 import AgeRangeField from '#/views/hrm/recruit/post/modules/age-range-field.vue';
 import SalaryRangeField from '#/views/hrm/recruit/post/modules/salary-range-field.vue';
+
+import { scanSource } from '../../../../../scripts/vsh/src/check-web-antd-contracts/scanner';
 
 vi.mock('ant-design-vue', () => ({
   Checkbox: defineComponent({
@@ -28,8 +31,8 @@ vi.mock('ant-design-vue', () => ({
     },
   }),
   InputNumber: defineComponent({
-    emits: ['update:value'],
     props: { placeholder: String },
+    emits: ['update:value'],
     setup(props, { emit }) {
       return () =>
         h('div', [

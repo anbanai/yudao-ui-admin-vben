@@ -178,9 +178,21 @@ async function handleExport() {
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     codec: createNumberRangesCodec([
-      { rangeField: 'totalQuantityRange', minField: 'totalQuantityMin', maxField: 'totalQuantityMax' },
-      { rangeField: 'totalPriceRange', minField: 'totalPriceMin', maxField: 'totalPriceMax' },
-      { rangeField: 'actualPriceRange', minField: 'actualPriceMin', maxField: 'actualPriceMax' },
+      {
+        rangeField: 'totalQuantityRange',
+        minField: 'totalQuantityMin',
+        maxField: 'totalQuantityMax',
+      },
+      {
+        rangeField: 'totalPriceRange',
+        minField: 'totalPriceMin',
+        maxField: 'totalPriceMax',
+      },
+      {
+        rangeField: 'actualPriceRange',
+        minField: 'actualPriceMin',
+        maxField: 'actualPriceMax',
+      },
     ]),
     collapsed: true,
     schema: useGridFormSchema(),

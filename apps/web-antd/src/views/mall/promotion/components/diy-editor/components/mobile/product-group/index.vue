@@ -174,8 +174,8 @@ onMounted(async () => {
   display: flex;
   width: 100%;
   overflow-x: auto;
-  border-bottom: 1px solid rgb(0 0 0 / 6%);
   scrollbar-width: none;
+  border-bottom: 1px solid rgb(0 0 0 / 6%);
 }
 
 .product-group-menu--horizontal::-webkit-scrollbar {
@@ -183,11 +183,11 @@ onMounted(async () => {
 }
 
 .product-group-menu--vertical {
+  flex-shrink: 0;
   align-self: flex-start;
   width: 88px;
   max-height: 100dvh;
   overflow-y: auto;
-  flex-shrink: 0;
 }
 
 .product-group-menu__item {
@@ -199,9 +199,9 @@ onMounted(async () => {
   font-size: 13px;
   line-height: 20px;
   letter-spacing: 0;
-  border: 0;
-  outline: 0;
   cursor: pointer;
+  outline: 0;
+  border: 0;
 }
 
 .product-group-menu--horizontal .product-group-menu__item {

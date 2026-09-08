@@ -233,7 +233,10 @@ defineExpose({ validate });
             </span>
             <Tag v-if="dimension.allowEdit" color="success">允许员工填写</Tag>
           </div>
-          <div v-if="dimension.remark" class="mt-1 text-xs text-muted-foreground">
+          <div
+            v-if="dimension.remark"
+            class="mt-1 text-xs text-muted-foreground"
+          >
             {{ dimension.remark }}
           </div>
         </div>

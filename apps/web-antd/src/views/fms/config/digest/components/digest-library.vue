@@ -203,7 +203,9 @@ function resetForm() {
           />
         </template>
       </Grid>
-      <div class="mt-2 text-xs text-muted-foreground">双击摘要可直接套用到当前分录</div>
+      <div class="mt-2 text-xs text-muted-foreground">
+        双击摘要可直接套用到当前分录
+      </div>
     </div>
   </Modal>
 </template>

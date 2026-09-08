@@ -81,7 +81,7 @@ function useFormSchema(): VbenFormSchema[] {
               value: item.id,
               label: `${item.name} (${item.identifier})`,
             }))
-            .sort((left, right) => {
+            .toSorted((left, right) => {
               if (left.value === selectedId) return -1;
               if (right.value === selectedId) return 1;
               return 0;
@@ -163,14 +163,16 @@ function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['rawDataType'],
-        resolve: ({ values }) => ({ componentProps: {
-          options: values.rawDataType
-            ? getByteOrderOptions(values.rawDataType).map((item) => ({
-                value: item.value,
-                label: `${item.label} - ${item.description}`,
-              }))
-            : [],
-        }}),
+        resolve: ({ values }) => ({
+          componentProps: {
+            options: values.rawDataType
+              ? getByteOrderOptions(values.rawDataType).map((item) => ({
+                  value: item.value,
+                  label: `${item.label} - ${item.description}`,
+                }))
+              : [],
+          },
+        }),
       },
       rules: 'required',
     },

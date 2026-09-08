@@ -104,7 +104,9 @@ function handleIconError(index: number) {
               {{ page.title }}
             </div>
             <!-- 描述 -->
-            <div class="mb-1 line-clamp-2 text-xs leading-snug text-muted-foreground">
+            <div
+              class="mb-1 line-clamp-2 text-xs leading-snug text-muted-foreground"
+            >
               {{ page.snippet }}
             </div>
             <!-- URL -->
@@ -150,7 +152,9 @@ function handleIconError(index: number) {
         <div class="space-y-4">
           <!-- 简短描述 -->
           <div>
-            <div class="mb-2 text-sm font-semibold text-muted-foreground">简短描述</div>
+            <div class="mb-2 text-sm font-semibold text-muted-foreground">
+              简短描述
+            </div>
             <div
               class="rounded-lg bg-muted p-3 text-sm leading-relaxed text-muted-foreground"
             >
@@ -159,7 +163,9 @@ function handleIconError(index: number) {
           </div>
           <!-- 内容摘要 -->
           <div v-if="selectedResult.summary">
-            <div class="mb-2 text-sm font-semibold text-muted-foreground">内容摘要</div>
+            <div class="mb-2 text-sm font-semibold text-muted-foreground">
+              内容摘要
+            </div>
             <div
               class="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-lg bg-muted p-3 text-sm leading-relaxed text-muted-foreground"
             >

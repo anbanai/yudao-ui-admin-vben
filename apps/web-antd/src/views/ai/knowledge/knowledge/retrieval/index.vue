@@ -105,7 +105,9 @@ onMounted(() => {
               :rows="8"
               placeholder="请输入文本"
             />
-            <div class="absolute bottom-2 right-2 text-sm text-muted-foreground">
+            <div
+              class="absolute bottom-2 right-2 text-sm text-muted-foreground"
+            >
               {{ queryParams.content?.length }} / 200
             </div>
           </div>
@@ -180,7 +182,9 @@ onMounted(() => {
                 {{ segment.content }}
               </div>
               <div class="flex items-center justify-between gap-8">
-                <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                <div
+                  class="flex items-center gap-1 text-sm text-muted-foreground"
+                >
                   <IconifyIcon icon="lucide:file-text" />
                   <span>{{ segment.documentName || '未知文档' }}</span>
                 </div>

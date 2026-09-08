@@ -101,15 +101,15 @@ const formattedDuration = computed(() =>
 <template>
   <!-- 通话进行中的悬浮窗；1v1 私聊 320×540；群通话切大窗 720×560 -->
   <div
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.35)] z-[1000] flex flex-col text-primary-foreground bg-[#1a1a1c]"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-2xl z-[1000] flex flex-col text-primary-foreground bg-foreground dark:bg-background"
     :class="isGroup ? 'w-[720px] h-[560px]' : 'w-[320px] h-[540px]'"
   >
     <!-- 重连中横幅；网络抖动时显示，直到 Reconnected 事件清除 -->
     <div
       v-if="reconnecting"
-      class="inline-flex absolute top-3 left-1/2 z-10 gap-2 items-center px-3.5 py-1.5 text-13px text-[#ffd45e] rounded-full -translate-x-1/2 bg-[rgba(255,196,0,0.18)]"
+      class="inline-flex absolute top-3 left-1/2 z-10 gap-2 items-center px-3.5 py-1.5 text-13px text-warning rounded-full -translate-x-1/2 bg-warning/20"
     >
-      <span class="reconnect-dot w-2 h-2 rounded-full bg-[#ffd45e]"></span>
+      <span class="reconnect-dot w-2 h-2 rounded-full bg-warning"></span>
       网络不佳，正在重连……
     </div>
     <div class="flex relative flex-1 justify-center items-center">
@@ -149,11 +149,13 @@ const formattedDuration = computed(() =>
             :clickable="false"
           />
           <div class="text-[17px] font-medium">{{ peerNickname }}</div>
-          <div class="text-13px text-primary-foreground/60">等待对方开启摄像头……</div>
+          <div class="text-13px text-primary-foreground/60">
+            等待对方开启摄像头……
+          </div>
         </div>
         <div
           v-if="localStream"
-          class="absolute top-4 right-4 z-[2] overflow-hidden w-30 rounded-lg aspect-[9/16] bg-[#333]"
+          class="absolute top-4 right-4 z-[2] overflow-hidden w-30 rounded-lg aspect-[9/16] bg-muted"
         >
           <video
             :ref="setLocalVideoRef"
@@ -176,7 +178,9 @@ const formattedDuration = computed(() =>
             :clickable="false"
           />
           <div class="text-[17px] font-medium">{{ peerNickname }}</div>
-          <div class="text-13px text-primary-foreground/60">{{ formattedDuration }}</div>
+          <div class="text-13px text-primary-foreground/60">
+            {{ formattedDuration }}
+          </div>
         </div>
       </template>
       <audio
@@ -198,7 +202,9 @@ const formattedDuration = computed(() =>
         <span
           class="flex justify-center items-center w-[52px] h-[52px] rounded-full"
           :class="
-            micEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'
+            micEnabled
+              ? 'bg-background text-foreground'
+              : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -222,7 +228,7 @@ const formattedDuration = computed(() =>
           class="flex justify-center items-center w-[52px] h-[52px] rounded-full"
           :class="
             speakerEnabled
-              ? 'bg-background text-[#1a1a1c]'
+              ? 'bg-background text-foreground'
               : 'bg-background/15 text-primary-foreground'
           "
         >
@@ -246,7 +252,9 @@ const formattedDuration = computed(() =>
         <span
           class="flex justify-center items-center w-[52px] h-[52px] rounded-full"
           :class="
-            cameraEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'
+            cameraEnabled
+              ? 'bg-background text-foreground'
+              : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -272,7 +280,7 @@ const formattedDuration = computed(() =>
             class="flex justify-center items-center w-[52px] h-[52px] rounded-full"
             :class="
               screenShareEnabled
-                ? 'bg-[#07c160] text-primary-foreground'
+                ? 'bg-success text-success-foreground'
                 : 'bg-background/15 text-primary-foreground'
             "
           >
@@ -298,7 +306,9 @@ const formattedDuration = computed(() =>
           >
             <Icon icon="ant-design:plus-outlined" :size="22" />
           </span>
-          <span class="text-xs text-primary-foreground/70 whitespace-nowrap">添加成员</span>
+          <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
+            添加成员
+          </span>
         </div>
       </template>
       <div
@@ -307,7 +317,7 @@ const formattedDuration = computed(() =>
         @click="$emit('hangup')"
       >
         <span
-          class="flex justify-center items-center w-[52px] h-[52px] text-primary-foreground rounded-full bg-[#f04a4a]"
+          class="flex justify-center items-center w-[52px] h-[52px] text-destructive-foreground rounded-full bg-destructive"
         >
           <Icon
             icon="ant-design:phone-outlined"
@@ -315,7 +325,9 @@ const formattedDuration = computed(() =>
             class="rotate-[135deg]"
           />
         </span>
-        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">挂断</span>
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
+          挂断
+        </span>
       </div>
     </div>
   </div>

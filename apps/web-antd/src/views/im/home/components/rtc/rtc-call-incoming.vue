@@ -71,7 +71,9 @@ const callMembers = useGroupCallMembers(
         <div class="text-sm font-medium truncate">
           {{ payload?.inviterNickname || '对方' }}
         </div>
-        <div class="text-13px text-primary-foreground/60 truncate">{{ tipText }}</div>
+        <div class="text-13px text-primary-foreground/60 truncate">
+          {{ tipText }}
+        </div>
       </template>
 
       <!-- 群通话成员行；私聊无；接入中的人半透明展示 -->

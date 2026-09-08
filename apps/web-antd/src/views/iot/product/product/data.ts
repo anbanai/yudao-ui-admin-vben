@@ -30,7 +30,10 @@ export function useBasicFormSchema(
       componentProps: {
         placeholder: '请输入 ProductKey',
       },
-      dependencies: { triggerFields: ['id'], resolve: ({ values }) => ({ show: !values.id }) },
+      dependencies: {
+        triggerFields: ['id'],
+        resolve: ({ values }) => ({ show: !values.id }),
+      },
       rules: z
         .string()
         .min(1, 'ProductKey 不能为空')
@@ -58,7 +61,10 @@ export function useBasicFormSchema(
         placeholder: '请输入 ProductKey',
         disabled: true,
       },
-      dependencies: { triggerFields: ['id'], resolve: ({ values }) => ({ show: !!values.id }) },
+      dependencies: {
+        triggerFields: ['id'],
+        resolve: ({ values }) => ({ show: !!values.id }),
+      },
       rules: z
         .string()
         .min(1, 'ProductKey 不能为空')
@@ -97,7 +103,12 @@ export function useBasicFormSchema(
         buttonStyle: 'solid',
         optionType: 'button',
       },
-      dependencies: { triggerFields: ['id'], resolve: ({ values }) => ({ componentProps: { disabled: !!values.id } }) },
+      dependencies: {
+        triggerFields: ['id'],
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
+        }),
+      },
       rules: 'required',
     },
     {
@@ -109,7 +120,14 @@ export function useBasicFormSchema(
         placeholder: '请选择联网方式',
       },
       // 网关子设备走网关联网，不需要联网方式
-      dependencies: { triggerFields: ['deviceType'], resolve: ({ values }) => ({ show: [DeviceTypeEnum.DEVICE, DeviceTypeEnum.GATEWAY].includes(values.deviceType) }) },
+      dependencies: {
+        triggerFields: ['deviceType'],
+        resolve: ({ values }) => ({
+          show: [DeviceTypeEnum.DEVICE, DeviceTypeEnum.GATEWAY].includes(
+            values.deviceType,
+          ),
+        }),
+      },
       rules: 'required',
     },
     {

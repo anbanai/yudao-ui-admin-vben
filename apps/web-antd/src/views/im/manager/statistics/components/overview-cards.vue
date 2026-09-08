@@ -88,7 +88,10 @@ const cards = computed(() => {
           class="mr-3 flex size-12 shrink-0 items-center justify-center rounded"
           :style="{ backgroundColor: card.color }"
         >
-          <IconifyIcon :icon="card.icon" class="size-6 text-primary-foreground" />
+          <IconifyIcon
+            :icon="card.icon"
+            class="size-6 text-primary-foreground"
+          />
         </div>
         <div class="min-w-0 flex-1">
           <div class="mb-1 text-sm text-muted-foreground">{{ card.title }}</div>

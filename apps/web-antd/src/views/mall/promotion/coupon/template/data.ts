@@ -15,6 +15,14 @@ import { convertToInteger, formatToFraction } from '@vben/utils';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+import {
+  discountFormat,
+  remainedCountFormat,
+  takeLimitCountFormat,
+  totalCountFormat,
+  validityTypeFormat,
+} from '../formatter';
+
 export interface ProductScopeFormValues {
   productCategoryIds?: number | number[];
   productScope?: number;
@@ -64,11 +72,11 @@ interface CouponOpenModalApi {
   unlock(): void;
 }
 
-type CouponTemplateLoadData = Pick<
-  MallCouponTemplateApi.CouponTemplate,
-  'discountLimitPrice' | 'discountPrice' | 'usePrice'
-> &
-  Partial<MallCouponTemplateApi.CouponTemplate>;
+type CouponTemplateLoadData = Partial<MallCouponTemplateApi.CouponTemplate> &
+  Pick<
+    MallCouponTemplateApi.CouponTemplate,
+    'discountLimitPrice' | 'discountPrice' | 'usePrice'
+  >;
 
 export function createDefaultCouponFormData(): CouponTemplateFormValues {
   return {
@@ -237,7 +245,7 @@ export async function syncCouponTemplateFormOpen({
     await formApi.reset({ values: createDefaultCouponFormData() });
     return;
   }
-  const data = modalApi.getData() as { id?: number } | undefined;
+  const data = modalApi.getData() as undefined | { id?: number };
   if (!data?.id) {
     setEditingId(undefined);
     await formApi.reset({ values: createDefaultCouponFormData() });
@@ -252,14 +260,6 @@ export async function syncCouponTemplateFormOpen({
     modalApi.unlock();
   }
 }
-
-import {
-  discountFormat,
-  remainedCountFormat,
-  takeLimitCountFormat,
-  totalCountFormat,
-  validityTypeFormat,
-} from '../formatter';
 
 /** 新增/修改的表单 */
 export function useFormSchema(

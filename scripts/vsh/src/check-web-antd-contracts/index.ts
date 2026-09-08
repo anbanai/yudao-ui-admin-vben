@@ -1,5 +1,7 @@
 import type { CAC } from 'cac';
 
+import { Buffer } from 'node:buffer';
+
 import { scanWorkspace } from './scanner';
 
 const MAX_DIAGNOSTIC_WRITE_BYTES = 60 * 1024;

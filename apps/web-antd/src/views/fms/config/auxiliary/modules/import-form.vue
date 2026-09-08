@@ -139,7 +139,9 @@ function resetImport() {
           <span class="icon-[ant-design--download-outlined]"></span>
           下载《{{ auxiliaryType?.name }}导入模板》
         </Button>
-        <div class="text-[13px] mt-1 text-muted-foreground">{{ templateTip }}</div>
+        <div class="text-[13px] mt-1 text-muted-foreground">
+          {{ templateTip }}
+        </div>
       </div>
       <div>
         <div class="text-[15px] mb-3 font-semibold">

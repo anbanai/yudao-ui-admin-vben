@@ -116,21 +116,36 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'smsTemplateCode',
       label: '短信模板',
       component: markRaw(SmsTemplateSelect),
-      dependencies: { triggerFields: ['receiveTypes'], resolve: ({ values }) => ({ show: hasReceiveType(values, IotAlertReceiveTypeEnum.SMS) }) },
+      dependencies: {
+        triggerFields: ['receiveTypes'],
+        resolve: ({ values }) => ({
+          show: hasReceiveType(values, IotAlertReceiveTypeEnum.SMS),
+        }),
+      },
       rules: 'selectRequired',
     },
     {
       fieldName: 'mailTemplateCode',
       label: '邮件模板',
       component: markRaw(MailTemplateSelect),
-      dependencies: { triggerFields: ['receiveTypes'], resolve: ({ values }) => ({ show: hasReceiveType(values, IotAlertReceiveTypeEnum.MAIL) }) },
+      dependencies: {
+        triggerFields: ['receiveTypes'],
+        resolve: ({ values }) => ({
+          show: hasReceiveType(values, IotAlertReceiveTypeEnum.MAIL),
+        }),
+      },
       rules: 'selectRequired',
     },
     {
       fieldName: 'notifyTemplateCode',
       label: '站内信模板',
       component: markRaw(NotifyTemplateSelect),
-      dependencies: { triggerFields: ['receiveTypes'], resolve: ({ values }) => ({ show: hasReceiveType(values, IotAlertReceiveTypeEnum.NOTIFY) }) },
+      dependencies: {
+        triggerFields: ['receiveTypes'],
+        resolve: ({ values }) => ({
+          show: hasReceiveType(values, IotAlertReceiveTypeEnum.NOTIFY),
+        }),
+      },
       rules: 'selectRequired',
     },
   ];

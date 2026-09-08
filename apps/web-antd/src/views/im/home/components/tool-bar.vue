@@ -75,7 +75,9 @@ const goProfile = () => router.push({ name: 'Profile' });
         v-for="item in tabs"
         :key="item.name"
         class="flex items-center justify-center w-10 h-10 rounded-lg text-[#a0a0a0] cursor-pointer transition-all hover:text-primary-foreground hover:bg-background/10"
-        :class="{ 'bg-background/15 text-primary-foreground': isActive(item.name) }"
+        :class="{
+          'bg-background/15 text-primary-foreground': isActive(item.name),
+        }"
         @click="goTab(item.name)"
       >
         <Badge

@@ -1,5 +1,7 @@
 import type { ContractViolation } from './scanner';
 
+import { Buffer } from 'node:buffer';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { checkWebAntdContracts } from './index';
@@ -14,7 +16,8 @@ function createViolations(count: number): ContractViolation[] {
   return Array.from({ length: count }, (_, index) => ({
     column: 1,
     line: index + 1,
-    message: 'Replace this legacy dependency callback with dependencies.resolve.',
+    message:
+      'Replace this legacy dependency callback with dependencies.resolve.',
     path: `src/${'migration-'.repeat(12)}${index}.ts`,
     ruleId: 'VF001',
   }));
@@ -31,9 +34,7 @@ describe('checkWebAntdContracts', () => {
     scanWorkspace.mockResolvedValue(violations);
     const write = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    await expect(checkWebAntdContracts()).rejects.toThrow(
-      '1000 violation(s)',
-    );
+    await expect(checkWebAntdContracts()).rejects.toThrow('1000 violation(s)');
 
     const writes = write.mock.calls.map(([chunk]) => String(chunk));
     const diagnostics = writes.flatMap((chunk) => chunk.split('\n'));

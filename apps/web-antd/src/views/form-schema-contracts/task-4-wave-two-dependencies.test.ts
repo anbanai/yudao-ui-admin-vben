@@ -1,21 +1,22 @@
+// oxlint-disable unicorn/no-array-callback-reference, unicorn/no-array-sort, unicorn/require-array-join-separator, vitest/prefer-lowercase-title, no-nested-ternary
 import fs from 'node:fs';
 import path from 'node:path';
 
-import ts from 'typescript';
 import { createPinia, setActivePinia } from 'pinia';
+import ts from 'typescript';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-
-import { scanSource } from '../../../../../scripts/vsh/src/check-web-antd-contracts/scanner';
-
-vi.mock('#/api/mall/trade/delivery/pickUpStore', () => ({
-  getSimpleDeliveryPickUpStoreList: vi.fn().mockResolvedValue([]),
-}));
 
 import {
   calculateNewPayPrice,
   createOrderPriceChangeHandler,
   usePriceFormSchema,
 } from '#/views/mall/trade/order/data';
+
+import { scanSource } from '../../../../../scripts/vsh/src/check-web-antd-contracts/scanner';
+
+vi.mock('#/api/mall/trade/delivery/pickUpStore', () => ({
+  getSimpleDeliveryPickUpStoreList: vi.fn().mockResolvedValue([]),
+}));
 
 function sourceFiles(root: string): string[] {
   return fs.readdirSync(root, { withFileTypes: true }).flatMap((entry) => {

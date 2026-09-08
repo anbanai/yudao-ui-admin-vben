@@ -53,7 +53,17 @@ const [Form, formApi] = useVbenForm({
         placeholder: '请输入 Modbus 服务器 IP 地址',
       },
       // Client 模式专有字段：必填；Server 模式不显示也不校验
-      dependencies: { triggerFields: ['protocolType'], resolve: ({ values }) => { const client = values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT; return { show: client, rules: client ? z.string().min(1, '请输入 IP 地址') : null, }; } },
+      dependencies: {
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const client =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT;
+          return {
+            show: client,
+            rules: client ? z.string().min(1, '请输入 IP 地址') : null,
+          };
+        },
+      },
     },
     {
       fieldName: 'port',
@@ -65,9 +75,19 @@ const [Form, formApi] = useVbenForm({
         min: 1,
         max: 65_535,
       },
-      dependencies: { triggerFields: ['protocolType'], resolve: ({ values }) => { const client = values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT; return { show: client, rules: client
-            ? z.number({ message: '请输入端口' }).min(1).max(65_535)
-            : null, }; } },
+      dependencies: {
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const client =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT;
+          return {
+            show: client,
+            rules: client
+              ? z.number({ message: '请输入端口' }).min(1).max(65_535)
+              : null,
+          };
+        },
+      },
       defaultValue: 502,
     },
     {
@@ -93,9 +113,19 @@ const [Form, formApi] = useVbenForm({
         min: 1000,
         step: 1000,
       },
-      dependencies: { triggerFields: ['protocolType'], resolve: ({ values }) => { const client = values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT; return { show: client, rules: client
-            ? z.number({ message: '请输入连接超时时间' }).min(1000)
-            : null, }; } },
+      dependencies: {
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const client =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT;
+          return {
+            show: client,
+            rules: client
+              ? z.number({ message: '请输入连接超时时间' }).min(1000)
+              : null,
+          };
+        },
+      },
       defaultValue: 3000,
     },
     {
@@ -108,9 +138,19 @@ const [Form, formApi] = useVbenForm({
         min: 1000,
         step: 1000,
       },
-      dependencies: { triggerFields: ['protocolType'], resolve: ({ values }) => { const client = values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT; return { show: client, rules: client
-            ? z.number({ message: '请输入重试间隔' }).min(1000)
-            : null, }; } },
+      dependencies: {
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const client =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT;
+          return {
+            show: client,
+            rules: client
+              ? z.number({ message: '请输入重试间隔' }).min(1000)
+              : null,
+          };
+        },
+      },
       defaultValue: 10_000,
     },
     {
@@ -120,7 +160,14 @@ const [Form, formApi] = useVbenForm({
       componentProps: {
         options: getDictOptions(DICT_TYPE.IOT_MODBUS_MODE, 'number'),
       },
-      dependencies: { triggerFields: ['protocolType'], resolve: ({ values }) => { const server = values.protocolType === ProtocolTypeEnum.MODBUS_TCP_SERVER; return { show: server }; } },
+      dependencies: {
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const server =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_SERVER;
+          return { show: server };
+        },
+      },
       rules: 'required',
       defaultValue: ModbusModeEnum.POLLING,
     },
@@ -131,7 +178,14 @@ const [Form, formApi] = useVbenForm({
       componentProps: {
         options: getDictOptions(DICT_TYPE.IOT_MODBUS_FRAME_FORMAT, 'number'),
       },
-      dependencies: { triggerFields: ['protocolType'], resolve: ({ values }) => { const server = values.protocolType === ProtocolTypeEnum.MODBUS_TCP_SERVER; return { show: server }; } },
+      dependencies: {
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const server =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_SERVER;
+          return { show: server };
+        },
+      },
       rules: 'required',
       defaultValue: ModbusFrameFormatEnum.MODBUS_TCP,
     },

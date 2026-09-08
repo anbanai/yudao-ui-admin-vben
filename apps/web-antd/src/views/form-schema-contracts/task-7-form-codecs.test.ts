@@ -9,7 +9,11 @@ import {
 
 describe('web-antd form codecs', () => {
   it('encodes and decodes numeric ranges without mutating either input', () => {
-    const codec = createNumberRangeCodec('amountRange', 'minAmount', 'maxAmount');
+    const codec = createNumberRangeCodec(
+      'amountRange',
+      'minAmount',
+      'maxAmount',
+    );
     const formValues = { amountRange: [10, 20] as [number, number], status: 1 };
     const encoded = codec.encode(formValues);
 
@@ -24,9 +28,16 @@ describe('web-antd form codecs', () => {
 
   it('handles empty and one-sided ranges while preserving unrelated fields', () => {
     const codec = createNumberRangeCodec('range', 'minimum', 'maximum');
-    expect(codec.encode({ range: undefined, query: 'x' })).toEqual({ query: 'x' });
-    expect(codec.encode({ range: [3, undefined], query: 'x' })).toEqual({ minimum: 3, query: 'x' });
-    expect(codec.decode({ minimum: undefined, maximum: 9, query: 'x' })).toEqual({ range: [undefined, 9], query: 'x' });
+    expect(codec.encode({ range: undefined, query: 'x' })).toEqual({
+      query: 'x',
+    });
+    expect(codec.encode({ range: [3, undefined], query: 'x' })).toEqual({
+      minimum: 3,
+      query: 'x',
+    });
+    expect(
+      codec.decode({ minimum: undefined, maximum: 9, query: 'x' }),
+    ).toEqual({ range: [undefined, 9], query: 'x' });
   });
 
   it('composes multiple range codecs and formats date ranges', () => {
@@ -45,7 +56,9 @@ describe('web-antd form codecs', () => {
       closingTime: '18:00',
     });
     expect(formValues.rangeTime[0]?.format('HH:mm')).toBe('09:00');
-    expect(codec.encode({ rangeTime: [undefined, dayjs('2026-01-01T18:00:00')] })).toEqual({
+    expect(
+      codec.encode({ rangeTime: [undefined, dayjs('2026-01-01T18:00:00')] }),
+    ).toEqual({
       closingTime: '18:00',
     });
     const decoded = codec.decode({

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ExtendedFormApi, VbenFormProps, VbenFormSlots } from './types';
 
-import { nextTick, onMounted, readonly, watch } from 'vue';
+import { computed, nextTick, onMounted, readonly, useAttrs, watch } from 'vue';
 
 import { useForwardPriorityValues } from '@vben-core/composables';
 import { get, isEqual } from '@vben-core/shared/utils';
@@ -37,9 +37,11 @@ if (!formApi) {
   throw new Error('Form api is required in <VbenUseForm />');
 }
 
+const attrs = useAttrs();
 const state = formApi.useStore();
 
 const forward = useForwardPriorityValues(props, state);
+const forwardWithAttrs = computed(() => ({ ...forward.value, ...attrs }));
 
 const componentRefMap = new Map<string, unknown>();
 
@@ -115,7 +117,7 @@ watch(values, (currentValues, previousValues) => {
 <template>
   <Form
     @keydown.enter="handleKeyDownEnter"
-    v-bind="forward"
+    v-bind="forwardWithAttrs"
     :collapsed="state?.collapsed"
     :component-bind-event-map="COMPONENT_BIND_EVENT_MAP"
     :component-map="COMPONENT_MAP"

@@ -78,7 +78,12 @@ const [Form, formApi] = useVbenForm({
     },
     labelWidth: 120,
   },
-  codec: createDateRangeCodec('rangeTime', 'openingTime', 'closingTime', 'HH:mm'),
+  codec: createDateRangeCodec(
+    'rangeTime',
+    'openingTime',
+    'closingTime',
+    'HH:mm',
+  ),
   wrapperClass: 'grid-cols-2',
   layout: 'horizontal',
   schema: useFormSchema(),

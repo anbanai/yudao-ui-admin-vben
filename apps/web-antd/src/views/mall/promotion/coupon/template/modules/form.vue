@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import type { CouponTemplateFormValues } from '../data';
+
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
@@ -16,7 +19,6 @@ import { SpuShowcase } from '#/views/mall/product/spu/components';
 
 import {
   createCouponScopeChangeHandler,
-  type CouponTemplateFormValues,
   submitCouponTemplateForm,
   syncCouponTemplateFormOpen,
   useFormSchema,

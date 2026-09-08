@@ -60,7 +60,7 @@
     "highlight.js": "catalog:",
     "livekit-client": "catalog:",
     "pinia": "catalog:",
-    "print-bridge-sdk": "0.1.3",
+    "print-bridge-sdk": "catalog:",
     "steady-xml": "catalog:",
     "tinymce": "catalog:",
     "tyme4ts": "catalog:",
@@ -71,5 +71,8 @@
     "vue3-print-nb": "catalog:",
     "vue3-signature": "catalog:",
     "vuedraggable": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
   }
 }

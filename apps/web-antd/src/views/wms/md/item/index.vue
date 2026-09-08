@@ -210,7 +210,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
               <div v-if="row.brandName" class="text-xs text-muted-foreground">
                 品牌：{{ row.brandName }}
               </div>
-              <div v-if="row.categoryName" class="text-xs text-muted-foreground">
+              <div
+                v-if="row.categoryName"
+                class="text-xs text-muted-foreground"
+              >
                 分类：{{ row.categoryName }}
               </div>
             </div>

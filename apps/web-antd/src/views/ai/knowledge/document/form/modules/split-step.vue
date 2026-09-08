@@ -228,7 +228,10 @@ onMounted(async () => {
                 @click="selectFile(index)"
               >
                 {{ file.name }}
-                <span v-if="file.segments" class="ml-1 text-sm text-muted-foreground">
+                <span
+                  v-if="file.segments"
+                  class="ml-1 text-sm text-muted-foreground"
+                >
                   ({{ file.segments.length }} 个分片)
                 </span>
               </Menu.Item>

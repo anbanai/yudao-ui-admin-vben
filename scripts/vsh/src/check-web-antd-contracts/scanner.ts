@@ -604,7 +604,11 @@ function scanTemplateNode(node: any, context: ScanContext) {
   }
 }
 
-function scanTemplateExpression(expression: string, prop: any, context: ScanContext) {
+function scanTemplateExpression(
+  expression: string,
+  prop: any,
+  context: ScanContext,
+) {
   const sourceFile = ts.createSourceFile(
     context.path,
     `(${expression})`,
@@ -615,7 +619,10 @@ function scanTemplateExpression(expression: string, prop: any, context: ScanCont
   const expressionStart = prop.exp.loc.start;
 
   function visit(node: ts.Node) {
-    if (ts.isStringLiteralLike(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    if (
+      ts.isStringLiteralLike(node) ||
+      ts.isNoSubstitutionTemplateLiteral(node)
+    ) {
       const relativeStart = node.getStart(sourceFile) - 1;
       const beforeLiteral = expression.slice(0, relativeStart);
       const lineBreak = beforeLiteral.lastIndexOf('\n');

@@ -160,7 +160,9 @@ onMounted(() => {
             <div class="mb-3 flex items-start">
               <div class="flex-1">
                 <div class="mb-2 flex items-center text-[13px]">
-                  <span class="mr-2 shrink-0 opacity-65 dark:text-primary-foreground/65">
+                  <span
+                    class="mr-2 shrink-0 opacity-65 dark:text-primary-foreground/65"
+                  >
                     产品分类
                   </span>
                   <span class="truncate font-medium text-primary">
@@ -168,7 +170,9 @@ onMounted(() => {
                   </span>
                 </div>
                 <div class="mb-2 flex items-center text-[13px]">
-                  <span class="mr-2 shrink-0 opacity-65 dark:text-primary-foreground/65">
+                  <span
+                    class="mr-2 shrink-0 opacity-65 dark:text-primary-foreground/65"
+                  >
                     产品类型
                   </span>
                   <DictTag
@@ -178,7 +182,9 @@ onMounted(() => {
                   />
                 </div>
                 <div class="flex items-center text-[13px]">
-                  <span class="mr-2 shrink-0 opacity-65 dark:text-primary-foreground/65">
+                  <span
+                    class="mr-2 shrink-0 opacity-65 dark:text-primary-foreground/65"
+                  >
                     产品标识
                   </span>
                   <Tooltip :title="item.productKey || item.id" placement="top">

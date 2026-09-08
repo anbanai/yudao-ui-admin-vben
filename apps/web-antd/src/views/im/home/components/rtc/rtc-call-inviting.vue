@@ -30,7 +30,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
 <template>
   <!-- 主叫等待对方接听的悬浮窗；1v1 私聊 320×540；群通话切大窗 720×560 -->
   <div
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.35)] z-[1000] flex flex-col text-primary-foreground bg-gradient-to-b from-[#2a2a2c] to-[#1a1a1c]"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-2xl z-[1000] flex flex-col text-primary-foreground bg-gradient-to-b from-foreground to-foreground dark:from-background dark:to-background"
     :class="isGroup ? 'w-[720px] h-[560px]' : 'w-[320px] h-[540px]'"
   >
     <div class="flex relative flex-1 justify-center items-center">
@@ -55,7 +55,9 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
           :clickable="false"
         />
         <div class="text-[17px] font-medium">{{ peerNickname || '对方' }}</div>
-        <div class="text-13px text-primary-foreground/60">等待对方接受邀请……</div>
+        <div class="text-13px text-primary-foreground/60">
+          等待对方接受邀请……
+        </div>
       </div>
     </div>
 
@@ -71,7 +73,9 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
         <span
           class="flex justify-center items-center w-12 h-12 rounded-full"
           :class="
-            micEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'
+            micEnabled
+              ? 'bg-background text-foreground'
+              : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -92,7 +96,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
         @click="$emit('cancel')"
       >
         <span
-          class="flex justify-center items-center w-12 h-12 text-primary-foreground rounded-full bg-[#f04a4a]"
+          class="flex justify-center items-center w-12 h-12 text-destructive-foreground rounded-full bg-destructive"
         >
           <Icon
             icon="ant-design:phone-outlined"
@@ -100,7 +104,9 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
             class="rotate-[135deg]"
           />
         </span>
-        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">取消</span>
+        <span class="text-xs text-primary-foreground/70 whitespace-nowrap">
+          取消
+        </span>
       </div>
       <div
         v-if="isVideo"
@@ -110,7 +116,9 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
         <span
           class="flex justify-center items-center w-12 h-12 rounded-full"
           :class="
-            cameraEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'
+            cameraEnabled
+              ? 'bg-background text-foreground'
+              : 'bg-background/15 text-primary-foreground'
           "
         >
           <Icon
@@ -135,7 +143,7 @@ const setLocalVideoRef = useMediaStreamElement<HTMLVideoElement>(
           class="flex justify-center items-center w-12 h-12 rounded-full"
           :class="
             speakerEnabled
-              ? 'bg-background text-[#1a1a1c]'
+              ? 'bg-background text-foreground'
               : 'bg-background/15 text-primary-foreground'
           "
         >

@@ -22,8 +22,8 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@vue/compiler-sfc": "catalog:",
     "@vben/node-utils": "workspace:*",
+    "@vue/compiler-sfc": "catalog:",
     "cac": "catalog:",
     "circular-dependency-scanner": "catalog:",
     "knip": "catalog:",

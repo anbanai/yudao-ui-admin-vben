@@ -47,7 +47,11 @@ const [PrintModal, printModalApi] = useVbenModal({
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     codec: createNumberRangesCodec([
-      { rangeField: 'voucherNumberRange', minField: 'minVoucherNumber', maxField: 'maxVoucherNumber' },
+      {
+        rangeField: 'voucherNumberRange',
+        minField: 'minVoucherNumber',
+        maxField: 'maxVoucherNumber',
+      },
       { rangeField: 'levelRange', minField: 'minLevel', maxField: 'maxLevel' },
     ]),
     schema: useGridFormSchema(),

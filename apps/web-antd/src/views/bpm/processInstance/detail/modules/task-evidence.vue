@@ -72,7 +72,10 @@ function isImageAttachment(url: string) {
           reasonText && !compact,
       }"
     >
-      <div v-if="!compact" class="mb-1 text-xs font-semibold text-muted-foreground">
+      <div
+        v-if="!compact"
+        class="mb-1 text-xs font-semibold text-muted-foreground"
+      >
         附件列表：
       </div>
       <div
@@ -92,7 +95,11 @@ function isImageAttachment(url: string) {
             :src="attachment"
             class="size-5 rounded object-cover"
           />
-          <IconifyIcon v-else icon="lucide:file-text" class="text-muted-foreground" />
+          <IconifyIcon
+            v-else
+            icon="lucide:file-text"
+            class="text-muted-foreground"
+          />
           <span class="truncate">{{ getFileNameFromUrl(attachment) }}</span>
         </a>
       </div>

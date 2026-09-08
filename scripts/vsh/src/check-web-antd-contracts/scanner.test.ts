@@ -224,8 +224,12 @@ const color = '#fff';
 </style>`;
     const violations = scanSource(source, 'src/example.vue');
     const scriptColor = violations.find(({ literal }) => literal === '#fff');
-    const dynamicClass = violations.find(({ literal }) => literal === 'bg-white');
-    const dynamicStyle = violations.find(({ literal }) => literal === '#123456');
+    const dynamicClass = violations.find(
+      ({ literal }) => literal === 'bg-white',
+    );
+    const dynamicStyle = violations.find(
+      ({ literal }) => literal === '#123456',
+    );
     const cssColor = violations.find(({ literal }) => literal === '#abcdef');
 
     expect(scriptColor).toMatchObject({
@@ -318,9 +322,7 @@ const color = '#fff';
         `const color = 'hsl(var(--primary) / 10%)';\nconst border = 'rgb(12 34 56)';`,
         'src/theme.ts',
       ),
-    ).toEqual([
-      expect.objectContaining({ literal: 'rgb(12 34 56)' }),
-    ]);
+    ).toEqual([expect.objectContaining({ literal: 'rgb(12 34 56)' })]);
   });
 
   it('scans dynamic template class and style expressions', () => {

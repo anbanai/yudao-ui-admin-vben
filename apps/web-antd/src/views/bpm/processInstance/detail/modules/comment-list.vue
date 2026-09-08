@@ -83,10 +83,14 @@ defineExpose({ getList });
 <template>
   <div v-loading="props.loading || commentLoading" class="min-h-full px-7 py-6">
     <div class="flex items-center gap-3 border-b pb-4">
-      <div class="text-lg font-bold text-muted-foreground dark:text-muted-foreground">
+      <div
+        class="text-lg font-bold text-muted-foreground dark:text-muted-foreground"
+      >
         流程评论
       </div>
-      <div class="text-sm text-muted-foreground">共 {{ comments.length }} 条</div>
+      <div class="text-sm text-muted-foreground">
+        共 {{ comments.length }} 条
+      </div>
     </div>
     <Empty v-if="comments.length === 0" description="暂无评论" />
     <div v-else class="mt-6 pl-2">

@@ -154,7 +154,9 @@ function bubbleClass(variant: 'file' | 'text' | 'voice'): string[] {
       return [
         side,
         'message-bubble--text',
-        isSelf ? 'text-muted-foreground bg-[#95ec69]' : 'text-[var(--ant-color-text)]',
+        isSelf
+          ? 'text-muted-foreground bg-[#95ec69]'
+          : 'text-[var(--ant-color-text)]',
       ];
     }
     case 'voice': {

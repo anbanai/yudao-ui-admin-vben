@@ -1,6 +1,6 @@
-import type { FormCodec, FormValues } from '@vben/common-ui';
-
 import type { Dayjs } from 'dayjs';
+
+import type { FormCodec, FormValues } from '@vben/common-ui';
 
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -70,10 +70,7 @@ export function createDateRangeCodec(
   return {
     encode(values) {
       const result = copy(values);
-      const range = values[rangeField] as
-        | [unknown, unknown]
-        | null
-        | undefined;
+      const range = values[rangeField] as [unknown, unknown] | null | undefined;
       Reflect.deleteProperty(result, rangeField);
       const start = formatDate(range?.[0], format);
       const end = formatDate(range?.[1], format);

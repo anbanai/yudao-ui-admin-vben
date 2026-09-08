@@ -3923,137 +3923,9 @@
     "category": "status",
     "literal": "#2a2a2c",
     "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-inviting.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "class=\"fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.35)] z-[1000] flex flex-col text-primary-foreground bg-gradient-to-b from-[#2a2a2c] to-[#1a1a1c]\""
-  },
-  {
-    "category": "status",
-    "literal": "#1a1a1c",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-inviting.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "class=\"fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.35)] z-[1000] flex flex-col text-primary-foreground bg-gradient-to-b from-[#2a2a2c] to-[#1a1a1c]\""
-  },
-  {
-    "category": "status",
-    "literal": "#1a1a1c",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-inviting.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "micEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'"
-  },
-  {
-    "category": "status",
-    "literal": "#f04a4a",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-inviting.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "class=\"flex justify-center items-center w-12 h-12 text-primary-foreground rounded-full bg-[#f04a4a]\""
-  },
-  {
-    "category": "status",
-    "literal": "#1a1a1c",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-inviting.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "cameraEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'"
-  },
-  {
-    "category": "status",
-    "literal": "#1a1a1c",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-inviting.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "? 'bg-background text-[#1a1a1c]'"
-  },
-  {
-    "category": "status",
-    "literal": "#2a2a2c",
-    "occurrence": 1,
     "path": "src/views/im/home/components/rtc/rtc-call-participant-tile.vue",
     "reason": "Represents a persisted business status or communication state color.",
     "source": "class=\"flex relative overflow-hidden justify-center items-center w-full h-full rounded-md bg-[#2a2a2c]\""
-  },
-  {
-    "category": "status",
-    "literal": "#1a1a1c",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "class=\"fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl overflow-hidden shadow-[0_12px_36px_rgba(0,0,0,0.35)] z-[1000] flex flex-col text-primary-foreground bg-[#1a1a1c]\""
-  },
-  {
-    "category": "status",
-    "literal": "#ffd45e",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "class=\"inline-flex absolute top-3 left-1/2 z-10 gap-2 items-center px-3.5 py-1.5 text-13px text-[#ffd45e] rounded-full -translate-x-1/2 bg-[rgba(255,196,0,0.18)]\""
-  },
-  {
-    "category": "status",
-    "literal": "rgba(255,196,0,0.18)",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "class=\"inline-flex absolute top-3 left-1/2 z-10 gap-2 items-center px-3.5 py-1.5 text-13px text-[#ffd45e] rounded-full -translate-x-1/2 bg-[rgba(255,196,0,0.18)]\""
-  },
-  {
-    "category": "status",
-    "literal": "#ffd45e",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "<span class=\"reconnect-dot w-2 h-2 rounded-full bg-[#ffd45e]\"></span>"
-  },
-  {
-    "category": "status",
-    "literal": "#333",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "class=\"absolute top-4 right-4 z-[2] overflow-hidden w-30 rounded-lg aspect-[9/16] bg-[#333]\""
-  },
-  {
-    "category": "status",
-    "literal": "#1a1a1c",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "micEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'"
-  },
-  {
-    "category": "status",
-    "literal": "#1a1a1c",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "? 'bg-background text-[#1a1a1c]'"
-  },
-  {
-    "category": "status",
-    "literal": "#1a1a1c",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "cameraEnabled ? 'bg-background text-[#1a1a1c]' : 'bg-background/15 text-primary-foreground'"
-  },
-  {
-    "category": "status",
-    "literal": "#07c160",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "? 'bg-[#07c160] text-primary-foreground'"
-  },
-  {
-    "category": "status",
-    "literal": "#f04a4a",
-    "occurrence": 1,
-    "path": "src/views/im/home/components/rtc/rtc-call-running.vue",
-    "reason": "Represents a persisted business status or communication state color.",
-    "source": "class=\"flex justify-center items-center w-[52px] h-[52px] text-primary-foreground rounded-full bg-[#f04a4a]\""
   },
   {
     "category": "status",
@@ -5750,5 +5622,21 @@
     "path": "src/views/mp/menu/modules/editor.vue",
     "reason": "WeChat content preview/editor uses a fixed authored palette.",
     "source": "class=\"mx-auto mb-[10px] w-[280px] border border-[#eaeaea] p-[10px]\""
+  },
+  {
+    "category": "status",
+    "literal": "text-gray-500",
+    "occurrence": 1,
+    "path": "src/views/mall/trade/logistics/sf/devices/index.vue",
+    "reason": "Printer diagnostic status text is retained in the user-owned logistics workflow.",
+    "source": "<span class=\"text-sm text-gray-500\">{{ diagnosticStatus }}</span>"
+  },
+  {
+    "category": "status",
+    "literal": "text-gray-500",
+    "occurrence": 1,
+    "path": "src/views/mall/trade/order/modules/sf-batch-delivery-form.vue",
+    "reason": "Printer device status text is retained in the user-owned logistics workflow.",
+    "source": "<div class=\"mb-3 flex items-center gap-2 text-sm text-gray-500\">"
   }
 ]

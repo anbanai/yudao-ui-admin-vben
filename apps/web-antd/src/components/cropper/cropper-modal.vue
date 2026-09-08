@@ -132,9 +132,7 @@ async function handleOk() {
       <!-- 左侧区域 -->
       <div class="h-full w-3/5">
         <!-- 裁剪器容器 -->
-        <div
-          class="relative h-[300px] bg-gradient-to-b from-muted to-muted"
-        >
+        <div class="relative h-[300px] bg-gradient-to-b from-muted to-muted">
           <CropperImage
             v-if="src"
             :circled="circled"

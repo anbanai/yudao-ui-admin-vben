@@ -16,7 +16,7 @@ type PullCursor =
 /** 可作为游标的拉取记录：服务端按 update_time + id 返回，客户端取最后一条推进游标 */
 interface PullRecord {
   id: number;
-  updateTime?: number | null;
+  updateTime?: null | number;
 }
 
 /** 单次拉取条数（与后端 limit 上限对齐） */
@@ -54,8 +54,8 @@ export async function runIncrementalPull<T extends PullRecord>(
   const storedCursor = await getPullCursor(db, cursorKey);
   const highWater: PullCursor = storedCursor;
   let cursor: PullCursor =
-    (storedCursor.lastUpdateTime === null ||
-      storedCursor.lastUpdateTime === undefined)
+    storedCursor.lastUpdateTime === null ||
+    storedCursor.lastUpdateTime === undefined
       ? {}
       : {
           lastUpdateTime: Math.max(

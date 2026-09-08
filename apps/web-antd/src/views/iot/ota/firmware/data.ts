@@ -66,7 +66,13 @@ export function useFormSchema(): VbenFormSchema[] {
         valueField: 'id',
         placeholder: '请选择产品',
       },
-      dependencies: { triggerFields: ['id'], resolve: ({ values }) => ({ componentProps: { disabled: !!values.id }, rules: values.id ? null : 'required' }) },
+      dependencies: {
+        triggerFields: ['id'],
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
+          rules: values.id ? null : 'required',
+        }),
+      },
     },
     {
       fieldName: 'version',
@@ -75,7 +81,13 @@ export function useFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请输入版本号',
       },
-      dependencies: { triggerFields: ['id'], resolve: ({ values }) => ({ componentProps: { disabled: !!values.id }, rules: values.id ? null : 'required' }) },
+      dependencies: {
+        triggerFields: ['id'],
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
+          rules: values.id ? null : 'required',
+        }),
+      },
     },
     {
       fieldName: 'description',
@@ -96,7 +108,13 @@ export function useFormSchema(): VbenFormSchema[] {
         maxSize: 50,
         helpText: '支持上传 .bin、.zip、.pdf 格式的固件文件，最大 50MB',
       },
-      dependencies: { triggerFields: ['id'], resolve: ({ values }) => ({ componentProps: { disabled: !!values.id }, rules: values.id ? null : 'required' }) },
+      dependencies: {
+        triggerFields: ['id'],
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
+          rules: values.id ? null : 'required',
+        }),
+      },
     },
   ];
 }

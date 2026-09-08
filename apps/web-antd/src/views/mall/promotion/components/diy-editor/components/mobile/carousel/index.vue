@@ -28,7 +28,10 @@ const handleIndexChange = (index: number) => {
     }"
     v-if="property.items.length === 0"
   >
-    <IconifyIcon icon="tdesign:image" class="text-[120px] text-muted-foreground" />
+    <IconifyIcon
+      icon="tdesign:image"
+      class="text-[120px] text-muted-foreground"
+    />
   </div>
   <div v-else class="relative">
     <Carousel

@@ -41,7 +41,9 @@ function toggleExpanded() {
       class="flex cursor-pointer items-center justify-between rounded-t-lg border border-b-0 border-border/60 bg-gradient-to-r from-blue-50 to-purple-50 p-2 transition-all duration-200 hover:from-blue-100 hover:to-purple-100"
       @click="toggleExpanded"
     >
-      <div class="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+      <div
+        class="flex items-center gap-1.5 text-sm font-medium text-muted-foreground"
+      >
         <IconifyIcon icon="lucide:brain" class="text-blue-600" :size="16" />
         <span>{{ titleText }}</span>
       </div>

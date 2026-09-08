@@ -203,24 +203,24 @@ onMounted(async () => {
           <RadioGroup v-model:value="formData.layoutType">
             <Tooltip title="双列" placement="bottom">
               <RadioButton value="twoCol">
-<IconifyIcon
+                <IconifyIcon
                   icon="fluent:text-column-two-24-filled"
                   class="size-6"
-              />
-</RadioButton>
+                />
+              </RadioButton>
             </Tooltip>
             <Tooltip title="三列" placement="bottom">
               <RadioButton value="threeCol">
-<IconifyIcon
+                <IconifyIcon
                   icon="fluent:text-column-three-24-filled"
                   class="size-6"
-              />
-</RadioButton>
+                />
+              </RadioButton>
             </Tooltip>
             <Tooltip title="水平滑动" placement="bottom">
               <RadioButton value="horizSwiper">
-<IconifyIcon icon="system-uicons:carousel" class="size-6" />
-</RadioButton>
+                <IconifyIcon icon="system-uicons:carousel" class="size-6" />
+              </RadioButton>
             </Tooltip>
           </RadioGroup>
         </FormItem>
@@ -242,8 +242,8 @@ onMounted(async () => {
 
       <Card title="角标" class="property-group" :bordered="false">
         <FormItem label="显示角标" name="badge.show">
-<Switch v-model:checked="formData.badge.show" />
-</FormItem>
+          <Switch v-model:checked="formData.badge.show" />
+        </FormItem>
         <FormItem
           v-if="formData.badge.show"
           label="角标图片"
@@ -262,18 +262,22 @@ onMounted(async () => {
 
       <Card title="圆角与间距" class="property-group" :bordered="false">
         <FormItem label="上圆角" name="borderRadiusTop">
-<Slider v-model:value="formData.borderRadiusTop" :max="100" :min="0" />
-</FormItem>
+          <Slider
+            v-model:value="formData.borderRadiusTop"
+            :max="100"
+            :min="0"
+          />
+        </FormItem>
         <FormItem label="下圆角" name="borderRadiusBottom">
-<Slider
+          <Slider
             v-model:value="formData.borderRadiusBottom"
             :max="100"
             :min="0"
-        />
-</FormItem>
+          />
+        </FormItem>
         <FormItem label="间隔" name="space">
-<Slider v-model:value="formData.space" :max="100" :min="0" />
-</FormItem>
+          <Slider v-model:value="formData.space" :max="100" :min="0" />
+        </FormItem>
       </Card>
     </Form>
   </ComponentContainerProperty>

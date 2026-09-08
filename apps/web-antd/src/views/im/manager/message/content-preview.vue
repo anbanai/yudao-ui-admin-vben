@@ -235,10 +235,16 @@ function openVideo() {
     </span>
   </span>
 
-  <span v-else-if="type === ImContentType.RECALL" class="text-xs text-muted-foreground">
+  <span
+    v-else-if="type === ImContentType.RECALL"
+    class="text-xs text-muted-foreground"
+  >
     [消息已撤回]
   </span>
-  <span v-else-if="type === ImContentType.READ" class="text-xs text-muted-foreground">
+  <span
+    v-else-if="type === ImContentType.READ"
+    class="text-xs text-muted-foreground"
+  >
     [已读回执]
   </span>
   <span
@@ -253,7 +259,10 @@ function openVideo() {
   >
     {{ groupTipText }}
   </span>
-  <span v-else-if="isFriendChatTip(type ?? -1)" class="text-xs text-muted-foreground">
+  <span
+    v-else-if="isFriendChatTip(type ?? -1)"
+    class="text-xs text-muted-foreground"
+  >
     {{ friendTipText }}
   </span>
   <span

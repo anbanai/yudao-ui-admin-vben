@@ -65,7 +65,11 @@ const [MoveFormModal, moveFormModalApi] = useVbenModal({
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     codec: createNumberRangesCodec([
-      { rangeField: 'amountRange', minField: 'minAmount', maxField: 'maxAmount' },
+      {
+        rangeField: 'amountRange',
+        minField: 'minAmount',
+        maxField: 'maxAmount',
+      },
     ]),
     schema: useGridFormSchema(),
     /** 重置为当前会计期间 */

@@ -1,6 +1,7 @@
 import type { Component } from 'vue';
 
 import { createApp, defineComponent, h, nextTick } from 'vue';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 type Resolver = (context: { values: Record<string, unknown> }) => {
@@ -20,7 +21,7 @@ const formState = vi.hoisted(() => ({
     setValues: vi.fn().mockResolvedValue(undefined),
     validate: vi.fn().mockResolvedValue({ valid: true }),
   },
-  options: undefined as { schema: FormSchema[] } | undefined,
+  options: undefined as undefined | { schema: FormSchema[] },
 }));
 const modalState = vi.hoisted(() => ({
   data: {
@@ -33,8 +34,8 @@ const modalState = vi.hoisted(() => ({
     protocolType: string;
   },
   options: undefined as
-    | { onOpenChange?: (open: boolean) => Promise<void> | void }
-    | undefined,
+    | undefined
+    | { onOpenChange?: (open: boolean) => Promise<void> | void },
 }));
 
 vi.doMock('#/adapter/form', () => ({
@@ -97,9 +98,8 @@ describe('modbus form dependency runtime contract', () => {
   });
 
   it('re-evaluates client/server fields from the hydrated protocol form value', async () => {
-    const { default: ModbusConfigForm } = await import(
-      '#/views/iot/device/device/detail/modules/modbus-config-form.vue'
-    );
+    const { default: ModbusConfigForm } =
+      await import('#/views/iot/device/device/detail/modules/modbus-config-form.vue');
     const host = document.createElement('div');
     document.body.append(host);
     app = createApp(ModbusConfigForm as Component);
@@ -107,12 +107,14 @@ describe('modbus form dependency runtime contract', () => {
     await nextTick();
 
     const schema = formState.options?.schema;
-    expect(schema?.find((field) => field.fieldName === 'protocolType')?.hide).toBe(
-      true,
-    );
+    expect(
+      schema?.find((field) => field.fieldName === 'protocolType')?.hide,
+    ).toBe(true);
     expect(modalState.options?.onOpenChange).toBeTypeOf('function');
     await modalState.options?.onOpenChange?.(true);
-    expect(formState.api.setValues).toHaveBeenCalledWith(modalState.data.config);
+    expect(formState.api.setValues).toHaveBeenCalledWith(
+      modalState.data.config,
+    );
     expect(formState.api.setFieldValue).toHaveBeenCalledWith(
       'protocolType',
       modalState.data.protocolType,

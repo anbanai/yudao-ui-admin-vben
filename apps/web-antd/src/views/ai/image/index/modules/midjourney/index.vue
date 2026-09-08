@@ -185,7 +185,9 @@ defineExpose({ settingValues });
         >
           <div :style="imageSize.style"></div>
         </div>
-        <div class="text-sm font-bold text-muted-foreground">{{ imageSize.key }}</div>
+        <div class="text-sm font-bold text-muted-foreground">
+          {{ imageSize.key }}
+        </div>
       </div>
     </Space>
   </div>
@@ -209,7 +211,9 @@ defineExpose({ settingValues });
           fit="contain"
           @click="handleModelClick(model)"
         />
-        <div class="text-sm font-bold text-muted-foreground">{{ model.name }}</div>
+        <div class="text-sm font-bold text-muted-foreground">
+          {{ model.name }}
+        </div>
       </div>
     </Space>
   </div>

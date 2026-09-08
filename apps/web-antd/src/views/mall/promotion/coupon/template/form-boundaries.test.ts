@@ -1,18 +1,20 @@
 /* eslint-disable vue/one-component-per-file */
 import type { Component } from 'vue';
 
+import { createApp, defineComponent, h, nextTick } from 'vue';
+
 import { globalShareState } from '@vben/common-ui';
 import { PromotionProductScopeEnum } from '@vben/constants';
+
 import { createPinia, setActivePinia } from 'pinia';
-import { createApp, defineComponent, h, nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { initSetupVbenForm, useVbenForm } from '#/adapter/form';
 
 import {
   COMPONENT_BIND_EVENT_MAP,
   COMPONENT_MAP,
 } from '../../../../../../../../packages/@core/ui-kit/form-ui/src/config';
-import { initSetupVbenForm, useVbenForm } from '#/adapter/form';
-
 import {
   createCouponScopeChangeHandler,
   createDefaultCouponFormData,
@@ -104,8 +106,8 @@ describe('coupon template real form boundaries', () => {
         };
       }
     }
-    let Form;
-    [Form, formApi] = useVbenForm({ schema, showDefaultActions: false });
+    const [Form, api] = useVbenForm({ schema, showDefaultActions: false });
+    formApi = api;
     const host = document.createElement('div');
     document.body.append(host);
     const app = createApp({ render: () => h(Form) });
@@ -204,7 +206,7 @@ describe('coupon template real form boundaries', () => {
     const second = handler({
       target: { value: PromotionProductScopeEnum.CATEGORY.scope },
     });
-    while (releases.length < 1) await Promise.resolve();
+    while (releases.length === 0) await Promise.resolve();
     releases[0]?.();
     await first;
     while (releases.length < 2) await Promise.resolve();
