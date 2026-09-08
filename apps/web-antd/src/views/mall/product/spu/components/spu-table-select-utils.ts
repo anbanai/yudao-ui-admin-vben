@@ -1,5 +1,58 @@
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
+export function createSpuSelectionStore(initialSpus: MallSpuApi.Spu[] = []) {
+  const selectedSpus = new Map<number, MallSpuApi.Spu>();
+
+  function replace(spus: MallSpuApi.Spu[]) {
+    selectedSpus.clear();
+    for (const spu of spus) {
+      if (spu.id !== undefined) {
+        selectedSpus.set(spu.id, spu);
+      }
+    }
+  }
+
+  function reconcilePage(
+    pageSpus: MallSpuApi.Spu[],
+    checkedSpus: MallSpuApi.Spu[],
+  ) {
+    const checkedIds = new Set(
+      checkedSpus
+        .map((spu) => spu.id)
+        .filter((id): id is number => id !== undefined),
+    );
+    for (const spu of pageSpus) {
+      if (spu.id !== undefined && !checkedIds.has(spu.id)) {
+        selectedSpus.delete(spu.id);
+      }
+    }
+    for (const spu of checkedSpus) {
+      if (spu.id !== undefined) {
+        selectedSpus.set(spu.id, spu);
+      }
+    }
+  }
+
+  function getSelected() {
+    return [...selectedSpus.values()];
+  }
+
+  function getSelectedFromPage(pageSpus: MallSpuApi.Spu[]) {
+    return pageSpus.filter(
+      (spu) => spu.id !== undefined && selectedSpus.has(spu.id),
+    );
+  }
+
+  replace(initialSpus);
+
+  return {
+    getSelected,
+    getSelectedFromPage,
+    reconcilePage,
+    replace,
+  };
+}
+
 export function createSpuSelectionSession() {
   let activeSessionId = 0;
   return {

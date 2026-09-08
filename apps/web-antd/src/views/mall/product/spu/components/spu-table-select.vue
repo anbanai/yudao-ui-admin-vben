@@ -15,7 +15,7 @@ import { useGridFormSchema } from './spu-select-data';
 import {
   createSpuSelectionRowsLoader,
   createSpuSelectionSession,
-  mergeSpuSelectionRecords,
+  createSpuSelectionStore,
 } from './spu-table-select-utils';
 
 interface SpuTableSelectProps {
@@ -36,6 +36,37 @@ const categoryList = ref<MallCategoryApi.Category[]>([]); // 分类列表
 const visible = ref(false);
 const loadSelectionRows = createSpuSelectionRowsLoader();
 const selectionSession = createSpuSelectionSession();
+const selectionStore = createSpuSelectionStore();
+let currentSessionId: number | undefined;
+
+/** 获取当前查询结果 */
+function getCurrentSpus() {
+  return gridApi.grid.getTableData().fullData as MallSpuApi.Spu[];
+}
+
+/** 将当前查询结果的勾选变化同步到弹窗独立状态 */
+function handleCheckboxSelectionChange() {
+  selectionStore.reconcilePage(
+    getCurrentSpus(),
+    gridApi.grid.getCheckboxRecords() as MallSpuApi.Spu[],
+  );
+}
+
+/** 查询、搜索或分页后恢复当前结果中的已选商品 */
+async function restoreCheckboxSelection(sessionId = currentSessionId) {
+  if (
+    sessionId === undefined ||
+    !selectionSession.isActive(sessionId) ||
+    !props.multiple ||
+    !visible.value
+  ) {
+    return;
+  }
+  const selectedRows = selectionStore.getSelectedFromPage(getCurrentSpus());
+  if (selectedRows.length > 0) {
+    await gridApi.grid.setCheckboxRow(selectedRows, true);
+  }
+}
 
 /** 单选：处理选中变化 */
 function handleRadioChange() {
@@ -129,6 +160,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
   },
   gridEvents: {
+    checkboxAll: handleCheckboxSelectionChange,
+    checkboxChange: handleCheckboxSelectionChange,
+    dataRendered: () => {
+      void restoreCheckboxSelection();
+    },
+    initRendered: () => {
+      void restoreCheckboxSelection();
+    },
     radioChange: handleRadioChange,
   },
 });
@@ -136,6 +175,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 /** 打开弹窗 */
 async function openModal(data?: MallSpuApi.Spu | MallSpuApi.Spu[]) {
   const sessionId = selectionSession.begin();
+  currentSessionId = sessionId;
+  selectionStore.replace(props.multiple && Array.isArray(data) ? data : []);
   visible.value = true;
   // 等待 Grid 组件完全初始化后再查询数据
   await nextTick();
@@ -163,7 +204,7 @@ async function openModal(data?: MallSpuApi.Spu | MallSpuApi.Spu[]) {
     }
     // 2. 设置已选中行
     if (props.multiple && Array.isArray(data) && data.length > 0) {
-      await gridApi.grid.setCheckboxRow(data, true);
+      await restoreCheckboxSelection(sessionId);
     } else if (!props.multiple && data && !Array.isArray(data)) {
       const row = tableData.find((item) => item.id === data.id);
       if (row) {
@@ -176,7 +217,9 @@ async function openModal(data?: MallSpuApi.Spu | MallSpuApi.Spu[]) {
 /** 关闭弹窗 */
 async function closeModal() {
   selectionSession.invalidate();
+  currentSessionId = undefined;
   visible.value = false;
+  selectionStore.replace([]);
   await Promise.all([
     gridApi.grid.clearCheckboxRow(),
     gridApi.grid.clearCheckboxReserve(),
@@ -187,10 +230,7 @@ async function closeModal() {
 
 /** 确认选择（多选模式） */
 function handleConfirm() {
-  const selectedRows = mergeSpuSelectionRecords(
-    gridApi.grid.getCheckboxReserveRecords() as MallSpuApi.Spu[],
-    gridApi.grid.getCheckboxRecords() as MallSpuApi.Spu[],
-  );
+  const selectedRows = selectionStore.getSelected();
   emit('change', selectedRows);
   closeModal();
 }

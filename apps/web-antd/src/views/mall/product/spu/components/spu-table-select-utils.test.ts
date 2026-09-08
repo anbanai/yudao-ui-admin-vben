@@ -3,9 +3,83 @@ import { describe, expect, it } from 'vitest';
 import {
   createSpuSelectionRowsLoader,
   createSpuSelectionSession,
+  createSpuSelectionStore,
   loadSpuSelectionRows,
   mergeSpuSelectionRecords,
 } from './spu-table-select-utils';
+
+describe('商品选择弹窗独立选中状态', () => {
+  it('搜索到新结果并勾选商品时保留搜索前的选择', () => {
+    const selectionStore = createSpuSelectionStore([
+      { id: 1, name: '商品一' },
+      { id: 2, name: '商品二' },
+    ]);
+
+    selectionStore.reconcilePage(
+      [
+        { id: 3, name: '商品三' },
+        { id: 4, name: '商品四' },
+      ],
+      [{ id: 3, name: '商品三' }],
+    );
+
+    expect(selectionStore.getSelected()).toEqual([
+      { id: 1, name: '商品一' },
+      { id: 2, name: '商品二' },
+      { id: 3, name: '商品三' },
+    ]);
+  });
+
+  it('重新搜索到已选商品并取消勾选时只移除该商品', () => {
+    const selectionStore = createSpuSelectionStore([
+      { id: 1, name: '商品一' },
+      { id: 2, name: '商品二' },
+      { id: 3, name: '商品三' },
+    ]);
+
+    selectionStore.reconcilePage(
+      [
+        { id: 1, name: '商品一' },
+        { id: 2, name: '商品二' },
+      ],
+      [{ id: 1, name: '商品一（最新）' }],
+    );
+
+    expect(selectionStore.getSelected()).toEqual([
+      { id: 1, name: '商品一（最新）' },
+      { id: 3, name: '商品三' },
+    ]);
+  });
+
+  it('查询刷新后只回显当前结果中已经选过的商品', () => {
+    const selectionStore = createSpuSelectionStore([
+      { id: 1, name: '商品一' },
+      { id: 3, name: '商品三' },
+    ]);
+
+    expect(
+      selectionStore.getSelectedFromPage([
+        { id: 2, name: '商品二' },
+        { id: 3, name: '商品三（最新）' },
+        { id: 4, name: '商品四' },
+      ]),
+    ).toEqual([{ id: 3, name: '商品三（最新）' }]);
+  });
+
+  it('读取空的查询结果时不会清空已保存的选择', () => {
+    const selectionStore = createSpuSelectionStore([
+      { id: 1, name: '商品一' },
+      { id: 2, name: '商品二' },
+    ]);
+
+    expect(selectionStore.getSelectedFromPage([])).toEqual([]);
+
+    expect(selectionStore.getSelected()).toEqual([
+      { id: 1, name: '商品一' },
+      { id: 2, name: '商品二' },
+    ]);
+  });
+});
 
 describe('商品表格多选记录', () => {
   it('合并跨页保留的旧商品和当前页新选择的商品', () => {
