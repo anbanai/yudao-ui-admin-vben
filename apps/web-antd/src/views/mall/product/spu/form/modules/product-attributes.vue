@@ -52,6 +52,7 @@ interface InputRefItem {
 const inputRef = ref<InputRefItem[]>([]); // 标签输入框 Ref
 const attributeList = ref<PropertyAndValues[]>([]); // 商品属性列表
 const attributeOptions = ref<MallPropertyApi.PropertyValue[]>([]); // 商品属性值下拉框
+const pendingValues = new Set<string>(); // 正在保存的属性值，避免 change 和 blur 重复提交
 
 /** 解决 ref 在 v-for 中的获取问题*/
 function setInputRef(el: any) {
@@ -111,49 +112,63 @@ async function handleInputConfirm(index: number, propertyId: number) {
   // 从数组中取最后一个输入的值（tags 模式下 inputValue 是数组）
   const currentValue = inputValue.value?.[inputValue.value.length - 1]?.trim();
 
-  if (currentValue) {
-    // 1. 重复添加校验
-    if (
-      attributeList.value?.[index]?.values?.find(
-        (item) => item.name === currentValue,
-      )
-    ) {
-      message.warning('已存在相同属性值，请重试');
-      attributeIndex.value = null;
-      inputValue.value = [];
-      return;
-    }
+  if (!currentValue) {
+    attributeIndex.value = null;
+    inputValue.value = [];
+    return;
+  }
 
-    // 2.1 情况一：属性值已存在，则直接使用并结束
-    const existValue = attributeOptions.value.find(
+  const pendingKey = `${propertyId}:${currentValue}`;
+  if (pendingValues.has(pendingKey)) {
+    return;
+  }
+
+  // 1. 重复添加校验
+  if (
+    attributeList.value?.[index]?.values?.find(
       (item) => item.name === currentValue,
-    );
-    if (existValue) {
-      attributeIndex.value = null;
-      inputValue.value = [];
-      attributeList.value?.[index]?.values?.push({
-        id: existValue.id!,
-        name: existValue.name,
-      });
-      emit('success', attributeList.value);
-      return;
-    }
+    )
+  ) {
+    message.warning('已存在相同属性值，请重试');
+    attributeIndex.value = null;
+    inputValue.value = [];
+    return;
+  }
 
-    // 2.2 情况二：新属性值，则进行保存
-    try {
-      const id = await createPropertyValue({
-        propertyId,
-        name: currentValue,
-      });
-      attributeList.value?.[index]?.values?.push({
-        id,
-        name: currentValue,
-      });
-      message.success($t('ui.actionMessage.operationSuccess'));
-      emit('success', attributeList.value);
-    } catch {
-      message.error($t('ui.actionMessage.operationFailed'));
-    }
+  pendingValues.add(pendingKey);
+
+  // 2.1 情况一：属性值已存在，则直接使用并结束
+  const existValue = attributeOptions.value.find(
+    (item) => item.name === currentValue,
+  );
+  if (existValue) {
+    pendingValues.delete(pendingKey);
+    attributeIndex.value = null;
+    inputValue.value = [];
+    attributeList.value?.[index]?.values?.push({
+      id: existValue.id!,
+      name: existValue.name,
+    });
+    emit('success', attributeList.value);
+    return;
+  }
+
+  // 2.2 情况二：新属性值，则进行保存
+  try {
+    const id = await createPropertyValue({
+      propertyId,
+      name: currentValue,
+    });
+    attributeList.value?.[index]?.values?.push({
+      id,
+      name: currentValue,
+    });
+    message.success($t('ui.actionMessage.operationSuccess'));
+    emit('success', attributeList.value);
+  } catch {
+    message.error($t('ui.actionMessage.operationFailed'));
+  } finally {
+    pendingValues.delete(pendingKey);
   }
   attributeIndex.value = null;
   inputValue.value = [];
