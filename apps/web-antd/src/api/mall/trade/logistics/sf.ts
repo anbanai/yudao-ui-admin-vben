@@ -45,7 +45,7 @@ export namespace MallSfLogisticsApi {
     receiverMobile: string;
     productCount: number;
     payPrice: number;
-    createTime: string;
+    createTime: number | string;
   }
 
   export interface Waybill {

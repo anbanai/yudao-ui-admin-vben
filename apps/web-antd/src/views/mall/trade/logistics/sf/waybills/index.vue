@@ -2,6 +2,7 @@
 import type { MallSfLogisticsApi } from '#/api/mall/trade/logistics/sf';
 
 import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
@@ -24,9 +25,12 @@ import {
   syncSfWaybillTrace,
 } from '#/api/mall/trade/logistics/sf';
 
+import { getTradeOrderDetailRoute } from '../../order-navigation';
+
 const waybills = ref<MallSfLogisticsApi.Waybill[]>([]);
 const traces = ref<MallSfLogisticsApi.Trace[]>([]);
 const traceOpen = ref(false);
+const { push } = useRouter();
 const columns = [
   { title: '订单号', dataIndex: 'orderNo' },
   { title: '顺丰运单号', dataIndex: 'waybillNo' },
@@ -53,6 +57,9 @@ function statusValue(record: Record<string, any>, key?: number | string) {
 }
 function asWaybill(record: Record<string, any>) {
   return record as MallSfLogisticsApi.Waybill;
+}
+function openOrderDetail(orderId: number) {
+  push(getTradeOrderDetailRoute(orderId));
 }
 async function cancel(record: MallSfLogisticsApi.Waybill) {
   await cancelSfWaybill(record.id);
@@ -93,6 +100,15 @@ onMounted(load);
           <Tag :color="color(statusValue(record, column.key))">
             {{ statusValue(record, column.key) || '-' }}
           </Tag>
+        </template>
+        <template v-else-if="column.dataIndex === 'orderNo'">
+          <Button
+            type="link"
+            class="p-0"
+            @click="openOrderDetail(record.orderId)"
+          >
+            {{ record.orderNo }}
+          </Button>
         </template>
         <template v-else-if="column.key === 'actions'">
           <Space wrap>

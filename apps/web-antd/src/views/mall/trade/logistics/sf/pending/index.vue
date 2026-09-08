@@ -2,9 +2,10 @@
 import type { MallSfLogisticsApi } from '#/api/mall/trade/logistics/sf';
 
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
-import { fenToYuan } from '@vben/utils';
+import { fenToYuan, formatDateTime } from '@vben/utils';
 
 import {
   Alert,
@@ -24,6 +25,7 @@ import {
   getSfAccounts,
 } from '#/api/mall/trade/logistics/sf';
 
+import { getTradeOrderDetailRoute } from '../../order-navigation';
 import {
   getPrintTaskErrorMessage,
   isPrintTaskQueued,
@@ -44,6 +46,7 @@ const selected = ref<Array<number | string>>([]);
 const accountId = ref<number>();
 const deviceId = ref<number>();
 const loadGuard = createLatestRequestGuard();
+const { push } = useRouter();
 
 const columns = [
   { title: '订单号', dataIndex: 'no' },
@@ -98,6 +101,10 @@ function ensureRouting() {
     return false;
   }
   return true;
+}
+
+function openOrderDetail(orderId: number) {
+  push(getTradeOrderDetailRoute(orderId));
 }
 
 async function createOne(orderId: number) {
@@ -216,8 +223,16 @@ onMounted(load);
       }"
     >
       <template #bodyCell="{ column, record }">
-        <template v-if="column.dataIndex === 'payPrice'">
+        <template v-if="column.dataIndex === 'no'">
+          <Button type="link" class="p-0" @click="openOrderDetail(record.id)">
+            {{ record.no }}
+          </Button>
+        </template>
+        <template v-else-if="column.dataIndex === 'payPrice'">
           ¥{{ fenToYuan(record.payPrice) }}
+        </template>
+        <template v-else-if="column.dataIndex === 'createTime'">
+          {{ formatDateTime(record.createTime) }}
         </template>
         <template v-else-if="column.key === 'actions'">
           <Space>
