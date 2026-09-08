@@ -278,7 +278,10 @@ onMounted(async () => {
           {
             label: '顺丰打单发货',
             type: 'primary',
-            auth: ['trade:order:update'],
+            auth: [
+              'trade:logistics:sf-waybill:create',
+              'trade:order:update',
+            ],
             onClick: handleSfDelivery,
             ifShow:
               order.status === TradeOrderStatusEnum.UNDELIVERED.status &&

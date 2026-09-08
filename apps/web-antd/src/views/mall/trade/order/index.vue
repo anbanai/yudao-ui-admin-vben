@@ -229,7 +229,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
             {
               label: '顺丰打单发货',
               type: 'link',
-              auth: ['trade:order:update'],
+              auth: [
+                'trade:logistics:sf-waybill:create',
+                'trade:order:update',
+              ],
               ifShow: () =>
                 row.deliveryType === DeliveryTypeEnum.EXPRESS.type &&
                 row.status === TradeOrderStatusEnum.UNDELIVERED.status,

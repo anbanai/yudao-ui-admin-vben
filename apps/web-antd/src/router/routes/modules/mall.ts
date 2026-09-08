@@ -51,6 +51,15 @@ const routes: RouteRecordRaw[] = [
     },
     children: [
       {
+        path: 'logistics/pending',
+        name: 'TradeSfLogisticsPendingRedirect',
+        redirect: '/mall/trade/order',
+        meta: {
+          title: '待发货工作台',
+          hideInMenu: true,
+        },
+      },
+      {
         path: String.raw`order/detail/:id(\d+)`,
         name: 'TradeOrderDetail',
         meta: {
