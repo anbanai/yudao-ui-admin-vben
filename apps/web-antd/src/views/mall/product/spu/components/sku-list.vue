@@ -1,13 +1,11 @@
 <script lang="ts" setup>
-import type { Ref } from 'vue';
-
 import type { MallSpuApi } from '#/api/mall/product/spu';
 import type {
   PropertyAndValues,
   RuleConfig,
 } from '#/views/mall/product/spu/components';
 
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import {
   copyValueToTarget,
@@ -21,10 +19,13 @@ import { Button, Image, Input, InputNumber, message } from 'ant-design-vue';
 import { VxeColumn, VxeTable } from '#/adapter/vxe-table';
 import { ImageUpload } from '#/components/upload';
 
+import { createEmptySku } from './sku-reconcile';
+
 defineOptions({ name: 'SkuList' });
 
 const props = withDefaults(
   defineProps<{
+    batchResetKey?: number;
     isActivityComponent?: boolean; // 是否作为 sku 活动配置组件
     isBatch?: boolean; // 是否作为批量操作组件
     isComponent?: boolean; // 是否作为 sku 选择组件
@@ -41,6 +42,7 @@ const props = withDefaults(
     isDetail: false,
     isComponent: false,
     isActivityComponent: false,
+    batchResetKey: 0,
   },
 );
 
@@ -50,24 +52,17 @@ const emit = defineEmits<{
 
 const { isBatch, isDetail, isComponent, isActivityComponent } = props;
 
-const formData: Ref<MallSpuApi.Spu | undefined> = ref<MallSpuApi.Spu>();
-const tableHeaders = ref<{ label: string; prop: string }[]>([]);
+const formData = computed(() => props.propFormData);
+const tableHeaders = computed(() =>
+  props.propertyList.map((item) => ({
+    id: item.id,
+    label: item.name,
+  })),
+);
 
-/** 创建空 SKU 数据 */
-function createEmptySku(): MallSpuApi.Sku {
-  return {
-    name: '', // SKU 名称，提交时会自动使用 SPU 名称
-    price: 0,
-    marketPrice: 0,
-    costPrice: 0,
-    barCode: '',
-    picUrl: '',
-    stock: 0,
-    weight: 0,
-    volume: 0,
-    firstBrokeragePrice: 0,
-    secondBrokeragePrice: 0,
-  };
+function getPropertyValueName(sku: MallSpuApi.Sku, propertyId: number) {
+  return sku.properties?.find((property) => property.propertyId === propertyId)
+    ?.valueName;
 }
 
 function formatDetailMoney(value: null | number | string | undefined) {
@@ -77,10 +72,19 @@ function formatDetailMoney(value: null | number | string | undefined) {
 
 const skuList = ref<MallSpuApi.Sku[]>([createEmptySku()]);
 
+watch(
+  () => props.batchResetKey,
+  () => {
+    if (props.isBatch) {
+      skuList.value = [createEmptySku()];
+    }
+  },
+);
+
 /** 批量添加 */
 function batchAdd() {
   validateProperty();
-  formData.value!.skus!.forEach((item: MallSpuApi.Sku) => {
+  (formData.value.skus ?? []).forEach((item: MallSpuApi.Sku) => {
     copyValueToTarget(item, skuList.value[0]);
   });
 }
@@ -89,6 +93,10 @@ function batchAdd() {
 function validateProperty() {
   // 校验商品属性属性值是否为空，有一个为空都不给过
   const warningInfo = '存在属性属性值为空，请先检查完善属性值后重试！！！';
+  if (formData.value.specType && props.propertyList.length === 0) {
+    message.warning(warningInfo);
+    throw new Error(warningInfo);
+  }
   for (const item of props.propertyList as PropertyAndValues[]) {
     if (!item.values || isEmpty(item.values)) {
       message.warning(warningInfo);
@@ -97,24 +105,19 @@ function validateProperty() {
   }
 }
 
-/** 删除 SKU */
-function deleteSku(row: MallSpuApi.Sku) {
-  const index = formData.value!.skus!.findIndex(
-    (sku: MallSpuApi.Sku) =>
-      JSON.stringify(sku.properties) === JSON.stringify(row.properties),
-  );
-  if (index !== -1) {
-    formData.value!.skus!.splice(index, 1);
-  }
-}
-
 /** 校验 SKU 数据：保存时，每个商品规格的表单要校验。例如：销售金额最低是 0.01 */
 function validateSku() {
   validateProperty();
+  const skus = formData.value.skus ?? [];
+  if (skus.length === 0) {
+    const warningInfo = '至少需要配置一个商品规格。';
+    message.warning(warningInfo);
+    throw new Error(warningInfo);
+  }
   let warningInfo = '请检查商品各行相关属性配置，';
   let validate = true;
 
-  for (const sku of formData.value!.skus!) {
+  for (const sku of skus) {
     for (const rule of props.ruleConfig as RuleConfig[]) {
       const value = getNestedValue(sku, rule.name);
       if (!rule.rule(value)) {
@@ -141,148 +144,6 @@ function handleSelectionChange({ records }: { records: MallSpuApi.Sku[] }) {
   emit('selectionChange', records);
 }
 
-/** 将传进来的值赋值给 skuList */
-watch(
-  () => props.propFormData,
-  (data) => {
-    if (!data) {
-      return;
-    }
-    formData.value = data;
-  },
-  {
-    deep: true,
-    immediate: true,
-  },
-);
-
-/** 生成表数据 */
-function generateTableData(propertyList: PropertyAndValues[]) {
-  const propertyValues = propertyList.map((item: PropertyAndValues) =>
-    (item.values || []).map((v: { id: number; name: string }) => ({
-      propertyId: item.id,
-      propertyName: item.name,
-      valueId: v.id,
-      valueName: v.name,
-    })),
-  );
-
-  const buildSkuList = build(propertyValues);
-
-  // 如果回显的 sku 属性和添加的属性不一致则重置 skus 列表
-  if (!validateData(propertyList)) {
-    formData.value!.skus = [];
-  }
-
-  for (const item of buildSkuList) {
-    const properties = Array.isArray(item) ? item : [item];
-    const row = {
-      ...createEmptySku(),
-      properties,
-    };
-
-    // 如果存在属性相同的 sku 则不做处理
-    const exists = formData.value!.skus!.some(
-      (sku: MallSpuApi.Sku) =>
-        JSON.stringify(sku.properties) === JSON.stringify(row.properties),
-    );
-
-    if (!exists) {
-      formData.value!.skus!.push(row);
-    }
-  }
-}
-
-/** 生成 skus 前置校验 */
-function validateData(propertyList: PropertyAndValues[]): boolean {
-  const skuPropertyIds: number[] = [];
-  formData.value!.skus!.forEach((sku: MallSpuApi.Sku) =>
-    sku.properties
-      ?.map((property: MallSpuApi.Property) => property.propertyId)
-      ?.forEach((propertyId?: number) => {
-        if (!skuPropertyIds.includes(propertyId!)) {
-          skuPropertyIds.push(propertyId!);
-        }
-      }),
-  );
-  const propertyIds = propertyList.map((item: PropertyAndValues) => item.id);
-  return skuPropertyIds.length === propertyIds.length;
-}
-
-/** 构建所有排列组合 */
-function build(
-  propertyValuesList: MallSpuApi.Property[][],
-): (MallSpuApi.Property | MallSpuApi.Property[])[] {
-  if (propertyValuesList.length === 0) {
-    return [];
-  } else if (propertyValuesList.length === 1) {
-    return propertyValuesList[0] || [];
-  } else {
-    const result: MallSpuApi.Property[][] = [];
-    const rest = build(propertyValuesList.slice(1));
-    const firstList = propertyValuesList[0];
-    if (!firstList) {
-      return [];
-    }
-
-    for (const element of firstList) {
-      for (const element_ of rest) {
-        // 第一次不是数组结构，后面的都是数组结构
-        if (Array.isArray(element_)) {
-          result.push([element!, ...(element_ as MallSpuApi.Property[])]);
-        } else {
-          result.push([element!, element_ as MallSpuApi.Property]);
-        }
-      }
-    }
-    return result;
-  }
-}
-
-/** 监听属性列表，生成相关参数和表头 */
-watch(
-  () => props.propertyList as PropertyAndValues[],
-  (propertyList: PropertyAndValues[]) => {
-    // 如果不是多规格则结束
-    if (!formData.value!.specType) {
-      return;
-    }
-
-    // 如果当前组件作为批量添加数据使用，则重置表数据
-    if (props.isBatch) {
-      skuList.value = [createEmptySku()];
-    }
-
-    // 判断代理对象是否为空
-    if (JSON.stringify(propertyList) === '[]') {
-      return;
-    }
-
-    // 重置并生成表头
-    tableHeaders.value = propertyList.map((item, index) => ({
-      prop: `name${index}`,
-      label: item.name,
-    }));
-
-    // 如果回显的 sku 属性和添加的属性一致则不处理
-    if (validateData(propertyList)) {
-      return;
-    }
-
-    // 添加新属性没有属性值也不做处理
-    if (propertyList.some((item) => !item.values || isEmpty(item.values))) {
-      return;
-    }
-
-    // 生成 table 数据，即 sku 列表
-    generateTableData(propertyList);
-  },
-  {
-    deep: true,
-    immediate: true,
-  },
-);
-
 const activitySkuListRef = ref();
 
 /** 获取 SKU 表格引用 */
@@ -291,7 +152,6 @@ function getSkuTableRef() {
 }
 
 defineExpose({
-  generateTableData,
   validateSku,
   getSkuTableRef,
 });
@@ -326,8 +186,8 @@ defineExpose({
       <template v-if="formData?.specType && !isBatch">
         <!-- 根据商品属性动态添加 -->
         <VxeColumn
-          v-for="(item, index) in tableHeaders"
-          :key="index"
+          v-for="item in tableHeaders"
+          :key="item.id"
           :title="item.label"
           align="center"
           fixed="left"
@@ -335,7 +195,7 @@ defineExpose({
         >
           <template #default="{ row }">
             <span class="font-bold text-[#40aaff]">
-              {{ row.properties?.[index]?.valueName }}
+              {{ getPropertyValueName(row, item.id) }}
             </span>
           </template>
         </VxeColumn>
@@ -430,24 +290,15 @@ defineExpose({
         </VxeColumn>
       </template>
       <VxeColumn
-        v-if="formData?.specType"
+        v-if="isBatch && formData?.specType"
         align="center"
         fixed="right"
         title="操作"
         width="100"
       >
-        <template #default="{ row }">
+        <template #default>
           <Button v-if="isBatch" type="link" size="small" @click="batchAdd">
             批量添加
-          </Button>
-          <Button
-            v-else
-            type="link"
-            size="small"
-            danger
-            @click="deleteSku(row)"
-          >
-            删除
           </Button>
         </template>
       </VxeColumn>
@@ -485,8 +336,8 @@ defineExpose({
       <template v-if="formData?.specType && !isBatch">
         <!-- 根据商品属性动态添加 -->
         <VxeColumn
-          v-for="(item, index) in tableHeaders"
-          :key="index"
+          v-for="item in tableHeaders"
+          :key="item.id"
           :title="item.label"
           align="center"
           max-width="80"
@@ -494,7 +345,7 @@ defineExpose({
         >
           <template #default="{ row }">
             <span class="font-bold text-[#40aaff]">
-              {{ row.properties?.[index]?.valueName }}
+              {{ getPropertyValueName(row, item.id) }}
             </span>
           </template>
         </VxeColumn>
@@ -575,8 +426,8 @@ defineExpose({
       <template v-if="formData?.specType">
         <!-- 根据商品属性动态添加 -->
         <VxeColumn
-          v-for="(item, index) in tableHeaders"
-          :key="index"
+          v-for="item in tableHeaders"
+          :key="item.id"
           :title="item.label"
           align="center"
           width="80"
@@ -584,7 +435,7 @@ defineExpose({
         >
           <template #default="{ row }">
             <span class="font-bold text-[#40aaff]">
-              {{ row.properties?.[index]?.valueName }}
+              {{ getPropertyValueName(row, item.id) }}
             </span>
           </template>
         </VxeColumn>

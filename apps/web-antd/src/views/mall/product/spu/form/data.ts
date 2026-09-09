@@ -120,6 +120,13 @@ export function useSkuFormSchema(
   propertyList: any[] = [],
   isDetail: boolean = false,
 ): VbenFormSchema[] {
+  const hasCompleteProperties =
+    propertyList.length > 0 &&
+    propertyList.every(
+      (property) =>
+        Array.isArray(property.values) && property.values.length > 0,
+    );
+
   return [
     {
       fieldName: 'id',
@@ -202,7 +209,7 @@ export function useSkuFormSchema(
         resolve({ values }) {
           return {
             show:
-              values.specType === true && propertyList.length > 0 && !isDetail,
+              values.specType === true && hasCompleteProperties && !isDetail,
           };
         },
       },
@@ -216,7 +223,7 @@ export function useSkuFormSchema(
         triggerFields: ['specType'],
         resolve({ values }) {
           return {
-            show: values.specType === true && propertyList.length > 0,
+            show: values.specType === true && hasCompleteProperties,
           };
         },
       },

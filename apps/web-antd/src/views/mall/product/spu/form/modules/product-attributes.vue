@@ -19,26 +19,25 @@ defineOptions({ name: 'ProductAttributes' });
 
 const props = withDefaults(defineProps<Props>(), {
   propertyList: () => [],
+  changeVersion: 0,
   isDetail: false,
 });
 
-const emit = defineEmits(['success']);
+const emit = defineEmits<{
+  (e: 'change', value: PropertyAndValues[]): void;
+}>();
 
 interface Props {
+  changeVersion?: number;
   propertyList?: PropertyAndValues[];
   isDetail?: boolean;
 }
 
 const inputValue = ref<string[]>([]); // 输入框值（tags 模式使用数组）
-const attributeIndex = ref<null | number>(null); // 获取焦点时记录当前属性项的 index
-const inputVisible = computed(() => (index: number) => {
-  if (attributeIndex.value === null) {
-    return false;
-  }
-  if (attributeIndex.value === index) {
-    return true;
-  }
-}); // 输入框显隐控制
+const activePropertyId = ref<null | number>(null);
+const inputVisible = computed(
+  () => (propertyId: number) => activePropertyId.value === propertyId,
+); // 输入框显隐控制
 
 interface InputRefItem {
   inputRef?: {
@@ -46,25 +45,49 @@ interface InputRefItem {
       id: string;
     };
   };
-  focus: () => void;
+  focus?: () => void;
 }
 
-const inputRef = ref<InputRefItem[]>([]); // 标签输入框 Ref
+const inputRef = ref(new Map<number, InputRefItem>()); // 标签输入框 Ref
 const attributeList = ref<PropertyAndValues[]>([]); // 商品属性列表
 const attributeOptions = ref<MallPropertyApi.PropertyValue[]>([]); // 商品属性值下拉框
 const pendingValues = new Set<string>(); // 正在保存的属性值，避免 change 和 blur 重复提交
+const attributeOptionsRequestVersion = ref(0);
+const propertyRevisions = new Map<number, number>();
 
-/** 解决 ref 在 v-for 中的获取问题*/
-function setInputRef(el: any) {
-  if (el === null || el === undefined) return;
-  // 如果不存在 id 相同的元素才添加
-  if (
-    !inputRef.value.some(
-      (item) => item.inputRef?.attributes.id === el.inputRef?.attributes.id,
-    )
-  ) {
-    inputRef.value.push(el);
+function markPropertyRemoved(propertyId: number) {
+  propertyRevisions.set(
+    propertyId,
+    (propertyRevisions.get(propertyId) ?? 0) + 1,
+  );
+}
+
+function clonePropertyList(list: PropertyAndValues[]): PropertyAndValues[] {
+  return list.map((property) => ({
+    ...property,
+    values: (property.values ?? []).map((value) => ({ ...value })),
+  }));
+}
+
+function applyPropertyList(nextList: PropertyAndValues[]) {
+  const nextPropertyIds = new Set(nextList.map((property) => property.id));
+  for (const property of attributeList.value) {
+    if (!nextPropertyIds.has(property.id)) {
+      markPropertyRemoved(property.id);
+    }
   }
+  attributeOptionsRequestVersion.value += 1;
+  attributeList.value = nextList;
+  emit('change', nextList);
+}
+
+/** 按属性编号保存输入框引用，避免属性删除后索引错位。 */
+function setInputRef(propertyId: number, el: unknown) {
+  if (el === null || el === undefined) {
+    inputRef.value.delete(propertyId);
+    return;
+  }
+  inputRef.value.set(propertyId, el as InputRefItem);
 }
 
 watch(
@@ -73,7 +96,16 @@ watch(
     if (!data) {
       return;
     }
-    attributeList.value = data;
+    const nextPropertyIds = new Set(data.map((property) => property.id));
+    for (const property of attributeList.value) {
+      if (!nextPropertyIds.has(property.id)) {
+        markPropertyRemoved(property.id);
+      }
+    }
+    attributeOptionsRequestVersion.value += 1;
+    attributeList.value = clonePropertyList(data);
+    activePropertyId.value = null;
+    inputValue.value = [];
   },
   {
     deep: true,
@@ -82,38 +114,50 @@ watch(
 );
 
 /** 删除属性值 */
-function handleCloseValue(index: number, value: PropertyAndValues) {
-  if (attributeList.value[index]?.values) {
-    attributeList.value[index].values = attributeList.value[
-      index
-    ].values?.filter((item) => item.id !== value.id);
+function handleCloseValue(propertyId: number, value: PropertyAndValues) {
+  const nextList = clonePropertyList(attributeList.value);
+  const propertyIndex = nextList.findIndex((item) => item.id === propertyId);
+  if (propertyIndex === -1) {
+    return;
   }
+  const property = nextList[propertyIndex];
+  if (!property) {
+    return;
+  }
+  property.values = (property.values ?? []).filter(
+    (item) => item.id !== value.id,
+  );
+  applyPropertyList(nextList);
 }
 
 /** 删除属性 */
 function handleCloseProperty(item: PropertyAndValues) {
-  attributeList.value = attributeList.value.filter(
+  const nextList = attributeList.value.filter(
     (attribute) => attribute.id !== item.id,
   );
-  emit('success', attributeList.value);
+  applyPropertyList(nextList);
 }
 
 /** 显示输入框并获取焦点 */
-async function showInput(index: number) {
-  attributeIndex.value = index;
-  inputRef.value?.[index]?.focus();
+async function showInput(propertyId: number) {
+  const property = attributeList.value.find((item) => item.id === propertyId);
+  if (!property) {
+    return;
+  }
+  activePropertyId.value = propertyId;
+  attributeOptions.value = [];
+  inputRef.value.get(property.id)?.focus?.();
   // 获取属性下拉选项
-  // oxlint-disable-next-line typescript/no-non-null-asserted-optional-chain
-  await getAttributeOptions(attributeList.value?.[index]?.id!);
+  await getAttributeOptions(property.id);
 }
 
 /** 定义 success 事件，用于操作成功后的回调 */
-async function handleInputConfirm(index: number, propertyId: number) {
+async function handleInputConfirm(propertyId: number) {
   // 从数组中取最后一个输入的值（tags 模式下 inputValue 是数组）
   const currentValue = inputValue.value?.[inputValue.value.length - 1]?.trim();
 
   if (!currentValue) {
-    attributeIndex.value = null;
+    activePropertyId.value = null;
     inputValue.value = [];
     return;
   }
@@ -124,13 +168,17 @@ async function handleInputConfirm(index: number, propertyId: number) {
   }
 
   // 1. 重复添加校验
-  if (
-    attributeList.value?.[index]?.values?.find(
-      (item) => item.name === currentValue,
-    )
-  ) {
+  const currentProperty = attributeList.value.find(
+    (item) => item.id === propertyId,
+  );
+  if (!currentProperty) {
+    activePropertyId.value = null;
+    inputValue.value = [];
+    return;
+  }
+  if (currentProperty.values?.some((item) => item.name === currentValue)) {
     message.warning('已存在相同属性值，请重试');
-    attributeIndex.value = null;
+    activePropertyId.value = null;
     inputValue.value = [];
     return;
   }
@@ -143,45 +191,77 @@ async function handleInputConfirm(index: number, propertyId: number) {
   );
   if (existValue) {
     pendingValues.delete(pendingKey);
-    attributeIndex.value = null;
+    activePropertyId.value = null;
     inputValue.value = [];
-    attributeList.value?.[index]?.values?.push({
+    const nextList = clonePropertyList(attributeList.value);
+    const propertyIndex = nextList.findIndex((item) => item.id === propertyId);
+    if (propertyIndex === -1) {
+      return;
+    }
+    nextList[propertyIndex]?.values?.push({
       id: existValue.id!,
       name: existValue.name,
     });
-    emit('success', attributeList.value);
+    applyPropertyList(nextList);
     return;
   }
 
   // 2.2 情况二：新属性值，则进行保存
+  const requestVersion = props.changeVersion;
+  const requestPropertyRevision = propertyRevisions.get(propertyId) ?? 0;
+  activePropertyId.value = null;
+  inputValue.value = [];
   try {
     const id = await createPropertyValue({
       propertyId,
       name: currentValue,
     });
-    attributeList.value?.[index]?.values?.push({
+    if (
+      requestVersion !== props.changeVersion ||
+      requestPropertyRevision !== (propertyRevisions.get(propertyId) ?? 0) ||
+      !attributeList.value.some((item) => item.id === propertyId)
+    ) {
+      return;
+    }
+    const nextList = clonePropertyList(attributeList.value);
+    const propertyIndex = nextList.findIndex((item) => item.id === propertyId);
+    if (propertyIndex === -1) {
+      return;
+    }
+    nextList[propertyIndex]?.values?.push({
       id,
       name: currentValue,
     });
     message.success($t('ui.actionMessage.operationSuccess'));
-    emit('success', attributeList.value);
+    applyPropertyList(nextList);
   } catch {
     message.error($t('ui.actionMessage.operationFailed'));
   } finally {
     pendingValues.delete(pendingKey);
   }
-  attributeIndex.value = null;
-  inputValue.value = [];
 }
 
 /** 获取商品属性下拉选项 */
 async function getAttributeOptions(propertyId: number) {
-  attributeOptions.value = await getPropertyValueSimpleList(propertyId);
+  const requestVersion = ++attributeOptionsRequestVersion.value;
+  try {
+    const options = await getPropertyValueSimpleList(propertyId);
+    if (
+      requestVersion === attributeOptionsRequestVersion.value &&
+      attributeList.value.some((item) => item.id === propertyId)
+    ) {
+      attributeOptions.value = options;
+    }
+  } catch {
+    if (requestVersion === attributeOptionsRequestVersion.value) {
+      attributeOptions.value = [];
+    }
+  }
 }
 </script>
 
 <template>
-  <Col v-for="(attribute, index) in attributeList" :key="index">
+  <Col v-for="attribute in attributeList" :key="attribute.id">
     <Divider class="my-3" />
     <div class="mt-2 flex flex-wrap items-center gap-2">
       <span class="mx-1">属性名：</span>
@@ -197,18 +277,18 @@ async function getAttributeOptions(propertyId: number) {
     <div class="mt-2 flex flex-wrap items-center gap-2">
       <span class="mx-1">属性值：</span>
       <Tag
-        v-for="(value, valueIndex) in attribute.values"
-        :key="valueIndex"
+        v-for="value in attribute.values"
+        :key="value.id"
         :closable="!isDetail"
         class="mx-1"
-        @close="handleCloseValue(index, value)"
+        @close="handleCloseValue(attribute.id, value)"
       >
         {{ value?.name }}
       </Tag>
       <Select
-        v-show="inputVisible(index)"
-        :id="`input${index}`"
-        :ref="setInputRef"
+        v-show="inputVisible(attribute.id)"
+        :id="`input${attribute.id}`"
+        :ref="(el) => setInputRef(attribute.id, el)"
         v-model:value="inputValue"
         allow-clear
         mode="tags"
@@ -216,9 +296,9 @@ async function getAttributeOptions(propertyId: number) {
         :filter-option="true"
         size="small"
         style="width: 100px"
-        @blur="handleInputConfirm(index, attribute.id)"
-        @change="handleInputConfirm(index, attribute.id)"
-        @keyup.enter="handleInputConfirm(index, attribute.id)"
+        @blur="handleInputConfirm(attribute.id)"
+        @change="handleInputConfirm(attribute.id)"
+        @keyup.enter="handleInputConfirm(attribute.id)"
       >
         <Select.Option
           v-for="item2 in attributeOptions"
@@ -229,8 +309,9 @@ async function getAttributeOptions(propertyId: number) {
         </Select.Option>
       </Select>
       <Tag
-        v-show="!inputVisible(index)"
-        @click="showInput(index)"
+        v-if="!isDetail"
+        v-show="!inputVisible(attribute.id)"
+        @click="showInput(attribute.id)"
         class="mx-1 border-dashed bg-muted"
       >
         <div class="flex items-center">

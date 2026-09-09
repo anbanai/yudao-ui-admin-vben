@@ -12,13 +12,18 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { useTabs } from '@vben/hooks';
 import { convertToInteger, formatToFraction } from '@vben/utils';
 
-import { Alert, Button, Card, message } from 'ant-design-vue';
+import { Alert, Button, Card, message, Modal } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { createSpu, getSpu, updateSpu } from '#/api/mall/product/spu';
 import { withOperationFeedback } from '#/utils/operation-feedback';
 import { getPropertyList, SkuList } from '#/views/mall/product/spu/components';
 
+import {
+  createEmptySku,
+  isSkuPropertiesSubset,
+  reconcileSkus,
+} from '../components/sku-reconcile';
 import {
   useDeliveryFormSchema,
   useDescriptionFormSchema,
@@ -42,6 +47,11 @@ const changeVersion = ref(0); // 表单变更版本，用于识别保存期间�
 const savedPayloadSnapshot = ref<null | string>(null);
 const isDetail = ref(name === 'ProductSpuDetail'); // 是否查看详情
 const initializingForm = ref(false); // 详情回填时不触发 SKU 重置逻辑
+const specChangePending = ref(false);
+const pendingSpecType = ref<boolean | null>(null);
+const propertyChangeVersion = ref(0);
+const specVersion = ref(0);
+const skuDraftVersion = ref(0);
 const skuListRef = ref(); // 商品属性列表 Ref
 
 const formData = ref<MallSpuApi.Spu>({
@@ -126,7 +136,6 @@ const [SkuForm, skuFormApi] = useVbenForm({
     if (initializingForm.value) {
       return;
     }
-    markUnsavedChanges();
     if (
       fieldsChanged.includes('subCommissionType') &&
       values.subCommissionType !== formData.value.subCommissionType
@@ -138,9 +147,13 @@ const [SkuForm, skuFormApi] = useVbenForm({
       fieldsChanged.includes('specType') &&
       values.specType !== formData.value.specType
     ) {
-      formData.value.specType = values.specType;
-      handleChangeSpec();
+      void handleChangeSpec(
+        Boolean(values.specType),
+        Boolean(formData.value.specType),
+      );
+      return;
     }
+    markUnsavedChanges();
   },
 });
 
@@ -214,7 +227,7 @@ function handleDescriptionUploadingChange(uploading: boolean) {
 function prepareSubmissionValues(values: MallSpuApi.Spu): MallSpuApi.Spu {
   const preparedValues = {
     ...values,
-    skus: formData.value.skus!.map((item) => ({
+    skus: (formData.value.skus ?? []).map((item) => ({
       ...item,
       name: values.name,
       price: convertToInteger(item.price),
@@ -286,6 +299,7 @@ async function handleSubmit() {
 
 /** 获得详情 */
 async function getDetail() {
+  specVersion.value += 1;
   if (isDetail.value) {
     isDetail.value = true;
     infoFormApi.setDisabled(true);
@@ -354,9 +368,81 @@ function openPropertyAddForm() {
   productPropertyAddFormApi.open();
 }
 
-/** 调用 SkuList generateTableData 方法*/
-function generateSkus(propertyList: PropertyAndValues[]) {
-  skuListRef.value.generateTableData(propertyList);
+function hasSkuData(sku: MallSpuApi.Sku): boolean {
+  const numericValues = [
+    sku.price,
+    sku.marketPrice,
+    sku.costPrice,
+    sku.stock,
+    sku.weight,
+    sku.volume,
+    sku.firstBrokeragePrice,
+    sku.secondBrokeragePrice,
+  ];
+  return Boolean(
+    sku.id ||
+    sku.barCode ||
+    sku.picUrl ||
+    numericValues.some((value) => {
+      const numericValue = Number(value);
+      return Number.isFinite(numericValue) && numericValue !== 0;
+    }),
+  );
+}
+
+function confirmDataReset(content: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const settle = (value: boolean) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve(value);
+    };
+    Modal.confirm({
+      title: '确认清空当前规格数据？',
+      content,
+      onOk: () => settle(true),
+      onCancel: () => settle(false),
+    });
+  });
+}
+
+/** 由父组件统一接收属性变化并对账 SKU。 */
+async function handlePropertyChange(nextList: PropertyAndValues[]) {
+  if (!formData.value.specType) {
+    return;
+  }
+  const requestVersion = ++propertyChangeVersion.value;
+  const currentSkus = formData.value.skus ?? [];
+  let nextSkus = reconcileSkus(nextList, currentSkus);
+  const discardedRows = currentSkus.filter(
+    (sku) =>
+      !nextSkus.some((nextSku) =>
+        isSkuPropertiesSubset(sku.properties, nextSku.properties),
+      ) && hasSkuData(sku),
+  );
+
+  if (discardedRows.length > 0) {
+    const confirmed = await confirmDataReset(
+      '删除属性值会移除对应的 SKU 行，已填写的价格、库存等数据将无法恢复。',
+    );
+    if (requestVersion !== propertyChangeVersion.value) {
+      return;
+    }
+    if (!confirmed) {
+      propertyList.value = [...propertyList.value];
+      return;
+    }
+    // 确认期间仍可能编辑保留的 SKU，必须基于最新数据重新对账。
+    nextSkus = reconcileSkus(nextList, formData.value.skus ?? []);
+  }
+
+  propertyList.value = nextList;
+  formData.value.skus = nextSkus;
+  skuDraftVersion.value += 1;
+  markUnsavedChanges();
 }
 
 /** 分销类型 */
@@ -368,26 +454,54 @@ function handleChangeSubCommissionType() {
   }
 }
 
-/** 选择规格 */
-function handleChangeSpec() {
-  // 重置商品属性列表
+/** 选择规格类型，清空前要求用户确认。 */
+async function handleChangeSpec(
+  nextSpecType: boolean,
+  previousSpecType: boolean,
+) {
+  if (specChangePending.value) {
+    const pendingValue = pendingSpecType.value ?? previousSpecType;
+    initializingForm.value = true;
+    try {
+      await skuFormApi.setFieldValue('specType', pendingValue);
+    } finally {
+      initializingForm.value = false;
+    }
+    return;
+  }
+  const hasData =
+    propertyList.value.length > 0 ||
+    (formData.value.skus ?? []).some((sku) => hasSkuData(sku));
+  if (hasData) {
+    specChangePending.value = true;
+    pendingSpecType.value = nextSpecType;
+    let confirmed: boolean;
+    try {
+      confirmed = await confirmDataReset(
+        '切换规格类型会清空当前属性和 SKU 数据。',
+      );
+    } finally {
+      specChangePending.value = false;
+      pendingSpecType.value = null;
+    }
+    if (!confirmed) {
+      initializingForm.value = true;
+      try {
+        await skuFormApi.setFieldValue('specType', previousSpecType);
+      } finally {
+        initializingForm.value = false;
+      }
+      return;
+    }
+  }
+
+  propertyChangeVersion.value += 1;
+  specVersion.value += 1;
+  formData.value.specType = nextSpecType;
   propertyList.value = [];
-  // 重置 sku 列表
-  formData.value.skus = [
-    {
-      name: '', // SKU 名称，提交时会自动使用 SPU 名称
-      price: 0,
-      marketPrice: 0,
-      costPrice: 0,
-      barCode: '',
-      picUrl: '',
-      stock: 0,
-      weight: 0,
-      volume: 0,
-      firstBrokeragePrice: 0,
-      secondBrokeragePrice: 0,
-    },
-  ];
+  formData.value.skus = [createEmptySku()];
+  skuDraftVersion.value += 1;
+  markUnsavedChanges();
 }
 
 /** 监听 sku form schema 变化，更新表单 */
@@ -416,7 +530,10 @@ onMounted(async () => {
 
 <template>
   <div>
-    <ProductPropertyAddFormModal :property-list="propertyList" />
+    <ProductPropertyAddFormModal
+      :property-list="propertyList"
+      @success="handlePropertyChange"
+    />
 
     <Page auto-content-height>
       <Card
@@ -494,18 +611,24 @@ onMounted(async () => {
           </template>
           <template #productAttributes>
             <div>
-              <Button class="mb-10px mr-15px" @click="openPropertyAddForm">
+              <Button
+                v-if="!isDetail"
+                class="mb-10px mr-15px"
+                @click="openPropertyAddForm"
+              >
                 添加属性
               </Button>
               <ProductAttributes
+                :change-version="specVersion"
                 :is-detail="isDetail"
                 :property-list="propertyList"
-                @success="generateSkus"
+                @change="handlePropertyChange"
               />
             </div>
           </template>
           <template #batchSkuList>
             <SkuList
+              :batch-reset-key="skuDraftVersion"
               :is-batch="true"
               :is-detail="isDetail"
               :prop-form-data="formData"

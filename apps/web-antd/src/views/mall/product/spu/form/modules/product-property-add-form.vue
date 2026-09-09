@@ -2,6 +2,7 @@
 <script lang="ts" setup>
 import type { VbenFormSchema } from '#/adapter/form';
 import type { MallPropertyApi } from '#/api/mall/product/property';
+import type { PropertyAndValues } from '#/views/mall/product/spu/components';
 
 import { ref, watch } from 'vue';
 
@@ -26,11 +27,18 @@ const props = defineProps({
 });
 
 const emit = defineEmits<{
-  success: [];
+  success: [value: PropertyAndValues[]];
 }>();
 
-const attributeList = ref<any[]>([]); // 商品属性列表
+const attributeList = ref<PropertyAndValues[]>([]); // 商品属性列表
 const attributeOptions = ref<MallPropertyApi.Property[]>([]); // 商品属性名称下拉框
+
+function clonePropertyList(list: PropertyAndValues[]): PropertyAndValues[] {
+  return list.map((property) => ({
+    ...property,
+    values: (property.values ?? []).map((value) => ({ ...value })),
+  }));
+}
 
 watch(
   () => props.propertyList,
@@ -38,7 +46,7 @@ watch(
     if (!data) {
       return;
     }
-    attributeList.value = data as any[];
+    attributeList.value = clonePropertyList(data as PropertyAndValues[]);
   },
   {
     deep: true,
@@ -91,44 +99,43 @@ const [Modal, modalApi] = useVbenModal({
       return;
     }
     modalApi.lock();
-    const values = await formApi.getValues();
-    // name 为数组，遍历数组，进行重复添加校验
-    const names = values.name;
-    for (const name of names) {
-      // 重复添加校验
-      for (const attrItem of attributeList.value) {
-        if (attrItem.name === name) {
+    try {
+      const values = await formApi.getValues();
+      const names = [
+        ...new Set(
+          (Array.isArray(values.name) ? values.name : [values.name])
+            .map((name: string) => name?.trim())
+            .filter(Boolean),
+        ),
+      ];
+      const nextList = clonePropertyList(attributeList.value);
+
+      for (const name of names) {
+        if (nextList.some((item) => item.name === name)) {
           message.error('该属性已存在，请勿重复添加');
           return;
         }
-      }
-    }
 
-    for (const name of names) {
-      const existProperty = attributeOptions.value.find(
-        (item: MallPropertyApi.Property) => item.name === name,
-      );
-      if (existProperty) {
-        // 情况一：如果属性已存在，则直接使用并结束
-        attributeList.value.push({
-          id: existProperty.id,
-          name,
-          values: [],
-        });
-      } else {
-        // 情况二：如果是不存在的属性，则需要执行新增
-        const propertyId = await createProperty({ name });
-        attributeList.value.push({
+        const existProperty = attributeOptions.value.find(
+          (item: MallPropertyApi.Property) => item.name === name,
+        );
+        const propertyId =
+          existProperty?.id ?? (await createProperty({ name }));
+        nextList.push({
           id: propertyId,
           name,
           values: [],
         });
       }
+      attributeList.value = nextList;
+      message.success($t('ui.actionMessage.operationSuccess'));
+      emit('success', nextList);
+      await modalApi.close();
+    } catch {
+      message.error($t('ui.actionMessage.operationFailed'));
+    } finally {
+      modalApi.unlock();
     }
-    message.success($t('ui.actionMessage.operationSuccess'));
-    modalApi.unlock();
-    await modalApi.close();
-    emit('success');
   },
 });
 </script>

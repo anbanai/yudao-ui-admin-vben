@@ -55,3 +55,23 @@ describe('商品详情表单', () => {
     expect(onUploadingChange).toHaveBeenCalledWith(true);
   });
 });
+
+describe('商品规格表单', () => {
+  it('属性值不完整时不显示批量设置和规格列表', async () => {
+    const { useSkuFormSchema } = await import('./data');
+    const schema = useSkuFormSchema([
+      {
+        id: 1,
+        name: '颜色',
+        values: [],
+      },
+    ]);
+    const batchField = schema.find((item) => item.fieldName === 'batchSkuList');
+    const multiField = schema.find((item) => item.fieldName === 'multiSkuList');
+    const resolveBatch = batchField?.dependencies?.resolve as any;
+    const resolveMulti = multiField?.dependencies?.resolve as any;
+
+    expect(resolveBatch({ values: { specType: true } }).show).toBe(false);
+    expect(resolveMulti({ values: { specType: true } }).show).toBe(false);
+  });
+});
