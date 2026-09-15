@@ -17,13 +17,34 @@ export function useDisagreeFormSchema(): VbenFormSchema[] {
     },
     {
       component: 'Textarea',
-      fieldName: 'reason',
+      fieldName: 'auditReason',
       label: '拒绝原因',
       componentProps: {
         placeholder: '请输入拒绝原因',
         rows: 4,
       },
       rules: z.string().min(2, { message: '拒绝原因不能少于 2 个字符' }),
+    },
+  ];
+}
+
+/** 拒绝收货表单的 schema 配置 */
+export function useRefuseFormSchema(): VbenFormSchema[] {
+  return [
+    {
+      component: 'Input',
+      fieldName: 'id',
+      hide: true,
+    },
+    {
+      component: 'Textarea',
+      fieldName: 'refuseMemo',
+      label: '收货备注',
+      componentProps: {
+        placeholder: '请输入收货备注',
+        rows: 4,
+      },
+      rules: z.string().min(2, { message: '收货备注不能少于 2 个字符' }),
     },
   ];
 }

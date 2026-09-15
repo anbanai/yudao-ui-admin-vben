@@ -272,12 +272,8 @@ function getValue() {
     return singleValue;
   }
 
-  // 多文件情况，根据输入参数类型决定返回格式
-  if (isUsingModelValue.value) {
-    return Array.isArray(props.modelValue) ? list : list.join(',');
-  }
-
-  return Array.isArray(props.value) ? list : list.join(',');
+  // 多文件情况：固定返回数组，保证与后端 List 字段一致（避免 modelValue 为 null/字符串时被 join 成字符串）
+  return list;
 }
 </script>
 

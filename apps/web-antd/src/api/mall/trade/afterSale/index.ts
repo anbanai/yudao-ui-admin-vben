@@ -50,8 +50,8 @@ export namespace MallAfterSaleApi {
   export interface AfterSaleDisagreeReqVO {
     /** 售后编号 */
     id: number;
-    /** 拒绝原因 */
-    reason: string;
+    /** 审批备注 */
+    auditReason: string;
   }
 }
 
@@ -88,8 +88,10 @@ export function receiveAfterSale(id: number) {
 }
 
 /** 拒绝收货 */
-export function refuseAfterSale(id: number) {
-  return requestClient.put(`/trade/after-sale/refuse?id=${id}`);
+export function refuseAfterSale(id: number, refuseMemo: string) {
+  return requestClient.put('/trade/after-sale/refuse', undefined, {
+    params: { id, refuseMemo },
+  });
 }
 
 /** 确认退款 */
