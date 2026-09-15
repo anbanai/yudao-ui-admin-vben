@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import type { FloatingActionButtonProperty } from './config';
+import type {
+  FloatingActionButtonItemProperty,
+  FloatingActionButtonProperty,
+} from './config';
 
 import { ref } from 'vue';
 
@@ -14,14 +17,20 @@ defineOptions({ name: 'FloatingActionButton' });
 defineProps<{ property: FloatingActionButtonProperty }>();
 
 const expanded = ref(false); // 是否展开
+const previewPopup = ref<FloatingActionButtonItemProperty | null>(null); // 预览弹窗卡片
 
 /** 处理展开/折叠 */
 function handleToggleFab() {
   expanded.value = !expanded.value;
 }
 
-function handleActive() {
+/** 处理按钮项点击 */
+function handleFabItemClick(item: FloatingActionButtonItemProperty) {
   expanded.value = false;
+  // 弹窗卡片类型：展示预览弹窗
+  if (item.type === 'popup') {
+    previewPopup.value = item;
+  }
 }
 </script>
 <template>
@@ -39,7 +48,7 @@ function handleActive() {
         v-for="(item, index) in property.list"
         :key="index"
         class="flex flex-col items-center"
-        @click="handleActive"
+        @click="handleFabItemClick(item)"
       >
         <Image :src="item.imgUrl" :width="28" :height="28" :preview="false">
           <template #error>
@@ -76,4 +85,31 @@ function handleActive() {
     class="absolute left-[calc(50%-375px/2)] top-0 z-[11] h-full w-[375px] bg-foreground/40"
     @click="handleToggleFab"
   ></div>
+  <!-- 弹窗卡片预览 -->
+  <div
+    v-if="previewPopup"
+    class="absolute left-[calc(50%-375px/2)] top-0 z-[30] flex h-full w-[375px] items-center justify-center bg-foreground/40 px-6"
+    @click="previewPopup = null"
+  >
+    <div class="w-full rounded-xl bg-card p-4 shadow-xl" @click.stop>
+      <Image
+        v-if="previewPopup.popupImgUrl"
+        :src="previewPopup.popupImgUrl"
+        :preview="false"
+        class="mb-3 w-full rounded-lg object-cover"
+      />
+      <div
+        v-if="previewPopup.popupTitle"
+        class="mb-2 text-base font-semibold text-foreground"
+      >
+        {{ previewPopup.popupTitle }}
+      </div>
+      <div
+        v-if="previewPopup.popupContent"
+        class="whitespace-pre-wrap text-sm text-muted-foreground"
+      >
+        {{ previewPopup.popupContent }}
+      </div>
+    </div>
+  </div>
 </template>
