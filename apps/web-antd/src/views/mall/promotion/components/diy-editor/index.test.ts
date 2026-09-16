@@ -26,7 +26,7 @@ vi.mock('#/api/mall/product/group', () => ({
 }));
 
 const legacyBannerUrl = 'https://static.iocoder.cn/mall/banner-01.jpg';
-const ossBaseUrl = 'https://teaworthshare.oss-cn-chengdu.aliyuncs.com';
+const ossBaseUrl = 'https://static.teaworthshare.com';
 
 let DiyEditor: Component;
 
