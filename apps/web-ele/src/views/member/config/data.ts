@@ -52,4 +52,17 @@ export const schema: VbenFormSchema[] = [
       class: '!w-full',
     },
   },
+  {
+    component: 'RadioGroup',
+    fieldName: 'pointTradeGiveTiming',
+    label: '积分发放时机',
+    help: '可选择支付后立即发放，或确认收货后发放',
+    componentProps: {
+      options: [
+        { label: '支付后立即发放', value: 1 },
+        { label: '确认收货后发放', value: 2 },
+      ],
+    },
+    defaultValue: 1,
+  },
 ];

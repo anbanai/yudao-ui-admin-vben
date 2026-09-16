@@ -12,6 +12,8 @@ export namespace MemberPointRecordApi {
     description: string;
     point: number;
     totalPoint: number;
+    status: number;
+    effectiveTime?: Date;
     userId: number;
     createDate: Date;
   }

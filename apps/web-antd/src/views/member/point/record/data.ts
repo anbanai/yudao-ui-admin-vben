@@ -68,6 +68,32 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       formatter: 'formatDateTime',
     },
     {
+      field: 'effectiveTime',
+      title: '生效时间',
+      minWidth: 180,
+      formatter: 'formatDateTime',
+    },
+    {
+      field: 'status',
+      title: '状态',
+      minWidth: 100,
+      slots: {
+        default: ({ row }) => {
+          const status = row.status ?? 1;
+          let color = 'default';
+          let label = '已作废';
+          if (status === 1) {
+            color = 'green';
+            label = '已生效';
+          } else if (status === 2) {
+            color = 'orange';
+            label = '待生效';
+          }
+          return h(Tag, { color }, () => label);
+        },
+      },
+    },
+    {
       field: 'nickname',
       title: '用户',
       minWidth: 150,
