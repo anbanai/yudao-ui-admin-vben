@@ -42,7 +42,7 @@ export const schema: VbenFormSchema[] = [
     component: 'InputNumber',
     fieldName: 'pointTradeGivePoint',
     label: '1 元赠送多少分',
-    help: '下单支付金额按比例赠送积分（实际支付 1 元赠送多少积分）',
+    help: '独立于积分抵扣开关；按商品实付金额赠送，设置为 0 时关闭消费赠分',
     componentProps: {
       class: '!w-full',
       min: 0,
