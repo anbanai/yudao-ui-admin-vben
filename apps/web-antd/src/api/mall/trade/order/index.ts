@@ -102,6 +102,7 @@ export namespace MallOrderApi {
   /** 交易订单统计响应 */
   export interface OrderSummaryRespVO {
     orderCount: number; // 订单数量
+    productCount?: number; // 商品销量
     orderPayPrice: number; // 订单金额
     afterSaleCount: number; // 退款单数
     afterSalePrice: number; // 退款金额
@@ -145,6 +146,11 @@ export function getOrderPage(params: PageParam) {
       params,
     },
   );
+}
+
+/** 导出交易订单 Excel */
+export function exportOrder(params: PageParam) {
+  return requestClient.download('/trade/order/export-excel', { params });
 }
 
 /** 查询交易订单统计 */

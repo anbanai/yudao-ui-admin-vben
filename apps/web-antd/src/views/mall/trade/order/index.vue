@@ -5,18 +5,22 @@ import type { MallOrderApi } from '#/api/mall/trade/order';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { DocAlert, Page, SummaryCard, useVbenModal } from '@vben/common-ui';
 import {
   DeliveryTypeEnum,
   DICT_TYPE,
   TradeOrderStatusEnum,
 } from '@vben/constants';
-import { fenToYuan } from '@vben/utils';
+import { downloadFileFromBlobPart, fenToYuan } from '@vben/utils';
 
-import { Image, List, message, Tag } from 'ant-design-vue';
+import { Card, Image, List, message, Tag } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getOrderPage } from '#/api/mall/trade/order';
+import {
+  exportOrder,
+  getOrderPage,
+  getOrderSummary,
+} from '#/api/mall/trade/order';
 import { DictTag } from '#/components/dict-tag';
 import { $t } from '#/locales';
 
@@ -51,10 +55,17 @@ const [SfBatchDeliveryFormModal, sfBatchDeliveryFormModalApi] = useVbenModal({
 });
 
 const selectedOrders = ref<MallOrderApi.Order[]>([]);
+const summary = ref<MallOrderApi.OrderSummaryRespVO>();
 
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
+}
+
+/** 导出当前筛选结果 */
+async function handleExport() {
+  const data = await exportOrder(await gridApi.formApi.getValues());
+  downloadFileFromBlobPart({ fileName: '订单列表.xls', source: data });
 }
 
 /** 详情 */
@@ -92,6 +103,7 @@ function handleRemark(row: MallOrderApi.Order) {
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
+    submitOnEnter: true,
   },
   gridOptions: {
     expandConfig: {
@@ -111,11 +123,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
         query: async ({ page }, formValues) => {
           selectedOrders.value = [];
           await gridApi.grid?.clearCheckboxRow();
-          return await getOrderPage({
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-            ...formValues,
-          });
+          const query = { ...formValues };
+          const [pageResult, summaryResult] = await Promise.all([
+            getOrderPage({
+              pageNo: page.currentPage,
+              pageSize: page.pageSize,
+              ...query,
+            }),
+            getOrderSummary(query),
+          ]);
+          summary.value = summaryResult;
+          return pageResult;
         },
       },
     },
@@ -152,10 +170,55 @@ const [Grid, gridApi] = useVbenVxeGrid({
     <SfDeliveryFormModal @success="handleRefresh" />
     <SfBatchDeliveryFormModal @success="handleRefresh" />
     <RemarkFormModal @success="handleRefresh" />
+    <Card class="mb-2">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard
+          class="min-w-0"
+          title="订单数量"
+          icon="icon-park-outline:transaction-order"
+          icon-color="bg-blue-100"
+          icon-bg-color="text-blue-500"
+          :value="summary?.orderCount || 0"
+        />
+        <SummaryCard
+          class="min-w-0"
+          title="商品销量"
+          icon="lucide:shopping-cart"
+          icon-color="bg-green-100"
+          icon-bg-color="text-green-500"
+          :value="summary?.productCount || 0"
+        />
+        <SummaryCard
+          class="min-w-0"
+          title="订单金额"
+          icon="streamline:money-cash-file-dollar-common-money-currency-cash-file"
+          icon-color="bg-purple-100"
+          icon-bg-color="text-purple-500"
+          prefix="￥"
+          :decimals="2"
+          :value="Number(fenToYuan(summary?.orderPayPrice || 0))"
+        />
+        <SummaryCard
+          class="min-w-0"
+          title="退款单数"
+          icon="heroicons:receipt-refundAfterSale"
+          icon-color="bg-yellow-100"
+          icon-bg-color="text-yellow-500"
+          :value="summary?.afterSaleCount || 0"
+        />
+      </div>
+    </Card>
     <Grid table-title="订单列表">
       <template #toolbar-tools>
         <TableAction
           :actions="[
+            {
+              label: $t('ui.actionTitle.export'),
+              type: 'primary',
+              icon: ACTION_ICON.DOWNLOAD,
+              auth: ['trade:order:export'],
+              onClick: handleExport,
+            },
             {
               label: `批量发货${selectedOrders.length ? ` (${selectedOrders.length})` : ''}`,
               type: 'primary',
@@ -229,10 +292,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             {
               label: '顺丰打单发货',
               type: 'link',
-              auth: [
-                'trade:logistics:sf-waybill:create',
-                'trade:order:update',
-              ],
+              auth: ['trade:logistics:sf-waybill:create', 'trade:order:update'],
               ifShow: () =>
                 row.deliveryType === DeliveryTypeEnum.EXPRESS.type &&
                 row.status === TradeOrderStatusEnum.UNDELIVERED.status,
