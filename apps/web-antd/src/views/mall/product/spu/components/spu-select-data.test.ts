@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useGridFormSchema } from './spu-select-data';
+
 const getCategoryList = vi.hoisted(() => vi.fn());
 
 vi.mock('#/api/mall/product/category', () => ({
@@ -18,7 +20,6 @@ describe('商品选择分类筛选', () => {
   });
 
   it('通过异步 api 加载分类树并返回原始分类列表', async () => {
-    const { useGridFormSchema } = await import('./spu-select-data');
     const onLoaded = vi.fn();
     const categoryField = useGridFormSchema(onLoaded).find(
       (field) => field.fieldName === 'categoryId',

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useGridFormSchema } from './data';
+
 const getCategoryList = vi.hoisted(() => vi.fn());
 
 vi.mock('#/api/mall/product/category', () => ({
@@ -16,12 +18,12 @@ describe('商品列表分类筛选', () => {
   });
 
   it('通过异步 api 加载并转换分类树', async () => {
-    const { useGridFormSchema } = await import('./data');
     const categoryField = useGridFormSchema().find(
       (field) => field.fieldName === 'categoryIds',
     );
-    const api = (categoryField?.componentProps as { api?: () => Promise<unknown[]> })
-      ?.api;
+    const api = (
+      categoryField?.componentProps as { api?: () => Promise<unknown[]> }
+    )?.api;
 
     expect(api).toEqual(expect.any(Function));
     await expect(api!()).resolves.toEqual([
