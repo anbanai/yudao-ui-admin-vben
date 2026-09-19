@@ -114,8 +114,24 @@ export function buildPromotionCacheKey(
   product: MallSpuApi.Spu,
   shareId: number,
   type: PromotionAssetType,
+  options: {
+    h5Domain?: string;
+    h5Url?: string;
+    identity?: PromotionIdentity;
+  } = {},
 ): string {
+  const identity = options.identity;
   return JSON.stringify({
+    h5Domain: options.h5Domain,
+    h5Url: options.h5Url,
+    identity: identity
+      ? {
+          avatarUrl: identity.avatarUrl,
+          kind: identity.kind,
+          name: identity.name,
+          shareId: identity.shareId,
+        }
+      : undefined,
     id: product.id,
     marketPrice: product.marketPrice,
     name: product.name,

@@ -37,7 +37,7 @@ type PreviewState =
   | { status: 'loading' };
 
 const SHOP_AVATAR_URL = '/branding/logo-mark.png';
-const SHOP_NAME = '不忍独享';
+const SHOP_NAME = import.meta.env.VITE_APP_TITLE?.trim() || '不忍独享';
 const H5_CONFIG_MESSAGE = '请配置 VITE_MALL_H5_DOMAIN';
 
 const { hasAccessByCodes } = useAccess();
@@ -50,6 +50,7 @@ const selectedMemberId = ref<number>();
 const selectedMember = ref<MemberUserApi.User>();
 const linkInput = ref<HTMLInputElement>();
 const assetCache = new Map<string, Blob>();
+const assetRequests = new Map<string, Promise<Blob>>();
 const qrCache = new Map<string, Promise<string>>();
 const previewStates = reactive<Record<PromotionAssetType, PreviewState>>({
   card: { status: 'idle' },
@@ -58,6 +59,7 @@ const previewStates = reactive<Record<PromotionAssetType, PreviewState>>({
 });
 let generationRequestId = 0;
 let lifecycleRequestId = 0;
+let modalLockRequestId: number | undefined;
 
 const identityOptions = computed(() => [
   { label: '店铺公共', value: 'shop' },
@@ -136,6 +138,23 @@ function resetSession() {
   selectedMember.value = undefined;
 }
 
+function lockModal(requestId: number) {
+  modalApi.lock();
+  modalLockRequestId = requestId;
+}
+
+function unlockModal(requestId: number) {
+  if (modalLockRequestId !== requestId) return;
+  modalLockRequestId = undefined;
+  modalApi.unlock();
+}
+
+function clearModalLock() {
+  if (modalLockRequestId === undefined) return;
+  modalLockRequestId = undefined;
+  modalApi.unlock();
+}
+
 async function getMiniProgramQr(context: PromotionContext) {
   const scene = context.miniProgramScene;
   const cached = qrCache.get(scene);
@@ -163,25 +182,50 @@ async function ensureAsset(type: PromotionAssetType) {
     currentProduct,
     context.identity.shareId,
     type,
+    {
+      h5Domain: import.meta.env.VITE_MALL_H5_DOMAIN,
+      h5Url: context.h5Url,
+      identity: context.identity,
+    },
   );
   const state = previewStates[type];
   if (state.status === 'ready') return;
 
-  const requestId = ++generationRequestId;
+  const requestId = generationRequestId;
   previewStates[type] = { status: 'loading' };
   try {
-    let blob = assetCache.get(key);
+    const cached = assetCache.get(key);
+    let blob = cached;
+    let ownsRequest = false;
     if (!blob) {
-      const miniProgramQrCode =
-        type === 'poster' || type === 'card'
-          ? await getMiniProgramQr(context)
-          : undefined;
-      blob = await renderPromotionAsset({
-        context,
-        ...(miniProgramQrCode ? { miniProgramQrCode } : {}),
-        type,
-      });
+      let request = assetRequests.get(key);
+      if (!request) {
+        ownsRequest = true;
+        request = (async () => {
+          const miniProgramQrCode =
+            type === 'poster' || type === 'card'
+              ? await getMiniProgramQr(context)
+              : undefined;
+          return renderPromotionAsset({
+            context,
+            ...(miniProgramQrCode ? { miniProgramQrCode } : {}),
+            type,
+          });
+        })();
+        assetRequests.set(key, request);
+        void request.then(
+          () => {
+            if (assetRequests.get(key) === request) assetRequests.delete(key);
+          },
+          () => {
+            if (assetRequests.get(key) === request) assetRequests.delete(key);
+          },
+        );
+      }
+      blob = await request;
     }
+    const latestState = previewStates[type];
+    if (!ownsRequest && 'url' in latestState) return;
     const url = URL.createObjectURL(blob);
     if (
       requestId !== generationRequestId ||
@@ -206,7 +250,7 @@ async function handleIdentityModeChange(value: number | string) {
   selectedMemberId.value = undefined;
   selectedMember.value = undefined;
   invalidatePreviews();
-  if (identityMode.value === 'shop' && activeTab.value !== 'link') {
+  if (identityMode.value === 'shop' && isPromotionAssetType(activeTab.value)) {
     await ensureAsset(activeTab.value);
   }
 }
@@ -215,14 +259,20 @@ async function handleMemberChange(member?: MemberUserApi.User) {
   selectedMember.value = member;
   selectedMemberId.value = member?.id;
   invalidatePreviews();
-  if (member && activeTab.value !== 'link') {
+  if (member && isPromotionAssetType(activeTab.value)) {
     await ensureAsset(activeTab.value);
   }
 }
 
 async function handleTabChange(value: number | string) {
   activeTab.value = value as ActiveTab;
-  if (activeTab.value !== 'link') await ensureAsset(activeTab.value);
+  if (isPromotionAssetType(activeTab.value)) {
+    await ensureAsset(activeTab.value);
+  }
+}
+
+function isPromotionAssetType(value: ActiveTab): value is PromotionAssetType {
+  return value !== 'link';
 }
 
 function downloadAsset(type: PromotionAssetType) {
@@ -232,6 +282,16 @@ function downloadAsset(type: PromotionAssetType) {
   anchor.href = state.url;
   anchor.download = buildPromotionFilename(product.value.name ?? '商品', type);
   anchor.click();
+}
+
+function downloadCurrentAsset() {
+  const type = activeTab.value;
+  if (isPromotionAssetType(type)) downloadAsset(type);
+}
+
+function retryCurrentAsset() {
+  const type = activeTab.value;
+  if (isPromotionAssetType(type)) void ensureAsset(type);
 }
 
 async function copyLink() {
@@ -253,48 +313,69 @@ function openPreview(url?: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+async function loadProduct(requestId: number) {
+  const row = modalApi.getData() as MallSpuApi.Spu;
+  if (!row?.id) {
+    if (requestId === lifecycleRequestId) {
+      loadError.value = '商品编号不存在';
+    }
+    return;
+  }
+  lockModal(requestId);
+  let shouldGeneratePreview = false;
+  try {
+    const latestProduct = await getSpu(row.id);
+    if (requestId !== lifecycleRequestId) return;
+    product.value = latestProduct;
+    loadError.value = '';
+    if (latestProduct.status !== ProductSpuStatusEnum.ENABLE.status) {
+      loadError.value = '仅支持推广已上架商品';
+      return;
+    }
+    if (!promotionContext.value) {
+      loadError.value = '商品推广信息不完整';
+      return;
+    }
+    shouldGeneratePreview = true;
+  } catch (error) {
+    if (requestId === lifecycleRequestId) {
+      loadError.value = errorMessage(error, '商品信息加载失败');
+    }
+  } finally {
+    unlockModal(requestId);
+  }
+  if (
+    shouldGeneratePreview &&
+    requestId === lifecycleRequestId &&
+    isPromotionAssetType(activeTab.value)
+  ) {
+    await ensureAsset(activeTab.value);
+  }
+}
+
+async function retryLoad() {
+  loadError.value = '';
+  await loadProduct(lifecycleRequestId);
+}
+
 const [Modal, modalApi] = useVbenModal({
   async onOpenChange(isOpen: boolean) {
     if (!isOpen) {
+      clearModalLock();
       resetSession();
       return;
     }
+    clearModalLock();
     resetSession();
     const requestId = lifecycleRequestId;
-    const row = modalApi.getData() as MallSpuApi.Spu;
-    if (!row?.id) {
-      loadError.value = '商品编号不存在';
-      return;
-    }
-    modalApi.lock();
-    let shouldGeneratePreview = false;
-    try {
-      const latestProduct = await getSpu(row.id);
-      if (requestId !== lifecycleRequestId) return;
-      product.value = latestProduct;
-      if (latestProduct.status !== ProductSpuStatusEnum.ENABLE.status) {
-        loadError.value = '仅支持推广已上架商品';
-        return;
-      }
-      if (!promotionContext.value) {
-        loadError.value = '商品推广信息不完整';
-        return;
-      }
-      shouldGeneratePreview = true;
-    } catch (error) {
-      if (requestId === lifecycleRequestId) {
-        loadError.value = errorMessage(error, '商品信息加载失败');
-      }
-    } finally {
-      modalApi.unlock();
-    }
-    if (shouldGeneratePreview && requestId === lifecycleRequestId) {
-      await ensureAsset(activeTab.value);
-    }
+    await loadProduct(requestId);
   },
 });
 
-onBeforeUnmount(resetSession);
+onBeforeUnmount(() => {
+  clearModalLock();
+  resetSession();
+});
 </script>
 
 <template>
@@ -325,7 +406,13 @@ onBeforeUnmount(resetSession);
         </div>
       </div>
 
-      <p v-if="loadError" class="text-sm text-red-500">{{ loadError }}</p>
+      <div v-if="loadError" class="flex items-center gap-3">
+        <p class="text-sm text-red-500">{{ loadError }}</p>
+        <Button size="small" @click="retryLoad">
+          <IconifyIcon class="mr-1" icon="lucide:refresh-cw" />
+          重试
+        </Button>
+      </div>
 
       <div
         v-if="!loadError"
@@ -394,7 +481,7 @@ onBeforeUnmount(resetSession);
             v-else-if="currentPreview?.status === 'ready'"
             class="flex flex-wrap gap-2"
           >
-            <Button @click="downloadAsset(activeTab as PromotionAssetType)">
+            <Button @click="downloadCurrentAsset">
               <IconifyIcon class="mr-1" icon="lucide:download" />
               下载 PNG
             </Button>
@@ -425,10 +512,7 @@ onBeforeUnmount(resetSession);
               class="space-y-3 text-center"
             >
               <p class="text-sm text-red-500">{{ currentPreview.message }}</p>
-              <Button
-                size="small"
-                @click="ensureAsset(activeTab as PromotionAssetType)"
-              >
+              <Button size="small" @click="retryCurrentAsset">
                 <IconifyIcon class="mr-1" icon="lucide:refresh-cw" />
                 重试
               </Button>
@@ -438,8 +522,15 @@ onBeforeUnmount(resetSession);
         </div>
       </div>
     </div>
-    <p v-else-if="loadError" class="py-12 text-center text-sm text-red-500">
-      {{ loadError }}
-    </p>
+    <div
+      v-else-if="loadError"
+      class="flex items-center justify-center gap-3 py-12"
+    >
+      <p class="text-center text-sm text-red-500">{{ loadError }}</p>
+      <Button size="small" @click="retryLoad">
+        <IconifyIcon class="mr-1" icon="lucide:refresh-cw" />
+        重试
+      </Button>
+    </div>
   </Modal>
 </template>

@@ -112,10 +112,20 @@ defineExpose({ handleChange, options, search });
   >
     <template #option="option">
       <div class="flex min-w-0 items-center gap-2">
-        <Avatar size="small">
+        <Avatar :src="option.member.avatar" size="small">
           {{ displayName(option.member).slice(0, 1) }}
         </Avatar>
         <span class="min-w-0 truncate">{{ displayLabel(option.member) }}</span>
+      </div>
+    </template>
+    <template #optionLabel="option">
+      <div class="flex min-w-0 items-center gap-2">
+        <Avatar :src="option.member?.avatar" size="small">
+          {{ option.member ? displayName(option.member).slice(0, 1) : '' }}
+        </Avatar>
+        <span class="min-w-0 truncate">
+          {{ option.member ? displayLabel(option.member) : option.label }}
+        </span>
       </div>
     </template>
     <template #notFoundContent>

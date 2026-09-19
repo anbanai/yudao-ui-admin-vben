@@ -21,6 +21,7 @@ export const PROMOTION_ASSET_SIZES = {
 } as const;
 
 const SHOP_LOGO_URL = '/branding/logo-mark.png';
+const SCAN_PROMPT = '扫码进入商品详情';
 
 export function wrapCanvasText(
   text: string,
@@ -40,16 +41,21 @@ export function wrapCanvasText(
     lines.push(current);
     current = character;
     if (lines.length === maxLines) {
+      const previousLine = lines[maxLines - 1];
+      if (previousLine === undefined) return lines;
       return [
         ...lines.slice(0, -1),
-        truncateLine(`${lines[maxLines - 1]}${current}`, maxWidth, measure),
+        truncateLine(`${previousLine}${current}`, maxWidth, measure),
       ];
     }
   }
   if (current) lines.push(current);
   if (lines.length <= maxLines) return lines;
   lines.length = maxLines;
-  lines[maxLines - 1] = truncateLine(lines[maxLines - 1], maxWidth, measure);
+  const lastLine = lines[maxLines - 1];
+  if (lastLine !== undefined) {
+    lines[maxLines - 1] = truncateLine(lastLine, maxWidth, measure);
+  }
   return lines;
 }
 
@@ -125,6 +131,7 @@ async function drawPoster(
     760,
     140,
   );
+  drawScanPrompt(context, SCAN_PROMPT, 410, 925, 160);
 }
 
 async function drawCard(
@@ -146,6 +153,7 @@ async function drawCard(
     500,
     180,
   );
+  drawScanPrompt(context, SCAN_PROMPT, 735, 700, 210);
 }
 
 async function drawH5QrImage(
@@ -155,11 +163,13 @@ async function drawH5QrImage(
 ) {
   const promotion = input.context;
   paintBackground(context, 800, 800);
-  await drawCoverImage(context, promotion.picUrl, dependencies, 0, 0, 800, 430);
-  drawTitle(context, promotion.productName, 48, 510, 704, 34);
-  drawPrice(context, promotion, 48, 620);
+  await drawCoverImage(context, promotion.picUrl, dependencies, 0, 0, 800, 320);
+  await drawIdentity(context, promotion, dependencies, 48, 350);
+  drawTitle(context, promotion.productName, 48, 440, 704, 34);
+  drawPrice(context, promotion, 48, 555);
   const qrUrl = await dependencies.toQrDataUrl(promotion.h5Url!, 280);
-  await drawQrImage(context, qrUrl, dependencies, 472, 470, 280);
+  await drawQrImage(context, qrUrl, dependencies, 260, 610, 150);
+  drawScanPrompt(context, SCAN_PROMPT, 435, 665, 300);
 }
 
 function paintBackground(
@@ -246,6 +256,25 @@ function drawPrice(
     const priceWidth = context.measureText(promotion.priceText).width;
     context.fillText(promotion.marketPriceText, x + priceWidth + 18, y + 8);
   }
+}
+
+function drawScanPrompt(
+  context: CanvasRenderingContext2D,
+  prompt: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+) {
+  context.fillStyle = '#6b7280';
+  context.font = '20px sans-serif';
+  context.textBaseline = 'top';
+  const lines = wrapCanvasText(
+    prompt,
+    maxWidth,
+    2,
+    context.measureText.bind(context),
+  );
+  lines.forEach((line, index) => context.fillText(line, x, y + index * 26));
 }
 
 async function drawIdentity(

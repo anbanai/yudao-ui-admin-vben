@@ -101,6 +101,34 @@ describe('商品推广数据', () => {
     );
   });
 
+  it('身份头像和 H5 配置变化时缓存键变化', () => {
+    const product = { id: 8, name: '茶', picUrl: '/tea.png', price: 100 };
+    const identity = createMemberIdentity(
+      { avatar: '/member-a.png', id: 9, nickname: '茶友' },
+      '/shop.png',
+    );
+    const base = buildPromotionCacheKey(product, 9, 'h5', {
+      h5Domain: 'https://mall.example.com',
+      h5Url: 'https://mall.example.com/product?spm=9.2.8.1.3',
+      identity,
+    });
+
+    expect(base).not.toBe(
+      buildPromotionCacheKey(product, 9, 'h5', {
+        h5Domain: 'https://mall.example.com',
+        h5Url: 'https://mall.example.com/product?spm=9.2.8.1.3',
+        identity: { ...identity, avatarUrl: '/member-b.png' },
+      }),
+    );
+    expect(base).not.toBe(
+      buildPromotionCacheKey(product, 9, 'h5', {
+        h5Domain: 'https://other.example.com',
+        h5Url: 'https://other.example.com/product?spm=9.2.8.1.3',
+        identity,
+      }),
+    );
+  });
+
   it('清理下载文件名非法字符', () => {
     expect(buildPromotionFilename('春茶/礼盒:*?', 'poster')).toBe(
       '春茶-礼盒---商品海报.png',

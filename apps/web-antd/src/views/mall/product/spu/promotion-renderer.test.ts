@@ -77,9 +77,12 @@ describe('推广图片渲染', () => {
   });
 
   it('generates an H5 QR from context.h5Url', async () => {
-    const { deps, qrCalls } = createFakeRenderDependencies();
+    const { deps, qrCalls, lastCanvas } = createFakeRenderDependencies();
     await renderPromotionAsset({ context: promotionContext, type: 'h5' }, deps);
     expect(qrCalls).toEqual([{ text: promotionContext.h5Url, width: 280 }]);
+    expect(lastCanvas()?.context.filledTexts).toEqual(
+      expect.arrayContaining(['推广员', '扫码进入商品详情']),
+    );
   });
 
   it('falls back to the shop logo when avatar loading fails', async () => {
@@ -95,6 +98,19 @@ describe('推广图片渲染', () => {
       deps,
     );
     expect(loadedUrls).toContain('/branding/logo-mark.png');
+  });
+
+  it.each(['poster', 'card'] as const)('%s 包含扫码提示', async (type) => {
+    const { deps, lastCanvas } = createFakeRenderDependencies();
+    await renderPromotionAsset(
+      {
+        context: promotionContext,
+        miniProgramQrCode: 'data:image/png;base64,qr',
+        type,
+      },
+      deps,
+    );
+    expect(lastCanvas()?.context.filledTexts).toContain('扫码进入商品详情');
   });
 
   it('rejects when canvas export returns a null Blob', async () => {
@@ -168,6 +184,7 @@ class FakeCanvas {
 }
 
 class FakeCanvasContext {
+  readonly filledTexts: string[] = [];
   fillStyle = '';
   font = '';
   textAlign: CanvasTextAlign = 'left';
@@ -175,7 +192,9 @@ class FakeCanvasContext {
 
   drawImage() {}
   fillRect() {}
-  fillText() {}
+  fillText(text: string) {
+    this.filledTexts.push(text);
+  }
   measureText(text: string) {
     return { width: text.length * 10 } as TextMetrics;
   }

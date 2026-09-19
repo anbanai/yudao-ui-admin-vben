@@ -295,6 +295,25 @@ describe('product promotion modal', () => {
     expect(mocks.renderPromotionAsset).not.toHaveBeenCalled();
   });
 
+  it('商品详情加载失败时显示重试并重新校验状态', async () => {
+    mocks.getSpu
+      .mockRejectedValueOnce(new Error('网络暂不可用'))
+      .mockResolvedValueOnce(activeProduct);
+    mocks.modalApi.getData.mockReturnValue({ id: 88 });
+    const { host } = mountPromotionModal();
+
+    await mocks.modalConfig!.onOpenChange(true);
+    await flushVueUpdates();
+    expect(host.textContent).toContain('网络暂不可用');
+    findButton(host, '重试').click();
+    await vi.waitFor(() => {
+      expect(mocks.getSpu).toHaveBeenCalledTimes(2);
+      expect(mocks.renderPromotionAsset).toHaveBeenCalled();
+    });
+    expect(host.textContent).toContain('最新商品名');
+    expect(mocks.modalApi.unlock).toHaveBeenCalledTimes(2);
+  });
+
   it('无会员查询权限时隐藏指定推广员模式', async () => {
     mocks.hasMemberPermission = false;
     const { host } = await openActiveProduct();
@@ -421,7 +440,11 @@ describe('product promotion modal', () => {
 
     await mocks.modalConfig!.onOpenChange(false);
 
-    expect(revokeObjectUrl.mock.calls.map(([url]) => url).toSorted()).toEqual([
+    expect(
+      revokeObjectUrl.mock.calls
+        .map(([url]) => url)
+        .toSorted((left, right) => left.localeCompare(right)),
+    ).toEqual([
       'blob:preview-1',
       'blob:preview-2',
       'blob:preview-3',
@@ -522,5 +545,53 @@ describe('product promotion modal', () => {
 
     expect(revokeObjectUrl).toHaveBeenCalledWith('blob:preview-2');
     expect(host.querySelector('img[src="blob:preview-1"]')).not.toBeNull();
+  });
+
+  it('相同缓存键的并发素材生成只发起一次请求', async () => {
+    let resolveRender: (blob: Blob) => void = () => {};
+    const renderRequest = new Promise<Blob>((resolve) => {
+      resolveRender = resolve;
+    });
+    mocks.getSpu.mockResolvedValue(activeProduct);
+    mocks.modalApi.getData.mockReturnValue({ id: 88 });
+    mocks.renderPromotionAsset.mockReturnValue(renderRequest);
+    const { host } = mountPromotionModal();
+
+    const opening = mocks.modalConfig!.onOpenChange(true);
+    await flushVueUpdates();
+    findButton(host, '店铺公共').click();
+    await flushVueUpdates();
+    resolveRender(new Blob(['png'], { type: 'image/png' }));
+    await opening;
+    await flushVueUpdates();
+
+    expect(mocks.renderPromotionAsset).toHaveBeenCalledTimes(1);
+  });
+
+  it('关闭并重新打开时不会让旧请求解锁新一代弹窗', async () => {
+    let resolveOldProduct: (product: typeof activeProduct) => void = () => {};
+    const oldProductRequest = new Promise<typeof activeProduct>((resolve) => {
+      resolveOldProduct = resolve;
+    });
+    mocks.getSpu
+      .mockReturnValueOnce(oldProductRequest)
+      .mockResolvedValueOnce(activeProduct);
+    mocks.modalApi.getData.mockReturnValue({ id: 88 });
+    const { host } = mountPromotionModal();
+
+    const opening = mocks.modalConfig!.onOpenChange(true);
+    await flushVueUpdates();
+    expect(mocks.modalApi.lock).toHaveBeenCalledTimes(1);
+
+    await mocks.modalConfig!.onOpenChange(false);
+    const reopening = mocks.modalConfig!.onOpenChange(true);
+    await reopening;
+    resolveOldProduct(activeProduct);
+    await opening;
+    await flushVueUpdates();
+
+    expect(mocks.modalApi.lock).toHaveBeenCalledTimes(2);
+    expect(mocks.modalApi.unlock).toHaveBeenCalledTimes(2);
+    expect(host.textContent).toContain('最新商品名');
   });
 });
