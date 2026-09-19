@@ -63,7 +63,11 @@ export function useGridColumns(
   ) => PromiseLike<boolean | undefined>,
 ): VxeTableGridOptions['columns'] {
   return [
-    { type: 'checkbox', width: 50, fixed: 'left' },
+    {
+      type: 'checkbox',
+      width: 48,
+      fixed: 'left',
+    },
     {
       field: 'id',
       title: '商品编号',
@@ -164,7 +168,7 @@ export function useGridColumns(
     },
     {
       title: '操作',
-      width: 300,
+      width: 360,
       fixed: 'right',
       slots: { default: 'actions' },
     },

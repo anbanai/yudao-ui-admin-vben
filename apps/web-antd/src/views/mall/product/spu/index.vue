@@ -3,7 +3,7 @@ import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MallProductGroupApi } from '#/api/mall/product/group';
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { confirm, DocAlert, Page, useVbenModal } from '@vben/common-ui';
@@ -28,8 +28,13 @@ import {
 import { $t } from '#/locales';
 import SpuGroupModal from '#/views/mall/product/group/modules/spu-group-modal.vue';
 
+import {
+  canBatchUpdateStatus,
+  createBatchStatusController,
+} from './batch-actions';
 import { createSpuSelectionStore } from './components/spu-table-select-utils';
 import { useGridColumns, useGridFormSchema } from './data';
+import InventoryForm from './modules/inventory-form.vue';
 
 const { push } = useRouter();
 const route = useRoute();
@@ -60,9 +65,12 @@ function groupLabel(id: number) {
 }
 
 function handleSelectionChange() {
+  // 分组保留跨页选择，上下架仅操作当前页已勾选的商品。
+  selectedProducts.value =
+    gridApi.grid.getCheckboxRecords() as MallSpuApi.Spu[];
   selection.reconcilePage(
     gridApi.grid.getTableData().fullData as MallSpuApi.Spu[],
-    gridApi.grid.getCheckboxRecords() as MallSpuApi.Spu[],
+    selectedProducts.value,
   );
   selectedCount.value = selection.getSelected().length;
 }
@@ -81,6 +89,7 @@ function openGrouping(operation: 'add' | 'remove', row?: MallSpuApi.Spu) {
 async function clearSelection() {
   selection.replace([]);
   selectedCount.value = 0;
+  selectedProducts.value = [];
   await gridApi.grid.clearCheckboxRow();
   await gridApi.grid.clearCheckboxReserve();
 }
@@ -90,6 +99,25 @@ async function handleGrouped() {
   groupsLoading = undefined;
   await handleRefresh();
 }
+const selectedProducts = ref<MallSpuApi.Spu[]>([]);
+const batchLoading = ref(false);
+const canBatchEnable = computed(() =>
+  canBatchUpdateStatus(
+    selectedProducts.value,
+    ProductSpuStatusEnum.ENABLE.status,
+  ),
+);
+const canBatchDisable = computed(() =>
+  canBatchUpdateStatus(
+    selectedProducts.value,
+    ProductSpuStatusEnum.DISABLE.status,
+  ),
+);
+
+const [InventoryFormModal, inventoryFormModalApi] = useVbenModal({
+  connectedComponent: InventoryForm,
+  destroyOnClose: true,
+});
 const tabsData = ref([
   {
     name: '出售中',
@@ -122,6 +150,44 @@ const tabsData = ref([
 async function handleRefresh() {
   await gridApi.query();
   await getTabCount();
+}
+
+function getBatchActionName(targetStatus: number) {
+  return targetStatus === ProductSpuStatusEnum.ENABLE.status ? '上架' : '下架';
+}
+
+const batchStatusController = createBatchStatusController({
+  confirm: (rows, targetStatus) =>
+    confirm(
+      `确认将选中的 ${rows.length} 件商品批量${getBatchActionName(targetStatus)}吗？`,
+    ),
+  async onCompleted({ failureCount, successCount }, targetStatus) {
+    const actionName = getBatchActionName(targetStatus);
+    const resultText = `批量${actionName}完成：成功 ${successCount} 件，失败 ${failureCount} 件`;
+    if (failureCount === 0) {
+      message.success(resultText);
+    } else if (successCount > 0) {
+      message.warning(resultText);
+    } else {
+      message.error(resultText);
+    }
+    await handleRefresh();
+  },
+  onLoadingChange: (loading) => {
+    batchLoading.value = loading;
+  },
+  update: updateStatus,
+});
+
+/** 批量更新上下架状态 */
+async function handleBatchStatusChange(targetStatus: number) {
+  const result = await batchStatusController.run(
+    selectedProducts.value,
+    targetStatus,
+  );
+  if (result.status === 'invalid') {
+    message.warning('请选择 1 至 100 个状态符合要求的商品');
+  }
 }
 
 /** 导出表格 */
@@ -216,18 +282,29 @@ function handleDetail(row: MallSpuApi.Spu) {
   push({ name: 'ProductSpuDetail', params: { id: row.id } });
 }
 
+/** 管理商品 SKU 库存 */
+function handleInventory(row: MallSpuApi.Spu) {
+  inventoryFormModalApi.setData(row).open();
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
   },
   gridOptions: {
     columns: useGridColumns(handleStatusChange),
+    checkboxConfig: {
+      reserve: true,
+      checkMethod: ({ row }: { row: MallSpuApi.Spu }) =>
+        row.status !== ProductSpuStatusEnum.RECYCLE.status,
+    },
     height: 'auto',
     keepSource: true,
-    checkboxConfig: { reserve: true },
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
+          selectedProducts.value = [];
+          await gridApi.grid?.clearCheckboxRow();
           const result = await getSpuPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
@@ -260,11 +337,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridEvents: {
     checkboxAll: handleSelectionChange,
     checkboxChange: handleSelectionChange,
-    dataRendered: () => {
+    dataRendered: async () => {
       const selected = selection.getSelectedFromPage(
         gridApi.grid.getTableData().fullData as MallSpuApi.Spu[],
       );
-      if (selected.length > 0) void gridApi.grid.setCheckboxRow(selected, true);
+      if (selected.length > 0)
+        await gridApi.grid.setCheckboxRow(selected, true);
+      handleSelectionChange();
     },
   },
 });
@@ -295,6 +374,8 @@ onMounted(async () => {
         url="https://doc.iocoder.cn/mall/product-spu-sku/"
       />
     </template>
+
+    <InventoryFormModal @success="handleRefresh" />
 
     <Grid>
       <template #toolbar-actions>
@@ -335,8 +416,25 @@ onMounted(async () => {
               onClick: handleCreate,
             },
             {
+              label: `批量上架${selectedProducts.length ? ` (${selectedProducts.length})` : ''}`,
+              icon: 'lucide:circle-arrow-up',
+              auth: ['product:spu:update'],
+              disabled: !canBatchEnable || batchLoading,
+              loading: batchLoading,
+              onClick: () =>
+                handleBatchStatusChange(ProductSpuStatusEnum.ENABLE.status),
+            },
+            {
+              label: `批量下架${selectedProducts.length ? ` (${selectedProducts.length})` : ''}`,
+              icon: 'lucide:circle-arrow-down',
+              auth: ['product:spu:update'],
+              disabled: !canBatchDisable || batchLoading,
+              loading: batchLoading,
+              onClick: () =>
+                handleBatchStatusChange(ProductSpuStatusEnum.DISABLE.status),
+            },
+            {
               label: $t('ui.actionTitle.export'),
-              type: 'primary',
               icon: ACTION_ICON.DOWNLOAD,
               auth: ['product:spu:export'],
               onClick: handleExport,
@@ -369,6 +467,14 @@ onMounted(async () => {
               onClick: handleEdit.bind(null, row),
             },
             {
+              label: '库存',
+              type: 'link',
+              icon: 'lucide:boxes',
+              auth: ['product:spu:update'],
+              ifShow: () => row.status !== ProductSpuStatusEnum.RECYCLE.status,
+              onClick: handleInventory.bind(null, row),
+            },
+            {
               label: $t('common.detail'),
               type: 'link',
               icon: ACTION_ICON.VIEW,
@@ -391,6 +497,7 @@ onMounted(async () => {
               type: 'link',
               icon: ACTION_ICON.EDIT,
               auth: ['product:spu:update'],
+              ifShow: () => tabType === 4,
               onClick: handleStatus02Change.bind(
                 null,
                 row,
@@ -402,6 +509,7 @@ onMounted(async () => {
               type: 'link',
               icon: ACTION_ICON.EDIT,
               auth: ['product:spu:update'],
+              ifShow: () => tabType !== 4,
               onClick: handleStatus02Change.bind(
                 null,
                 row,
