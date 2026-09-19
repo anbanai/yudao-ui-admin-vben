@@ -93,12 +93,6 @@ const h5Configured = computed(() => {
   }
 });
 const h5Available = computed(() => Boolean(promotionContext.value?.h5Url));
-const tabItems = computed(() => [
-  { key: 'poster', label: '商品海报' },
-  { key: 'card', label: '商品卡片' },
-  { disabled: !h5Available.value, key: 'h5', label: 'H5 二维码' },
-  { disabled: !h5Available.value, key: 'link', label: '推广链接' },
-]);
 const currentPreview = computed(() =>
   activeTab.value === 'link' ? undefined : previewStates[activeTab.value],
 );
@@ -357,10 +351,18 @@ onBeforeUnmount(resetSession);
             <div class="text-xs font-medium text-gray-500">推广形式</div>
             <Tabs
               v-model:active-key="activeTab"
-              :items="tabItems"
               size="small"
               @change="handleTabChange"
-            />
+            >
+              <Tabs.TabPane key="poster" tab="商品海报" />
+              <Tabs.TabPane key="card" tab="商品卡片" />
+              <Tabs.TabPane key="h5" :disabled="!h5Available" tab="H5 二维码" />
+              <Tabs.TabPane
+                key="link"
+                :disabled="!h5Available"
+                tab="推广链接"
+              />
+            </Tabs>
             <p v-if="!h5Configured" class="text-xs text-amber-600">
               {{ H5_CONFIG_MESSAGE }}
             </p>

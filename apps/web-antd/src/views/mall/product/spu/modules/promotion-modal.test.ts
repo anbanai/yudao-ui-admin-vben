@@ -121,41 +121,6 @@ vi.mock('ant-design-vue', async (importOriginal) => {
         );
     },
   });
-  const Tabs = defineComponent({
-    props: {
-      activeKey: { default: '', type: String },
-      items: {
-        required: true,
-        type: Array as PropType<
-          Array<{ disabled?: boolean; key: string; label: string }>
-        >,
-      },
-    },
-    emits: ['change', 'update:activeKey'],
-    setup(props, { emit, slots }) {
-      return () =>
-        h('div', [
-          h(
-            'div',
-            props.items.map((item) =>
-              h(
-                'button',
-                {
-                  'aria-pressed': props.activeKey === item.key,
-                  disabled: item.disabled,
-                  onClick: () => {
-                    emit('update:activeKey', item.key);
-                    emit('change', item.key);
-                  },
-                },
-                item.label,
-              ),
-            ),
-          ),
-          slots.default?.(),
-        ]);
-    },
-  });
   return {
     ...actual,
     message: {
@@ -164,7 +129,6 @@ vi.mock('ant-design-vue', async (importOriginal) => {
       warning: mocks.messageWarning,
     },
     Segmented,
-    Tabs,
   };
 });
 
@@ -204,6 +168,14 @@ describe('product promotion modal', () => {
     );
     if (!button) throw new Error(`Button not found: ${label}`);
     return button;
+  }
+
+  function findTab(host: HTMLElement, label: string) {
+    const tab = [...host.querySelectorAll<HTMLElement>('[role="tab"]')].find(
+      (item) => item.textContent?.trim() === label,
+    );
+    if (!tab) throw new Error(`Tab not found: ${label}`);
+    return tab;
   }
 
   async function openActiveProduct() {
@@ -281,6 +253,35 @@ describe('product promotion modal', () => {
     );
   });
 
+  it('使用真实 Tabs 渲染四种推广形式并可切换商品卡片', async () => {
+    const { host } = await openActiveProduct();
+
+    expect(
+      [...host.querySelectorAll<HTMLElement>('[role="tab"]')].map((tab) =>
+        tab.textContent?.trim(),
+      ),
+    ).toEqual(['商品海报', '商品卡片', 'H5 二维码', '推广链接']);
+    expect(findTab(host, '商品海报').getAttribute('aria-selected')).toBe(
+      'true',
+    );
+    expect(findTab(host, 'H5 二维码').getAttribute('aria-disabled')).not.toBe(
+      'true',
+    );
+    expect(findTab(host, '推广链接').getAttribute('aria-disabled')).not.toBe(
+      'true',
+    );
+
+    findTab(host, '商品卡片').click();
+    await vi.waitFor(() => {
+      expect(findTab(host, '商品卡片').getAttribute('aria-selected')).toBe(
+        'true',
+      );
+      expect(mocks.renderPromotionAsset).toHaveBeenLastCalledWith(
+        expect.objectContaining({ type: 'card' }),
+      );
+    });
+  });
+
   it('最新商品已下架时阻止生成推广素材', async () => {
     mocks.getSpu.mockResolvedValue({ ...activeProduct, status: 0 });
     mocks.modalApi.getData.mockReturnValue({ ...activeProduct, status: 1 });
@@ -331,8 +332,12 @@ describe('product promotion modal', () => {
     await flushVueUpdates();
 
     expect(host.textContent).not.toContain('请配置 VITE_MALL_H5_DOMAIN');
-    expect(findButton(host, 'H5 二维码').hasAttribute('disabled')).toBe(true);
-    expect(findButton(host, '推广链接').hasAttribute('disabled')).toBe(true);
+    expect(findTab(host, 'H5 二维码').getAttribute('aria-disabled')).toBe(
+      'true',
+    );
+    expect(findTab(host, '推广链接').getAttribute('aria-disabled')).toBe(
+      'true',
+    );
   });
 
   it('身份变化时撤销旧地址并清空素材缓存', async () => {
@@ -353,9 +358,9 @@ describe('product promotion modal', () => {
   it('重复访问相同身份和类型时复用已生成素材', async () => {
     const { host } = await openActiveProduct();
 
-    findButton(host, '商品卡片').click();
+    findTab(host, '商品卡片').click();
     await flushVueUpdates();
-    findButton(host, '商品海报').click();
+    findTab(host, '商品海报').click();
     await flushVueUpdates();
 
     expect(mocks.renderPromotionAsset).toHaveBeenCalledTimes(2);
@@ -367,7 +372,7 @@ describe('product promotion modal', () => {
     const { host } = await openActiveProduct();
     expect(host.textContent).toContain('二维码服务不可用');
 
-    findButton(host, 'H5 二维码').click();
+    findTab(host, 'H5 二维码').click();
     await flushVueUpdates();
 
     expect(mocks.renderPromotionAsset).toHaveBeenCalledWith(
@@ -375,7 +380,7 @@ describe('product promotion modal', () => {
     );
     expect(host.textContent).toContain('下载 PNG');
 
-    findButton(host, '推广链接').click();
+    findTab(host, '推广链接').click();
     await flushVueUpdates();
     expect(
       (host.querySelector('input[readonly]') as HTMLInputElement).value,
@@ -387,12 +392,20 @@ describe('product promotion modal', () => {
     const { host } = await openActiveProduct();
 
     expect(host.textContent).toContain('请配置 VITE_MALL_H5_DOMAIN');
-    expect(findButton(host, '商品海报').hasAttribute('disabled')).toBe(false);
-    expect(findButton(host, '商品卡片').hasAttribute('disabled')).toBe(false);
-    expect(findButton(host, 'H5 二维码').hasAttribute('disabled')).toBe(true);
-    expect(findButton(host, '推广链接').hasAttribute('disabled')).toBe(true);
+    expect(findTab(host, '商品海报').getAttribute('aria-disabled')).not.toBe(
+      'true',
+    );
+    expect(findTab(host, '商品卡片').getAttribute('aria-disabled')).not.toBe(
+      'true',
+    );
+    expect(findTab(host, 'H5 二维码').getAttribute('aria-disabled')).toBe(
+      'true',
+    );
+    expect(findTab(host, '推广链接').getAttribute('aria-disabled')).toBe(
+      'true',
+    );
 
-    findButton(host, '商品卡片').click();
+    findTab(host, '商品卡片').click();
     await flushVueUpdates();
     expect(mocks.renderPromotionAsset).toHaveBeenLastCalledWith(
       expect.objectContaining({ type: 'card' }),
@@ -401,9 +414,9 @@ describe('product promotion modal', () => {
 
   it('关闭时撤销全部预览地址', async () => {
     const { host } = await openActiveProduct();
-    findButton(host, '商品卡片').click();
+    findTab(host, '商品卡片').click();
     await flushVueUpdates();
-    findButton(host, 'H5 二维码').click();
+    findTab(host, 'H5 二维码').click();
     await flushVueUpdates();
 
     await mocks.modalConfig!.onOpenChange(false);
@@ -425,18 +438,18 @@ describe('product promotion modal', () => {
     const { host } = await openActiveProduct();
 
     findButton(host, '下载 PNG').click();
-    findButton(host, '商品卡片').click();
+    findTab(host, '商品卡片').click();
     await vi.waitFor(() => {
-      expect(findButton(host, '商品卡片').getAttribute('aria-pressed')).toBe(
+      expect(findTab(host, '商品卡片').getAttribute('aria-selected')).toBe(
         'true',
       );
       expect(mocks.renderPromotionAsset).toHaveBeenCalledTimes(2);
       expect(host.textContent).toContain('下载 PNG');
     });
     findButton(host, '下载 PNG').click();
-    findButton(host, 'H5 二维码').click();
+    findTab(host, 'H5 二维码').click();
     await vi.waitFor(() => {
-      expect(findButton(host, 'H5 二维码').getAttribute('aria-pressed')).toBe(
+      expect(findTab(host, 'H5 二维码').getAttribute('aria-selected')).toBe(
         'true',
       );
       expect(mocks.renderPromotionAsset).toHaveBeenCalledTimes(3);
@@ -453,7 +466,7 @@ describe('product promotion modal', () => {
 
   it('复制或打开当前推广链接', async () => {
     const { host } = await openActiveProduct();
-    findButton(host, '推广链接').click();
+    findTab(host, '推广链接').click();
     await flushVueUpdates();
 
     findButton(host, '复制链接').click();
@@ -473,7 +486,7 @@ describe('product promotion modal', () => {
   it('剪贴板不可用时选中只读链接并提示手动复制', async () => {
     writeClipboard.mockRejectedValue(new Error('denied'));
     const { host } = await openActiveProduct();
-    findButton(host, '推广链接').click();
+    findTab(host, '推广链接').click();
     await flushVueUpdates();
 
     findButton(host, '复制链接').click();
