@@ -61,6 +61,7 @@
     "livekit-client": "catalog:",
     "pinia": "catalog:",
     "print-bridge-sdk": "catalog:",
+    "qrcode": "catalog:",
     "steady-xml": "catalog:",
     "tinymce": "catalog:",
     "tyme4ts": "catalog:",
@@ -73,6 +74,7 @@
     "vuedraggable": "catalog:"
   },
   "devDependencies": {
+    "@types/qrcode": "catalog:",
     "typescript": "catalog:"
   }
 }
