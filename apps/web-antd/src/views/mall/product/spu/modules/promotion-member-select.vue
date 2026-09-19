@@ -56,8 +56,10 @@ function displayName(member: MemberUserApi.User) {
 }
 
 function displayLabel(member: MemberUserApi.User) {
-  const phone = member.mobile?.slice(-4) || '----';
-  return `${displayName(member)}（会员${member.id ?? '-'}） · 手机尾号 ${phone}`;
+  const baseLabel = `${displayName(member)}（会员${member.id ?? '-'}）`;
+  return member.mobile
+    ? `${baseLabel} · 手机尾号 ${member.mobile.slice(-4)}`
+    : baseLabel;
 }
 
 const options = computed(() =>

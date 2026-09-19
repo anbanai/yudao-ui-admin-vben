@@ -65,6 +65,19 @@ describe('promotion member select', () => {
     });
   });
 
+  it('无手机号时不显示手机号尾号占位符', async () => {
+    apiMocks.getUserPage.mockResolvedValue({
+      list: [{ id: 10, nickname: '无手机号会员' }],
+      total: 1,
+    });
+    const { vm } = mountMemberSelect();
+    vm.search('无手机号会员');
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    await nextTick();
+    expect(vm.options[0]?.label).not.toContain('手机尾号');
+    expect(vm.options[0]?.label).not.toContain('----');
+  });
+
   it('较早的响应不会覆盖较新的搜索结果', async () => {
     let resolveFirst: (value: unknown) => void = () => {};
     const first = new Promise((resolve) => {
