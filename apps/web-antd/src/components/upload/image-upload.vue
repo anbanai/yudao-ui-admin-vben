@@ -2,12 +2,23 @@
 import type { UploadFile, UploadProps } from 'ant-design-vue';
 import type { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
 
+import type { Sortable } from '@vben/hooks';
+
 import type { FileUploadProps } from './typing';
 
 import type { AxiosProgressEvent } from '#/api/infra/file';
 
-import { computed, ref, toRefs, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  toRefs,
+  watch,
+} from 'vue';
 
+import { useSortable } from '@vben/hooks';
 import { IconifyIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
 import {
@@ -20,6 +31,7 @@ import {
 
 import { message, Modal, Upload } from 'ant-design-vue';
 
+import { moveArrayItem } from './sortable';
 import { UploadResultStatus } from './typing';
 import { useUpload, useUploadType } from './use-upload';
 
@@ -39,6 +51,7 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   api: undefined,
   resultField: '',
   showDescription: true,
+  sortable: false,
 });
 const emit = defineEmits([
   'change',
@@ -74,6 +87,44 @@ const isActMsg = ref<boolean>(true); // 文件类型错误提示
 const isFirstRender = ref<boolean>(true); // 是否第一次渲染
 const uploadNumber = ref<number>(0); // 上传文件计数器
 const uploadList = ref<any[]>([]); // 临时上传列表
+const uploadRoot = ref<HTMLElement>();
+let sortableInstance: null | Sortable = null;
+
+function emitSortedValue() {
+  const value = getValue();
+  isInnerOperate.value = true;
+  emit('update:value', value);
+  emit('update:modelValue', value);
+  emit('change', value);
+}
+
+async function initializeSortable() {
+  if (!props.sortable || props.disabled) {
+    sortableInstance?.destroy();
+    sortableInstance = null;
+    return;
+  }
+  await nextTick();
+  const container =
+    uploadRoot.value?.querySelector<HTMLElement>('.ant-upload-list');
+  if (!container) {
+    sortableInstance?.destroy();
+    sortableInstance = null;
+    return;
+  }
+  sortableInstance?.destroy();
+  const { initializeSortable: createSortable } = useSortable(container, {
+    animation: 200,
+    onEnd({ oldIndex, newIndex }) {
+      if (oldIndex === undefined || newIndex === undefined) {
+        return;
+      }
+      fileList.value = moveArrayItem(fileList.value ?? [], oldIndex, newIndex);
+      emitSortedValue();
+    },
+  });
+  sortableInstance = await createSortable();
+}
 
 watch(
   currentValue,
@@ -115,6 +166,17 @@ watch(
     deep: true,
   },
 );
+
+watch(
+  () => [props.disabled, props.sortable, fileList.value?.length ?? 0],
+  () => void initializeSortable(),
+);
+
+onMounted(() => void initializeSortable());
+onUnmounted(() => {
+  sortableInstance?.destroy();
+  sortableInstance = null;
+});
 
 /** 将文件转换为 Base64 格式 */
 function getBase64<T extends ArrayBuffer | null | string>(file: File) {
@@ -301,7 +363,10 @@ function getValue() {
 </script>
 
 <template>
-  <div>
+  <div
+    ref="uploadRoot"
+    :data-image-upload-sortable="sortable ? 'true' : undefined"
+  >
     <Upload
       v-bind="$attrs"
       v-model:file-list="fileList"
@@ -350,5 +415,9 @@ function getValue() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+[data-image-upload-sortable='true'] .ant-upload-list-item {
+  cursor: grab;
 }
 </style>

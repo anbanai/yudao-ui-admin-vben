@@ -3,6 +3,28 @@ import { describe, expect, it } from 'vitest';
 import source from './index.vue?raw';
 
 describe('商品 SPU 表单提交状态', () => {
+  it('固定提交多规格并移除单规格表单分支', () => {
+    expect(source).toContain('specType: true');
+    expect(source).toContain('specType: formData.value.specType ?? true');
+    expect(source).not.toContain('singleSkuList');
+    expect(source).not.toContain("fieldsChanged.includes('specType')");
+  });
+
+  it('兼容历史单规格商品并在添加完整属性后迁移为多规格', () => {
+    expect(source).toContain('legacySingleSpec');
+    expect(source).toContain('res.specType === false');
+    expect(source).toContain('#legacySkuList');
+    expect(source).toMatch(
+      /if \(legacySingleSpec\.value && hasCompleteProperties\(nextList\)\)/,
+    );
+  });
+
+  it('提交时将预售预设和自定义发货天数转换为后端字段', () => {
+    expect(source).toContain('deliveryDaysPreset');
+    expect(source).toContain('customDeliveryDays');
+    expect(source).toContain('deliveryDays:');
+  });
+
   it('提交时只显示保存按钮 loading，不遮挡商品表单内容', () => {
     expect(source).toMatch(/const submitLoading = ref\(false\)/);
     expect(source).toMatch(/<Card[\s\S]*:loading="formLoading"/);
@@ -81,15 +103,6 @@ describe('商品 SPU 表单提交状态', () => {
     expect(source).not.toContain('generateTableData');
   });
 
-  it('切换规格类型前会确认并在取消时恢复原字段值', () => {
-    expect(source).toContain('Modal.confirm');
-    expect(source).toContain("skuFormApi.setFieldValue('specType'");
-    expect(source).toContain('pendingSpecType');
-    expect(source).toMatch(
-      /async function handleChangeSpec\(\s+nextSpecType: boolean/,
-    );
-  });
-
   it('属性变更取消时重新同步子组件草稿', () => {
     expect(source).toContain('propertyList.value = [...propertyList.value]');
   });
@@ -109,11 +122,6 @@ describe('商品 SPU 表单提交状态', () => {
     expect(source).toContain('const specVersion = ref(0)');
     expect(source).toContain(':change-version="specVersion"');
     expect(source).not.toContain(':change-version="propertyChangeVersion"');
-  });
-
-  it('单规格状态下忽略过期的多规格属性事件', () => {
-    expect(source).toMatch(/if \(!formData\.value\.specType\)\s*\{\s*return;/);
-    expect(source).toContain(':change-version="specVersion"');
   });
 
   it('详情模式隐藏新增属性入口', () => {

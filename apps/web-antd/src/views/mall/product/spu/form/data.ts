@@ -69,7 +69,6 @@ export function useInfoFormSchema(): VbenFormSchema[] {
         allowClear: true,
         placeholder: '请选择商品品牌',
       },
-      rules: 'required',
     },
     {
       fieldName: 'keyword',
@@ -78,7 +77,6 @@ export function useInfoFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请输入商品关键字',
       },
-      rules: 'required',
     },
     {
       fieldName: 'introduction',
@@ -91,7 +89,6 @@ export function useInfoFormSchema(): VbenFormSchema[] {
         maxlength: 128,
         allowClear: true,
       },
-      rules: 'required',
     },
     {
       fieldName: 'picUrl',
@@ -110,6 +107,63 @@ export function useInfoFormSchema(): VbenFormSchema[] {
         maxNumber: 10,
         multiple: true,
         maxSize: 30,
+        sortable: true,
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'isPreSale',
+      label: '销售方式',
+      component: 'RadioGroup',
+      componentProps: {
+        options: [
+          { label: '现货', value: false },
+          { label: '预售', value: true },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'deliveryDaysPreset',
+      label: '付款后发货',
+      component: 'Select',
+      componentProps: {
+        allowClear: true,
+        options: [
+          { label: '3 天', value: 3 },
+          { label: '5 天', value: 5 },
+          { label: '7 天', value: 7 },
+          { label: '15 天', value: 15 },
+          { label: '自定义', value: 'custom' },
+        ],
+        placeholder: '请选择发货周期',
+      },
+      dependencies: {
+        triggerFields: ['isPreSale'],
+        resolve({ values }) {
+          return { show: values.isPreSale === true };
+        },
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'customDeliveryDays',
+      label: '自定义天数',
+      component: 'InputNumber',
+      componentProps: {
+        class: '!w-full',
+        min: 1,
+        precision: 0,
+      },
+      dependencies: {
+        triggerFields: ['isPreSale', 'deliveryDaysPreset'],
+        resolve({ values }) {
+          return {
+            show:
+              values.isPreSale === true &&
+              values.deliveryDaysPreset === 'custom',
+          };
+        },
       },
       rules: 'required',
     },
@@ -120,6 +174,7 @@ export function useInfoFormSchema(): VbenFormSchema[] {
 export function useSkuFormSchema(
   propertyList: any[] = [],
   isDetail: boolean = false,
+  legacySingleSpec: boolean = false,
 ): VbenFormSchema[] {
   const hasCompleteProperties =
     propertyList.length > 0 &&
@@ -153,81 +208,31 @@ export function useSkuFormSchema(
       },
       rules: 'required',
     },
-    {
-      fieldName: 'specType',
-      label: '商品规格',
-      component: 'RadioGroup',
-      componentProps: {
-        allowClear: true,
-        options: [
-          {
-            label: '单规格',
-            value: false,
-          },
-          {
-            label: '多规格',
-            value: true,
-          },
-        ],
-      },
-      rules: 'required',
-    },
-    // 单规格时显示的 SkuList
-    {
-      fieldName: 'singleSkuList',
-      label: '',
-      component: 'Input',
-      dependencies: {
-        triggerFields: ['specType'],
-        resolve({ values }) {
-          return {
-            show: values.specType === false,
-          };
-        },
-      },
-    },
     // 多规格时显示的商品属性（占位，实际通过插槽渲染）
     {
       fieldName: 'productAttributes',
       label: '商品属性',
       component: 'Input',
-      dependencies: {
-        triggerFields: ['specType'],
-        resolve({ values }) {
-          return {
-            show: values.specType === true,
-          };
-        },
-      },
+    },
+    {
+      fieldName: 'legacySkuList',
+      label: '规格列表',
+      component: 'Input',
+      hide: !legacySingleSpec || hasCompleteProperties,
     },
     // 多规格 - 批量设置
     {
       fieldName: 'batchSkuList',
       label: '批量设置',
       component: 'Input',
-      dependencies: {
-        triggerFields: ['specType'],
-        resolve({ values }) {
-          return {
-            show:
-              values.specType === true && hasCompleteProperties && !isDetail,
-          };
-        },
-      },
+      hide: !hasCompleteProperties || isDetail,
     },
     // 多规格 - 规格列表
     {
       fieldName: 'multiSkuList',
       label: '规格列表',
       component: 'Input',
-      dependencies: {
-        triggerFields: ['specType'],
-        resolve({ values }) {
-          return {
-            show: values.specType === true && hasCompleteProperties,
-          };
-        },
-      },
+      hide: !hasCompleteProperties,
     },
   ];
 }
@@ -332,6 +337,47 @@ export function useOtherFormSchema(): VbenFormSchema[] {
       componentProps: {
         class: '!w-full',
         min: 0,
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'buyLimit',
+      label: '限购数量',
+      component: 'InputNumber',
+      componentProps: {
+        class: '!w-full',
+        min: 0,
+        precision: 0,
+        placeholder: '0 表示不限购',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'buyLimitLevel',
+      label: '等级限购',
+      component: 'Select',
+      componentProps: {
+        options: [
+          { label: '全部', value: 'ALL' },
+          { label: 'L0', value: 'L0' },
+          { label: 'L1', value: 'L1' },
+          { label: 'L2', value: 'L2' },
+          { label: 'L3', value: 'L3' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'pointDiscountRate',
+      label: '积分抵扣比例',
+      component: 'InputNumber',
+      componentProps: {
+        addonAfter: '（0-1）',
+        class: '!w-full',
+        max: 1,
+        min: 0,
+        precision: 2,
+        step: 0.1,
       },
       rules: 'required',
     },

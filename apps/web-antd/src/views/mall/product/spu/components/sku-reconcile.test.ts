@@ -152,4 +152,21 @@ describe('sku 组合对账', () => {
     });
     expect(getSkuKey(result[0]?.properties)).toBe('1:11|2:21');
   });
+
+  it('历史单规格首次添加属性时将原 SKU 数据迁移到第一个规格', () => {
+    const legacySku = sku([], { price: 19, stock: 8 });
+
+    const result = reconcileSkus(
+      propertyList([
+        { id: 11, name: '红色' },
+        { id: 12, name: '蓝色' },
+      ]),
+      [legacySku],
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({ price: 19, stock: 8 });
+    expect(result[0]?.properties?.[0]?.valueId).toBe(11);
+    expect(result[1]).toMatchObject({ price: 0, stock: 0 });
+  });
 });

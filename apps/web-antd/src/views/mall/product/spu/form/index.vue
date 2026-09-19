@@ -20,7 +20,6 @@ import { withOperationFeedback } from '#/utils/operation-feedback';
 import { getPropertyList, SkuList } from '#/views/mall/product/spu/components';
 
 import {
-  createEmptySku,
   isSkuPropertiesSubset,
   reconcileSkus,
 } from '../components/sku-reconcile';
@@ -47,8 +46,7 @@ const changeVersion = ref(0); // 表单变更版本，用于识别保存期间�
 const savedPayloadSnapshot = ref<null | string>(null);
 const isDetail = ref(name === 'ProductSpuDetail'); // 是否查看详情
 const initializingForm = ref(false); // 详情回填时不触发 SKU 重置逻辑
-const specChangePending = ref(false);
-const pendingSpecType = ref<boolean | null>(null);
+const legacySingleSpec = ref(false); // 兼容存量单规格商品，新增商品仍固定为多规格
 const propertyChangeVersion = ref(0);
 const specVersion = ref(0);
 const skuDraftVersion = ref(0);
@@ -65,8 +63,13 @@ const formData = ref<MallSpuApi.Spu>({
   deliveryTypes: [],
   deliveryTemplateId: undefined,
   brandId: undefined,
-  specType: false,
+  specType: true,
   subCommissionType: false,
+  isPreSale: false,
+  deliveryDays: undefined,
+  buyLimit: 0,
+  buyLimitLevel: 'ALL',
+  pointDiscountRate: 0,
   skus: [
     {
       name: '', // SKU 名称，提交时会自动使用 SPU 名称
@@ -130,7 +133,11 @@ const [SkuForm, skuFormApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: useSkuFormSchema(propertyList.value, isDetail.value),
+  schema: useSkuFormSchema(
+    propertyList.value,
+    isDetail.value,
+    legacySingleSpec.value,
+  ),
   showDefaultActions: false,
   handleValuesChange: (values, fieldsChanged) => {
     if (initializingForm.value) {
@@ -142,16 +149,6 @@ const [SkuForm, skuFormApi] = useVbenForm({
     ) {
       formData.value.subCommissionType = values.subCommissionType;
       handleChangeSubCommissionType();
-    }
-    if (
-      fieldsChanged.includes('specType') &&
-      values.specType !== formData.value.specType
-    ) {
-      void handleChangeSpec(
-        Boolean(values.specType),
-        Boolean(formData.value.specType),
-      );
-      return;
     }
     markUnsavedChanges();
   },
@@ -224,9 +221,21 @@ function handleDescriptionUploadingChange(uploading: boolean) {
 }
 
 /** 转换表单值为接口提交格式 */
-function prepareSubmissionValues(values: MallSpuApi.Spu): MallSpuApi.Spu {
+type ProductFormValues = MallSpuApi.Spu & {
+  customDeliveryDays?: number;
+  deliveryDaysPreset?: 'custom' | number;
+};
+
+function prepareSubmissionValues(values: ProductFormValues): MallSpuApi.Spu {
+  const { customDeliveryDays, deliveryDaysPreset, ...formValues } = values;
   const preparedValues = {
-    ...values,
+    ...formValues,
+    specType: formData.value.specType ?? true,
+    deliveryDays: formValues.isPreSale
+      ? deliveryDaysPreset === 'custom'
+        ? customDeliveryDays
+        : Number(deliveryDaysPreset)
+      : undefined,
     skus: (formData.value.skus ?? []).map((item) => ({
       ...item,
       name: values.name,
@@ -236,7 +245,7 @@ function prepareSubmissionValues(values: MallSpuApi.Spu): MallSpuApi.Spu {
       firstBrokeragePrice: convertToInteger(item.firstBrokeragePrice),
       secondBrokeragePrice: convertToInteger(item.secondBrokeragePrice),
     })),
-    sliderPicUrls: (values.sliderPicUrls ?? []).map((item: any) =>
+    sliderPicUrls: (formValues.sliderPicUrls ?? []).map((item: any) =>
       typeof item === 'object' ? item.url : item,
     ),
   };
@@ -324,8 +333,17 @@ async function getDetail() {
       firstBrokeragePrice: Number(formatToFraction(item.firstBrokeragePrice)),
       secondBrokeragePrice: Number(formatToFraction(item.secondBrokeragePrice)),
     }));
+    legacySingleSpec.value = res.specType === false;
+    const normalizedRes: MallSpuApi.Spu = {
+      ...res,
+      buyLimit: res.buyLimit ?? 0,
+      buyLimitLevel: res.buyLimitLevel ?? 'ALL',
+      isPreSale: res.isPreSale ?? false,
+      pointDiscountRate: res.pointDiscountRate ?? 0,
+      specType: res.specType ?? true,
+    };
     initializingForm.value = true;
-    formData.value = res;
+    formData.value = normalizedRes;
     // 将 SKU 的属性，整理成 PropertyAndValues 数组
     propertyList.value = getPropertyList(formData.value);
     // Card 的 loading 骨架不会渲染默认插槽，需先关闭骨架让表单完成挂载。
@@ -333,11 +351,21 @@ async function getDetail() {
     await nextTick();
     // 初始化各表单值
     await Promise.all([
-      infoFormApi.setValues(res),
-      skuFormApi.setValues(res),
-      deliveryFormApi.setValues(res),
-      descriptionFormApi.setValues(res),
-      otherFormApi.setValues(res),
+      infoFormApi.setValues({
+        ...normalizedRes,
+        deliveryDaysPreset:
+          normalizedRes.deliveryDays &&
+          [3, 5, 7, 15].includes(normalizedRes.deliveryDays)
+            ? normalizedRes.deliveryDays
+            : normalizedRes.deliveryDays
+              ? 'custom'
+              : undefined,
+        customDeliveryDays: normalizedRes.deliveryDays,
+      }),
+      skuFormApi.setValues(normalizedRes),
+      deliveryFormApi.setValues(normalizedRes),
+      descriptionFormApi.setValues(normalizedRes),
+      otherFormApi.setValues(normalizedRes),
     ]);
     await nextTick();
     await nextTick();
@@ -390,6 +418,16 @@ function hasSkuData(sku: MallSpuApi.Sku): boolean {
   );
 }
 
+function hasCompleteProperties(list: PropertyAndValues[]): boolean {
+  return (
+    list.length > 0 &&
+    list.every(
+      (property) =>
+        Array.isArray(property.values) && property.values.length > 0,
+    )
+  );
+}
+
 function confirmDataReset(content: string): Promise<boolean> {
   return new Promise((resolve) => {
     let settled = false;
@@ -411,18 +449,21 @@ function confirmDataReset(content: string): Promise<boolean> {
 
 /** 由父组件统一接收属性变化并对账 SKU。 */
 async function handlePropertyChange(nextList: PropertyAndValues[]) {
-  if (!formData.value.specType) {
-    return;
+  let migratingLegacy = false;
+  if (legacySingleSpec.value && hasCompleteProperties(nextList)) {
+    migratingLegacy = true;
   }
   const requestVersion = ++propertyChangeVersion.value;
   const currentSkus = formData.value.skus ?? [];
   let nextSkus = reconcileSkus(nextList, currentSkus);
-  const discardedRows = currentSkus.filter(
-    (sku) =>
-      !nextSkus.some((nextSku) =>
-        isSkuPropertiesSubset(sku.properties, nextSku.properties),
-      ) && hasSkuData(sku),
-  );
+  const discardedRows = migratingLegacy
+    ? []
+    : currentSkus.filter(
+        (sku) =>
+          !nextSkus.some((nextSku) =>
+            isSkuPropertiesSubset(sku.properties, nextSku.properties),
+          ) && hasSkuData(sku),
+      );
 
   if (discardedRows.length > 0) {
     const confirmed = await confirmDataReset(
@@ -441,6 +482,10 @@ async function handlePropertyChange(nextList: PropertyAndValues[]) {
 
   propertyList.value = nextList;
   formData.value.skus = nextSkus;
+  if (migratingLegacy) {
+    legacySingleSpec.value = false;
+    formData.value.specType = true;
+  }
   skuDraftVersion.value += 1;
   markUnsavedChanges();
 }
@@ -454,62 +499,16 @@ function handleChangeSubCommissionType() {
   }
 }
 
-/** 选择规格类型，清空前要求用户确认。 */
-async function handleChangeSpec(
-  nextSpecType: boolean,
-  previousSpecType: boolean,
-) {
-  if (specChangePending.value) {
-    const pendingValue = pendingSpecType.value ?? previousSpecType;
-    initializingForm.value = true;
-    try {
-      await skuFormApi.setFieldValue('specType', pendingValue);
-    } finally {
-      initializingForm.value = false;
-    }
-    return;
-  }
-  const hasData =
-    propertyList.value.length > 0 ||
-    (formData.value.skus ?? []).some((sku) => hasSkuData(sku));
-  if (hasData) {
-    specChangePending.value = true;
-    pendingSpecType.value = nextSpecType;
-    let confirmed: boolean;
-    try {
-      confirmed = await confirmDataReset(
-        '切换规格类型会清空当前属性和 SKU 数据。',
-      );
-    } finally {
-      specChangePending.value = false;
-      pendingSpecType.value = null;
-    }
-    if (!confirmed) {
-      initializingForm.value = true;
-      try {
-        await skuFormApi.setFieldValue('specType', previousSpecType);
-      } finally {
-        initializingForm.value = false;
-      }
-      return;
-    }
-  }
-
-  propertyChangeVersion.value += 1;
-  specVersion.value += 1;
-  formData.value.specType = nextSpecType;
-  propertyList.value = [];
-  formData.value.skus = [createEmptySku()];
-  skuDraftVersion.value += 1;
-  markUnsavedChanges();
-}
-
 /** 监听 sku form schema 变化，更新表单 */
 watch(
-  propertyList,
+  [propertyList, legacySingleSpec],
   () => {
     skuFormApi.updateSchema(
-      useSkuFormSchema(propertyList.value, isDetail.value),
+      useSkuFormSchema(
+        propertyList.value,
+        isDetail.value,
+        legacySingleSpec.value,
+      ),
     );
   },
   { deep: true },
@@ -522,6 +521,23 @@ watch(formData, markUnsavedChanges, { deep: true });
 onMounted(async () => {
   spuId.value = params.id as unknown as number;
   if (!spuId.value) {
+    initializingForm.value = true;
+    try {
+      await nextTick();
+      await Promise.all([
+        infoFormApi.setValues({
+          ...formData.value,
+          deliveryDaysPreset: undefined,
+          customDeliveryDays: undefined,
+        }),
+        skuFormApi.setValues({ ...formData.value, specType: true }),
+        deliveryFormApi.setValues(formData.value),
+        descriptionFormApi.setValues(formData.value),
+        otherFormApi.setValues(formData.value),
+      ]);
+    } finally {
+      initializingForm.value = false;
+    }
     return;
   }
   await getDetail();
@@ -599,7 +615,7 @@ onMounted(async () => {
 
         <InfoForm class="w-3/5" v-show="activeTabName === 'info'" />
         <SkuForm class="w-full" v-show="activeTabName === 'sku'">
-          <template #singleSkuList>
+          <template #legacySkuList>
             <SkuList
               ref="skuListRef"
               class="w-full"

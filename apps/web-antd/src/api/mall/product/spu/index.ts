@@ -17,8 +17,13 @@ export namespace MallSpuApi {
     deliveryTypes?: number[]; // 配送方式
     deliveryTemplateId?: number; // 运费模版
     brandId?: number; // 商品品牌编号
-    specType?: boolean; // 商品规格
+    specType?: boolean; // 商品规格（新增商品固定为多规格）
     subCommissionType?: boolean; // 分销类型
+    isPreSale?: boolean; // 是否预售
+    deliveryDays?: number; // 付款后发货天数
+    buyLimit?: number; // 限购数量，0 表示不限购
+    buyLimitLevel?: 'ALL' | 'L0' | 'L1' | 'L2' | 'L3'; // 等级限购
+    pointDiscountRate?: number; // 积分抵扣比例，范围 0-1
     skus?: Sku[]; // sku数组
     description?: string; // 商品详情
     sort?: number; // 商品排序

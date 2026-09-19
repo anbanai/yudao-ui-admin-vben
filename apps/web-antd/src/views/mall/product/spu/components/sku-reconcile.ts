@@ -101,7 +101,12 @@ export function reconcileSkus(
     existingSkus.map((sku) => [getSkuKey(sku.properties), sku]),
   );
 
-  return buildCombinations(propertyList).map((properties) => {
+  const legacySku =
+    existingSkus.length === 1 && !existingSkus[0]?.properties?.length
+      ? existingSkus[0]
+      : undefined;
+
+  return buildCombinations(propertyList).map((properties, index) => {
     const existing = existingByKey.get(getSkuKey(properties));
     if (existing) {
       return { ...cloneSku(existing), properties };
@@ -112,6 +117,10 @@ export function reconcileSkus(
     );
     if (fallbackCandidates.length === 1) {
       return { ...cloneSku(fallbackCandidates[0]!), properties };
+    }
+
+    if (legacySku && index === 0) {
+      return { ...cloneSku(legacySku), properties };
     }
 
     return { ...createEmptySku(), properties };

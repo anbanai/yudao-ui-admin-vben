@@ -39,6 +39,24 @@ describe('商品基础信息表单', () => {
       allowClear: false,
     });
   });
+
+  it('品牌、关键字和简介为可选字段，并提供预售配置', async () => {
+    const { useInfoFormSchema } = await import('./data');
+    const schema = useInfoFormSchema();
+    for (const fieldName of ['brandId', 'keyword', 'introduction']) {
+      expect(schema.find((item) => item.fieldName === fieldName)?.rules).toBe(
+        undefined,
+      );
+    }
+    expect(schema.find((item) => item.fieldName === 'isPreSale')).toMatchObject(
+      {
+        component: 'RadioGroup',
+      },
+    );
+    expect(
+      schema.find((item) => item.fieldName === 'deliveryDaysPreset'),
+    ).toBeDefined();
+  });
 });
 
 describe('商品详情表单', () => {
@@ -70,10 +88,46 @@ describe('商品规格表单', () => {
     ]);
     const batchField = schema.find((item) => item.fieldName === 'batchSkuList');
     const multiField = schema.find((item) => item.fieldName === 'multiSkuList');
-    const resolveBatch = batchField?.dependencies?.resolve as any;
-    const resolveMulti = multiField?.dependencies?.resolve as any;
 
-    expect(resolveBatch({ values: { specType: true } }).show).toBe(false);
-    expect(resolveMulti({ values: { specType: true } }).show).toBe(false);
+    expect(batchField?.hide).toBe(true);
+    expect(multiField?.hide).toBe(true);
+  });
+
+  it('固定使用多规格，不再暴露单规格切换', async () => {
+    const { useSkuFormSchema } = await import('./data');
+    const schema = useSkuFormSchema([], false);
+    expect(schema.some((item) => item.fieldName === 'specType')).toBe(false);
+    expect(schema.some((item) => item.fieldName === 'singleSkuList')).toBe(
+      false,
+    );
+    expect(schema.some((item) => item.fieldName === 'multiSkuList')).toBe(true);
+  });
+
+  it('历史单规格商品在迁移属性前仍展示原 SKU 编辑表', async () => {
+    const { useSkuFormSchema } = await import('./data');
+    const schema = useSkuFormSchema([], false, true);
+    expect(schema.some((item) => item.fieldName === 'legacySkuList')).toBe(
+      true,
+    );
+  });
+});
+
+describe('商品其它设置表单', () => {
+  it('提供限购、等级限购和积分抵扣比例', async () => {
+    const { useOtherFormSchema } = await import('./data');
+    const schema = useOtherFormSchema();
+    expect(schema.find((item) => item.fieldName === 'buyLimit')).toMatchObject({
+      component: 'InputNumber',
+    });
+    expect(
+      schema.find((item) => item.fieldName === 'buyLimitLevel'),
+    ).toMatchObject({
+      component: 'Select',
+    });
+    expect(
+      schema.find((item) => item.fieldName === 'pointDiscountRate'),
+    ).toMatchObject({
+      component: 'InputNumber',
+    });
   });
 });
