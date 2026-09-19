@@ -35,6 +35,7 @@ import {
 import { createSpuSelectionStore } from './components/spu-table-select-utils';
 import { useGridColumns, useGridFormSchema } from './data';
 import InventoryForm from './modules/inventory-form.vue';
+import PromotionModal from './modules/promotion-modal.vue';
 
 const { push } = useRouter();
 const route = useRoute();
@@ -116,6 +117,10 @@ const canBatchDisable = computed(() =>
 
 const [InventoryFormModal, inventoryFormModalApi] = useVbenModal({
   connectedComponent: InventoryForm,
+  destroyOnClose: true,
+});
+const [PromotionFormModal, promotionModalApi] = useVbenModal({
+  connectedComponent: PromotionModal,
   destroyOnClose: true,
 });
 const tabsData = ref([
@@ -287,6 +292,11 @@ function handleInventory(row: MallSpuApi.Spu) {
   inventoryFormModalApi.setData(row).open();
 }
 
+/** 推广商品 */
+function handlePromotion(row: MallSpuApi.Spu) {
+  promotionModalApi.setData(row).open();
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
@@ -376,6 +386,7 @@ onMounted(async () => {
     </template>
 
     <InventoryFormModal @success="handleRefresh" />
+    <PromotionFormModal />
 
     <Grid>
       <template #toolbar-actions>
@@ -473,6 +484,16 @@ onMounted(async () => {
               auth: ['product:spu:update'],
               ifShow: () => row.status !== ProductSpuStatusEnum.RECYCLE.status,
               onClick: handleInventory.bind(null, row),
+            },
+            {
+              label: '推广',
+              type: 'link',
+              icon: 'lucide:share-2',
+              auth: ['product:spu:query'],
+              ifShow: () =>
+                tabType === 0 &&
+                row.status === ProductSpuStatusEnum.ENABLE.status,
+              onClick: handlePromotion.bind(null, row),
             },
             {
               label: $t('common.detail'),
