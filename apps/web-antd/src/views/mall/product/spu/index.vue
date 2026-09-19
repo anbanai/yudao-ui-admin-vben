@@ -1,17 +1,23 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { MallProductGroupApi } from '#/api/mall/product/group';
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { confirm, DocAlert, Page } from '@vben/common-ui';
+import { confirm, DocAlert, Page, useVbenModal } from '@vben/common-ui';
 import { ProductSpuStatusEnum } from '@vben/constants';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { message, Tabs } from 'ant-design-vue';
+import { message, Tabs, Tag } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  getGroupLabel,
+  getSimpleGroupList,
+  getSpuGroupMap,
+} from '#/api/mall/product/group';
 import {
   deleteSpu,
   exportSpu,
@@ -20,12 +26,70 @@ import {
   updateStatus,
 } from '#/api/mall/product/spu';
 import { $t } from '#/locales';
+import SpuGroupModal from '#/views/mall/product/group/modules/spu-group-modal.vue';
 
+import { createSpuSelectionStore } from './components/spu-table-select-utils';
 import { useGridColumns, useGridFormSchema } from './data';
 
 const { push } = useRouter();
 const route = useRoute();
 const tabType = ref(0);
+const groupList = ref<MallProductGroupApi.Group[]>([]);
+const selection = createSpuSelectionStore();
+const selectedCount = ref(0);
+const [GroupModal, groupModalApi] = useVbenModal({
+  connectedComponent: SpuGroupModal,
+  destroyOnClose: true,
+});
+let groupsLoading: Promise<void> | undefined;
+
+function loadGroups() {
+  return (groupsLoading ??= getSimpleGroupList()
+    .then((groups) => {
+      groupList.value = groups;
+    })
+    .catch((error) => {
+      groupsLoading = undefined;
+      throw error;
+    }));
+}
+
+function groupLabel(id: number) {
+  const group = groupList.value.find((item) => item.id === id);
+  return group ? getGroupLabel(group) : `分组 #${id}`;
+}
+
+function handleSelectionChange() {
+  selection.reconcilePage(
+    gridApi.grid.getTableData().fullData as MallSpuApi.Spu[],
+    gridApi.grid.getCheckboxRecords() as MallSpuApi.Spu[],
+  );
+  selectedCount.value = selection.getSelected().length;
+}
+
+function openGrouping(operation: 'add' | 'remove', row?: MallSpuApi.Spu) {
+  const spuIds = (row ? [row] : selection.getSelected()).flatMap((spu) =>
+    spu.id ? [spu.id] : [],
+  );
+  if (spuIds.length === 0 || spuIds.length > 200) {
+    message.warning('请选择1至200件商品');
+    return;
+  }
+  groupModalApi.setData({ spuIds, operation }).open();
+}
+
+async function clearSelection() {
+  selection.replace([]);
+  selectedCount.value = 0;
+  await gridApi.grid.clearCheckboxRow();
+  await gridApi.grid.clearCheckboxReserve();
+}
+
+async function handleGrouped() {
+  await clearSelection();
+  groupsLoading = undefined;
+  await handleRefresh();
+}
 const tabsData = ref([
   {
     name: '出售中',
@@ -62,7 +126,10 @@ async function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exportSpu(await gridApi.formApi.getValues());
+  const data = await exportSpu({
+    ...(await gridApi.formApi.getValues()),
+    tabType: tabType.value,
+  });
   downloadFileFromBlobPart({ fileName: '商品.xls', source: data });
 }
 
@@ -157,6 +224,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns: useGridColumns(handleStatusChange),
     height: 'auto',
     keepSource: true,
+    checkboxConfig: { reserve: true },
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
@@ -166,6 +234,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
             tabType: tabType.value,
             ...formValues,
           });
+          const [groupMap] = await Promise.all([
+            getSpuGroupMap(
+              result.list.flatMap((spu) => (spu.id ? [spu.id] : [])),
+            ),
+            loadGroups(),
+          ]);
+          for (const spu of result.list) {
+            if (spu.id) spu.groupIds = groupMap[spu.id] ?? [];
+          }
           void getTabCount(formValues); // 跟随筛选刷新 tab 数量
           return result;
         },
@@ -180,6 +257,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   } as VxeTableGridOptions<MallSpuApi.Spu>,
+  gridEvents: {
+    checkboxAll: handleSelectionChange,
+    checkboxChange: handleSelectionChange,
+    dataRendered: () => {
+      const selected = selection.getSelectedFromPage(
+        gridApi.grid.getTableData().fullData as MallSpuApi.Spu[],
+      );
+      if (selected.length > 0) void gridApi.grid.setCheckboxRow(selected, true);
+    },
+  },
 });
 
 function onChangeTab(key: any) {
@@ -201,6 +288,7 @@ onMounted(async () => {
 
 <template>
   <Page auto-content-height>
+    <GroupModal @success="handleGrouped" />
     <template #doc>
       <DocAlert
         title="【商品】商品 SPU 与 SKU"
@@ -219,8 +307,26 @@ onMounted(async () => {
         </Tabs>
       </template>
       <template #toolbar-tools>
+        <div v-if="selectedCount" class="mr-2">已选 {{ selectedCount }} 件</div>
         <TableAction
           :actions="[
+            {
+              label: '清空选择',
+              ifShow: () => selectedCount > 0,
+              onClick: clearSelection,
+            },
+            {
+              label: '批量加入分组',
+              auth: ['product:group:update', 'product:spu:update'],
+              disabled: selectedCount === 0,
+              onClick: () => openGrouping('add'),
+            },
+            {
+              label: '批量移出分组',
+              auth: ['product:group:update', 'product:spu:update'],
+              disabled: selectedCount === 0,
+              onClick: () => openGrouping('remove'),
+            },
             {
               label: $t('ui.actionTitle.create', ['商品']),
               type: 'primary',
@@ -238,9 +344,23 @@ onMounted(async () => {
           ]"
         />
       </template>
+      <template #groups="{ row }">
+        <div v-if="!row.groupIds?.length" class="text-muted-foreground">
+          未分组
+        </div>
+        <Tag v-for="id in row.groupIds" :key="id" class="my-1">
+          <span>{{ groupLabel(id) }}</span>
+        </Tag>
+      </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
+            {
+              label: '分组',
+              type: 'link',
+              auth: ['product:group:update', 'product:spu:update'],
+              onClick: () => openGrouping('add', row),
+            },
             {
               label: $t('common.edit'),
               type: 'link',

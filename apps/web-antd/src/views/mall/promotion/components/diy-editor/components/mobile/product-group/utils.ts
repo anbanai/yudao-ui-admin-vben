@@ -167,8 +167,7 @@ export function createPreviewProductLoader<T, Q>(
         if (request !== currentRequest) {
           return { accepted: false, list: [] as T[] };
         }
-        cache.set(key, []);
-        return { accepted: true, list: [] as T[] };
+        return { accepted: true, failed: true, list: [] as T[] };
       }
     },
     reset() {

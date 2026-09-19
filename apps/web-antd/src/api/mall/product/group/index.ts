@@ -12,6 +12,9 @@ export namespace MallProductGroupApi {
     name: string;
     sort: number;
     status: number;
+    storefrontVisible: boolean;
+    spuCount?: number;
+    saleSpuCount?: number;
     remark?: string;
     createTime?: Date;
     disabled?: boolean;
@@ -26,6 +29,12 @@ export namespace MallProductGroupApi {
     groupId: number;
     sort: number;
     spuId: number;
+  }
+
+  export interface SpuBatchUpdateRequest {
+    spuIds: number[];
+    groupIds: number[];
+    operation: 'add' | 'remove';
   }
 }
 
@@ -64,8 +73,41 @@ export async function getSelectableGroupList() {
   const groups = await getSimpleGroupList();
   return groups.map((group) => ({
     ...group,
+    label: getGroupLabel(group),
     disabled: group.status !== CommonStatusEnum.ENABLE,
   }));
+}
+
+export function getGroupLabel(group: MallProductGroupApi.Group) {
+  const labels = [
+    ...(group.storefrontVisible === false ? ['内部'] : []),
+    ...(group.status === CommonStatusEnum.ENABLE ? [] : ['停用']),
+  ];
+  return labels.length > 0
+    ? `${group.name}（${labels.join('、')}）`
+    : group.name;
+}
+
+/** 大页按接口上限分批补充分组，避免逐商品查询。 */
+export async function getSpuGroupMap(spuIds: number[]) {
+  const ids = [...new Set(spuIds)];
+  const result: Record<number, number[]> = {};
+  for (let offset = 0; offset < ids.length; offset += 200) {
+    Object.assign(
+      result,
+      await requestClient.get<Record<number, number[]>>(
+        '/product/group/spu-group-map',
+        { params: { spuIds: ids.slice(offset, offset + 200) } },
+      ),
+    );
+  }
+  return result;
+}
+
+export function updateSpuGroups(
+  data: MallProductGroupApi.SpuBatchUpdateRequest,
+) {
+  return requestClient.post<boolean>('/product/group/spu-batch-update', data);
 }
 
 export function getGroupSpuPage(params: PageParam) {

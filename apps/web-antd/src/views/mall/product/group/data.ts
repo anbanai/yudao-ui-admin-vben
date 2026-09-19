@@ -39,6 +39,18 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: z.number().default(CommonStatusEnum.ENABLE),
     },
     {
+      fieldName: 'storefrontVisible',
+      label: '店铺可见',
+      component: 'RadioGroup',
+      componentProps: {
+        options: [
+          { label: '公开分组', value: true },
+          { label: '内部运营', value: false },
+        ],
+      },
+      rules: z.boolean().default(true),
+    },
+    {
       fieldName: 'remark',
       label: '备注',
       component: 'Textarea',
@@ -84,6 +96,25 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     { field: 'remark', title: '备注', minWidth: 180 },
     {
+      field: 'storefrontVisible',
+      title: '店铺可见',
+      width: 120,
+      formatter: ({ cellValue }) =>
+        cellValue === false ? '内部运营' : '公开分组',
+    },
+    {
+      field: 'spuCount',
+      title: '商品总数',
+      width: 100,
+      slots: { default: 'spuCount' },
+    },
+    {
+      field: 'saleSpuCount',
+      title: '在售商品',
+      width: 100,
+      slots: { default: 'saleSpuCount' },
+    },
+    {
       field: 'createTime',
       title: '创建时间',
       minWidth: 170,
@@ -91,7 +122,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       title: '操作',
-      width: 240,
+      width: 330,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -131,7 +162,12 @@ export function useMemberGridColumns(): VxeTableGridOptions['columns'] {
       width: 90,
       cellRender: { name: 'CellImage' },
     },
-    { field: 'name', title: '商品名称', minWidth: 220 },
+    {
+      field: 'name',
+      title: '商品名称',
+      minWidth: 220,
+      slots: { default: 'name' },
+    },
     {
       field: 'groupSort',
       title: '组内排序',

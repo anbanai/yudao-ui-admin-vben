@@ -33,8 +33,10 @@ describe('商品基础信息表单', () => {
     expect(groupField?.rules).toBeUndefined();
     expect(groupField?.componentProps).toMatchObject({
       mode: 'multiple',
-      labelField: 'name',
+      labelField: 'label',
       valueField: 'id',
+      disabledField: 'disabled',
+      allowClear: false,
     });
   });
 });

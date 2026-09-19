@@ -42,6 +42,7 @@ import {
   normalizeGroupIds,
   normalizeProductGroupProperty,
 } from './components/mobile/product-group/utils';
+import { getProductListValidationError } from './components/mobile/product-list/utils';
 import { component as TAB_BAR_COMPONENT } from './components/mobile/tab-bar/config';
 import { MALL_DIY_ASSETS, normalizeMallDiyAssetUrls } from './static-assets';
 import { getPageBackgroundStyle } from './util';
@@ -175,6 +176,16 @@ function handleSave() {
         component.property.pageSize,
       );
       validationError = getProductGroupValidationError(component.property);
+    } else if (component.id === 'ProductList') {
+      if (component.property.sourceType === 'group') {
+        component.property.groupIds = normalizeGroupIds(
+          component.property.groupIds,
+        );
+        component.property.pageSize = clampProductGroupPageSize(
+          component.property.pageSize ?? 10,
+        );
+      }
+      validationError = getProductListValidationError(component.property);
     } else if (component.id === 'ProductCategory') {
       component.property.categoryIds = normalizeCategoryIds(
         component.property.categoryIds || [],

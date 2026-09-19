@@ -3,9 +3,8 @@ import type { ProductGroupProperty } from './config';
 
 import type { MallProductGroupApi } from '#/api/mall/product/group';
 
-import { computed, onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
-import { CommonStatusEnum } from '@vben/constants';
 import { IconifyIcon } from '@vben/icons';
 
 import { useVModel } from '@vueuse/core';
@@ -25,17 +24,13 @@ import {
 } from 'ant-design-vue';
 import VueDraggable from 'vuedraggable';
 
-import { getSimpleGroupList } from '#/api/mall/product/group';
 import UploadImg from '#/components/upload/image-upload.vue';
 import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
-import {
-  clampProductGroupPageSize,
-  normalizeGroupIds,
-  orderSelectedGroups,
-  PRODUCT_GROUP_LIMIT,
-} from './utils';
+import { getGroupDisplayName } from './availability';
+import GroupSelect from './group-select.vue';
+import { clampProductGroupPageSize, normalizeGroupIds } from './utils';
 
 defineOptions({ name: 'ProductGroupProperty' });
 
@@ -44,31 +39,16 @@ const emit = defineEmits(['update:modelValue']);
 const formData = useVModel(props, 'modelValue', emit);
 
 const groups = ref<MallProductGroupApi.Group[]>([]);
-const groupOptions = computed(() =>
-  groups.value.map((group) => ({
-    label: group.name,
-    value: group.id,
-    disabled: group.status !== CommonStatusEnum.ENABLE,
-  })),
-);
-const selectedGroups = computed(() =>
-  orderSelectedGroups(formData.value.groupIds, groups.value),
-);
 
 function getGroupItemKey(groupId: number) {
   return groupId;
 }
 
 function getGroupName(groupId: number) {
-  return (
-    groups.value.find((group) => group.id === groupId)?.name ||
-    `分组 ${groupId}`
-  );
+  return getGroupDisplayName(groupId, groups.value);
 }
 
 function handleRemoveGroup(groupId: number) {
-  const group = groups.value.find((item) => item.id === groupId);
-  if (group?.status !== CommonStatusEnum.ENABLE) return;
   formData.value.groupIds = formData.value.groupIds.filter(
     (id) => id !== groupId,
   );
@@ -88,14 +68,6 @@ watch(
   },
   { deep: true },
 );
-
-onMounted(async () => {
-  try {
-    groups.value = await getSimpleGroupList();
-  } catch {
-    groups.value = [];
-  }
-});
 </script>
 
 <template>
@@ -107,24 +79,10 @@ onMounted(async () => {
     >
       <Card title="商品分组" class="property-group" :bordered="false">
         <FormItem label="选择分组" required>
-          <Select
-            v-model:value="formData.groupIds"
-            :options="groupOptions"
-            :max-tag-count="2"
-            :max-count="PRODUCT_GROUP_LIMIT"
-            :max-tag-placeholder="() => `已选 ${formData.groupIds.length} 个`"
-            allow-clear
-            mode="multiple"
-            show-search
-            option-filter-prop="label"
-            placeholder="请选择商品分组"
-          />
-          <div class="mt-1 text-xs text-muted-foreground">
-            最多选择 {{ PRODUCT_GROUP_LIMIT }} 个分组，禁用分组仅保留已有关系
-          </div>
+          <GroupSelect v-model="formData.groupIds" @loaded="groups = $event" />
         </FormItem>
 
-        <div v-if="selectedGroups.length" class="mt-2">
+        <div v-if="formData.groupIds.length" class="mt-2">
           <div class="mb-2 text-xs text-muted-foreground">拖动调整菜单顺序</div>
           <VueDraggable
             v-model="formData.groupIds"
@@ -149,10 +107,6 @@ onMounted(async () => {
                     danger
                     shape="circle"
                     size="small"
-                    :disabled="
-                      groups.find((item) => item.id === element)?.status !==
-                      CommonStatusEnum.ENABLE
-                    "
                     @click="handleRemoveGroup(element)"
                   >
                     <template #icon>

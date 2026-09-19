@@ -7,6 +7,8 @@ import { handleTree, treeToString } from '@vben/utils';
 import { getCategoryList } from '#/api/mall/product/category';
 import { getRangePickerDefaultProps } from '#/utils';
 
+import { useSpuGroupFilterSchema } from './components/group-filter';
+
 /** 分类树缓存：供表格分类名称列显示 */
 let categoryList: any[] = [];
 
@@ -40,6 +42,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
         childrenField: 'children',
       },
     },
+    ...useSpuGroupFilterSchema(),
     {
       fieldName: 'createTime',
       label: '创建时间',
@@ -60,6 +63,7 @@ export function useGridColumns(
   ) => PromiseLike<boolean | undefined>,
 ): VxeTableGridOptions['columns'] {
   return [
+    { type: 'checkbox', width: 50, fixed: 'left' },
     {
       field: 'id',
       title: '商品编号',
@@ -87,6 +91,12 @@ export function useGridColumns(
       formatter: ({ row }) => {
         return treeToString(categoryList, row.categoryId);
       },
+    },
+    {
+      field: 'groupIds',
+      title: '商品分组',
+      minWidth: 200,
+      slots: { default: 'groups' },
     },
     {
       field: 'status',

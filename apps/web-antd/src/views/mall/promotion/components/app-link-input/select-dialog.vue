@@ -9,16 +9,21 @@ import { getUrlNumberValue } from '@vben/utils';
 import { Button, Form, FormItem, message, Tooltip } from 'ant-design-vue';
 
 import { getCategory } from '#/api/mall/product/category';
+import { getSimpleGroupList } from '#/api/mall/product/group';
 import { ProductCategorySelect } from '#/views/mall/product/category/components/';
 
+import { getGroupDisplayName } from '../diy-editor/components/mobile/product-group/availability';
+import GroupSelect from '../diy-editor/components/mobile/product-group/group-select.vue';
 import { APP_LINK_GROUP_LIST, APP_LINK_TYPE_ENUM } from './data';
 import LinkDetailSelect from './link-detail-select.vue';
 import {
   appendLinkParam,
   getCategorySelectParentId,
+  getGroupLinkIds,
   getLinkParamKey,
   resolveAppLinkName,
   validateCategoryLink,
+  validateGroupLink,
 } from './link-utils';
 
 /** APP 链接选择弹框 */
@@ -31,6 +36,7 @@ const emit = defineEmits<{
 
 const activeGroup = ref(APP_LINK_GROUP_LIST[0]?.name); // 选中的分组，默认选中第一个
 const activeAppLink = ref({} as AppLink); // 选中的 APP 链接
+const selectedGroupIds = ref<number[]>([]);
 
 const linkScrollbar = ref<HTMLDivElement>(); // 右侧滚动条
 const groupTitleRefs = ref<HTMLInputElement[]>([]); // 分组标题引用列表
@@ -48,6 +54,20 @@ const linkDetailSelectRef = ref<InstanceType<typeof LinkDetailSelect>>(); // 详
 
 const [Modal, modalApi] = useVbenModal({
   async onConfirm() {
+    const isValidGroupLink = await validateGroupLink(
+      activeAppLink.value.type,
+      activeAppLink.value.path,
+      getSimpleGroupList,
+    );
+    if (!isValidGroupLink) {
+      message.warning('请选择公开且启用的商品分组；原链接已保留');
+      selectedGroupIds.value = getGroupLinkIds(activeAppLink.value.path);
+      detailSelectDialog.value = {
+        type: APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST,
+      };
+      detailSelectModalApi.open();
+      return;
+    }
     const isValidCategoryLink = await validateCategoryLink(
       activeAppLink.value.type,
       activeAppLink.value.path,
@@ -102,6 +122,22 @@ async function open(link: string, currentName?: string) {
     await nextTick();
     handleGroupSelected(group.name);
   }
+  if (activeAppLink.value.type === APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST) {
+    try {
+      const groups = await getSimpleGroupList();
+      if (activeAppLink.value.path !== link) return;
+      const names = getGroupLinkIds(link).map((id) =>
+        getGroupDisplayName(id, groups),
+      );
+      if (names.length > 0)
+        activeAppLink.value.name = resolveAppLinkName(
+          activeAppLink.value.name,
+          names.join('、'),
+        );
+    } catch {
+      // 加载失败时保留已有名称与原始链接，确认时仍会重新校验。
+    }
+  }
 }
 
 /** 处理 APP 链接选中 */
@@ -109,7 +145,7 @@ async function handleAppLinkSelected(appLink: AppLink) {
   if (!isSameLink(appLink.path, activeAppLink.value.path)) {
     activeAppLink.value = { ...appLink };
   }
-  if (!appLink.type) {
+  if (appLink.type === undefined) {
     return;
   }
   // 返显当前链接的参数值
@@ -135,6 +171,11 @@ async function handleAppLinkSelected(appLink: AppLink) {
     // 分类选择：商品分类页、商品列表页（按分类筛选）
     case APP_LINK_TYPE_ENUM.PRODUCT_CATEGORY_LIST:
     case APP_LINK_TYPE_ENUM.PRODUCT_LIST: {
+      detailSelectModalApi.open();
+      break;
+    }
+    case APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST: {
+      selectedGroupIds.value = getGroupLinkIds(activeAppLink.value.path);
       detailSelectModalApi.open();
       break;
     }
@@ -220,6 +261,9 @@ function handleCategorySelected(category?: { id: number; name: string }) {
 </script>
 <template>
   <Modal title="选择链接" class="w-[65%]">
+    <div v-if="activeAppLink.name" class="mb-3 text-sm text-muted-foreground">
+      当前链接：{{ activeAppLink.name }}
+    </div>
     <div class="flex h-[500px] gap-2">
       <!-- 左侧分组列表 -->
       <div
@@ -278,8 +322,25 @@ function handleCategorySelected(category?: { id: number; name: string }) {
     </div>
   </Modal>
 
-  <DetailSelectModal title="选择分类" class="w-[65%]">
+  <DetailSelectModal
+    :title="
+      detailSelectDialog.type === APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST
+        ? '选择商品分组'
+        : '选择分类'
+    "
+    class="w-[65%]"
+  >
     <Form class="min-h-[200px]">
+      <FormItem
+        v-if="detailSelectDialog.type === APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST"
+        label="选择分组"
+      >
+        <GroupSelect
+          v-model="selectedGroupIds"
+          single
+          @change="handleDetailSelected"
+        />
+      </FormItem>
       <FormItem
         label="选择分类"
         v-if="

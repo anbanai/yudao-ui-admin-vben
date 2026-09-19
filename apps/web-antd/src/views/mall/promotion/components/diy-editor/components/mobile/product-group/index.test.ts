@@ -1,9 +1,11 @@
+/* eslint-disable vue/one-component-per-file */
 import type { ProductGroupProperty } from './config';
 
-import { createApp, nextTick } from 'vue';
+import { createApp, nextTick, reactive } from 'vue';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { component } from './config';
 import ProductGroup from './index.vue';
 
 const { getGroupSpuPageMock, getSimpleGroupListMock } = vi.hoisted(() => ({
@@ -25,6 +27,13 @@ vi.mock('../product-list/index.vue', () => ({
 
 describe('product group', () => {
   const hosts: HTMLDivElement[] = [];
+
+  async function settle() {
+    for (let i = 0; i < 8; i++) {
+      await Promise.resolve();
+      await nextTick();
+    }
+  }
 
   afterEach(() => {
     for (const host of hosts.splice(0)) host.remove();
@@ -84,6 +93,54 @@ describe('product group', () => {
     expect(buttons?.item(1).style.color).toBe('#a8071a');
     expect(buttons?.item(1).style.backgroundColor).toBe('#fff1f0');
 
+    app.unmount();
+  });
+
+  it('preserves internal and deleted ids while excluding them from the all tab query', async () => {
+    getSimpleGroupListMock.mockResolvedValueOnce([
+      { id: 1, name: '公开组', sort: 1, status: 0 },
+      { id: 2, name: '内部组', sort: 2, status: 0, storefrontVisible: false },
+    ]);
+    const property = {
+      ...component.property,
+      groupIds: [1, 2, 99],
+      showAll: true,
+    };
+    const host = document.createElement('div');
+    hosts.push(host);
+    const app = createApp(ProductGroup, { property });
+    app.mount(host);
+    await settle();
+    expect(getGroupSpuPageMock).toHaveBeenCalledWith({
+      groupIds: [1],
+      pageNo: 1,
+      pageSize: 10,
+    });
+    expect(host.textContent).toContain('内部组（仅内部使用）');
+    expect(host.textContent).toContain('分组 99（已删除或不可访问）');
+    expect(property.groupIds).toEqual([1, 2, 99]);
+    app.unmount();
+  });
+
+  it('refetches dynamic products when sorting changes or the preview is refreshed', async () => {
+    const property = reactive({ ...component.property, groupIds: [1] });
+    const host = document.createElement('div');
+    hosts.push(host);
+    const app = createApp(ProductGroup, { property });
+    app.mount(host);
+    await settle();
+    property.sortType = 'sales';
+    await settle();
+    expect(getGroupSpuPageMock).toHaveBeenLastCalledWith({
+      groupIds: [1],
+      pageNo: 1,
+      pageSize: 10,
+      sortAsc: false,
+      sortField: 'salesCount',
+    });
+    host.querySelector('button')!.click();
+    await settle();
+    expect(getGroupSpuPageMock).toHaveBeenCalledTimes(3);
     app.unmount();
   });
 });

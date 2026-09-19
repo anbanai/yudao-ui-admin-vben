@@ -8,6 +8,8 @@ import { fenToYuan, handleTree } from '@vben/utils';
 import { getCategoryList } from '#/api/mall/product/category';
 import { getRangePickerDefaultProps } from '#/utils';
 
+import { useSpuGroupFilterSchema } from './group-filter';
+
 /** 列表的搜索表单 */
 export function useGridFormSchema(
   onLoaded?: (categories: MallCategoryApi.Category[]) => void,
@@ -45,6 +47,7 @@ export function useGridFormSchema(
         treeNodeFilterProp: 'label',
       },
     },
+    ...useSpuGroupFilterSchema(),
     {
       fieldName: 'createTime',
       label: '创建时间',

@@ -73,16 +73,37 @@ export namespace MallSpuApi {
 
 /** 获得商品 SPU 列表 */
 export function getSpuPage(params: PageParam) {
-  return requestClient.get<PageResult<MallSpuApi.Spu>>('/product/spu/page', {
-    params,
-  });
+  const query = resolveSpuGroupQuery(params);
+  return requestClient.get<PageResult<MallSpuApi.Spu>>(
+    query.hasGroupFilter
+      ? '/product/group/spu-filter-page'
+      : '/product/spu/page',
+    { params: query.params },
+  );
 }
 
 /** 获得商品 SPU 列表 tabsCount（支持按 name/categoryId/createTime 筛选） */
 export function getTabsCount(params?: Record<string, any>) {
-  return requestClient.get<Record<string, number>>('/product/spu/get-count', {
-    params,
-  });
+  const query = resolveSpuGroupQuery(params);
+  return requestClient.get<Record<string, number>>(
+    query.hasGroupFilter
+      ? '/product/group/spu-filter-count'
+      : '/product/spu/get-count',
+    { params: query.params },
+  );
+}
+
+/** 只在使用分组条件时切换接口，保留分类、名称、时间和销售标签的交集。 */
+function resolveSpuGroupQuery(params?: Record<string, any>) {
+  if (!params) return { hasGroupFilter: false, params };
+  const { groupIds, ungrouped, ...filters } = params;
+  if (ungrouped === true) {
+    return { hasGroupFilter: true, params: { ...filters, ungrouped: true } };
+  }
+  if (Array.isArray(groupIds) && groupIds.length > 0) {
+    return { hasGroupFilter: true, params: { ...filters, groupIds } };
+  }
+  return { hasGroupFilter: false, params: filters };
 }
 
 /** 创建商品 SPU */
@@ -117,7 +138,13 @@ export function deleteSpu(id: number) {
 
 /** 导出商品 SPU Excel */
 export function exportSpu(params: PageParam) {
-  return requestClient.download('/product/spu/export-excel', { params });
+  const query = resolveSpuGroupQuery(params);
+  return requestClient.download(
+    query.hasGroupFilter
+      ? '/product/group/spu-filter-export'
+      : '/product/spu/export-excel',
+    { params: query.params },
+  );
 }
 
 /** 获得商品 SPU 精简列表 */

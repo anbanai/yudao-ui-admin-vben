@@ -12,6 +12,7 @@ import { getCombinationActivityPage } from '#/api/mall/promotion/combination/com
 import { getCouponTemplatePage } from '#/api/mall/promotion/coupon/couponTemplate';
 import { getDiyPagePage } from '#/api/mall/promotion/diy/page';
 import { getSeckillActivityPage } from '#/api/mall/promotion/seckill/seckillActivity';
+import { useSpuGroupFilterSchema } from '#/views/mall/product/spu/components/group-filter';
 
 import { APP_LINK_TYPE_ENUM } from './data';
 import { getLinkDetailName } from './link-utils';
@@ -221,6 +222,13 @@ const selectedId = ref<number>(); // 选中的记录编号
 const selectedRow = ref<Record<string, unknown>>(); // 选中的记录，用于回传名称
 
 const [Grid, gridApi] = useVbenVxeGrid({
+  formOptions:
+    props.type === APP_LINK_TYPE_ENUM.PRODUCT_DETAIL_NORMAL
+      ? {
+          schema: useSpuGroupFilterSchema(),
+          submitOnChange: true,
+        }
+      : undefined,
   gridOptions: {
     columns: useGridColumns(),
     height: 450,
@@ -233,12 +241,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }: any) => {
-          const queryFn = props.type ? QUERY_FN_MAP[props.type] : undefined;
+        query: async (
+          { page }: any,
+          formValues: Record<string, unknown> = {},
+        ) => {
+          const queryFn =
+            props.type === undefined ? undefined : QUERY_FN_MAP[props.type];
           if (!queryFn) {
             return { list: [], total: 0 };
           }
           return await queryFn({
+            ...formValues,
             pageNo: page.currentPage,
             pageSize: page.pageSize,
           });

@@ -4,7 +4,8 @@ import type { MallProductGroupApi } from '#/api/mall/product/group';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 
-import { message } from 'ant-design-vue';
+import { useClipboard } from '@vueuse/core';
+import { Button, message } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteGroup, getGroupPage } from '#/api/mall/product/group';
@@ -13,6 +14,9 @@ import { $t } from '#/locales';
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
 import MemberModal from './modules/member-modal.vue';
+import { getPublicGroupLink } from './operations';
+
+const { copy } = useClipboard({ legacy: true });
 
 const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
@@ -35,8 +39,15 @@ function handleEdit(row: MallProductGroupApi.Group) {
   formModalApi.setData(row).open();
 }
 
-function handleMembers(row: MallProductGroupApi.Group) {
-  membersModalApi.setData(row).open();
+function handleMembers(row: MallProductGroupApi.Group, memberStatus?: number) {
+  membersModalApi.setData({ ...row, memberStatus }).open();
+}
+
+async function copyLink(row: MallProductGroupApi.Group) {
+  const link = getPublicGroupLink(row);
+  if (!link) return;
+  await copy(link);
+  message.success('分组店铺链接已复制');
 }
 
 async function handleDelete(row: MallProductGroupApi.Group) {
@@ -69,7 +80,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 <template>
   <Page auto-content-height>
     <FormModal @success="refresh" />
-    <MembersModal />
+    <MembersModal @success="refresh" />
     <Grid table-title="商品分组列表">
       <template #toolbar-tools>
         <TableAction
@@ -84,9 +95,25 @@ const [Grid, gridApi] = useVbenVxeGrid({
           ]"
         />
       </template>
+      <template #spuCount="{ row }">
+        <Button type="link" @click="handleMembers(row)">
+          <span>{{ row.spuCount ?? 0 }}</span>
+        </Button>
+      </template>
+      <template #saleSpuCount="{ row }">
+        <Button type="link" @click="handleMembers(row, 1)">
+          <span>{{ row.saleSpuCount ?? 0 }}</span>
+        </Button>
+      </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[
+            {
+              label: '复制店铺链接',
+              type: 'link',
+              ifShow: () => Boolean(getPublicGroupLink(row)),
+              onClick: () => copyLink(row),
+            },
             {
               label: '成员管理',
               type: 'link',

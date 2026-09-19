@@ -1,7 +1,13 @@
 import type { ComponentStyle, DiyComponent } from '../../../util';
+import type { ProductGroupSortType } from '../product-group/config';
 
 /** 商品栏属性 */
 export interface ProductListProperty {
+  sourceType?: 'group' | 'manual';
+  groupIds?: number[];
+  pageSize?: number;
+  sortType?: ProductGroupSortType;
+  showMore?: boolean;
   layoutType: 'horizSwiper' | 'threeCol' | 'twoCol'; // 布局类型：双列 | 三列 | 水平滑动
   fields: {
     name: ProductListFieldProperty; // 商品名称
@@ -40,6 +46,11 @@ export const component = {
     borderRadiusBottom: 8,
     space: 8,
     spuIds: [],
+    sourceType: 'manual',
+    groupIds: [],
+    pageSize: 10,
+    sortType: 'default',
+    showMore: false,
     style: {
       bgType: 'color',
       bgColor: '',

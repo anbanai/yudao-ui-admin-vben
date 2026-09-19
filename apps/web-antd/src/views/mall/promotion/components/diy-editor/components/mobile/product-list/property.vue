@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ProductListProperty } from './config';
 
+import { computed } from 'vue';
+
 import { IconifyIcon } from '@vben/icons';
 
 import { useVModel } from '@vueuse/core';
@@ -9,8 +11,10 @@ import {
   Checkbox,
   Form,
   FormItem,
+  InputNumber,
   RadioButton,
   RadioGroup,
+  Select,
   Slider,
   Switch,
   Tooltip,
@@ -21,6 +25,8 @@ import SpuShowcase from '#/views/mall/product/spu/components/spu-showcase.vue';
 import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
+import GroupSelect from '../product-group/group-select.vue';
+import { clampProductGroupPageSize } from '../product-group/utils';
 
 /** 商品栏属性面板 */
 defineOptions({ name: 'ProductListProperty' });
@@ -30,6 +36,30 @@ const props = defineProps<{ modelValue: ProductListProperty }>();
 const emit = defineEmits(['update:modelValue']);
 
 const formData = useVModel(props, 'modelValue', emit);
+const sourceType = computed({
+  get: () => formData.value.sourceType || 'manual',
+  set: (value: 'group' | 'manual') => {
+    formData.value.sourceType = value;
+  },
+});
+
+function updatePageSize(value: unknown) {
+  formData.value.pageSize = clampProductGroupPageSize(
+    typeof value === 'number' ? value : 10,
+  );
+}
+
+function updateSortType(value: unknown) {
+  if (
+    value === 'default' ||
+    value === 'latest' ||
+    value === 'sales' ||
+    value === 'priceAsc' ||
+    value === 'priceDesc'
+  ) {
+    formData.value.sortType = value;
+  }
+}
 </script>
 
 <template>
@@ -40,7 +70,43 @@ const formData = useVModel(props, 'modelValue', emit);
       :model="formData"
     >
       <Card title="商品列表" class="property-group" :bordered="false">
-        <SpuShowcase v-model="formData.spuIds" />
+        <FormItem label="商品来源">
+          <RadioGroup v-model:value="sourceType">
+            <RadioButton value="manual">手动选择</RadioButton>
+            <RadioButton value="group">按分组</RadioButton>
+          </RadioGroup>
+        </FormItem>
+        <SpuShowcase v-if="sourceType === 'manual'" v-model="formData.spuIds" />
+        <template v-else>
+          <FormItem label="选择分组" required>
+            <GroupSelect v-model="formData.groupIds" />
+          </FormItem>
+          <FormItem label="商品数量">
+            <InputNumber
+              :value="formData.pageSize ?? 10"
+              :min="1"
+              :max="50"
+              :precision="0"
+              @update:value="updatePageSize"
+            />
+          </FormItem>
+          <FormItem label="商品排序">
+            <Select
+              :value="formData.sortType ?? 'default'"
+              :options="[
+                { label: '综合排序', value: 'default' },
+                { label: '最新上架', value: 'latest' },
+                { label: '销量优先', value: 'sales' },
+                { label: '价格升序', value: 'priceAsc' },
+                { label: '价格降序', value: 'priceDesc' },
+              ]"
+              @update:value="updateSortType"
+            />
+          </FormItem>
+          <FormItem label="查看更多">
+            <Switch v-model:checked="formData.showMore" />
+          </FormItem>
+        </template>
       </Card>
       <Card title="商品样式" class="property-group" :bordered="false">
         <FormItem label="布局" name="type">

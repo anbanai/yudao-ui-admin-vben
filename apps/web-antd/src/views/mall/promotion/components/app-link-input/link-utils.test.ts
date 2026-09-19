@@ -1,3 +1,4 @@
+/* eslint-disable vue/one-component-per-file */
 import { createApp, defineComponent, h, nextTick, ref } from 'vue';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -7,15 +8,18 @@ import {
   appendLinkParam,
   formatAppLinkName,
   getCategorySelectParentId,
+  getGroupLinkIds,
   getLinkDetailName,
   getLinkParamKey,
   resolveAppLinkName,
   validateCategoryLink,
+  validateGroupLink,
 } from './link-utils';
 import SelectDialog from './select-dialog.vue';
 
 const dialogMocks = vi.hoisted(() => ({
   getCategory: vi.fn(),
+  getGroups: vi.fn().mockResolvedValue([]),
   messageWarning: vi.fn(),
   modalApis: [] as Array<{
     close: ReturnType<typeof vi.fn>;
@@ -59,6 +63,14 @@ vi.mock('#/api/mall/product/category', () => ({
   getCategory: dialogMocks.getCategory,
 }));
 
+vi.mock('#/api/mall/product/group', () => ({
+  getSimpleGroupList: dialogMocks.getGroups,
+}));
+vi.mock(
+  '../diy-editor/components/mobile/product-group/group-select.vue',
+  () => ({ default: { template: '<div />' } }),
+);
+
 vi.mock('#/views/mall/product/category/components/', async () => {
   const { defineComponent } = await import('vue');
   return { ProductCategorySelect: defineComponent(() => () => null) };
@@ -78,12 +90,66 @@ afterEach(() => {
   unmountDialog = undefined;
   dialogHost = undefined;
   dialogMocks.getCategory.mockReset();
+  dialogMocks.getGroups.mockReset().mockResolvedValue([]);
   dialogMocks.messageWarning.mockReset();
   dialogMocks.modalApis.length = 0;
   dialogMocks.modalConfigs.length = 0;
 });
 
 describe('app link helpers', () => {
+  it('keeps old enum values and gives group routes their own encoded parameter', () => {
+    expect(APP_LINK_TYPE_ENUM.PRODUCT_LIST).toBe(10);
+    expect(APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST).toBe(11);
+    expect(getLinkParamKey(APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST)).toBe(
+      'groupIds',
+    );
+    const path = appendLinkParam(
+      '/pages/goods/group-list?label=%E6%96%B0%E8%8C%B6',
+      'groupIds',
+      '3,5',
+    );
+    expect(path).toContain('groupIds=3%2C5');
+    expect(getGroupLinkIds(path)).toEqual([3, 5]);
+    expect(new URL(path, 'https://example.com').searchParams.get('label')).toBe(
+      '新茶',
+    );
+  });
+
+  it.each(['', '0', '1,abc', '-1', '1.2', '9007199254740992'])(
+    'rejects unsafe or missing group ids %s',
+    async (ids) => {
+      expect(
+        await validateGroupLink(
+          APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST,
+          `/pages/goods/group-list?groupIds=${ids}`,
+          async () => [],
+        ),
+      ).toBe(false);
+    },
+  );
+
+  it('requires every linked group to be public and enabled while accepting legacy visibility', async () => {
+    const groups = async () => [
+      { id: 1, name: '公开', status: 0 },
+      { id: 2, name: '内部', status: 0, storefrontVisible: false },
+      { id: 3, name: '停用', status: 1, storefrontVisible: true },
+    ];
+    expect(
+      await validateGroupLink(
+        APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST,
+        '/pages/goods/group-list?groupIds=1',
+        groups,
+      ),
+    ).toBe(true);
+    for (const ids of ['1,2', '3', '99'])
+      expect(
+        await validateGroupLink(
+          APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST,
+          `/pages/goods/group-list?groupIds=${ids}`,
+          groups,
+        ),
+      ).toBe(false);
+  });
   it('rejects a persisted child category link before confirmation', async () => {
     expect(
       await validateCategoryLink(
@@ -225,6 +291,52 @@ describe('app link helpers', () => {
     expect(appLinkChange).not.toHaveBeenCalled();
     expect(dialogMocks.modalApis[0]?.close).not.toHaveBeenCalled();
     expect(dialogMocks.messageWarning).toHaveBeenCalledOnce();
+    expect(dialogMocks.modalApis[1]?.open).toHaveBeenCalledOnce();
+  });
+
+  async function openGroupDialog(storefrontVisible: boolean) {
+    dialogMocks.getGroups.mockResolvedValue([
+      { id: 12, name: '春茶 & 新品', status: 0, storefrontVisible },
+    ]);
+    const change = vi.fn();
+    const appLinkChange = vi.fn();
+    const dialogRef = ref<{ open: (link: string) => Promise<void> }>();
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(SelectDialog, {
+            ref: dialogRef,
+            onChange: change,
+            onAppLinkChange: appLinkChange,
+          });
+      },
+    });
+    dialogHost = document.createElement('div');
+    document.body.append(dialogHost);
+    const app = createApp(Wrapper);
+    unmountDialog = () => app.unmount();
+    app.mount(dialogHost);
+    const path = '/pages/goods/group-list?groupIds=12&campaign=spring%20tea';
+    await dialogRef.value?.open(path);
+    await nextTick();
+    await dialogMocks.modalConfigs[0]?.onConfirm();
+    return { change, appLinkChange, path };
+  }
+
+  it('roundtrips public group labels and the saved link', async () => {
+    const { change, appLinkChange, path } = await openGroupDialog(true);
+    expect(dialogHost?.textContent).toContain('春茶 & 新品');
+    expect(change).toHaveBeenCalledWith(path);
+    expect(appLinkChange).toHaveBeenCalledWith(
+      expect.objectContaining({ name: '分组商品列表：春茶 & 新品', path }),
+    );
+  });
+
+  it('protects unavailable saved group ids from replacement', async () => {
+    const { change } = await openGroupDialog(false);
+    expect(dialogHost?.textContent).toContain('春茶 & 新品');
+    expect(change).not.toHaveBeenCalled();
+    expect(dialogHost?.textContent).toContain('仅内部使用');
     expect(dialogMocks.modalApis[1]?.open).toHaveBeenCalledOnce();
   });
 });

@@ -4,6 +4,7 @@ import type { MallProductGroupApi } from '#/api/mall/product/group';
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
 import { computed, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { useVbenModal } from '@vben/common-ui';
 import { CommonStatusEnum } from '@vben/constants';
@@ -29,6 +30,9 @@ type GroupMember = Omit<MallSpuApi.Spu, 'id'> & {
   groupSort?: number;
   id: number;
 };
+
+const emit = defineEmits<{ success: [] }>();
+const { push } = useRouter();
 
 const group = ref<MallProductGroupApi.Group>();
 const selectorRef = ref<InstanceType<typeof SpuTableSelect>>();
@@ -60,6 +64,7 @@ async function handleSelected(selected: MallSpuApi.Spu | MallSpuApi.Spu[]) {
   await addGroupSpus(buildGroupMemberBatchRequest(group.value.id, spuIds));
   message.success('商品已加入分组');
   refresh();
+  emit('success');
 }
 
 async function removeMembers(rows: GroupMember[]) {
@@ -69,6 +74,7 @@ async function removeMembers(rows: GroupMember[]) {
   await removeGroupSpus(buildGroupMemberBatchRequest(group.value.id, spuIds));
   message.success('商品已移出分组');
   refresh();
+  emit('success');
 }
 
 async function removeSelected() {
@@ -86,13 +92,25 @@ async function saveSort(row: GroupMember) {
   refresh();
 }
 
+async function openProduct(row: GroupMember, edit = false) {
+  await modalApi.close();
+  await push({
+    name: edit ? 'ProductSpuEdit' : 'ProductSpuDetail',
+    params: { id: row.id },
+  });
+}
+
 const [Modal, modalApi] = useVbenModal({
-  onOpenChange(isOpen) {
+  async onOpenChange(isOpen) {
     if (!isOpen) {
       group.value = undefined;
       return;
     }
-    group.value = modalApi.getData() as MallProductGroupApi.Group;
+    const data = modalApi.getData() as MallProductGroupApi.Group & {
+      memberStatus?: number;
+    };
+    group.value = data;
+    await gridApi.formApi.setValues({ status: data.memberStatus });
     refresh();
   },
 });
@@ -148,6 +166,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
             },
           ]"
         />
+      </template>
+      <template #name="{ row }">
+        <Button type="link" @click="openProduct(row)">
+          <span>{{ row.name }}</span>
+        </Button>
+        <Button
+          v-access:code="['product:spu:update']"
+          type="link"
+          size="small"
+          @click="openProduct(row, true)"
+        >
+          <span>编辑</span>
+        </Button>
       </template>
       <template #sort="{ row }">
         <div class="flex items-center gap-2">

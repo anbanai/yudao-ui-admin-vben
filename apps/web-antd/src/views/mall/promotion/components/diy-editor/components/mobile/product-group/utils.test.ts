@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { component } from './config';
 import {
@@ -142,5 +142,27 @@ describe('product group configuration', () => {
       '商品分组至少需要选择一个分组',
     );
     expect(getProductGroupValidationError({ groupIds: [1] })).toBeUndefined();
+  });
+
+  it('retries failed queries and resets cached results after refresh', async () => {
+    const request = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue(['updated']);
+    const loader = createPreviewProductLoader(request);
+    expect(await loader.load('a', 'a')).toMatchObject({
+      accepted: true,
+      failed: true,
+      list: [],
+    });
+    expect(await loader.load('a', 'a')).toEqual({
+      accepted: true,
+      list: ['updated'],
+    });
+    await loader.load('a', 'a');
+    expect(request).toHaveBeenCalledTimes(2);
+    loader.reset();
+    await loader.load('a', 'a');
+    expect(request).toHaveBeenCalledTimes(3);
   });
 });

@@ -48,10 +48,11 @@ export function useInfoFormSchema(): VbenFormSchema[] {
       componentProps: {
         api: getSelectableGroupList,
         disabledField: 'disabled',
-        labelField: 'name',
+        labelField: 'label',
         valueField: 'id',
         mode: 'multiple',
-        allowClear: true,
+        // 停用成员保持只读；关闭一键清空，避免连同停用成员一起移除。
+        allowClear: false,
         showSearch: true,
         optionFilterProp: 'label',
         placeholder: '请选择商品分组（可多选）',

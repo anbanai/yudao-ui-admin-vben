@@ -7,14 +7,21 @@ import type { MallSpuApi } from '#/api/mall/product/spu';
 
 import { computed, onMounted, ref, watch } from 'vue';
 
-import { CommonStatusEnum } from '@vben/constants';
+import { Button } from 'ant-design-vue';
 
 import { getGroupSpuPage, getSimpleGroupList } from '#/api/mall/product/group';
 
 import ProductList from '../product-list/index.vue';
 import {
+  getGroupDisplayName,
+  getUnavailableGroupIds,
+  isStorefrontGroup,
+} from './availability';
+import {
   buildProductGroupQuery,
   createPreviewProductLoader,
+  createRequestGuard,
+  normalizeGroupIds,
   normalizeProductGroupProperty,
   orderSelectedGroups,
 } from './utils';
@@ -26,6 +33,10 @@ const props = defineProps<{ property: ProductGroupProperty }>();
 const availableGroups = ref<MallProductGroupApi.Group[]>([]);
 const activeKey = ref('');
 const spuList = ref<MallSpuApi.Spu[]>([]);
+const loading = ref(false);
+const failed = ref(false);
+const unavailableNames = ref<string[]>([]);
+const groupRequestGuard = createRequestGuard();
 
 const selectedGroups = computed(() =>
   orderSelectedGroups(props.property.groupIds, availableGroups.value),
@@ -62,10 +73,14 @@ const productLoader = createPreviewProductLoader<
 
 async function loadActiveTab() {
   const tabKey = activeKey.value;
+  spuList.value = [];
+  failed.value = false;
   if (!tabKey) {
-    spuList.value = [];
+    productLoader.reset();
+    loading.value = false;
     return;
   }
+  loading.value = true;
   const result = await productLoader.load(
     tabKey,
     buildProductGroupQuery(
@@ -75,6 +90,8 @@ async function loadActiveTab() {
   );
   if (result.accepted && activeKey.value === tabKey) {
     spuList.value = result.list;
+    failed.value = result.failed === true;
+    loading.value = false;
   }
 }
 
@@ -108,21 +125,35 @@ watch(
     props.property.showAll,
     props.property.sortType,
   ],
-  resetProducts,
+  refreshProducts,
   { deep: true },
 );
 
-onMounted(async () => {
+async function refreshProducts() {
+  const request = groupRequestGuard.next();
+  productLoader.reset();
+  spuList.value = [];
+  loading.value = true;
+  failed.value = false;
   try {
     const groups = await getSimpleGroupList();
-    availableGroups.value = groups.filter(
-      (group) => group.status === CommonStatusEnum.ENABLE,
-    );
+    if (!groupRequestGuard.isCurrent(request)) return;
+    availableGroups.value = groups.filter((group) => isStorefrontGroup(group));
+    unavailableNames.value = getUnavailableGroupIds(
+      normalizeGroupIds(props.property.groupIds),
+      groups,
+    ).map((id) => getGroupDisplayName(id, groups));
   } catch {
+    if (!groupRequestGuard.isCurrent(request)) return;
     availableGroups.value = [];
+    loading.value = false;
+    failed.value = true;
+    return;
   }
   resetProducts();
-});
+}
+
+onMounted(refreshProducts);
 </script>
 
 <template>
@@ -155,7 +186,41 @@ onMounted(async () => {
       </button>
     </nav>
     <div class="product-group__content min-w-0 flex-1">
+      <div
+        class="mb-2 flex items-center justify-between text-xs text-muted-foreground"
+      >
+        <span>分组商品实时预览</span>
+        <Button
+          size="small"
+          type="link"
+          :loading="loading"
+          @click.stop="refreshProducts"
+        >
+          刷新
+        </Button>
+      </div>
+      <div
+        v-if="unavailableNames.length"
+        class="mb-2 text-xs text-amber-600"
+        role="status"
+      >
+        以下分组不可展示：{{ unavailableNames.join('、') }}
+      </div>
+      <div
+        v-if="loading"
+        class="p-4 text-center text-sm text-muted-foreground"
+        role="status"
+      >
+        商品加载中…
+      </div>
+      <div v-else-if="failed" class="p-4 text-center text-sm" role="alert">
+        商品加载失败
+        <Button type="link" size="small" @click.stop="refreshProducts">
+          重试
+        </Button>
+      </div>
       <ProductList
+        v-else
         :key="menu.layout"
         :property="productListProperty"
         :spu-list="spuList"
