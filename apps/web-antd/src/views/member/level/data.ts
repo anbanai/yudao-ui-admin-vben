@@ -62,6 +62,20 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
+      fieldName: 'pointTradeGiveMultiplierDisplay',
+      label: '返积分倍率',
+      component: 'InputNumber',
+      componentProps: {
+        class: '!w-full',
+        min: 0,
+        max: 10,
+        step: 0.1,
+        precision: 1,
+        placeholder: '例如 1.2 倍',
+      },
+      rules: 'required',
+    },
+    {
       fieldName: 'icon',
       label: '等级图标',
       component: 'ImageUpload',
@@ -162,6 +176,12 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       field: 'discountPercent',
       title: '享受折扣(%)',
       minWidth: 120,
+    },
+    {
+      field: 'pointTradeGiveMultiplier',
+      title: '返积分倍率',
+      minWidth: 150,
+      slots: { default: 'pointMultiplier' },
     },
     {
       field: 'status',

@@ -5,9 +5,12 @@ export namespace MemberLevelApi {
   export interface Level {
     id?: number;
     name: string;
+    level: number;
     experience: number;
     value: number;
     discountPercent: number;
+    /** 消费返积分倍率，千分比：1200 表示 1.2 倍 */
+    pointTradeGiveMultiplier: number;
     icon: string;
     bgUrl: string;
     status: number;
