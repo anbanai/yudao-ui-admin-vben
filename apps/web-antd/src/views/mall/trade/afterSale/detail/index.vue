@@ -12,14 +12,26 @@ import { DICT_TYPE } from '@vben/constants';
 import { useTabs } from '@vben/hooks';
 import { $t } from '@vben/locales';
 
-import { message, Tag } from 'ant-design-vue';
+import {
+  Descriptions,
+  Input,
+  message,
+  Modal,
+  Tag,
+  Timeline,
+} from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   agreeAfterSale,
+  cancelReturnShipment,
   getAfterSale,
+  getReturnShipment,
+  getReturnShipmentTraces,
+  manualReturnShipment,
   receiveAfterSale,
   refundAfterSale,
+  retryReturnShipment,
 } from '#/api/mall/trade/afterSale';
 import { useDescription } from '#/components/description';
 import { DictTag } from '#/components/dict-tag';
@@ -50,6 +62,18 @@ const afterSale = ref<MallAfterSaleApi.AfterSale>({
   orderItem: {},
   logs: [],
 });
+const returnShipment = ref<MallAfterSaleApi.ReturnShipment>();
+const traces = ref<MallAfterSaleApi.ReturnShipment['traces']>([]);
+const manualModalOpen = ref(false);
+const manualLogisticsId = ref('');
+const manualLogisticsNo = ref('');
+
+function maskMobile(mobile?: string) {
+  if (!mobile) return '';
+  return mobile.length >= 7
+    ? `${mobile.slice(0, 3)}****${mobile.slice(-4)}`
+    : '****';
+}
 
 const [OrderDescriptions] = useDescription({
   title: '订单信息',
@@ -130,6 +154,16 @@ async function getDetail() {
       return;
     }
     afterSale.value = res;
+    try {
+      returnShipment.value = await getReturnShipment(afterSaleId.value);
+    } catch {
+      returnShipment.value = undefined;
+    }
+    try {
+      traces.value = (await getReturnShipmentTraces(afterSaleId.value)) || [];
+    } catch {
+      traces.value = [];
+    }
     productGridApi.setGridOptions({ data: [afterSale.value.orderItem] });
     operateLogGridApi.setGridOptions({
       data: afterSale.value.logs || [],
@@ -137,6 +171,38 @@ async function getDetail() {
   } finally {
     loading.value = false;
   }
+}
+
+async function handleRetryReturnShipment() {
+  await confirm('确认重试创建顺丰退货取件单？');
+  await retryReturnShipment(afterSaleId.value);
+  message.success('已提交重试');
+  await getDetail();
+}
+
+async function handleCancelReturnShipment() {
+  await confirm('确认取消尚未揽收的取件单？');
+  await cancelReturnShipment(afterSaleId.value);
+  message.success('已取消取件');
+  await getDetail();
+}
+
+async function handleManualReturnShipment() {
+  if (!manualLogisticsId.value || !manualLogisticsNo.value) {
+    message.warning('请填写物流公司编号和物流单号');
+    return;
+  }
+  await manualReturnShipment(afterSaleId.value, {
+    logisticsId: Number(manualLogisticsId.value),
+    logisticsNo: manualLogisticsNo.value,
+  });
+  manualModalOpen.value = false;
+  message.success('已补录退货物流');
+  await getDetail();
+}
+
+function openManualReturnShipment() {
+  manualModalOpen.value = true;
 }
 
 /** 同意售后 */
@@ -270,6 +336,33 @@ onMounted(() => {
               hasAccessByCodes(['trade:after-sale:receive']),
           },
           {
+            label: '重试创建取件单',
+            type: 'primary',
+            onClick: handleRetryReturnShipment,
+            ifShow:
+              returnShipment?.status === 'CREATE_FAILED' &&
+              hasAccessByCodes(['trade:after-sale:return-shipment:retry']),
+          },
+          {
+            label: '取消取件单',
+            type: 'default',
+            danger: true,
+            onClick: handleCancelReturnShipment,
+            ifShow:
+              ['CREATING', 'PICKUP_PENDING'].includes(
+                returnShipment?.status || '',
+              ) &&
+              hasAccessByCodes(['trade:after-sale:return-shipment:cancel']),
+          },
+          {
+            label: '人工补录物流',
+            type: 'default',
+            onClick: openManualReturnShipment,
+            ifShow:
+              afterSale.status === 20 &&
+              hasAccessByCodes(['trade:after-sale:return-shipment:manual']),
+          },
+          {
             label: '拒绝收货',
             type: 'primary',
             danger: true,
@@ -296,6 +389,21 @@ onMounted(() => {
     <!-- 拒绝收货弹窗 -->
     <RefuseModal @success="getDetail" />
 
+    <Modal
+      v-model:open="manualModalOpen"
+      title="人工补录退货物流"
+      @ok="handleManualReturnShipment"
+    >
+      <div class="mb-3">物流公司编号</div>
+      <Input
+        v-model:value="manualLogisticsId"
+        class="mb-4"
+        placeholder="请输入物流公司编号"
+      />
+      <div class="mb-3">物流单号</div>
+      <Input v-model:value="manualLogisticsNo" placeholder="请输入物流单号" />
+    </Modal>
+
     <!-- 订单信息 -->
     <div class="mb-4">
       <OrderDescriptions :data="afterSale" />
@@ -307,6 +415,75 @@ onMounted(() => {
     <!-- 退款状态 -->
     <div class="mb-4">
       <RefundStatusDescriptions :data="afterSale" />
+    </div>
+    <div v-if="returnShipment" class="mb-4">
+      <Descriptions title="退货取件物流" bordered size="small" :column="2">
+        <Descriptions.Item label="服务商">
+{{
+          returnShipment.provider || '-'
+        }}
+</Descriptions.Item>
+        <Descriptions.Item label="状态">
+{{
+          returnShipment.statusName || returnShipment.status || '-'
+        }}
+</Descriptions.Item>
+        <Descriptions.Item label="运单号">
+{{
+          returnShipment.waybillNo || '-'
+        }}
+</Descriptions.Item>
+        <Descriptions.Item label="预约时间">
+{{
+          returnShipment.appointmentTime || '-'
+        }}
+</Descriptions.Item>
+        <Descriptions.Item label="费用承担">
+{{
+          returnShipment.feePayerName || returnShipment.feePayer || '-'
+        }}
+</Descriptions.Item>
+        <Descriptions.Item label="预计/实际费用">
+          {{ returnShipment.estimatedFee ?? '-' }} /
+          {{ returnShipment.actualFee ?? '-' }} 分
+        </Descriptions.Item>
+        <Descriptions.Item label="已扣退款运费">
+          {{ returnShipment.refundDeductedFee ?? '-' }} 分
+        </Descriptions.Item>
+        <Descriptions.Item label="取件联系人">
+{{ returnShipment.pickupContactName || '-' }}
+          {{
+            maskMobile(returnShipment.pickupContactMobile)
+          }}
+</Descriptions.Item>
+        <Descriptions.Item label="取件地址">
+{{
+          returnShipment.pickupAddress || '-'
+        }}
+</Descriptions.Item>
+        <Descriptions.Item label="退货地址">
+{{
+          returnShipment.returnAddress || '-'
+        }}
+</Descriptions.Item>
+        <Descriptions.Item
+          v-if="returnShipment.errorMessage"
+          label="异常原因"
+          :span="2"
+        >
+          <span class="text-red-500">{{ returnShipment.errorMessage }}</span>
+        </Descriptions.Item>
+      </Descriptions>
+      <Timeline
+        v-if="traces?.length"
+        class="mt-4"
+        :items="
+          traces.map((item) => ({
+            label: item.occurredTime || item.operateTime,
+            children: `${item.description || item.content || ''}${item.location ? ` · ${item.location}` : ''}`,
+          }))
+        "
+      />
     </div>
     <!-- 商品信息 -->
     <div class="mb-4">

@@ -38,12 +38,41 @@ export namespace MallAfterSaleApi {
     refundTime?: Date; // 退款时间
     logisticsId?: number; // 退货物流公司编号
     logisticsNo?: string; // 退货物流单号
+    returnShipment?: ReturnShipment; // 上门取件逆向物流
     deliveryTime?: Date; // 退货时间
     receiveTime?: Date; // 收货时间
     receiveReason?: string; // 收货备注
     order?: MallOrderApi.Order; // 关联订单
     orderItem?: MallOrderApi.OrderItem; // 关联订单项
     logs?: any[]; // 关联售后日志
+  }
+
+  export interface ReturnShipment {
+    id?: number;
+    provider?: string;
+    providerOrderNo?: string;
+    waybillNo?: string;
+    status?: string;
+    statusName?: string;
+    feePayer?: string;
+    feePayerName?: string;
+    estimatedFee?: number;
+    actualFee?: number;
+    refundDeductedFee?: number;
+    appointmentTime?: string;
+    pickupContactName?: string;
+    pickupContactMobile?: string;
+    pickupAddress?: string;
+    returnAddress?: string;
+    errorMessage?: string;
+    traces?: {
+      content?: string;
+      description?: string;
+      location?: string;
+      occurredTime?: string;
+      // Legacy aliases kept for older provider payloads.
+      operateTime?: string;
+    }[];
   }
 
   /** 拒绝售后请求 */
@@ -97,4 +126,39 @@ export function refuseAfterSale(id: number, refuseMemo: string) {
 /** 确认退款 */
 export function refundAfterSale(id: number) {
   return requestClient.put(`/trade/after-sale/refund?id=${id}`);
+}
+
+/** 查询售后逆向物流单 */
+export function getReturnShipment(id: number) {
+  return requestClient.get<MallAfterSaleApi.ReturnShipment>(
+    `/trade/after-sale/${id}/return-shipment`,
+  );
+}
+
+/** 查询售后逆向物流轨迹 */
+export function getReturnShipmentTraces(id: number) {
+  return requestClient.get<MallAfterSaleApi.ReturnShipment['traces']>(
+    `/trade/after-sale/${id}/return-shipment/traces`,
+  );
+}
+
+/** 重试创建逆向物流单 */
+export function retryReturnShipment(id: number) {
+  return requestClient.post(`/trade/after-sale/${id}/return-shipment/retry`);
+}
+
+/** 取消未揽收的逆向物流单 */
+export function cancelReturnShipment(id: number) {
+  return requestClient.post(`/trade/after-sale/${id}/return-shipment/cancel`);
+}
+
+/** 人工补录退货物流 */
+export function manualReturnShipment(
+  id: number,
+  data: { logisticsId: number; logisticsNo: string },
+) {
+  return requestClient.post(
+    `/trade/after-sale/${id}/return-shipment/manual`,
+    data,
+  );
 }

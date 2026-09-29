@@ -107,6 +107,27 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
     },
     {
+      fieldName: 'returnShipmentStatus',
+      label: '逆向物流状态',
+      component: 'Select',
+      componentProps: {
+        options: [
+          { label: '创建中', value: 'CREATING' },
+          { label: '未知处理中', value: 'UNKNOWN' },
+          { label: '待取件', value: 'PICKUP_PENDING' },
+          { label: '已揽收', value: 'PICKED_UP' },
+          { label: '运输中', value: 'IN_TRANSIT' },
+          { label: '已签收', value: 'DELIVERED' },
+          { label: '创建失败', value: 'CREATE_FAILED' },
+          { label: '取消中', value: 'CANCEL_REQUESTED' },
+          { label: '已取消', value: 'CANCELLED' },
+          { label: '异常', value: 'EXCEPTION' },
+        ],
+        placeholder: '请选择逆向物流状态',
+        allowClear: true,
+      },
+    },
+    {
       fieldName: 'createTime',
       label: '创建时间',
       component: 'RangePicker',
