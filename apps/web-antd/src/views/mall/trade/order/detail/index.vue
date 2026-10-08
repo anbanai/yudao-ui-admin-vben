@@ -14,8 +14,9 @@ import {
   TradeOrderStatusEnum,
 } from '@vben/constants';
 import { useTabs } from '@vben/hooks';
+import { fenToYuan, formatDateTime } from '@vben/utils';
 
-import { message, Tag } from 'ant-design-vue';
+import { Card, message, Tag } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getSimpleDeliveryExpressList } from '#/api/mall/trade/delivery/express';
@@ -278,10 +279,7 @@ onMounted(async () => {
           {
             label: '顺丰打单发货',
             type: 'primary',
-            auth: [
-              'trade:logistics:sf-waybill:create',
-              'trade:order:update',
-            ],
+            auth: ['trade:logistics:sf-waybill:create', 'trade:order:update'],
             onClick: handleSfDelivery,
             ifShow:
               order.status === TradeOrderStatusEnum.UNDELIVERED.status &&
@@ -330,6 +328,37 @@ onMounted(async () => {
     <!-- 订单状态 -->
     <div class="mb-4">
       <OrderStatusDescriptions :data="order" />
+    </div>
+    <!-- 商家履约订单 -->
+    <div v-if="order.subOrders?.length" class="mb-4">
+      <Card size="small" title="商家履约订单">
+        <div class="space-y-3">
+          <div
+            v-for="subOrder in order.subOrders"
+            :key="subOrder.id"
+            class="rounded border border-solid border-gray-200 p-3"
+          >
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span class="font-medium">{{
+                subOrder.merchantName || `商家 #${subOrder.merchantId}`
+              }}</span>
+              <span>子订单号：{{ subOrder.no || '-' }}</span>
+              <span>状态：<DictTag
+                  :type="DICT_TYPE.TRADE_ORDER_STATUS"
+                  :value="subOrder.status"
+              /></span>
+              <span>商品数：{{ subOrder.productCount || 0 }}</span>
+              <span>应付：{{ fenToYuan(subOrder.payPrice || 0) }} 元</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-500">
+              <span>物流单号：{{ subOrder.logisticsNo || '-' }}</span>
+              <span class="ml-4">发货时间：{{
+                  formatDateTime(subOrder.deliveryTime) || '-'
+                }}</span>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
     <!-- 商品信息 -->
     <div class="mb-4">

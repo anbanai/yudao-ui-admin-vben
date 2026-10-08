@@ -7,6 +7,7 @@ import { handleTree } from '@vben/utils';
 import { getSimpleBrandList } from '#/api/mall/product/brand';
 import { getCategoryList } from '#/api/mall/product/category';
 import { getSelectableGroupList } from '#/api/mall/product/group';
+import { getSimpleMerchantList } from '#/api/mall/product/merchant';
 import { getSimpleTemplateList } from '#/api/mall/trade/delivery/expressTemplate';
 
 /** 基础设置的表单 */
@@ -42,6 +43,20 @@ export function useInfoFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
+      fieldName: 'merchantId',
+      label: '所属商家',
+      component: 'ApiSelect',
+      componentProps: {
+        api: getSimpleMerchantList,
+        labelField: 'storeName',
+        valueField: 'id',
+        showSearch: true,
+        optionFilterProp: 'label',
+        placeholder: '请选择已审核商家',
+      },
+      rules: 'required',
+    },
+    {
       fieldName: 'groupIds',
       label: '商品分组',
       component: 'ApiSelect',
@@ -69,6 +84,16 @@ export function useInfoFormSchema(): VbenFormSchema[] {
         allowClear: true,
         placeholder: '请选择商品品牌',
       },
+      dependencies: {
+        triggerFields: ['merchantId'],
+        resolve: ({ values }) => ({
+          componentProps: {
+            api: () => getSimpleBrandList({ merchantId: values.merchantId }),
+            disabled: !values.merchantId,
+          },
+        }),
+      },
+      rules: 'required',
     },
     {
       fieldName: 'keyword',

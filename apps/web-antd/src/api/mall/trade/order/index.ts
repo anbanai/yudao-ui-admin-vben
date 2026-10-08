@@ -63,6 +63,33 @@ export namespace MallOrderApi {
       nickname?: string; // 用户昵称
     }; // 推广用户信息
     logs?: OrderLog[]; // 订单操作日志
+    subOrders?: OrderSub[]; // 商家履约订单
+  }
+
+  /** 商家履约订单 */
+  export interface OrderSub {
+    id?: number;
+    orderId?: number;
+    no?: string;
+    merchantId?: number;
+    merchantName?: string;
+    status?: number;
+    productCount?: number;
+    totalPrice?: number;
+    discountPrice?: number;
+    couponPrice?: number;
+    pointPrice?: number;
+    vipPrice?: number;
+    adjustPrice?: number;
+    deliveryPrice?: number;
+    payPrice?: number;
+    deliveryType?: number;
+    logisticsId?: number;
+    logisticsNo?: string;
+    deliveryTime?: Date;
+    receiveTime?: Date;
+    refundStatus?: number;
+    afterSaleStatus?: number;
   }
 
   /** 订单项 */

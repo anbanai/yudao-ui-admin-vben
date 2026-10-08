@@ -5,6 +5,7 @@ import type { MallSpuApi } from '#/api/mall/product/spu';
 import { handleTree, treeToString } from '@vben/utils';
 
 import { getCategoryList } from '#/api/mall/product/category';
+import { getSimpleMerchantList } from '#/api/mall/product/merchant';
 import { getRangePickerDefaultProps } from '#/utils';
 
 import { useSpuGroupFilterSchema } from './components/group-filter';
@@ -21,6 +22,20 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Input',
       componentProps: {
         placeholder: '请输入商品名称',
+        allowClear: true,
+      },
+    },
+    {
+      fieldName: 'merchantId',
+      label: '所属商家',
+      component: 'ApiSelect',
+      componentProps: {
+        api: getSimpleMerchantList,
+        labelField: 'storeName',
+        valueField: 'id',
+        showSearch: true,
+        optionFilterProp: 'label',
+        placeholder: '请选择商家',
         allowClear: true,
       },
     },
@@ -95,6 +110,12 @@ export function useGridColumns(
       formatter: ({ row }) => {
         return treeToString(categoryList, row.categoryId);
       },
+    },
+    {
+      field: 'merchantName',
+      title: '所属商家',
+      minWidth: 160,
+      formatter: ({ row }) => row.merchantName || row.merchantId || '-',
     },
     {
       field: 'groupIds',

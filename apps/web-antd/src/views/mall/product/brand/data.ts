@@ -5,6 +5,7 @@ import { CommonStatusEnum, DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
 import { z } from '#/adapter/form';
+import { getSimpleMerchantList } from '#/api/mall/product/merchant';
 import { getRangePickerDefaultProps } from '#/utils';
 
 /** 新增/修改的表单 */
@@ -21,6 +22,20 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Input',
       componentProps: {
         placeholder: '请输入品牌名称',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'merchantId',
+      label: '所属商家',
+      component: 'ApiSelect',
+      componentProps: {
+        api: getSimpleMerchantList,
+        labelField: 'storeName',
+        valueField: 'id',
+        showSearch: true,
+        optionFilterProp: 'label',
+        placeholder: '请选择已审核商家',
       },
       rules: 'required',
     },
@@ -89,6 +104,20 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
     },
     {
+      fieldName: 'merchantId',
+      label: '所属商家',
+      component: 'ApiSelect',
+      componentProps: {
+        api: getSimpleMerchantList,
+        labelField: 'storeName',
+        valueField: 'id',
+        showSearch: true,
+        optionFilterProp: 'label',
+        placeholder: '请选择商家',
+        allowClear: true,
+      },
+    },
+    {
       fieldName: 'createTime',
       label: '创建时间',
       component: 'RangePicker',
@@ -115,6 +144,12 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       cellRender: {
         name: 'CellImage',
       },
+    },
+    {
+      field: 'merchantName',
+      title: '所属商家',
+      minWidth: 160,
+      formatter: ({ row }) => row.merchantName || row.merchantId || '-',
     },
     {
       field: 'sort',

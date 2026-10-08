@@ -199,6 +199,12 @@ export function useProductColumns(): VxeTableGridOptions['columns'] {
       slots: { default: 'spuName' },
     },
     {
+      field: 'merchantName',
+      title: '所属商家',
+      width: 160,
+      formatter: ({ row }) => row.merchantName || row.merchantId || '-',
+    },
+    {
       field: 'price',
       title: '商品原价',
       width: 150,

@@ -17,6 +17,8 @@ export namespace MallSpuApi {
     deliveryTypes?: number[]; // 配送方式
     deliveryTemplateId?: number; // 运费模版
     brandId?: number; // 商品品牌编号
+    merchantId?: number; // 销售商家编号
+    merchantName?: string; // 商家名称
     specType?: boolean; // 商品规格（新增商品固定为多规格）
     subCommissionType?: boolean; // 分销类型
     isPreSale?: boolean; // 是否预售

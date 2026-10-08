@@ -12,6 +12,16 @@ const routes: RouteRecordRaw[] = [
     },
     children: [
       {
+        path: 'merchant',
+        name: 'ProductMerchant',
+        meta: {
+          title: '商家管理',
+          activePath: '/mall/product/merchant',
+          keepAlive: true,
+        },
+        component: () => import('#/views/mall/product/merchant/index.vue'),
+      },
+      {
         path: 'spu/add',
         name: 'ProductSpuAdd',
         meta: {
@@ -68,6 +78,26 @@ const routes: RouteRecordRaw[] = [
         },
         component: () =>
           import('#/views/mall/trade/afterSale/detail/index.vue'),
+      },
+      {
+        path: 'report/picking',
+        name: 'TradeReportPicking',
+        meta: {
+          title: '备货单',
+          activePath: '/mall/trade/report/picking',
+          keepAlive: true,
+        },
+        component: () => import('#/views/mall/trade/report/index.vue'),
+      },
+      {
+        path: 'report/reconciliation',
+        name: 'TradeReportReconciliation',
+        meta: {
+          title: '对账单',
+          activePath: '/mall/trade/report/reconciliation',
+          keepAlive: true,
+        },
+        component: () => import('#/views/mall/trade/report/index.vue'),
       },
     ],
   },
