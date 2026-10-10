@@ -250,7 +250,10 @@ function plusNews() {
         <!--富文本编辑器组件-->
         <Row>
           <Col :span="24">
-            <RichTextarea v-model="activeNewsItem.content" />
+            <RichTextarea
+              v-model="activeNewsItem.content"
+              image-upload-scene="material"
+            />
           </Col>
         </Row>
       </div>

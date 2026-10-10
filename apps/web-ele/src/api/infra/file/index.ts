@@ -30,6 +30,7 @@ export namespace InfraFileApi {
   export interface FileUploadReqVO {
     file: globalThis.File;
     directory?: string;
+    scene?: 'material' | 'product';
   }
 }
 

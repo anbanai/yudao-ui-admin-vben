@@ -18,6 +18,10 @@ import { checkFileType, isFunction, isObject, isString } from '@vben/utils';
 
 import { ElButton, ElMessage, ElUpload } from 'element-plus';
 
+import {
+  getMaterialImageValidationError,
+  getProductImageValidationError,
+} from './policy';
 import { UploadResultStatus } from './typing';
 import { useUpload, useUploadType } from './use-upload';
 
@@ -173,6 +177,17 @@ async function beforeUpload(file: File) {
     return false;
   }
 
+  if (props.scene === 'product' || props.scene === 'material') {
+    const error =
+      props.scene === 'product'
+        ? getProductImageValidationError(file.name, file.size)
+        : getMaterialImageValidationError(file.name, file.size);
+    if (error) {
+      ElMessage.error(error);
+      return false;
+    }
+  }
+
   const { maxSize, accept } = props;
   const isAct = checkFileType(file, accept);
   if (!isAct) {
@@ -204,7 +219,7 @@ async function beforeUpload(file: File) {
 async function customRequest(options: UploadRequestOptions) {
   let { api } = props;
   if (!api || !isFunction(api)) {
-    api = useUpload(props.directory).httpRequest;
+    api = useUpload(props.directory, props.scene).httpRequest;
   }
   try {
     // 上传文件

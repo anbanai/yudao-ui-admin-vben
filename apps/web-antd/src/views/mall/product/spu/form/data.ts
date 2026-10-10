@@ -120,7 +120,9 @@ export function useInfoFormSchema(): VbenFormSchema[] {
       label: '商品封面图',
       component: 'ImageUpload',
       componentProps: {
-        maxSize: 30,
+        maxSize: 3,
+        accept: ['jpg', 'jpeg', 'png', 'bmp'],
+        scene: 'product',
       },
       rules: 'required',
     },
@@ -131,7 +133,9 @@ export function useInfoFormSchema(): VbenFormSchema[] {
       componentProps: {
         maxNumber: 10,
         multiple: true,
-        maxSize: 30,
+        maxSize: 3,
+        accept: ['jpg', 'jpeg', 'png', 'bmp'],
+        scene: 'product',
         sortable: true,
       },
       rules: 'required',
@@ -320,6 +324,7 @@ export function useDescriptionFormSchema(
       componentProps: {
         placeholder: '请输入商品详情',
         height: 1000,
+        imageUploadScene: 'product',
         onUploadingChange,
       },
       rules: 'required',

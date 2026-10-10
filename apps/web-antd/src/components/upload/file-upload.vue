@@ -14,6 +14,10 @@ import { checkFileType, isFunction, isObject, isString } from '@vben/utils';
 
 import { Button, message, Upload } from 'ant-design-vue';
 
+import {
+  getMaterialImageValidationError,
+  getProductImageValidationError,
+} from './policy';
 import { UploadResultStatus } from './typing';
 import { useUpload, useUploadType } from './use-upload';
 
@@ -156,6 +160,16 @@ async function beforeUpload(file: File) {
   }
 
   const { maxSize, accept } = props;
+  if (props.scene === 'product' || props.scene === 'material') {
+    const error =
+      props.scene === 'product'
+        ? getProductImageValidationError(file.name, file.size)
+        : getMaterialImageValidationError(file.name, file.size);
+    if (error) {
+      message.error(error);
+      return Upload.LIST_IGNORE;
+    }
+  }
   const isAct = checkFileType(file, accept);
   if (!isAct) {
     message.error($t('ui.upload.acceptUpload', [accept]));
@@ -186,7 +200,7 @@ async function beforeUpload(file: File) {
 async function customRequest(info: UploadRequestOption) {
   let { api } = props;
   if (!api || !isFunction(api)) {
-    api = useUpload(props.directory).httpRequest;
+    api = useUpload(props.directory, props.scene).httpRequest;
   }
   try {
     // 上传文件

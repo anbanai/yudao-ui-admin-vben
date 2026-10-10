@@ -84,6 +84,9 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'ImageUpload',
       componentProps: {
         maxNumber: 9,
+        maxSize: 3,
+        accept: ['jpg', 'jpeg', 'png', 'bmp'],
+        scene: 'product',
         placeholder: '请上传评论图片',
       },
       rules: 'required',

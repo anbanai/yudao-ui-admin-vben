@@ -49,7 +49,7 @@ const uploadData = reactive({
 
 /** 图片上传前校验 */
 function beforeImageUpload(rawFile: UploadRawFile) {
-  return useBeforeUpload(UploadType.Image, 2)(rawFile);
+  return useBeforeUpload(UploadType.Image, 10)(rawFile);
 }
 
 /** 上传成功 */

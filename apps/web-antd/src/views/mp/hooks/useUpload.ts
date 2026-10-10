@@ -30,7 +30,7 @@ const UPLOAD_CONFIGS: Record<UploadType, UploadTypeConfig> = {
       'image/bmp',
       'image/jpg',
     ],
-    maxSizeMB: 2,
+    maxSizeMB: 10,
     i18nKey: 'mp.upload.image',
   },
   [UploadType.Video]: {

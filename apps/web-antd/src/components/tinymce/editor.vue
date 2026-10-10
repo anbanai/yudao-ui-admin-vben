@@ -20,6 +20,10 @@ import { buildShortUUID, isNumber } from '@vben/utils';
 
 import Editor from '@tinymce/tinymce-vue';
 
+import {
+  getMaterialImageValidationError,
+  getProductImageValidationError,
+} from '#/components/upload/policy';
 import { useUpload } from '#/components/upload/use-upload';
 
 import { bindHandlers } from './helper';
@@ -40,6 +44,7 @@ const props = withDefaults(defineProps<TinymacProps>(), {
   plugins: defaultPlugins,
   toolbar: defaultToolbar,
   showImageUpload: true,
+  imageUploadScene: undefined,
 });
 
 const emit = defineEmits(['change', 'uploadingChange']);
@@ -51,6 +56,7 @@ interface TinymacProps {
   height?: number | string;
   width?: number | string;
   showImageUpload?: boolean;
+  imageUploadScene?: 'material' | 'product';
 }
 
 /** 外部使用 v-model 绑定值 */
@@ -158,7 +164,23 @@ const initOptions = computed((): InitOptions => {
     images_upload_handler: (blobInfo: any) => {
       return new Promise((resolve, reject) => {
         const file = blobInfo.blob() as File;
-        const { httpRequest } = useUpload();
+        let uploadError: null | string = null;
+        if (props.imageUploadScene === 'product') {
+          uploadError = getProductImageValidationError(
+            blobInfo.filename(),
+            file.size,
+          );
+        } else if (props.imageUploadScene === 'material') {
+          uploadError = getMaterialImageValidationError(
+            blobInfo.filename(),
+            file.size,
+          );
+        }
+        if (uploadError) {
+          reject(uploadError);
+          return;
+        }
+        const { httpRequest } = useUpload(undefined, props.imageUploadScene);
         httpRequest(file)
           .then((url) => {
             resolve(url);
@@ -346,6 +368,7 @@ function handleUploadingChange(uploading: boolean) {
       v-show="editorRef"
       :disabled="disabled"
       :fullscreen="fullscreen"
+      :scene="imageUploadScene"
       @done="handleDone"
       @error="handleError"
       @uploading="handleImageUploading"

@@ -57,6 +57,20 @@ describe('商品基础信息表单', () => {
       schema.find((item) => item.fieldName === 'deliveryDaysPreset'),
     ).toBeDefined();
   });
+
+  it('主图和轮播图限制为 3MB 的 JPG、PNG、BMP', async () => {
+    const { useInfoFormSchema } = await import('./data');
+    const schema = useInfoFormSchema();
+    for (const fieldName of ['picUrl', 'sliderPicUrls']) {
+      expect(
+        schema.find((item) => item.fieldName === fieldName)?.componentProps,
+      ).toMatchObject({
+        maxSize: 3,
+        accept: ['jpg', 'jpeg', 'png', 'bmp'],
+        scene: 'product',
+      });
+    }
+  });
 });
 
 describe('商品详情表单', () => {
@@ -73,6 +87,7 @@ describe('商品详情表单', () => {
     componentProps?.onUploadingChange(true);
 
     expect(onUploadingChange).toHaveBeenCalledWith(true);
+    expect(componentProps?.imageUploadScene).toBe('product');
   });
 });
 

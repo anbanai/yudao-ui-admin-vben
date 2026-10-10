@@ -31,6 +31,10 @@ import {
 
 import { message, Modal, Upload } from 'ant-design-vue';
 
+import {
+  getMaterialImageValidationError,
+  getProductImageValidationError,
+} from './policy';
 import { moveArrayItem } from './sortable';
 import { UploadResultStatus } from './typing';
 import { useUpload, useUploadType } from './use-upload';
@@ -237,6 +241,17 @@ async function beforeUpload(file: File) {
     return Upload.LIST_IGNORE;
   }
 
+  if (props.scene === 'product' || props.scene === 'material') {
+    const error =
+      props.scene === 'product'
+        ? getProductImageValidationError(file.name, file.size)
+        : getMaterialImageValidationError(file.name, file.size);
+    if (error) {
+      message.error(error);
+      return Upload.LIST_IGNORE;
+    }
+  }
+
   const { maxSize, accept } = props;
   const isAct = isImage(file.name, accept);
   if (!isAct) {
@@ -264,7 +279,7 @@ async function beforeUpload(file: File) {
 async function customRequest(info: UploadRequestOption) {
   let { api } = props;
   if (!api || !isFunction(api)) {
-    api = useUpload(props.directory).httpRequest;
+    api = useUpload(props.directory, props.scene).httpRequest;
   }
   try {
     // 上传文件
