@@ -6,7 +6,6 @@ import type { RequestClientOptions } from '@vben/request';
 import { isTenantEnable, useAppConfig } from '@vben/hooks';
 import { preferences } from '@vben/preferences';
 import {
-  authenticateResponseInterceptor,
   defaultResponseInterceptor,
   errorMessageResponseInterceptor,
   RequestClient,
@@ -17,14 +16,33 @@ import { createApiEncrypt } from '@vben/utils';
 import { message } from 'ant-design-vue';
 
 import { useAuthStore } from '#/store';
+import { useMerchantSessionStore } from '#/store/merchant-session';
 
 import { refreshTokenApi } from './core';
+import { getMerchantApiURL } from './merchant-client';
+import {
+  assertCurrentRequestSession,
+  bindRequestToSession,
+  sessionAuthenticationInterceptor,
+} from './request-session';
 
 const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
+const merchantApiURL = getMerchantApiURL(apiURL);
 const tenantEnable = isTenantEnable();
 const apiEncrypt = createApiEncrypt(import.meta.env);
 
-function createRequestClient(baseURL: string, options?: RequestClientOptions) {
+export const merchantBaseRequestClient = new RequestClient({
+  baseURL: merchantApiURL,
+});
+merchantBaseRequestClient.addRequestInterceptor({
+  fulfilled: (config) => config,
+});
+
+function createRequestClient(
+  baseURL: string,
+  options?: RequestClientOptions,
+  tokenMode: 'admin' | 'merchant' = 'admin',
+) {
   const client = new RequestClient({
     ...options,
     baseURL,
@@ -36,8 +54,16 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   async function doReAuthenticate() {
     console.warn('Access token or refresh token is invalid or expired. ');
     const accessStore = useAccessStore();
+    const merchantSession = useMerchantSessionStore();
     const authStore = useAuthStore();
-    accessStore.setAccessToken(null);
+    // Ignore responses from an identity that is no longer active.
+    if (authStore.authMode !== tokenMode) return;
+    if (tokenMode === 'merchant') {
+      merchantSession.$reset();
+    } else {
+      accessStore.setAccessToken(null);
+      accessStore.setRefreshToken(null);
+    }
     if (
       preferences.app.loginExpiredMode === 'modal' &&
       accessStore.isAccessChecked
@@ -52,18 +78,46 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
    * 刷新token逻辑
    */
   async function doRefreshToken() {
+    const authStore = useAuthStore();
+    const sessionVersion = authStore.sessionVersion;
     const accessStore = useAccessStore();
-    const refreshToken = accessStore.refreshToken as string;
+    const refreshToken = (
+      tokenMode === 'merchant'
+        ? useMerchantSessionStore().refreshToken
+        : accessStore.refreshToken
+    ) as string;
     if (!refreshToken) {
       throw new Error('Refresh token is null!');
     }
-    const resp = await refreshTokenApi(refreshToken);
+    const resp =
+      tokenMode === 'merchant'
+        ? await merchantBaseRequestClient.post(
+            `/system/auth/refresh-token?refreshToken=${refreshToken}`,
+          )
+        : await refreshTokenApi(refreshToken);
     const newToken = resp?.data?.data?.accessToken;
     // add by 芋艿：这里一定要抛出 resp.data，从而触发 authenticateResponseInterceptor 中，刷新令牌失败！！！
     if (!newToken) {
       throw resp.data;
     }
-    accessStore.setAccessToken(newToken);
+    const currentRefreshToken =
+      tokenMode === 'merchant'
+        ? useMerchantSessionStore().refreshToken
+        : accessStore.refreshToken;
+    if (
+      currentRefreshToken !== refreshToken ||
+      authStore.sessionVersion !== sessionVersion
+    ) {
+      throw new Error('Session changed during token refresh');
+    }
+    const newRefreshToken = resp?.data?.data?.refreshToken ?? refreshToken;
+    if (tokenMode === 'merchant') {
+      useMerchantSessionStore().setRefreshToken(newRefreshToken);
+      useMerchantSessionStore().setAccessToken(newToken);
+    } else {
+      accessStore.setRefreshToken(newRefreshToken);
+      accessStore.setAccessToken(newToken);
+    }
     return newToken;
   }
 
@@ -75,17 +129,25 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   client.addRequestInterceptor({
     fulfilled: async (config) => {
       const accessStore = useAccessStore();
+      const merchantSession = useMerchantSessionStore();
+      bindRequestToSession(config, useAuthStore().sessionVersion);
 
-      config.headers.Authorization = formatToken(accessStore.accessToken);
+      config.headers.Authorization = formatToken(
+        tokenMode === 'merchant'
+          ? merchantSession.accessToken
+          : accessStore.accessToken,
+      );
       config.headers['Accept-Language'] = preferences.app.locale;
       // 添加租户编号
-      config.headers['tenant-id'] = tenantEnable
-        ? accessStore.tenantId
-        : undefined;
+      config.headers['tenant-id'] =
+        tokenMode === 'admin' && tenantEnable
+          ? accessStore.tenantId
+          : undefined;
       // 只有登录时，才设置 visit-tenant-id 访问租户
-      config.headers['visit-tenant-id'] = tenantEnable
-        ? accessStore.visitTenantId
-        : undefined;
+      config.headers['visit-tenant-id'] =
+        tokenMode === 'admin' && tenantEnable
+          ? accessStore.visitTenantId
+          : undefined;
 
       // 是否 API 加密
       if ((config.headers || {}).isEncrypt) {
@@ -108,6 +170,10 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   // API 解密响应拦截器
   client.addResponseInterceptor({
     fulfilled: (response) => {
+      assertCurrentRequestSession(
+        response.config,
+        useAuthStore().sessionVersion,
+      );
       // 检查是否需要解密响应数据
       const encryptHeader = apiEncrypt.getEncryptHeader();
       const isEncryptResponse =
@@ -182,8 +248,9 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
 
   // token过期的处理
   client.addResponseInterceptor(
-    authenticateResponseInterceptor({
+    sessionAuthenticationInterceptor({
       client,
+      getSessionVersion: () => useAuthStore().sessionVersion,
       doReAuthenticate,
       doRefreshToken,
       enableRefreshToken: preferences.app.enableRefreshToken,
@@ -214,6 +281,11 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
 export const requestClient = createRequestClient(apiURL, {
   responseReturn: 'data',
 });
+export const merchantRequestClient = createRequestClient(
+  merchantApiURL,
+  { responseReturn: 'data' },
+  'merchant',
+);
 
 export const baseRequestClient = new RequestClient({ baseURL: apiURL });
 baseRequestClient.addRequestInterceptor({

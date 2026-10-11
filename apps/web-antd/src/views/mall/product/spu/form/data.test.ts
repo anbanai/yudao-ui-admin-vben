@@ -9,6 +9,9 @@ vi.mock('#/api/mall/product/category', () => ({
 vi.mock('#/api/mall/product/group', () => ({
   getSelectableGroupList: vi.fn(),
 }));
+vi.mock('#/api/mall/product/merchant', () => ({
+  getSimpleMerchantList: vi.fn(),
+}));
 vi.mock('#/api/mall/trade/delivery/expressTemplate', () => ({
   getSimpleTemplateList: vi.fn(),
 }));

@@ -50,14 +50,20 @@ const notificationPopupRef = ref<null | { toggle: () => void }>(null);
 const { isDark } = usePreferences();
 
 const menus = computed(() => [
-  {
-    handler: () => {
-      router.push({ name: 'Profile' });
-    },
-    icon: AntdProfileOutlined,
-    text: $t('ui.widgets.profile'),
-  },
+  ...(authStore.authMode === 'merchant'
+    ? []
+    : [
+        {
+          handler: () => {
+            router.push({ name: 'Profile' });
+          },
+          icon: AntdProfileOutlined,
+          text: $t('ui.widgets.profile'),
+        },
+      ]),
 ]);
+
+const merchantMode = computed(() => authStore.authMode === 'merchant');
 
 const avatar = computed(() => {
   return userStore.userInfo?.avatar ?? preferences.app.defaultAvatar;
@@ -165,6 +171,9 @@ async function handleTenantChange(tenant: SystemTenantApi.Tenant) {
 
 // ========== 初始化 ==========
 onMounted(() => {
+  if (merchantMode.value) {
+    return;
+  }
   // 首次加载未读数量
   handleNotificationGetUnreadCount();
   // 获取租户列表
@@ -263,7 +272,7 @@ watch(
         @logout="handleLogout"
         @notification="handleNotificationToggle"
       >
-        <template #notification>
+        <template v-if="!merchantMode" #notification>
           <Notification
             ref="notificationPopupRef"
             :dot="showDot"
@@ -278,7 +287,7 @@ watch(
         </template>
       </UserDropdown>
     </template>
-    <template #notification>
+    <template v-if="!merchantMode" #notification>
       <Notification
         :dot="showDot"
         :notifications="notifications"
@@ -291,8 +300,8 @@ watch(
       />
     </template>
     <template #header-right-1>
-      <FmsAccountSetSwitch />
-      <div v-if="tenantEnable">
+      <FmsAccountSetSwitch v-if="!merchantMode" />
+      <div v-if="tenantEnable && !merchantMode">
         <TenantDropdown
           class="mr-2"
           :tenant-list="tenants"
@@ -301,7 +310,7 @@ watch(
         />
       </div>
     </template>
-    <template #header-right-900>
+    <template v-if="!merchantMode" #header-right-900>
       <Tooltip title="IM 聊天">
         <button
           class="hover:bg-accent hover:text-accent-foreground mr-1 inline-flex size-8 items-center justify-center rounded-md transition-colors"

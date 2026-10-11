@@ -9,6 +9,7 @@ import { startProgress, stopProgress } from '@vben/utils';
 import { message } from 'ant-design-vue';
 
 import { getSimpleDictDataList } from '#/api/system/dict/data';
+import { isMerchantPathAllowed } from '#/router/merchant-access';
 import { accessRoutes, coreRouteNames } from '#/router/routes';
 import { useAuthStore } from '#/store';
 
@@ -55,9 +56,34 @@ function setupAccessGuard(router: Router) {
     const authStore = useAuthStore();
     const dictStore = useDictStore();
 
+    const activeAccessToken = authStore.getActiveAccessToken();
+
+    if (
+      !activeAccessToken &&
+      authModeRequiresMerchantLogin(to.path, authStore.authMode)
+    ) {
+      authStore.setAuthMode('merchant');
+    }
+
+    if (
+      authStore.authMode === 'admin' &&
+      activeAccessToken &&
+      isMerchantPathAllowed(to.path)
+    ) {
+      return userStore.userInfo?.homePath || preferences.app.defaultHomePath;
+    }
+
+    if (authStore.authMode === 'merchant' && activeAccessToken) {
+      const merchantHome =
+        userStore.userInfo?.homePath || '/merchant/workbench';
+      if (to.path === LOGIN_PATH || !isMerchantPathAllowed(to.path)) {
+        return merchantHome;
+      }
+    }
+
     // 基本路由，这些路由不需要进入权限拦截
     if (coreRouteNames.includes(to.name as string)) {
-      if (to.path === LOGIN_PATH && accessStore.accessToken) {
+      if (to.path === LOGIN_PATH && activeAccessToken) {
         return decodeURIComponent(
           (to.query?.redirect as string) ||
             userStore.userInfo?.homePath ||
@@ -68,7 +94,7 @@ function setupAccessGuard(router: Router) {
     }
 
     // accessToken 检查
-    if (!accessStore.accessToken) {
+    if (!activeAccessToken) {
       // 明确声明忽略权限访问权限，则可以访问
       if (to.meta.ignoreAccess) {
         return true;
@@ -96,7 +122,9 @@ function setupAccessGuard(router: Router) {
     }
 
     // 加载字典数据（不阻塞加载）
-    dictStore.setDictCacheByApi(getSimpleDictDataList);
+    if (authStore.authMode === 'admin') {
+      dictStore.setDictCacheByApi(getSimpleDictDataList);
+    }
 
     // 生成路由表
     // 当前登录用户拥有的角色标识列表
@@ -119,6 +147,7 @@ function setupAccessGuard(router: Router) {
 
     // 生成菜单和路由
     const { accessibleMenus, accessibleRoutes } = await generateAccess({
+      merchant: authStore.authMode === 'merchant',
       roles: userRoles,
       router,
       // 则会在菜单中显示，但是访问会被重定向到403
@@ -140,6 +169,10 @@ function setupAccessGuard(router: Router) {
       replace: true,
     };
   });
+}
+
+function authModeRequiresMerchantLogin(path: string, mode: string) {
+  return mode !== 'merchant' && isMerchantPathAllowed(path);
 }
 
 /**
