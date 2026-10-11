@@ -43,12 +43,14 @@ describe('商品基础信息表单', () => {
     });
   });
 
-  it('品牌、关键字和简介为可选字段，并提供预售配置', async () => {
+  it('商品名称、品牌、关键字和简介为必填字段，并提供预售配置', async () => {
     const { useInfoFormSchema } = await import('./data');
     const schema = useInfoFormSchema();
-    for (const fieldName of ['brandId', 'keyword', 'introduction']) {
-      expect(schema.find((item) => item.fieldName === fieldName)?.rules).toBe(
-        undefined,
+    for (const fieldName of ['name', 'brandId', 'keyword', 'introduction']) {
+      expect(schema.find((item) => item.fieldName === fieldName)).toMatchObject(
+        {
+          rules: 'required',
+        },
       );
     }
     expect(schema.find((item) => item.fieldName === 'isPreSale')).toMatchObject(

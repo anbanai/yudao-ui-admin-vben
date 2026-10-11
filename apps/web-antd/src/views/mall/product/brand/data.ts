@@ -45,6 +45,9 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'ImageUpload',
       componentProps: {
         placeholder: '请上传品牌图片',
+        maxSize: 3,
+        accept: ['jpg', 'jpeg', 'png', 'bmp'],
+        scene: 'product',
       },
       rules: 'required',
     },

@@ -102,6 +102,7 @@ export function useInfoFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请输入商品关键字',
       },
+      rules: 'required',
     },
     {
       fieldName: 'introduction',
@@ -114,6 +115,7 @@ export function useInfoFormSchema(): VbenFormSchema[] {
         maxlength: 128,
         allowClear: true,
       },
+      rules: 'required',
     },
     {
       fieldName: 'picUrl',

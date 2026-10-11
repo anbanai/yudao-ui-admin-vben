@@ -54,6 +54,9 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'ImageUpload',
       componentProps: {
         placeholder: '请上传移动端分类图',
+        maxSize: 3,
+        accept: ['jpg', 'jpeg', 'png', 'bmp'],
+        scene: 'product',
       },
       rules: 'required',
     },
