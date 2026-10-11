@@ -1,4 +1,4 @@
-ARG NGINX_IMAGE=nginx:1.24-alpine
+ARG NGINX_IMAGE=registry.cn-chengdu.aliyuncs.com/acs/nginx:nginx
 FROM ${NGINX_IMAGE}
 COPY ./apps/web-antd/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
