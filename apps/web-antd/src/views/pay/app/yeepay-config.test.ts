@@ -60,28 +60,32 @@ describe('yeePay channel configuration', () => {
     );
     const promotionResolve = promotionField?.dependencies?.resolve;
     const certResolve = certSerialField?.dependencies?.resolve;
+    const dependencyContext = (config: Record<string, string>) =>
+      ({ values: { config } }) as unknown as Parameters<
+        NonNullable<typeof promotionResolve>
+      >[0];
 
     expect(
-      promotionResolve?.({
-        values: { config: { feeBearerMode: 'PLATFORM_FEE_ACCOUNT' } },
-      }),
+      promotionResolve?.(
+        dependencyContext({ feeBearerMode: 'PLATFORM_FEE_ACCOUNT' }),
+      ),
     ).toEqual({
       show: false,
     });
     expect(
-      promotionResolve?.({
-        values: { config: { feeBearerMode: 'FULL_SUBSIDY_PROMOTION' } },
-      }),
+      promotionResolve?.(
+        dependencyContext({ feeBearerMode: 'FULL_SUBSIDY_PROMOTION' }),
+      ),
     ).toEqual({
       show: true,
     });
     expect(
-      certResolve?.({ values: { config: { signingCertType: 'RSA2048' } } }),
+      certResolve?.(dependencyContext({ signingCertType: 'RSA2048' })),
     ).toEqual({
       show: false,
     });
     expect(
-      certResolve?.({ values: { config: { signingCertType: 'SM2' } } }),
+      certResolve?.(dependencyContext({ signingCertType: 'SM2' })),
     ).toEqual({
       show: true,
     });
