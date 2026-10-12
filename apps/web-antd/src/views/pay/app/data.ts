@@ -11,6 +11,8 @@ import { z } from '#/adapter/form';
 import { InputUpload } from '#/components/upload';
 import { getRangePickerDefaultProps } from '#/utils';
 
+import { createYeepayChannelFormSchema } from './yeepay-config';
+
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
@@ -151,6 +153,17 @@ export function useGridColumns(
           title: '条码',
           slots: {
             default: 'wxBarConfig',
+          },
+        },
+      ],
+    },
+    {
+      title: '易宝聚合支付配置',
+      children: [
+        {
+          title: '微信小程序',
+          slots: {
+            default: 'yeepayWxLiteConfig',
           },
         },
       ],
@@ -299,7 +312,9 @@ export function useChannelFormSchema(formType: string = ''): VbenFormSchema[] {
   ];
   // 添加通用字段
   // 根据类型添加特定字段
-  if (formType.includes('alipay_')) {
+  if (formType === 'yeepay_wx_lite') {
+    schema.push(...createYeepayChannelFormSchema());
+  } else if (formType.includes('alipay_')) {
     schema.push(
       {
         label: '开放平台 APPID',
