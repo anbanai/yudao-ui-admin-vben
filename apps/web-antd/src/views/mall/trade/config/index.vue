@@ -92,6 +92,7 @@ onMounted(() => {
         <Tabs.TabPane tab="售后" key="afterSale" :force-render="true" />
         <Tabs.TabPane tab="配送" key="delivery" :force-render="true" />
         <Tabs.TabPane tab="分销" key="brokerage" :force-render="true" />
+        <Tabs.TabPane tab="客服" key="kefu" :force-render="true" />
       </Tabs>
       <Form class="w-2/5" />
     </Card>
