@@ -5,7 +5,7 @@ import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PmsProjectApi } from '#/api/pms/pm/project';
 import type { PmsProjectGroupApi } from '#/api/pms/pm/project/group';
 
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { useAccess } from '@vben/access';
@@ -13,22 +13,20 @@ import { confirm, DocAlert, Page, useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictLabel } from '@vben/hooks';
 import { IconifyIcon } from '@vben/icons';
-import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
 
 import {
   Button,
   Dropdown,
   Empty,
   Menu,
-  MenuItem,
   message,
   Progress,
+  Spin,
   Switch,
   Tabs,
   Tag,
   Tooltip,
 } from 'antdv-next';
-import dayjs from 'dayjs';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -54,37 +52,23 @@ import {
   PmsProjectType,
 } from '#/views/pms/pm/utils/constants';
 import {
+  formatPmsDate,
   formatProjectCompletionRate,
   formatProjectWorkItemCounts,
 } from '#/views/pms/pm/utils/format';
 
-import ProjectForm from '../components/project-form.vue';
+import FavoriteTrendChart from './components/favorite-trend-chart.vue';
 import ProjectGroupList from './components/group/project-group-list.vue';
-import { useGridColumns, useSearchFormSchema } from './data';
+import { useGridColumns, useGridFormSchema } from './data';
+import ProjectForm from './modules/form.vue';
 
 defineOptions({ name: 'PmsProjectList' });
-
-// TODO @AI：antd/antdv-next 的 v-loading 是 EP 指令，改 Spin 或 lock。表格操作对齐 TableAction；connectedComponent 补 destroyOnClose；grid 补 toolbarConfig.refresh/search。三端这段注释和实现要对齐。
-/** 星标项目趋势小图（v-for 内逐卡片渲染） */
-const favoriteChartRenderers = new Map<number, (options: EChartsOption) => void>(); // 星标项目趋势图渲染器
-
-/** 收集星标项目趋势图容器并创建渲染器 */
-function setFavoriteChartRef(id: number, el: any) {
-  if (el) {
-    if (!favoriteChartRenderers.has(id)) {
-      // 列表数据异步渲染，useEcharts 的挂载钩子已过，手动标记激活
-      const { isActive, renderEcharts } = useEcharts(ref(el));
-      isActive.value = true;
-      favoriteChartRenderers.set(id, (options) => renderEcharts(options));
-    }
-  } else {
-    favoriteChartRenderers.delete(id);
-  }
-}
 
 const { hasAccessByCodes } = useAccess();
 const { push, replace } = useRouter(); // 路由
 const route = useRoute(); // 当前路由
+// 项目范围通过查询参数切换，复用同一个“我的项目”页签
+route.matched[route.matched.length - 1]!.meta.fullPathKey = false;
 const PROJECT_SCENE_TAB_MAP: Record<number, string> = {
   [PmsProjectSceneType.ALL]: 'all',
   [PmsProjectSceneType.MANAGED]: 'owner',
@@ -98,13 +82,6 @@ const groupList = ref<PmsProjectGroupApi.ProjectGroup[]>([]); // 当前用户的
 const isParticipatedScene = computed(
   () => sceneType.value === PmsProjectSceneType.PARTICIPATED,
 ); // 是否“我参与的项目”场景
-// antdv-next Tabs 的 activeKey 为字符串，业务状态仍使用数值场景类型
-const sceneTypeKey = computed({
-  get: () => String(sceneType.value),
-  set: (key: string) => {
-    sceneType.value = Number(key);
-  },
-});
 const movableGroupList = computed(() =>
   groupList.value.filter((group) => group.type !== PmsProjectGroupType.ALL),
 ); // 可以移动到的个人分组
@@ -150,7 +127,10 @@ function getProjectSceneByRoute() {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
-    schema: useSearchFormSchema(),
+    schema: useGridFormSchema(
+      () => groupList.value,
+      () => isParticipatedScene.value,
+    ),
     submitOnEnter: true,
   },
   gridOptions: {
@@ -176,6 +156,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
       isHover: true,
     },
+    toolbarConfig: {
+      refresh: true,
+      search: true,
+    },
   } as VxeTableGridOptions<PmsProjectApi.Project>,
 });
 
@@ -185,16 +169,11 @@ async function getFavoriteList() {
   try {
     const projects = await getFavoriteProjectList();
     favoriteProjectList.value = await Promise.all(
-      projects.map(async (project) => ({
-        ...project,
-        completedTrends: (await getProjectOverview(project.id)).completedTrends,
-      })),
+      projects.map(async (project) => {
+        const overview = await getProjectOverview(project.id);
+        return { ...project, completedTrends: overview.completedTrends };
+      }),
     );
-    // 图表容器随列表渲染完成后逐卡片渲染
-    await nextTick();
-    for (const project of favoriteProjectList.value) {
-      favoriteChartRenderers.get(project.id)?.(getFavoriteTrendChartOptions(project));
-    }
   } finally {
     favoriteLoading.value = false;
   }
@@ -206,19 +185,6 @@ async function getGroupList() {
   const allGroup = groupList.value.find(
     (group) => group.type === PmsProjectGroupType.ALL,
   );
-  gridApi.formApi.updateSchema([
-    {
-      fieldName: 'groupId',
-      componentProps: {
-        allowClear: true,
-        options: groupList.value.map((group) => ({
-          label: `${group.name}（${group.projectCount}）`,
-          value: group.id!,
-        })),
-        placeholder: '请选择个人分组',
-      },
-    },
-  ]);
   await gridApi.formApi.setFieldValue('groupId', allGroup?.id);
 }
 
@@ -269,6 +235,7 @@ function openProjectConfig(id: number) {
   push({
     name: 'PmsProjectConfig',
     params: { id },
+    query: { pageKey: 'PmsProjectConfig' },
   });
 }
 
@@ -286,11 +253,9 @@ async function handleMoveGroup(projectId: number, groupId: number) {
 
 /** 星标或取消星标项目 */
 async function handleCollect(project: PmsProjectApi.Project) {
-  if (project.favoriteStatus) {
-    await deleteProjectFavorite(project.id);
-  } else {
-    await createProjectFavorite(project.id);
-  }
+  await (project.favoriteStatus
+    ? deleteProjectFavorite(project.id)
+    : createProjectFavorite(project.id));
   const favoriteStatus = !project.favoriteStatus;
   message.success(favoriteStatus ? '星标成功' : '已取消星标');
   await Promise.all([gridApi.query(), getFavoriteList()]);
@@ -307,8 +272,7 @@ async function handleExit(project: PmsProjectApi.Project) {
     await exitProject(project.id);
     message.success('已退出项目');
     await handleProjectChanged();
-  } catch {
-  }
+  } catch {}
 }
 
 /** 处理项目生命周期操作 */
@@ -325,10 +289,7 @@ async function handleProjectCommand(
     return;
   }
   if (command.startsWith('group:')) {
-    await handleMoveGroup(
-      project.id,
-      Number(command.substring('group:'.length)),
-    );
+    await handleMoveGroup(project.id, Number(command.slice('group:'.length)));
     return;
   }
   try {
@@ -343,8 +304,7 @@ async function handleProjectCommand(
       message.success('项目已移入回收站');
     }
     await handleProjectChanged();
-  } catch {
-  }
+  } catch {}
 }
 
 /** 项目发生变化后刷新列表与个人分组 */
@@ -416,128 +376,139 @@ watch(
       />
     </template>
 
-    <div v-loading="favoriteLoading" class="mb-4 rounded-lg bg-background p-4">
-      <!-- 星标项目 -->
-      <div class="mb-4 flex items-baseline gap-3">
-        <span class="text-base font-semibold">星标项目</span>
-        <span class="text-[13px] text-muted-foreground">
-          快速访问经常使用的项目
-        </span>
-      </div>
-      <div
-        v-if="favoriteProjectList.length"
-        class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3"
-      >
-        <div
-          v-for="project in favoriteProjectList"
-          :key="project.id"
-          class="relative flex h-full min-w-0 cursor-pointer items-center gap-3 rounded-md border border-solid border-border bg-accent p-4 transition-[border-color,box-shadow] hover:border-primary hover:shadow-md"
-          @click="openProjectDetail(project)"
-        >
-          <span
-            class="inline-flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"
-          >
-            <IconifyIcon :icon="project.icon || 'lucide:folder'" />
+    <Spin :spinning="favoriteLoading">
+      <div class="mb-4 rounded-lg bg-background p-4">
+        <!-- 星标项目 -->
+        <div class="mb-4 flex items-baseline gap-3">
+          <span class="text-base font-semibold">星标项目</span>
+          <span class="text-[13px] text-muted-foreground">
+            快速访问经常使用的项目
           </span>
-          <div class="min-w-0 flex-1">
-            <div class="truncate font-medium text-primary">
-              {{ project.name }}
-            </div>
-            <div class="mt-1 truncate text-xs text-muted-foreground">
-              {{
-                project.description ||
-                `${getDictLabel(DICT_TYPE.PMS_PROJECT_TYPE, project.type) || '-'} · 暂无项目描述`
-              }}
-            </div>
-            <Progress
-              class="mt-2.5"
-              :percent="formatProjectCompletionRate(project)"
-              :show-info="false"
-              :size="['100%', 5]"
-            />
-            <EchartsUI
-              v-if="project.completedTrends"
-              :ref="(el: any) => setFavoriteChartRef(project.id, el)"
-              class="mt-1.5"
-              height="56px"
-            />
-          </div>
-          <Tooltip title="取消星标" placement="top">
-            <Button
-              aria-label="取消星标"
-              class="absolute right-3 top-3 !text-yellow-500"
-              type="link"
-              @click.stop="handleCollect(project)"
+        </div>
+        <div
+          v-if="favoriteProjectList.length"
+          class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3"
+        >
+          <div
+            v-for="project in favoriteProjectList"
+            :key="project.id"
+            class="relative flex h-full min-w-0 cursor-pointer items-start gap-3 rounded-md border border-solid border-border bg-accent p-4 transition-[border-color,box-shadow] hover:border-primary hover:shadow-md"
+            @click="openProjectDetail(project)"
+          >
+            <span
+              class="inline-flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"
             >
-              <IconifyIcon :size="20" icon="lucide:star" />
-            </Button>
-          </Tooltip>
-          <div class="absolute bottom-2 right-3" @click.stop>
-            <Dropdown>
-              <Button aria-label="更多操作" type="link">
-                <IconifyIcon :size="18" icon="lucide:ellipsis" />
+              <IconifyIcon :icon="project.icon || 'lucide:folder'" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="truncate pr-8 font-medium text-primary">
+                {{ project.name }}
+              </div>
+              <div class="mt-1 truncate text-xs text-muted-foreground">
+                {{
+                  project.description ||
+                  `${getDictLabel(DICT_TYPE.PMS_PROJECT_TYPE, project.type) || '-'} · 暂无项目描述`
+                }}
+              </div>
+              <Progress
+                class="mt-2.5"
+                :percent="formatProjectCompletionRate(project)"
+                :show-info="false"
+                :stroke-width="5"
+              />
+              <div v-if="project.completedTrends" class="pr-10">
+                <FavoriteTrendChart
+                  class="mt-1.5"
+                  :options="getFavoriteTrendChartOptions(project)"
+                />
+              </div>
+            </div>
+            <Tooltip title="取消星标" placement="top">
+              <Button
+                aria-label="取消星标"
+                class="!absolute !right-3 !top-3 !h-auto !p-0 !text-yellow-500"
+                type="link"
+                @click.stop="handleCollect(project)"
+              >
+                <IconifyIcon
+                  class="[&_path]:fill-current"
+                  :size="20"
+                  icon="lucide:star"
+                />
               </Button>
-              <template #popupRender>
-                <Menu
-                  @click="({ key }: any) => handleProjectCommand(key, project)"
-                >
-                  <MenuItem
-                    v-if="project.adminStatus"
-                    v-access:code="['pms:pm:project:update']"
-                    key="config"
+            </Tooltip>
+            <div class="absolute bottom-2 right-3 z-10" @click.stop>
+              <Dropdown>
+                <Button aria-label="更多操作" type="link">
+                  <IconifyIcon :size="18" icon="lucide:ellipsis" />
+                </Button>
+                <template #popupRender>
+                  <Menu
+                    @click="
+                      ({ key }: any) => handleProjectCommand(key, project)
+                    "
                   >
-                    项目设置
-                  </MenuItem>
-                  <template v-if="project.memberStatus">
-                    <MenuItem disabled>移动到分组</MenuItem>
-                    <MenuItem
-                      v-for="group in movableGroupList"
-                      :key="`group:${group.id}`"
+                    <Menu.Item
+                      v-if="
+                        project.adminStatus &&
+                        hasAccessByCodes(['pms:pm:project:update'])
+                      "
+                      key="config"
                     >
-                      {{ group.name }}
-                    </MenuItem>
-                  </template>
-                  <Menu.Divider v-if="project.exitStatus" />
-                  <MenuItem
-                    v-if="project.exitStatus"
-                    v-access:code="['pms:pm:project-member:query']"
-                    key="exit"
-                  >
-                    退出项目
-                  </MenuItem>
-                  <template v-if="hasAccessByCodes(['pms:pm:project:update'])">
-                    <MenuItem v-if="project.adminStatus" key="archive">
-                      归档项目
-                    </MenuItem>
-                    <MenuItem v-if="project.adminStatus" key="recycle">
-                      移入回收站
-                    </MenuItem>
-                  </template>
-                </Menu>
-              </template>
-            </Dropdown>
+                      项目设置
+                    </Menu.Item>
+                    <template v-if="project.memberStatus">
+                      <Menu.Item disabled>移动到分组</Menu.Item>
+                      <Menu.Item
+                        v-for="group in movableGroupList"
+                        :key="`group:${group.id}`"
+                      >
+                        {{ group.name }}
+                      </Menu.Item>
+                    </template>
+                    <Menu.Divider v-if="project.exitStatus" />
+                    <Menu.Item
+                      v-if="
+                        project.exitStatus &&
+                        hasAccessByCodes(['pms:pm:project-member:query'])
+                      "
+                      key="exit"
+                    >
+                      退出项目
+                    </Menu.Item>
+                    <template
+                      v-if="hasAccessByCodes(['pms:pm:project:update'])"
+                    >
+                      <Menu.Item v-if="project.adminStatus" key="archive">
+                        归档项目
+                      </Menu.Item>
+                      <Menu.Item v-if="project.adminStatus" key="recycle">
+                        移入回收站
+                      </Menu.Item>
+                    </template>
+                  </Menu>
+                </template>
+              </Dropdown>
+            </div>
           </div>
         </div>
+        <Empty v-else description="暂无星标项目" />
       </div>
-      <Empty v-else description="暂无星标项目" />
-    </div>
+    </Spin>
 
     <!-- 项目列表 -->
     <Grid>
       <template #toolbar-actions>
         <!-- 项目范围 -->
         <Tabs
-          v-model:active-key="sceneTypeKey"
           class="w-full"
+          :active-key="String(sceneType)"
           @change="handleSceneChange"
         >
-          <Tabs.TabPane :key="String(PmsProjectSceneType.ALL)" tab="全部项目" />
+          <Tabs.TabPane :key="PmsProjectSceneType.ALL" tab="全部项目" />
+          <Tabs.TabPane :key="PmsProjectSceneType.MANAGED" tab="我负责的" />
           <Tabs.TabPane
-            :key="String(PmsProjectSceneType.MANAGED)"
-            tab="我负责的"
-          />
-          <Tabs.TabPane
-            :key="String(PmsProjectSceneType.PARTICIPATED)"
+            :key="PmsProjectSceneType.PARTICIPATED"
             tab="我参与的"
           />
         </Tabs>
@@ -571,7 +542,9 @@ watch(
             >
               {{ row.name }}
             </div>
-            <Tag>{{ getDictLabel(DICT_TYPE.PMS_PROJECT_TYPE, row.type) || '-' }}</Tag>
+            <Tag>
+              {{ getDictLabel(DICT_TYPE.PMS_PROJECT_TYPE, row.type) || '-' }}
+            </Tag>
           </div>
         </div>
       </template>
@@ -591,7 +564,7 @@ watch(
       </template>
       <template #endTime="{ row }">
         <Tag v-if="row.endTime">
-          {{ dayjs(row.endTime).format('M月D日截止') }}
+          {{ formatPmsDate(row.endTime, 'M月D日') }}截止
         </Tag>
         <span v-else>-</span>
       </template>
@@ -606,37 +579,40 @@ watch(
           <Button type="link">更多</Button>
           <template #popupRender>
             <Menu @click="({ key }: any) => handleProjectCommand(key, row)">
-              <MenuItem
-                v-if="row.adminStatus"
-                v-access:code="['pms:pm:project:update']"
+              <Menu.Item
+                v-if="
+                  row.adminStatus && hasAccessByCodes(['pms:pm:project:update'])
+                "
                 key="config"
               >
                 项目设置
-              </MenuItem>
+              </Menu.Item>
               <template v-if="isParticipatedScene && row.memberStatus">
-                <MenuItem disabled>移动到分组</MenuItem>
-                <MenuItem
+                <Menu.Item disabled>移动到分组</Menu.Item>
+                <Menu.Item
                   v-for="group in movableGroupList"
                   :key="`group:${group.id}`"
                 >
                   {{ group.name }}
-                </MenuItem>
+                </Menu.Item>
               </template>
               <Menu.Divider v-if="row.exitStatus" />
-              <MenuItem
-                v-if="row.exitStatus"
-                v-access:code="['pms:pm:project-member:query']"
+              <Menu.Item
+                v-if="
+                  row.exitStatus &&
+                  hasAccessByCodes(['pms:pm:project-member:query'])
+                "
                 key="exit"
               >
                 退出项目
-              </MenuItem>
+              </Menu.Item>
               <template v-if="hasAccessByCodes(['pms:pm:project:update'])">
-                <MenuItem v-if="row.adminStatus" key="archive">
+                <Menu.Item v-if="row.adminStatus" key="archive">
                   归档项目
-                </MenuItem>
-                <MenuItem v-if="row.adminStatus" key="recycle">
+                </Menu.Item>
+                <Menu.Item v-if="row.adminStatus" key="recycle">
                   移入回收站
-                </MenuItem>
+                </Menu.Item>
               </template>
             </Menu>
           </template>

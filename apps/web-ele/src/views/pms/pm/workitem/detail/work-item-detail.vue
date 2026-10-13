@@ -46,11 +46,10 @@ import {
   PmsWorkItemLifecycleStatus,
   PmsWorkItemType,
 } from '#/views/pms/pm/utils/constants';
-import {
-  getWorkItemStatusTagType,
-} from '#/views/pms/pm/utils/format';
+import { getWorkItemStatusTagType } from '#/views/pms/pm/utils/format';
 
-import WorkItemForm from '../form/work-item-form.vue';
+import WorkItemSelect from '../components/work-item-select.vue';
+import WorkItemForm from '../list/modules/form.vue';
 import WorkItemStatusSelect from '../status/work-item-status-select.vue';
 import WorkItemWorkLogList from '../worklog/worklog-list.vue';
 import WorkItemActivity from './work-item-activity.vue';
@@ -71,8 +70,10 @@ const workItem = ref<PmsWorkItemApi.WorkItem>(); // 工作项详情
 const activeTab = ref('comment'); // 当前协作信息页签
 const expandedPanels = ref(['basic']); // 展开的属性面板
 const workItemActivityRef = ref<InstanceType<typeof WorkItemActivity>>(); // 工作项动态 Ref
-const workItemTypeName = computed(() =>
-  getDictLabel(DICT_TYPE.PMS_WORK_ITEM_TYPE, workItem.value?.type || 0) || '-',
+const workItemTypeName = computed(
+  () =>
+    getDictLabel(DICT_TYPE.PMS_WORK_ITEM_TYPE, workItem.value?.type || 0) ||
+    '-',
 ); // 工作项类型名称
 const canUpdate = computed(
   () => editable.value && hasAccessByCodes(['pms:pm:work-item:update']),
@@ -210,8 +211,7 @@ async function handleArchive() {
     ElMessage.success('归档成功');
     drawerApi.close();
     emit('success');
-  } catch {
-  }
+  } catch {}
 }
 
 /** 将工作项移入回收站 */
@@ -227,8 +227,7 @@ async function handleRecycle() {
     ElMessage.success('已移入回收站');
     drawerApi.close();
     emit('success');
-  } catch {
-  }
+  } catch {}
 }
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -324,11 +323,21 @@ const [Drawer, drawerApi] = useVbenDrawer({
         <!-- 工作项内容与协作信息 -->
         <main class="min-w-0 overflow-y-auto px-8 py-6">
           <section class="mb-7">
-            <div v-if="editable" class="mb-4 flex items-center gap-2">
-              <ElButton link type="primary" @click="openEditForm">
+            <div v-if="editable" class="mb-4 flex items-center gap-5">
+              <ElButton
+                class="!h-auto !px-0"
+                link
+                type="primary"
+                @click="openEditForm"
+              >
                 <IconifyIcon class="mr-1" icon="ep:edit" />编辑描述
               </ElButton>
-              <ElButton link type="primary" @click="openEditForm">
+              <ElButton
+                class="!h-auto !px-0"
+                link
+                type="primary"
+                @click="openEditForm"
+              >
                 <IconifyIcon class="mr-1" icon="ep:paperclip" />上传附件
               </ElButton>
             </div>
@@ -409,39 +418,45 @@ const [Drawer, drawerApi] = useVbenDrawer({
         <aside
           class="overflow-y-auto border-0 border-l border-solid border-[var(--el-border-color-lighter)] bg-[var(--el-bg-color)] p-5"
         >
-          <WorkItemStatusSelect
-            v-if="workItem && canUpdate && isInlineEditing('statusId')"
-            v-model="workItem.statusId"
-            class="mb-4 !w-full"
-            :project-id="workItem.projectId"
-            :work-item-type="workItem.type"
-            @change="handleQuickStatusChange"
-            @blur="cancelInlineEditing"
-            @keyup.esc.stop="cancelInlineEditing"
-          />
-          <ElTag
-            v-else-if="workItem && canUpdate"
-            class="mb-4 cursor-pointer"
-            :type="getWorkItemStatusTagType(workItem.status)"
-            @click="startInlineEditing('statusId')"
-          >
-            {{ workItem.statusName }}
-          </ElTag>
-          <ElTag
-            v-else
-            class="mb-4"
-            :type="getWorkItemStatusTagType(workItem?.status)"
-          >
-            {{ workItem?.statusName }}
-          </ElTag>
-
           <ElCollapse v-model="expandedPanels">
             <ElCollapseItem name="basic" title="基础信息">
               <div class="flex flex-col gap-0.5">
                 <div
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">负责人</span>
+                  <div class="text-[var(--el-text-color-secondary)]">状态</div>
+                  <WorkItemStatusSelect
+                    v-if="workItem && canUpdate && isInlineEditing('statusId')"
+                    v-model="workItem.statusId"
+                    class="!w-full"
+                    :project-id="workItem.projectId"
+                    :work-item-type="workItem.type"
+                    @change="handleQuickStatusChange"
+                    @blur="cancelInlineEditing"
+                    @keyup.esc.stop="cancelInlineEditing"
+                  />
+                  <ElButton
+                    v-else-if="workItem && canUpdate"
+                    class="min-w-0 !justify-start !px-0 font-medium"
+                    link
+                    @click="startInlineEditing('statusId')"
+                  >
+                    {{ workItem.statusName }}
+                  </ElButton>
+                  <ElTag
+                    v-else
+                    class="w-fit"
+                    :type="getWorkItemStatusTagType(workItem?.status)"
+                  >
+                    {{ workItem?.statusName }}
+                  </ElTag>
+                </div>
+                <div
+                  class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
+                >
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    负责人
+                  </div>
                   <ProjectMemberSelect
                     v-if="
                       workItem && canUpdate && isInlineEditing('assigneeUserId')
@@ -472,7 +487,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
                 <div
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">优先级</span>
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    优先级
+                  </div>
                   <ElSelect
                     v-if="workItem && canUpdate && isInlineEditing('priority')"
                     v-model="workItem.priority"
@@ -497,20 +514,32 @@ const [Drawer, drawerApi] = useVbenDrawer({
                     link
                     @click="startInlineEditing('priority')"
                   >
-                    {{ getDictLabel(DICT_TYPE.PMS_WORK_ITEM_PRIORITY, workItem?.priority) || '-' }}
+                    {{
+                      getDictLabel(
+                        DICT_TYPE.PMS_WORK_ITEM_PRIORITY,
+                        workItem?.priority,
+                      ) || '-'
+                    }}
                   </ElButton>
                   <strong
                     v-else
                     class="min-w-0 truncate font-medium text-[var(--el-text-color-regular)]"
                   >
-                    {{ getDictLabel(DICT_TYPE.PMS_WORK_ITEM_PRIORITY, workItem?.priority) || '-' }}
+                    {{
+                      getDictLabel(
+                        DICT_TYPE.PMS_WORK_ITEM_PRIORITY,
+                        workItem?.priority,
+                      ) || '-'
+                    }}
                   </strong>
                 </div>
                 <div
                   v-if="projectType === PmsProjectType.AGILE"
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">所属迭代</span>
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    所属迭代
+                  </div>
                   <IterationSelect
                     v-if="
                       workItem && canUpdate && isInlineEditing('iterationId')
@@ -544,7 +573,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
                   "
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">关联需求</span>
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    关联需求
+                  </div>
                   <WorkItemSelect
                     v-if="
                       workItem &&
@@ -580,7 +611,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
                   v-if="workItem?.type === PmsWorkItemType.DEFECT"
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">缺陷类型</span>
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    缺陷类型
+                  </div>
                   <strong
                     class="min-w-0 truncate font-medium text-[var(--el-text-color-regular)]"
                   >
@@ -595,7 +628,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
                 <div
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">完成进度</span>
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    完成进度
+                  </div>
                   <ElInputNumber
                     v-if="workItem && canUpdate && isInlineEditing('progress')"
                     v-model="workItem.progress"
@@ -624,7 +659,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
                 <div
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">预估工时</span>
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    预估工时
+                  </div>
                   <ElInputNumber
                     v-if="
                       workItem && canUpdate && isInlineEditing('estimatedHours')
@@ -662,7 +699,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
                 <div
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">开始时间</span>
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    开始时间
+                  </div>
                   <ElDatePicker
                     v-if="workItem && canUpdate && isInlineEditing('startTime')"
                     v-model="workItem.startTime"
@@ -693,7 +732,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
                 <div
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">截止时间</span>
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    截止时间
+                  </div>
                   <ElDatePicker
                     v-if="workItem && canUpdate && isInlineEditing('endTime')"
                     v-model="workItem.endTime"
@@ -724,7 +765,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
                 <div
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
-                  <span class="text-[var(--el-text-color-secondary)]">创建时间</span>
+                  <div class="text-[var(--el-text-color-secondary)]">
+                    创建时间
+                  </div>
                   <strong
                     class="min-w-0 truncate font-medium text-[var(--el-text-color-regular)]"
                   >

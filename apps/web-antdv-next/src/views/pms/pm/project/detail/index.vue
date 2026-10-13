@@ -7,7 +7,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { confirm, Page } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Dropdown, Menu, MenuItem, message, Spin, Tabs } from 'antdv-next';
+import { Button, Dropdown, Menu, message, Spin, Tabs } from 'antdv-next';
 
 import { getProject } from '#/api/pms/pm/project';
 import {
@@ -30,8 +30,6 @@ import ProjectOverview from './project-overview.vue';
 import ProjectWorkLog from './project-work-log.vue';
 
 defineOptions({ name: 'PmsProjectDetail' });
-
-// TODO @AI：antd/antdv-next 不要用 v-loading。三端详情页结构差一截，对齐页签、权限按钮和空态。
 
 type ProjectDetailTab =
   | 'all'
@@ -116,11 +114,9 @@ function handleTabChange(tab: number | string) {
 
 /** 切换项目关注状态 */
 async function handleCollect() {
-  if (project.value.favoriteStatus) {
-    await deleteProjectFavorite(project.value.id);
-  } else {
-    await createProjectFavorite(project.value.id);
-  }
+  await (project.value.favoriteStatus
+    ? deleteProjectFavorite(project.value.id)
+    : createProjectFavorite(project.value.id));
   // 更新当前页面的关注状态
   project.value.favoriteStatus = !project.value.favoriteStatus;
   message.success(project.value.favoriteStatus ? '收藏成功' : '已取消收藏');
@@ -144,6 +140,7 @@ function openProjectConfig() {
     params: {
       id: project.value.id,
     },
+    query: { pageKey: 'PmsProjectConfig' },
   });
 }
 
@@ -158,8 +155,7 @@ async function handleExit() {
     await exitProject(project.value.id);
     message.success('已退出项目');
     close();
-  } catch {
-  }
+  } catch {}
 }
 
 /** 关闭项目详情 */
@@ -213,14 +209,16 @@ watch(
           </Button>
           <template #popupRender>
             <Menu @click="({ key }: any) => handleProjectCommand(key)">
-              <MenuItem v-if="project.memberStatus" key="favorite">
+              <Menu.Item v-if="project.memberStatus" key="favorite">
                 {{ project.favoriteStatus ? '取消星标' : '星标项目' }}
-              </MenuItem>
-              <MenuItem v-if="project.adminStatus" key="config">
+              </Menu.Item>
+              <Menu.Item v-if="project.adminStatus" key="config">
                 项目设置
-              </MenuItem>
+              </Menu.Item>
               <Menu.Divider v-if="project.exitStatus" />
-              <MenuItem v-if="project.exitStatus" key="exit">退出项目</MenuItem>
+              <Menu.Item v-if="project.exitStatus" key="exit">
+                退出项目
+              </Menu.Item>
             </Menu>
           </template>
         </Dropdown>

@@ -4,10 +4,10 @@ import type { HrmRecruitCandidateApi } from '#/api/hrm/recruit/candidate';
 
 import { markRaw } from 'vue';
 
-import { z } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
+import { z } from '#/adapter/form';
 import { getRecruitChannelSimpleList } from '#/api/hrm/recruit/channel';
 import { getRecruitEliminateReasonList } from '#/api/hrm/recruit/config';
 import { getRecruitPostSimpleList } from '#/api/hrm/recruit/post';

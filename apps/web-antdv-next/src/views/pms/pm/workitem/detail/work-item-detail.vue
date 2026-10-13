@@ -4,7 +4,7 @@ import type { PmsWorkItemApi } from '#/api/pms/pm/workitem';
 import { computed, ref } from 'vue';
 
 import { useAccess } from '@vben/access';
-import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { confirm, Spinner, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictLabel, getDictOptions } from '@vben/hooks';
 import { IconifyIcon } from '@vben/icons';
@@ -19,7 +19,6 @@ import {
   Dropdown,
   InputNumber,
   Menu,
-  MenuItem,
   message,
   Select,
   Tabs,
@@ -43,11 +42,10 @@ import {
   PmsWorkItemLifecycleStatus,
   PmsWorkItemType,
 } from '#/views/pms/pm/utils/constants';
-import {
-  getWorkItemStatusTagType,
-} from '#/views/pms/pm/utils/format';
+import { getWorkItemStatusTagType } from '#/views/pms/pm/utils/format';
 
-import WorkItemForm from '../form/work-item-form.vue';
+import WorkItemSelect from '../components/work-item-select.vue';
+import WorkItemForm from '../list/modules/form.vue';
 import WorkItemStatusSelect from '../status/work-item-status-select.vue';
 import WorkItemWorkLogList from '../worklog/worklog-list.vue';
 import WorkItemActivity from './work-item-activity.vue';
@@ -55,8 +53,6 @@ import WorkItemComment from './work-item-comment.vue';
 import WorkItemSubtaskList from './work-item-subtask-list.vue';
 
 defineOptions({ name: 'PmsWorkItemDetail' });
-
-// TODO @AI：详情里可编辑字段（时间、负责人等）尽量抽 schema；as any、v-loading 对齐 system user 的 lock。三端模板差异也收一下。
 
 const emit = defineEmits<{ success: [] }>(); // 定义 success 事件，用于详情变更后的回调
 
@@ -68,8 +64,10 @@ const workItem = ref<PmsWorkItemApi.WorkItem>(); // 工作项详情
 const activeTab = ref('comment'); // 当前协作信息页签
 const expandedPanels = ref(['basic']); // 展开的属性面板
 const workItemActivityRef = ref<InstanceType<typeof WorkItemActivity>>(); // 工作项动态 Ref
-const workItemTypeName = computed(() =>
-  getDictLabel(DICT_TYPE.PMS_WORK_ITEM_TYPE, workItem.value?.type || 0) || '-',
+const workItemTypeName = computed(
+  () =>
+    getDictLabel(DICT_TYPE.PMS_WORK_ITEM_TYPE, workItem.value?.type || 0) ||
+    '-',
 ); // 工作项类型名称
 const canUpdate = computed(
   () => editable.value && hasAccessByCodes(['pms:pm:work-item:update']),
@@ -207,8 +205,7 @@ async function handleArchive() {
     message.success('归档成功');
     drawerApi.close();
     emit('success');
-  } catch {
-  }
+  } catch {}
 }
 
 /** 将工作项移入回收站 */
@@ -224,8 +221,7 @@ async function handleRecycle() {
     message.success('已移入回收站');
     drawerApi.close();
     emit('success');
-  } catch {
-  }
+  } catch {}
 }
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -248,8 +244,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 <template>
   <Drawer>
-    <div
-      v-loading="loading"
+    <Spinner
+      :spinning="loading"
       class="flex h-full min-w-[900px] flex-col bg-background"
     >
       <!-- 工作项标题与操作 -->
@@ -293,10 +289,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
             </Button>
             <template #popupRender>
               <Menu @click="({ key }: any) => handleMoreCommand(key)">
-                <MenuItem key="edit">编辑</MenuItem>
-                <MenuItem v-if="canUpdate" key="archive">归档</MenuItem>
+                <Menu.Item key="edit">编辑</Menu.Item>
+                <Menu.Item v-if="canUpdate" key="archive">归档</Menu.Item>
                 <Menu.Divider v-if="canUpdate" />
-                <MenuItem v-if="canUpdate" key="recycle">移入回收站</MenuItem>
+                <Menu.Item v-if="canUpdate" key="recycle">移入回收站</Menu.Item>
               </Menu>
             </template>
           </Dropdown>
@@ -312,11 +308,11 @@ const [Drawer, drawerApi] = useVbenDrawer({
         <!-- 工作项内容与协作信息 -->
         <main class="min-w-0 overflow-y-auto px-8 py-6">
           <section class="mb-7">
-            <div v-if="editable" class="mb-4 flex items-center gap-2">
-              <Button type="link" @click="openEditForm">
+            <div v-if="editable" class="mb-4 flex items-center gap-5">
+              <Button class="!h-auto !px-0" type="link" @click="openEditForm">
                 <IconifyIcon class="mr-1" icon="lucide:square-pen" />编辑描述
               </Button>
-              <Button type="link" @click="openEditForm">
+              <Button class="!h-auto !px-0" type="link" @click="openEditForm">
                 <IconifyIcon class="mr-1" icon="lucide:paperclip" />上传附件
               </Button>
             </div>
@@ -343,9 +339,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
                 :href="fileUrl"
                 target="_blank"
               >
-                <IconifyIcon class="mr-1.5" icon="lucide:paperclip" />{{
-                  getFileNameFromUrl(fileUrl)
-                }}
+                <IconifyIcon class="mr-1.5" icon="lucide:paperclip" />
+                {{ getFileNameFromUrl(fileUrl) }}
               </a>
             </div>
           </section>
@@ -393,35 +388,39 @@ const [Drawer, drawerApi] = useVbenDrawer({
         <aside
           class="overflow-y-auto border-0 border-l border-solid border-border bg-background p-5"
         >
-          <WorkItemStatusSelect
-            v-if="workItem && canUpdate && isInlineEditing('statusId')"
-            v-model="workItem.statusId"
-            class="mb-4 !w-full"
-            :project-id="workItem.projectId"
-            :work-item-type="workItem.type"
-            @change="handleQuickStatusChange"
-            @blur="cancelInlineEditing"
-            @keyup.esc.stop="cancelInlineEditing"
-          />
-          <Tag
-            v-else-if="workItem && canUpdate"
-            class="mb-4 cursor-pointer"
-            :color="getWorkItemStatusTagType(workItem.status)"
-            @click="startInlineEditing('statusId')"
-          >
-            {{ workItem.statusName }}
-          </Tag>
-          <Tag
-            v-else
-            class="mb-4"
-            :color="getWorkItemStatusTagType(workItem?.status)"
-          >
-            {{ workItem?.statusName }}
-          </Tag>
-
           <Collapse v-model:active-key="expandedPanels">
             <CollapsePanel key="basic" header="基础信息">
               <div class="flex flex-col gap-0.5">
+                <div
+                  class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
+                >
+                  <span class="text-muted-foreground">状态</span>
+                  <WorkItemStatusSelect
+                    v-if="workItem && canUpdate && isInlineEditing('statusId')"
+                    v-model="workItem.statusId"
+                    class="!w-full"
+                    :project-id="workItem.projectId"
+                    :work-item-type="workItem.type"
+                    @change="handleQuickStatusChange"
+                    @blur="cancelInlineEditing"
+                    @keyup.esc.stop="cancelInlineEditing"
+                  />
+                  <Button
+                    v-else-if="workItem && canUpdate"
+                    class="min-w-0 !justify-start !px-0 font-medium"
+                    type="link"
+                    @click="startInlineEditing('statusId')"
+                  >
+                    {{ workItem.statusName }}
+                  </Button>
+                  <Tag
+                    v-else
+                    class="w-fit"
+                    :color="getWorkItemStatusTagType(workItem?.status)"
+                  >
+                    {{ workItem?.statusName }}
+                  </Tag>
+                </div>
                 <div
                   class="grid min-h-[42px] grid-cols-[86px_minmax(0,1fr)] items-center gap-3 text-[13px]"
                 >
@@ -479,13 +478,23 @@ const [Drawer, drawerApi] = useVbenDrawer({
                     type="link"
                     @click="startInlineEditing('priority')"
                   >
-                    {{ getDictLabel(DICT_TYPE.PMS_WORK_ITEM_PRIORITY, workItem?.priority) || '-' }}
+                    {{
+                      getDictLabel(
+                        DICT_TYPE.PMS_WORK_ITEM_PRIORITY,
+                        workItem?.priority,
+                      ) || '-'
+                    }}
                   </Button>
                   <strong
                     v-else
                     class="min-w-0 truncate font-medium text-foreground"
                   >
-                    {{ getDictLabel(DICT_TYPE.PMS_WORK_ITEM_PRIORITY, workItem?.priority) || '-' }}
+                    {{
+                      getDictLabel(
+                        DICT_TYPE.PMS_WORK_ITEM_PRIORITY,
+                        workItem?.priority,
+                      ) || '-'
+                    }}
                   </strong>
                 </div>
                 <div
@@ -644,12 +653,19 @@ const [Drawer, drawerApi] = useVbenDrawer({
                   <span class="text-muted-foreground">开始时间</span>
                   <DatePicker
                     v-if="workItem && canUpdate && isInlineEditing('startTime')"
-                    v-model:value="workItem.startTime as any"
+                    :value="
+                      workItem.startTime
+                        ? String(workItem.startTime)
+                        : undefined
+                    "
                     class="!w-full"
                     allow-clear
                     placeholder="请选择开始时间"
                     show-time
                     value-format="x"
+                    @update:value="
+                      workItem.startTime = $event ? Number($event) : undefined
+                    "
                     @change="saveInlineWorkItem"
                     @blur="cancelInlineEditing"
                     @keyup.esc.stop="cancelInlineEditing"
@@ -675,12 +691,17 @@ const [Drawer, drawerApi] = useVbenDrawer({
                   <span class="text-muted-foreground">截止时间</span>
                   <DatePicker
                     v-if="workItem && canUpdate && isInlineEditing('endTime')"
-                    v-model:value="workItem.endTime as any"
+                    :value="
+                      workItem.endTime ? String(workItem.endTime) : undefined
+                    "
                     class="!w-full"
                     allow-clear
                     placeholder="请选择截止时间"
                     show-time
                     value-format="x"
+                    @update:value="
+                      workItem.endTime = $event ? Number($event) : undefined
+                    "
                     @change="saveInlineWorkItem"
                     @blur="cancelInlineEditing"
                     @keyup.esc.stop="cancelInlineEditing"
@@ -713,7 +734,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
           </Collapse>
         </aside>
       </div>
-    </div>
+    </Spinner>
 
     <!-- 工作项编辑表单 -->
     <WorkItemFormModal @success="handleFormSuccess" />

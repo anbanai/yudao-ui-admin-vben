@@ -36,7 +36,7 @@ import {
   PmsWorkItemType,
 } from '#/views/pms/pm/utils/constants';
 
-import StatusDeleteForm from './status-delete-form.vue';
+import StatusDeleteForm from './modules/delete-form.vue';
 
 defineOptions({ name: 'PmsWorkItemStatusList' });
 
@@ -94,10 +94,12 @@ async function getBoardConfig() {
     .filter(Boolean);
 }
 
+let nextTemporaryId = -1; // 尚未保存的状态和看板列使用独立临时编号
+
 /** 添加状态 */
 function handleAdd() {
   statusList.value.push({
-    id: -Date.now(),
+    id: nextTemporaryId--,
     projectId: projectId.value,
     workItemType: type.value,
     name: '',
@@ -111,7 +113,7 @@ function handleAdd() {
 /** 添加看板列 */
 function handleAddBoard() {
   boardList.value.push({
-    id: -Date.now(),
+    id: nextTemporaryId--,
     name: '',
     statusIds: [],
     statuses: [],
@@ -212,7 +214,7 @@ async function submitForm() {
       projectId.value,
       type.value,
       boardList.value.map((board) => ({
-        id: board.id,
+        id: board.id && board.id > 0 ? board.id : undefined,
         name: board.name.trim(),
         statusIds: board.statuses.map((status) => status.id),
       })),
@@ -329,10 +331,8 @@ const [Modal, modalApi] = useVbenModal({
           >
             <template #item="{ element }">
               <ElTag class="cursor-move" effect="plain">
-{{
-                element.name
-              }}
-</ElTag>
+                {{ element.name }}
+              </ElTag>
             </template>
           </draggable>
         </div>
@@ -367,10 +367,8 @@ const [Modal, modalApi] = useVbenModal({
               >
                 <template #item="{ element: status }">
                   <ElTag class="cursor-move" effect="plain">
-{{
-                    status.name
-                  }}
-</ElTag>
+                    {{ status.name }}
+                  </ElTag>
                 </template>
               </draggable>
             </div>

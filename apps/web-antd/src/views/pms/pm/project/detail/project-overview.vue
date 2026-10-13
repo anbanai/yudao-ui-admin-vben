@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { EChartsOption } from '@vben/plugins/echarts';
+import type { EChartsOption, EchartsUIType } from '@vben/plugins/echarts';
 
 import type { PmsIterationApi } from '#/api/pms/pm/iteration';
 import type { PmsProjectApi } from '#/api/pms/pm/project';
@@ -26,7 +26,6 @@ import {
   Spin,
   Tag,
 } from 'ant-design-vue';
-import dayjs from 'dayjs';
 
 import { getIterationPage } from '#/api/pms/pm/iteration';
 import { getProjectOverview } from '#/api/pms/pm/project';
@@ -36,16 +35,13 @@ import {
   PmsProjectType,
 } from '#/views/pms/pm/utils/constants';
 import {
+  formatPmsDate,
   formatProjectCompletionRate,
   getIterationStatusTagType,
 } from '#/views/pms/pm/utils/format';
 import WorkItemDetail from '#/views/pms/pm/workitem/detail/work-item-detail.vue';
 
 defineOptions({ name: 'PmsProjectOverview' });
-
-// TODO @AI：antd/antdv-next 不要用 v-loading。日期用 formatDateTime，不要页面里 dayjs.format。
-// TODO @AI：概况只展示未完成迭代和最新公告，却分页拉取全部迭代/公告后再 filter[0]；应补后端状态/limit 查询或聚合接口，避免项目数据增长后首屏请求无界膨胀。
-// TODO @AI：trendChartRef 使用 ref<any>，应对齐 CRM/system 的 EchartsUIType 实例类型，避免模板 ref 和图表调用失去类型约束。
 
 const props = defineProps<{
   editable: boolean;
@@ -69,7 +65,7 @@ const latestAnnouncement = computed(() => announcements.value[0]); // 最新项�
 const isAgileProject = computed(
   () => props.project.type === PmsProjectType.AGILE,
 );
-const trendChartRef = ref<any>(); // 工作项趋势图
+const trendChartRef = ref<EchartsUIType>(); // 工作项趋势图
 const { renderEcharts: renderTrendChart } = useEcharts(trendChartRef);
 
 const trendChartOptions = computed<EChartsOption>(() => ({
@@ -135,6 +131,7 @@ function openAnnouncementConfig() {
       id: props.project.id,
     },
     query: {
+      pageKey: 'PmsProjectConfig',
       tabs: 'announcement',
     },
   });
@@ -249,7 +246,12 @@ onMounted(() => {
           <div class="flex items-center justify-between gap-2">
             <span class="truncate font-medium">{{ iteration.name }}</span>
             <Tag :color="getIterationStatusTagType(iteration.status)">
-              {{ getDictLabel(DICT_TYPE.PMS_ITERATION_STATUS, iteration.status) || '-' }}
+              {{
+                getDictLabel(
+                  DICT_TYPE.PMS_ITERATION_STATUS,
+                  iteration.status,
+                ) || '-'
+              }}
             </Tag>
           </div>
           <div
@@ -257,16 +259,10 @@ onMounted(() => {
           >
             <span>
               {{
-                iteration.startTime
-                  ? dayjs(iteration.startTime).format('YYYY-MM-DD')
-                  : '--'
+                iteration.startTime ? formatPmsDate(iteration.startTime) : '--'
               }}
               至
-              {{
-                iteration.endTime
-                  ? dayjs(iteration.endTime).format('YYYY-MM-DD')
-                  : '--'
-              }}
+              {{ iteration.endTime ? formatPmsDate(iteration.endTime) : '--' }}
             </span>
             <span v-if="iteration.progress !== undefined">
               完成 {{ iteration.progress }}%
@@ -301,17 +297,9 @@ onMounted(() => {
           {{ project.name }}
         </Descriptions.Item>
         <Descriptions.Item label="项目周期" :span="2">
-          {{
-            project.startTime
-              ? dayjs(project.startTime).format('YYYY-MM-DD')
-              : '未设置'
-          }}
+          {{ project.startTime ? formatPmsDate(project.startTime) : '未设置' }}
           至
-          {{
-            project.endTime
-              ? dayjs(project.endTime).format('YYYY-MM-DD')
-              : '未设置'
-          }}
+          {{ project.endTime ? formatPmsDate(project.endTime) : '未设置' }}
         </Descriptions.Item>
         <Descriptions.Item label="项目管理员">
           {{ project.adminNames.join('、') || '未设置' }}

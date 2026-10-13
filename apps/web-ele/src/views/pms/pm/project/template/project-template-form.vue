@@ -179,7 +179,7 @@ function initStatusSortable() {
         const targetStatus = group.statuses[newIndex]!;
         const oldGlobalIndex = formData.value.statuses.indexOf(movedStatus);
         const targetGlobalIndex = formData.value.statuses.indexOf(targetStatus);
-        if (oldGlobalIndex < 0 || targetGlobalIndex < 0) {
+        if (oldGlobalIndex === -1 || targetGlobalIndex === -1) {
           return;
         }
         formData.value.statuses.splice(oldGlobalIndex, 1);
@@ -286,7 +286,7 @@ function removeStatusByItem(
   status: PmsProjectTemplateApi.ProjectTemplateStatus,
 ) {
   const index = formData.value.statuses.indexOf(status);
-  if (index >= 0) {
+  if (index !== -1) {
     removeStatus(index);
   }
 }
@@ -543,11 +543,8 @@ const [Modal, modalApi] = useVbenModal({
     }
     try {
       await formRef.value.validate();
-    } catch (fields: any) {
-      activeTab.value = Object.prototype.hasOwnProperty.call(
-        fields,
-        'itemTypes',
-      )
+    } catch (error: any) {
+      activeTab.value = Object.prototype.hasOwnProperty.call(error, 'itemTypes')
         ? 'itemType'
         : 'basic';
       return;
@@ -700,10 +697,10 @@ onBeforeUnmount(destroySortables);
               @change="handleItemTypesChange"
             >
               <ElCheckbox
-                          v-for="item in getDictOptions(
-                            DICT_TYPE.PMS_WORK_ITEM_TYPE,
-                            'number',
-                          )"
+                v-for="item in getDictOptions(
+                  DICT_TYPE.PMS_WORK_ITEM_TYPE,
+                  'number',
+                )"
                 :key="item.value"
                 :value="item.value"
               >

@@ -18,13 +18,11 @@ import {
   Empty,
   Input,
   Menu,
-  MenuItem,
   message,
   Select,
   Spin,
   Tag,
 } from 'antdv-next';
-import dayjs from 'dayjs';
 import draggable from 'vuedraggable';
 
 import {
@@ -40,8 +38,8 @@ import {
   updateWorkItemIteration,
   updateWorkItemPlanningSort,
 } from '#/api/pms/pm/workitem';
-import IterationForm from '#/views/pms/pm/iteration/components/iteration-form.vue';
-import IterationStartForm from '#/views/pms/pm/iteration/components/iteration-start-form.vue';
+import IterationForm from '#/views/pms/pm/iteration/list/modules/form.vue';
+import IterationStartForm from '#/views/pms/pm/iteration/list/modules/start-form.vue';
 import {
   PmsIterationStatus,
   PmsWorkItemDefectType,
@@ -49,17 +47,15 @@ import {
   PmsWorkItemType,
 } from '#/views/pms/pm/utils/constants';
 import {
+  formatPmsDate,
   getIterationStatusTagType,
   getPriorityColor,
   getWorkItemStatusTagType,
 } from '#/views/pms/pm/utils/format';
 import WorkItemDetail from '#/views/pms/pm/workitem/detail/work-item-detail.vue';
-import WorkItemForm from '#/views/pms/pm/workitem/form/work-item-form.vue';
+import WorkItemForm from '#/views/pms/pm/workitem/list/modules/form.vue';
 
 defineOptions({ name: 'PmsPlanningBoard' });
-
-// TODO @AI：看板可以保留自定义拖拽；antd/antdv-next 不要用 v-loading。日期格式抽到 format.ts，不要页面里 dayjs.format。
-// TODO @AI：getPlanningData 先分页取全部迭代/待规划事项，再对每个迭代逐一分页取工作项，形成 N+1 且请求量随迭代数增长；优先补聚合规划接口或一次查询返回分组数据。
 
 const props = defineProps<{
   editable: boolean;
@@ -207,8 +203,7 @@ async function handleRecycleWorkItem(workItem: PmsWorkItemApi.WorkItem) {
     await recycleWorkItem(workItem.id!);
     message.success('已移入回收站');
     await getPlanningData();
-  } catch {
-  }
+  } catch {}
 }
 
 /** 处理迭代操作 */
@@ -238,8 +233,7 @@ async function handleCompleteIteration(iteration: PlanningIteration) {
     expandedIterationIds.delete(iteration.id);
     message.success('迭代已完成');
     await getPlanningData();
-  } catch {
-  }
+  } catch {}
 }
 
 /** 删除迭代 */
@@ -250,8 +244,7 @@ async function handleDeleteIteration(iteration: PlanningIteration) {
     expandedIterationIds.delete(iteration.id);
     message.success('删除成功');
     await getPlanningData();
-  } catch {
-  }
+  } catch {}
 }
 
 /** 记录当前拖拽工作项，支持投放到折叠迭代标题 */
@@ -480,7 +473,9 @@ onMounted(() => {
       <!-- Backlog 区域：展示尚未规划到迭代的工作项 -->
       <Card>
         <template #title>
-          <span class="font-semibold">Backlog 共 {{ unplannedWorkItems.length }} 个事项</span>
+          <div class="font-semibold">
+            Backlog 共 {{ unplannedWorkItems.length }} 个事项
+          </div>
         </template>
         <draggable
           v-model="unplannedWorkItems"
@@ -509,7 +504,12 @@ onMounted(() => {
                     :style="{ color: getPriorityColor(element.priority) }"
                   >
                     <span class="h-2 w-2 rounded-full bg-current"></span>
-                    {{ getDictLabel(DICT_TYPE.PMS_WORK_ITEM_PRIORITY, element.priority) || '-' }}
+                    {{
+                      getDictLabel(
+                        DICT_TYPE.PMS_WORK_ITEM_PRIORITY,
+                        element.priority,
+                      ) || '-'
+                    }}
                   </span>
                   <Tag :color="getWorkItemStatusTagType(element.status)">
                     {{ element.statusName }}
@@ -527,8 +527,8 @@ onMounted(() => {
                           ({ key }: any) => handleWorkItemCommand(key, element)
                         "
                       >
-                        <MenuItem key="edit">编辑事项</MenuItem>
-                        <MenuItem key="recycle">移入回收站</MenuItem>
+                        <Menu.Item key="edit">编辑事项</Menu.Item>
+                        <Menu.Item key="recycle">移入回收站</Menu.Item>
                       </Menu>
                     </template>
                   </Dropdown>
@@ -556,8 +556,8 @@ onMounted(() => {
             :options="
               getDictOptions(DICT_TYPE.PMS_WORK_ITEM_TYPE, 'number').map(
                 (item) => ({
-                label: item.label,
-                value: item.value,
+                  label: item.label,
+                  value: item.value,
                 }),
               )
             "
@@ -613,32 +613,32 @@ onMounted(() => {
                         ({ key }: any) => handleIterationCommand(key, iteration)
                       "
                     >
-                      <MenuItem
+                      <Menu.Item
                         v-if="iteration.status === PmsIterationStatus.PLANNED"
                         v-access:code="['pms:pm:iteration:update']"
                         key="start"
                       >
                         开始迭代
-                      </MenuItem>
-                      <MenuItem
+                      </Menu.Item>
+                      <Menu.Item
                         v-if="iteration.status === PmsIterationStatus.ACTIVE"
                         v-access:code="['pms:pm:iteration:update']"
                         key="complete"
                       >
                         完成迭代
-                      </MenuItem>
-                      <MenuItem
+                      </Menu.Item>
+                      <Menu.Item
                         v-access:code="['pms:pm:iteration:update']"
                         key="edit"
                       >
                         编辑迭代
-                      </MenuItem>
-                      <MenuItem
+                      </Menu.Item>
+                      <Menu.Item
                         v-access:code="['pms:pm:iteration:delete']"
                         key="delete"
                       >
                         删除迭代
-                      </MenuItem>
+                      </Menu.Item>
                     </Menu>
                   </template>
                 </Dropdown>
@@ -647,18 +647,21 @@ onMounted(() => {
                 <span class="text-xs text-muted-foreground">
                   {{
                     iteration.startTime
-                      ? dayjs(iteration.startTime).format('YYYY-MM-DD')
+                      ? formatPmsDate(iteration.startTime)
                       : '--'
                   }}
                   至
                   {{
-                    iteration.endTime
-                      ? dayjs(iteration.endTime).format('YYYY-MM-DD')
-                      : '--'
+                    iteration.endTime ? formatPmsDate(iteration.endTime) : '--'
                   }}
                 </span>
                 <Tag :color="getIterationStatusTagType(iteration.status)">
-                  {{ getDictLabel(DICT_TYPE.PMS_ITERATION_STATUS, iteration.status) || '-' }}
+                  {{
+                    getDictLabel(
+                      DICT_TYPE.PMS_ITERATION_STATUS,
+                      iteration.status,
+                    ) || '-'
+                  }}
                 </Tag>
               </div>
             </div>
@@ -691,7 +694,12 @@ onMounted(() => {
                       :style="{ color: getPriorityColor(element.priority) }"
                     >
                       <span class="h-2 w-2 rounded-full bg-current"></span>
-                      {{ getDictLabel(DICT_TYPE.PMS_WORK_ITEM_PRIORITY, element.priority) || '-' }}
+                      {{
+                        getDictLabel(
+                          DICT_TYPE.PMS_WORK_ITEM_PRIORITY,
+                          element.priority,
+                        ) || '-'
+                      }}
                     </span>
                     <Tag :color="getWorkItemStatusTagType(element.status)">
                       {{ element.statusName }}
@@ -710,8 +718,8 @@ onMounted(() => {
                               handleWorkItemCommand(key, element)
                           "
                         >
-                          <MenuItem key="edit">编辑事项</MenuItem>
-                          <MenuItem key="recycle">移入回收站</MenuItem>
+                          <Menu.Item key="edit">编辑事项</Menu.Item>
+                          <Menu.Item key="recycle">移入回收站</Menu.Item>
                         </Menu>
                       </template>
                     </Dropdown>
@@ -747,8 +755,8 @@ onMounted(() => {
               :options="
                 getDictOptions(DICT_TYPE.PMS_WORK_ITEM_TYPE, 'number').map(
                   (item) => ({
-                  label: item.label,
-                  value: item.value,
+                    label: item.label,
+                    value: item.value,
                   }),
                 )
               "
