@@ -1,10 +1,9 @@
-export function setTradeConfigTab<T extends { type?: string }>(
+export function setTradeConfigTab<T>(
   formData: T | undefined,
   activeKey: string,
-) {
+): (T & { type: string }) | undefined {
   if (!formData) {
     return undefined;
   }
-  formData.type = activeKey;
-  return formData;
+  return { ...formData, type: activeKey };
 }

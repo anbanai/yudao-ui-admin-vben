@@ -27,7 +27,11 @@ async function getConfigInfo() {
     if (!res) {
       return;
     }
-    formData.value = res;
+    const nextFormData = setTradeConfigTab(res, activeKey.value);
+    if (!nextFormData) {
+      return;
+    }
+    formData.value = nextFormData;
     // 转换金额单位
     formData.value.deliveryExpressFreePrice = Number.parseFloat(
       fenToYuan(formData.value.deliveryExpressFreePrice!),
@@ -35,9 +39,9 @@ async function getConfigInfo() {
     formData.value.brokerageWithdrawMinPrice = Number.parseFloat(
       fenToYuan(formData.value.brokerageWithdrawMinPrice!),
     );
-    setTradeConfigTab(formData.value, activeKey.value);
     // 设置到 values
     await formApi.setValues(formData.value);
+    await formApi.setFieldValue('type', activeKey.value);
     formApi.updateSchema(schema);
   } catch {
     ElMessage.error('交易配置加载失败，请刷新重试');
@@ -47,13 +51,14 @@ async function getConfigInfo() {
 }
 
 /** 切换 Tab */
-function handleTabChange(key: number | string) {
+async function handleTabChange(key: number | string) {
   activeKey.value = String(key);
   const nextFormData = setTradeConfigTab(formData.value, activeKey.value);
   if (!nextFormData) {
     return;
   }
-  formApi.setValues(nextFormData);
+  formData.value = nextFormData;
+  await formApi.setFieldValue('type', activeKey.value);
   formApi.updateSchema(schema);
 }
 

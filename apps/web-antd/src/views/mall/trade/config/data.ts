@@ -13,6 +13,7 @@ export const schema: VbenFormSchema[] = [
     component: 'Input',
     fieldName: 'type',
     hide: true,
+    defaultValue: 'afterSale',
   },
   {
     fieldName: 'kefuWechatQrCodeUrl',

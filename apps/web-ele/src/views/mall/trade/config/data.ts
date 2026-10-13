@@ -15,6 +15,7 @@ export const schema: VbenFormSchema[] = [
   {
     component: 'Input',
     fieldName: 'type',
+    defaultValue: 'afterSale',
     dependencies: {
       triggerFields: [''],
       show: () => false,

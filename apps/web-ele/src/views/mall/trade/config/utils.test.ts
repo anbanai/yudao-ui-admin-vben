@@ -11,5 +11,6 @@ describe('trade config tab state', () => {
     const config = { type: 'afterSale' };
 
     expect(setTradeConfigTab(config, 'kefu')).toEqual({ type: 'kefu' });
+    expect(config).toEqual({ type: 'afterSale' });
   });
 });
