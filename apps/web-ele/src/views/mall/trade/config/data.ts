@@ -21,6 +21,20 @@ export const schema: VbenFormSchema[] = [
     },
   },
   {
+    fieldName: 'kefuWechatQrCodeUrl',
+    label: '客服图片',
+    component: 'ImageUpload',
+    componentProps: {
+      maxNumber: 1,
+      placeholder: '请上传企微二维码或企微联系人图片',
+    },
+    dependencies: {
+      triggerFields: ['type'],
+      show: (values) => values.type === 'kefu',
+    },
+    help: '建议上传企微二维码或企微联系人图片，用户将在小程序中长按识别',
+  },
+  {
     fieldName: 'afterSaleRefundReasons',
     label: '退款理由',
     component: 'Select',

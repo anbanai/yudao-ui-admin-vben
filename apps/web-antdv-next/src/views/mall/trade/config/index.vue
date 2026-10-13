@@ -6,42 +6,54 @@ import { onMounted, ref } from 'vue';
 import { DocAlert, Page } from '@vben/common-ui';
 import { fenToYuan, yuanToFen } from '@vben/utils';
 
-import { Card, message, TabPane, Tabs } from 'antdv-next';
+import { Card, message, Spin, TabPane, Tabs } from 'antdv-next';
 
 import { useVbenForm } from '#/adapter/form';
 import { getTradeConfig, saveTradeConfig } from '#/api/mall/trade/config';
 import { $t } from '#/locales';
 
 import { schema } from './data';
+import { setTradeConfigTab } from './utils';
 
 const activeKey = ref('afterSale');
 const formData = ref<MallTradeConfigApi.Config & { type?: string }>();
+const loading = ref(true);
 
 /** 获取配置 */
 async function getConfigInfo() {
-  const res = await getTradeConfig();
-  if (!res) {
-    return;
+  loading.value = true;
+  try {
+    const res = await getTradeConfig();
+    if (!res) {
+      return;
+    }
+    formData.value = res;
+    // 转换金额单位
+    formData.value.deliveryExpressFreePrice = Number.parseFloat(
+      fenToYuan(formData.value.deliveryExpressFreePrice!),
+    );
+    formData.value.brokerageWithdrawMinPrice = Number.parseFloat(
+      fenToYuan(formData.value.brokerageWithdrawMinPrice!),
+    );
+    setTradeConfigTab(formData.value, activeKey.value);
+    // 设置到 values
+    await formApi.setValues(formData.value);
+    formApi.updateSchema(schema);
+  } catch {
+    message.error('交易配置加载失败，请刷新重试');
+  } finally {
+    loading.value = false;
   }
-  formData.value = res;
-  // 转换金额单位
-  formData.value.deliveryExpressFreePrice = Number.parseFloat(
-    fenToYuan(formData.value.deliveryExpressFreePrice!),
-  );
-  formData.value.brokerageWithdrawMinPrice = Number.parseFloat(
-    fenToYuan(formData.value.brokerageWithdrawMinPrice!),
-  );
-  formData.value!.type = activeKey.value;
-  formApi.updateSchema(schema);
-  // 设置到 values
-  await formApi.setValues(formData.value);
 }
 
 /** 切换 Tab */
-function handleTabChange(key: any) {
-  activeKey.value = key;
-  formData.value!.type = activeKey.value;
-  formApi.setValues(formData.value!);
+function handleTabChange(key: number | string) {
+  activeKey.value = String(key);
+  const nextFormData = setTradeConfigTab(formData.value, activeKey.value);
+  if (!nextFormData) {
+    return;
+  }
+  formApi.setValues(nextFormData);
   formApi.updateSchema(schema);
 }
 
@@ -89,11 +101,34 @@ onMounted(() => {
     </template>
     <Card>
       <Tabs :active-key="activeKey" @change="handleTabChange">
-        <TabPane tab="售后" key="afterSale" :force-render="true" />
-        <TabPane tab="配送" key="delivery" :force-render="true" />
-        <TabPane tab="分销" key="brokerage" :force-render="true" />
+        <TabPane
+          tab="售后"
+          key="afterSale"
+          :force-render="true"
+          :disabled="loading || !formData"
+        />
+        <TabPane
+          tab="配送"
+          key="delivery"
+          :force-render="true"
+          :disabled="loading || !formData"
+        />
+        <TabPane
+          tab="分销"
+          key="brokerage"
+          :force-render="true"
+          :disabled="loading || !formData"
+        />
+        <TabPane
+          tab="客服"
+          key="kefu"
+          :force-render="true"
+          :disabled="loading || !formData"
+        />
       </Tabs>
-      <Form class="w-2/5" />
+      <Spin :spinning="loading">
+        <Form class="w-2/5" />
+      </Spin>
     </Card>
   </Page>
 </template>

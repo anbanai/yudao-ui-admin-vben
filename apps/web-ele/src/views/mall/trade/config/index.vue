@@ -13,35 +13,47 @@ import { getTradeConfig, saveTradeConfig } from '#/api/mall/trade/config';
 import { $t } from '#/locales';
 
 import { schema } from './data';
+import { setTradeConfigTab } from './utils';
 
 const activeKey = ref('afterSale');
 const formData = ref<MallTradeConfigApi.Config & { type?: string }>();
+const loading = ref(true);
 
 /** 获取配置 */
 async function getConfigInfo() {
-  const res = await getTradeConfig();
-  if (!res) {
-    return;
+  loading.value = true;
+  try {
+    const res = await getTradeConfig();
+    if (!res) {
+      return;
+    }
+    formData.value = res;
+    // 转换金额单位
+    formData.value.deliveryExpressFreePrice = Number.parseFloat(
+      fenToYuan(formData.value.deliveryExpressFreePrice!),
+    );
+    formData.value.brokerageWithdrawMinPrice = Number.parseFloat(
+      fenToYuan(formData.value.brokerageWithdrawMinPrice!),
+    );
+    setTradeConfigTab(formData.value, activeKey.value);
+    // 设置到 values
+    await formApi.setValues(formData.value);
+    formApi.updateSchema(schema);
+  } catch {
+    ElMessage.error('交易配置加载失败，请刷新重试');
+  } finally {
+    loading.value = false;
   }
-  formData.value = res;
-  // 转换金额单位
-  formData.value.deliveryExpressFreePrice = Number.parseFloat(
-    fenToYuan(formData.value.deliveryExpressFreePrice!),
-  );
-  formData.value.brokerageWithdrawMinPrice = Number.parseFloat(
-    fenToYuan(formData.value.brokerageWithdrawMinPrice!),
-  );
-  formData.value!.type = activeKey.value;
-  formApi.updateSchema(schema);
-  // 设置到 values
-  await formApi.setValues(formData.value);
 }
 
 /** 切换 Tab */
-function handleTabChange(key: any) {
-  activeKey.value = key;
-  formData.value!.type = activeKey.value;
-  formApi.setValues(formData.value!);
+function handleTabChange(key: number | string) {
+  activeKey.value = String(key);
+  const nextFormData = setTradeConfigTab(formData.value, activeKey.value);
+  if (!nextFormData) {
+    return;
+  }
+  formApi.setValues(nextFormData);
   formApi.updateSchema(schema);
 }
 
@@ -87,11 +99,32 @@ onMounted(() => {
         url="https://doc.iocoder.cn/mall/trade-cart/"
       />
     </template>
-    <ElCard>
+    <ElCard v-loading="loading">
       <ElTabs :model-value="activeKey" @tab-change="handleTabChange">
-        <ElTabPane label="售后" name="afterSale" :force-render="true" />
-        <ElTabPane label="配送" name="delivery" :force-render="true" />
-        <ElTabPane label="分销" name="brokerage" :force-render="true" />
+        <ElTabPane
+          label="售后"
+          name="afterSale"
+          :force-render="true"
+          :disabled="loading || !formData"
+        />
+        <ElTabPane
+          label="配送"
+          name="delivery"
+          :force-render="true"
+          :disabled="loading || !formData"
+        />
+        <ElTabPane
+          label="分销"
+          name="brokerage"
+          :force-render="true"
+          :disabled="loading || !formData"
+        />
+        <ElTabPane
+          label="客服"
+          name="kefu"
+          :force-render="true"
+          :disabled="loading || !formData"
+        />
       </ElTabs>
       <Form class="w-2/5" />
     </ElCard>

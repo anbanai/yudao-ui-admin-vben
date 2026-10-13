@@ -20,6 +20,8 @@ export namespace MallTradeConfigApi {
     brokerageWithdrawFeePercent: number;
     brokerageWithdrawTypes: number[];
     tencentLbsKey?: string;
+    /** 企微客服二维码或联系人图片地址 */
+    kefuWechatQrCodeUrl?: string;
   }
 }
 
