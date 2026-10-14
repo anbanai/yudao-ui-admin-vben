@@ -13,7 +13,7 @@ import { getTradeConfig, saveTradeConfig } from '#/api/mall/trade/config';
 import { $t } from '#/locales';
 
 import { schema } from './data';
-import { setTradeConfigTab } from './utils';
+import { mergeTradeConfigFormValues, setTradeConfigTab } from './utils';
 
 const activeKey = ref('afterSale');
 const formData = ref<MallTradeConfigApi.Config & { type?: string }>();
@@ -69,7 +69,10 @@ async function handleSubmit() {
     return;
   }
   // 提交表单
-  const data = (await formApi.getValues()) as MallTradeConfigApi.Config;
+  const data = mergeTradeConfigFormValues(
+    formData.value,
+    (await formApi.getValues()) as MallTradeConfigApi.Config,
+  );
   // 转换金额单位
   data.deliveryExpressFreePrice = yuanToFen(data.deliveryExpressFreePrice!);
   data.brokerageWithdrawMinPrice = yuanToFen(data.brokerageWithdrawMinPrice!);
