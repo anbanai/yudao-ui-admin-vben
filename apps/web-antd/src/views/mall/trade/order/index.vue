@@ -56,6 +56,7 @@ const [SfBatchDeliveryFormModal, sfBatchDeliveryFormModalApi] = useVbenModal({
 
 const selectedOrders = ref<MallOrderApi.Order[]>([]);
 const summary = ref<MallOrderApi.OrderSummaryRespVO>();
+let summaryRequestId = 0;
 
 /** 刷新表格 */
 function handleRefresh() {
@@ -124,15 +125,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
           selectedOrders.value = [];
           await gridApi.grid?.clearCheckboxRow();
           const query = { ...formValues };
-          const [pageResult, summaryResult] = await Promise.all([
-            getOrderPage({
-              pageNo: page.currentPage,
-              pageSize: page.pageSize,
-              ...query,
-            }),
-            getOrderSummary(query),
-          ]);
-          summary.value = summaryResult;
+          const requestId = ++summaryRequestId;
+          const pageResult = await getOrderPage({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            ...query,
+          });
+          void getOrderSummary(query)
+            .then((result) => {
+              if (requestId === summaryRequestId) {
+                summary.value = result;
+              }
+            })
+            .catch((error) => {
+              console.error('Failed to load order summary:', error);
+            });
           return pageResult;
         },
       },
@@ -154,7 +161,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 
 <template>
-  <Page auto-content-height>
+  <Page auto-content-height content-class="flex flex-col overflow-hidden">
     <template #doc>
       <DocAlert
         title="【交易】交易订单"
@@ -208,7 +215,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         />
       </div>
     </Card>
-    <Grid table-title="订单列表">
+    <Grid class="min-h-0 flex-1" table-title="订单列表">
       <template #toolbar-tools>
         <TableAction
           :actions="[
