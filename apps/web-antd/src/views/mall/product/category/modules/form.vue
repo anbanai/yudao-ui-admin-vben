@@ -47,6 +47,13 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.lock();
     // 提交表单
     const data = (await formApi.getValues()) as MallCategoryApi.Category;
+    if (
+      Number(data.parentId) === 0 ||
+      data.displayProductCount === null ||
+      data.displayProductCount === undefined
+    ) {
+      data.displayProductCount = 6;
+    }
     try {
       await (formData.value?.id ? updateCategory(data) : createCategory(data));
       // 关闭并提示
@@ -72,6 +79,15 @@ const [Modal, modalApi] = useVbenModal({
       if (data.id) {
         data = await getCategory(data.id);
       }
+      data = {
+        ...data,
+        displayProductCount:
+          Number(data.parentId) === 0 ||
+          data.displayProductCount === null ||
+          data.displayProductCount === undefined
+            ? 6
+            : data.displayProductCount,
+      };
       // 设置到 values
       formData.value = data;
       await formApi.setValues(data);

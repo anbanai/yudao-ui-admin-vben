@@ -61,6 +61,28 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
+      fieldName: 'displayProductCount',
+      label: '展示商品数量',
+      component: 'InputNumber',
+      componentProps: {
+        class: '!w-full',
+        defaultValue: 6,
+        min: 1,
+        max: 50,
+        precision: 0,
+        placeholder: '请输入展示商品数量（1-50）',
+      },
+      dependencies: {
+        triggerFields: ['parentId'],
+        resolve: ({ values }) => ({
+          show: Number(values.parentId) !== 0,
+          componentProps: {
+            disabled: Number(values.parentId) === 0,
+          },
+        }),
+      },
+    },
+    {
       fieldName: 'sort',
       label: '分类排序',
       component: 'InputNumber',
@@ -118,6 +140,11 @@ export function useGridColumns(): VxeTableGridOptions<MallCategoryApi.Category>[
       cellRender: {
         name: 'CellImage',
       },
+    },
+    {
+      field: 'displayProductCount',
+      title: '展示商品数量',
+      minWidth: 110,
     },
     {
       field: 'sort',
