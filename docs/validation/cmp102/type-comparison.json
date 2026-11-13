@@ -1,0 +1,8 @@
+{
+  "baseline": 379,
+  "current": 378,
+  "newDiagnostics": [],
+  "removedDiagnostics": [
+    "src/views/mall/promotion/coupon/components/send-form.vue(22,16): error TS2571: Object is of type 'unknown'."
+  ]
+}

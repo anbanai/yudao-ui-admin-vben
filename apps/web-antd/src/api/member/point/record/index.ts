@@ -26,3 +26,14 @@ export function getRecordPage(params: PageParam) {
     },
   );
 }
+
+export interface PointStatistics {
+  grantTotal: number;
+  consumeTotal: number;
+  availableTotal: number;
+  expiredTotal: number;
+}
+/** 统计口径由后端返回，不受列表筛选条件影响。 */
+export function getPointStatistics() {
+  return requestClient.get<PointStatistics>('/member/point/record/statistics');
+}

@@ -105,6 +105,7 @@ export const PAGE_LIBS = [
     name: '营销组件',
     extended: true,
     components: [
+      'NewcomerCoupon',
       'PromotionCombination',
       'PromotionSeckill',
       'PromotionPoint',

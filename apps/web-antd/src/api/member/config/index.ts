@@ -4,6 +4,11 @@ export namespace MemberConfigApi {
   /** 积分设置信息 */
   export interface Config {
     id?: number;
+    pointValidityDays: number;
+    pointDoubleStartTime?: null | string;
+    pointDoubleEndTime?: null | string;
+    pointDoubleTimezone: string;
+    pointDoubleWeekdays?: string;
     pointTradeDeductEnable: boolean;
     pointTradeDeductUnitPrice: number;
     pointTradeDeductMaxPrice: number;

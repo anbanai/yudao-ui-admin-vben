@@ -12,6 +12,7 @@ import {
 } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
+import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
 import {
@@ -43,6 +44,90 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
+      fieldName: 'couponType',
+      label: '券用途',
+      component: 'RadioGroup',
+      defaultValue: 1,
+      componentProps: {
+        options: [
+          { label: '优惠券', value: 1 },
+          { label: '商品兑换券', value: 2 },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'exchangeSpuId',
+      label: '兑换商品SPU',
+      component: 'InputNumber',
+      componentProps: {
+        min: 1,
+        precision: 0,
+        placeholder: '选择兑换商品和规格',
+      },
+      dependencies: {
+        triggerFields: ['couponType'],
+        show: (v) => v.couponType === 2,
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'exchangeSkuId',
+      label: '兑换规格SKU',
+      component: 'InputNumber',
+      componentProps: { min: 1, precision: 0 },
+      dependencies: {
+        triggerFields: ['couponType'],
+        show: (v) => v.couponType === 2,
+      },
+      rules: 'required',
+      help: '绑定一个真实规格；兑换按正常订单履约，可能另付运费。',
+    },
+    {
+      fieldName: 'canStack',
+      label: '允许券叠加',
+      component: 'Switch',
+      defaultValue: false,
+      dependencies: {
+        triggerFields: ['couponType'],
+        show: (v) => v.couponType !== 2,
+      },
+    },
+    {
+      fieldName: 'stackLimit',
+      label: '同组叠加上限',
+      component: 'InputNumber',
+      defaultValue: 1,
+      componentProps: { min: 1, max: 10, precision: 0 },
+      rules: z.number().int().min(1).max(10),
+      dependencies: {
+        triggerFields: ['canStack', 'couponType'],
+        show: (v) => v.couponType !== 2 && v.canStack,
+      },
+    },
+    {
+      fieldName: 'stackWithPromotion',
+      label: '可同用其他营销',
+      component: 'Switch',
+      defaultValue: false,
+      help: '包括折扣、会员优惠、满减和积分抵扣；所有选中券都必须允许。',
+      dependencies: {
+        triggerFields: ['couponType'],
+        show: (v) => v.couponType !== 2,
+      },
+    },
+    {
+      fieldName: 'newcomerOnly',
+      label: '首页新人券',
+      component: 'Switch',
+      defaultValue: false,
+      help: '限用户主动领取模板；资格和升级隐藏由后台判断，已领取券有效期固定。',
+      dependencies: {
+        triggerFields: ['takeType'],
+        show: (v) => v.takeType === CouponTemplateTakeTypeEnum.USER.type,
+      },
+    },
+    {
       fieldName: 'description',
       label: '优惠券描述',
       component: 'Textarea',
@@ -52,7 +137,11 @@ export function useFormSchema(): VbenFormSchema[] {
     },
     {
       fieldName: 'productScope',
-      label: '优惠劵类型',
+      dependencies: {
+        triggerFields: ['couponType'],
+        show: (v) => v.couponType !== 2,
+      },
+      label: '商品适用范围',
       component: 'RadioGroup',
       componentProps: {
         options: getDictOptions(DICT_TYPE.PROMOTION_PRODUCT_SCOPE, 'number'),
@@ -65,8 +154,9 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '商品',
       component: 'Input',
       dependencies: {
-        triggerFields: ['productScope', 'productScopeValues'],
+        triggerFields: ['productScope', 'productScopeValues', 'couponType'],
         show: (model) =>
+          model.couponType !== 2 &&
           model.productScope === PromotionProductScopeEnum.SPU.scope,
         trigger(values, form) {
           // 当加载已有数据时，根据 productScopeValues 设置 productSpuIds
@@ -85,8 +175,9 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '商品分类',
       component: 'Input',
       dependencies: {
-        triggerFields: ['productScope', 'productScopeValues'],
+        triggerFields: ['productScope', 'productScopeValues', 'couponType'],
         show: (model) =>
+          model.couponType !== 2 &&
           model.productScope === PromotionProductScopeEnum.CATEGORY.scope,
         trigger(values, form) {
           // 当加载已有数据时，根据 productScopeValues 设置 productCategoryIds
@@ -109,6 +200,10 @@ export function useFormSchema(): VbenFormSchema[] {
     },
     {
       fieldName: 'discountType',
+      dependencies: {
+        triggerFields: ['couponType'],
+        show: (v) => v.couponType !== 2,
+      },
       label: '优惠类型',
       component: 'RadioGroup',
       componentProps: {
@@ -129,8 +224,9 @@ export function useFormSchema(): VbenFormSchema[] {
         addonAfter: '元',
       },
       dependencies: {
-        triggerFields: ['discountType'],
+        triggerFields: ['discountType', 'couponType'],
         show: (model) =>
+          model.couponType !== 2 &&
           model.discountType === PromotionDiscountTypeEnum.PRICE.type,
       },
       rules: 'required',
@@ -148,8 +244,9 @@ export function useFormSchema(): VbenFormSchema[] {
         addonAfter: '折',
       },
       dependencies: {
-        triggerFields: ['discountType'],
+        triggerFields: ['discountType', 'couponType'],
         show: (model) =>
+          model.couponType !== 2 &&
           model.discountType === PromotionDiscountTypeEnum.PERCENT.type,
       },
       rules: 'required',
@@ -166,14 +263,16 @@ export function useFormSchema(): VbenFormSchema[] {
         addonAfter: '元',
       },
       dependencies: {
-        triggerFields: ['discountType'],
+        triggerFields: ['discountType', 'couponType'],
         show: (model) =>
+          model.couponType !== 2 &&
           model.discountType === PromotionDiscountTypeEnum.PERCENT.type,
       },
       rules: 'required',
     },
     {
       fieldName: 'usePrice',
+      defaultValue: 0,
       label: '满多少元可以使用',
       component: 'InputNumber',
       componentProps: {
@@ -205,11 +304,7 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '发放数量，没有之后不能领取或发放，-1 为不限制',
         addonAfter: '张',
       },
-      dependencies: {
-        triggerFields: ['takeType'],
-        show: (model) =>
-          model.takeType === CouponTemplateTakeTypeEnum.USER.type,
-      },
+
       rules: 'required',
     },
     {
@@ -222,10 +317,7 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '设置为 -1 时，可无限领取',
         addonAfter: '张',
       },
-      dependencies: {
-        triggerFields: ['takeType'],
-        show: (model) => model.takeType === 1,
-      },
+
       rules: 'required',
     },
     {
@@ -247,7 +339,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RangePicker',
       componentProps: {
         ...getRangePickerDefaultProps(),
-        valueFormat: 'x',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       dependencies: {
         triggerFields: ['validityType'],
@@ -373,6 +465,18 @@ export function useGridColumns(
       field: 'name',
       title: '优惠券名称',
       minWidth: 140,
+    },
+    {
+      field: 'couponType',
+      title: '券用途',
+      minWidth: 110,
+      formatter: ({ cellValue }) => (cellValue === 2 ? '商品兑换券' : '优惠券'),
+    },
+    {
+      field: 'newcomerOnly',
+      title: '新人专享',
+      minWidth: 90,
+      formatter: ({ cellValue }) => (cellValue ? '是' : '否'),
     },
     {
       field: 'productScope',

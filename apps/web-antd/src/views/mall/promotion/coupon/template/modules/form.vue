@@ -7,7 +7,7 @@ import { useVbenModal } from '@vben/common-ui';
 import { CouponTemplateTakeTypeEnum } from '@vben/constants';
 import { convertToInteger, formatToFraction } from '@vben/utils';
 
-import { message } from 'ant-design-vue';
+import { Button, message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import {
@@ -18,6 +18,7 @@ import {
 import { $t } from '#/locales';
 import { ProductCategorySelect } from '#/views/mall/product/category/components';
 import { SpuShowcase } from '#/views/mall/product/spu/components';
+import SpuSelect from '#/views/mall/product/spu/components/spu-select.vue';
 
 import { useFormSchema } from '../data';
 
@@ -28,6 +29,14 @@ const formData = ref<
     productSpuIds?: number[];
   }
 >({});
+const exchangeSelect = ref<InstanceType<typeof SpuSelect>>();
+async function chooseExchange(spuId: number, skuIds?: number[]) {
+  if (!skuIds?.[0]) return;
+  formData.value.exchangeSpuId = spuId;
+  formData.value.exchangeSkuId = skuIds[0];
+  await formApi.setFieldValue('exchangeSpuId', spuId);
+  await formApi.setFieldValue('exchangeSkuId', skuIds[0]);
+}
 const getTitle = computed(() => {
   return formData.value?.id
     ? $t('ui.actionTitle.edit', ['优惠券模板'])
@@ -67,10 +76,9 @@ const [Modal, modalApi] = useVbenModal({
       return;
     }
     modalApi.lock();
-    // 提交表单
-    const formValues = (await formApi.getValues()) as any;
-    const data = await processSubmitData(formValues);
     try {
+      const formValues = (await formApi.getValues()) as any;
+      const data = await processSubmitData(formValues);
       await (formData.value?.id
         ? updateCouponTemplate(data)
         : createCouponTemplate(data));
@@ -110,8 +118,35 @@ async function processSubmitData(
 ): Promise<MallCouponTemplateApi.CouponTemplate> {
   return {
     ...formValues,
+    couponType: formValues.couponType ?? 1,
+    discountType: formValues.couponType === 2 ? 1 : formValues.discountType,
+    productScope: formValues.couponType === 2 ? 2 : formValues.productScope,
+    productScopeValues:
+      formValues.couponType === 2
+        ? [formValues.exchangeSpuId]
+        : formValues.productScopeValues,
+    exchangeSpuId:
+      formValues.couponType === 2 ? formValues.exchangeSpuId : null,
+    exchangeSkuId:
+      formValues.couponType === 2 ? formValues.exchangeSkuId : null,
+    canStack:
+      formValues.couponType === 2 ? false : Boolean(formValues.canStack),
+    stackLimit:
+      formValues.couponType === 2 || !formValues.canStack
+        ? 1
+        : formValues.stackLimit,
+    stackWithPromotion:
+      formValues.couponType === 2
+        ? false
+        : Boolean(formValues.stackWithPromotion),
+    newcomerOnly:
+      formValues.takeType === CouponTemplateTakeTypeEnum.USER.type &&
+      Boolean(formValues.newcomerOnly),
     // 金额转换：元转分
-    discountPrice: convertToInteger(formValues.discountPrice),
+    discountPrice:
+      formValues.couponType === 2
+        ? 0
+        : convertToInteger(formValues.discountPrice),
     discountPercent:
       formValues.discountPercent === undefined
         ? undefined
@@ -128,14 +163,8 @@ async function processSubmitData(
         ? formValues.validTimes[1]
         : undefined,
     // 处理发放数量和限领数量
-    totalCount:
-      formValues.takeType === CouponTemplateTakeTypeEnum.USER.type
-        ? formValues.totalCount
-        : -1,
-    takeLimitCount:
-      formValues.takeType === CouponTemplateTakeTypeEnum.USER.type
-        ? formValues.takeLimitCount
-        : -1,
+    totalCount: formValues.totalCount ?? -1,
+    takeLimitCount: formValues.takeLimitCount ?? -1,
   };
 }
 
@@ -165,6 +194,12 @@ async function processLoadData(
 <template>
   <Modal :title="getTitle" class="w-2/5">
     <Form class="mx-4">
+      <template #exchangeSpuId>
+        <div>
+          <Button @click="exchangeSelect?.open()">选择规格</Button>
+          <p>已选商品：{{ formData.exchangeSpuId }}</p>
+        </div>
+      </template>
       <!-- 自定义插槽：商品选择 -->
       <template #productSpuIds>
         <SpuShowcase v-model="formData.productSpuIds" />
@@ -174,5 +209,11 @@ async function processLoadData(
         <ProductCategorySelect v-model="formData.productCategoryIds" />
       </template>
     </Form>
+    <SpuSelect
+      ref="exchangeSelect"
+      :is-select-sku="true"
+      :radio="true"
+      @select="chooseExchange"
+    />
   </Modal>
 </template>

@@ -6,6 +6,13 @@ export namespace MallCouponTemplateApi {
   /** 优惠券模板 */
   export interface CouponTemplate {
     id: number; // 模板编号
+    couponType: number;
+    exchangeSpuId?: number;
+    exchangeSkuId?: number;
+    canStack: boolean;
+    stackLimit: number;
+    stackWithPromotion: boolean;
+    newcomerOnly: boolean;
     name: string; // 模板名称
     status: number; // 状态
     totalCount: number; // 发放数量

@@ -1,0 +1,30 @@
+.                                        | [WARN] Unsupported engine: wanted: {"node":"^22.18.0 || ^24.12.0"} (current: {"node":"v26.13.0","pnpm":"11.16.0"})
+$ pnpm vite build --mode production
+failed to load config from /Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376/apps/web-antd/vite.config.ts
+error during build:
+Error: Build failed with 1 error:
+
+[plugin externalize-deps]
+Error: Failed to resolve entry for package "@vben/vite-config". The package may have incorrect main/module/exports specified in its package.json.
+    at packageEntryFailure (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:33172:30)
+    at resolvePackageEntry (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:33169:2)
+    at tryNodeResolve (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:33068:70)
+    at nodeResolveWithVite (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:33277:9)
+    at PluginContextImpl.handler (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:37062:19)
+    at plugin (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/rolldown@1.2.6/node_modules/rolldown/dist/shared/bindingify-input-options-4JJxbZl2.mjs:1459:30)
+    at file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/rolldown@1.2.6/node_modules/rolldown/dist/shared/bindingify-input-options-4JJxbZl2.mjs:1930:21
+    at plugin.<computed> (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/rolldown@1.2.6/node_modules/rolldown/dist/shared/bindingify-input-options-4JJxbZl2.mjs:2127:18)
+    at aggregateBindingErrorsIntoJsError (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/rolldown@1.2.6/node_modules/rolldown/dist/shared/error-HDibX49O.mjs:48:18)
+    at unwrapBindingResult (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/rolldown@1.2.6/node_modules/rolldown/dist/shared/error-HDibX49O.mjs:18:128)
+    at #build (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/rolldown@1.2.6/node_modules/rolldown/dist/shared/rolldown-C9Hfg50O.mjs:133:34)
+    at async bundleConfigFile (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:37116:17)
+    at async bundleAndLoadConfigFile (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:37014:18)
+    at async loadConfigFromFile (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:36975:42)
+    at async resolveConfig (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:36581:22)
+    at async createBuilder (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/chunks/node.js:34217:17)
+    at async CAC.<anonymous> (file:///Users/Shared/teaworthshare/yudao-ui-admin-vben/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.5_esbuild@0.28.2_jiti@2.7.0_less@4.9.0_supports-color@10.2._88d8d9e6124c691969a6183f3561b02a/node_modules/vite/dist/node/cli.js:765:19) {
+  errors: [Getter/Setter]
+}
+/Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376/apps/web-antd:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @vben/web-antd@5.7.0 build: `pnpm vite build --mode production`
+Exit status 1

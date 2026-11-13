@@ -65,6 +65,15 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
+      fieldName: 'pointMultiplier',
+      label: '积分倍率(%)',
+      component: 'InputNumber',
+      defaultValue: 100,
+      rules: z.number().int().min(100).max(1000),
+      help: '100为1倍，150为1.5倍；命中双倍时段固定2倍，不与等级倍率相乘。',
+      componentProps: { min: 100, max: 1000, precision: 0, class: '!w-full' },
+    },
+    {
       fieldName: 'icon',
       label: '等级图标',
       component: 'ImageUpload',
@@ -166,6 +175,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '享受折扣(%)',
       minWidth: 120,
     },
+    { field: 'pointMultiplier', title: '积分倍率(%)', minWidth: 120 },
     {
       field: 'status',
       title: '状态',

@@ -8,6 +8,7 @@ export namespace MemberLevelApi {
     experience: number;
     value: number;
     discountPercent: number;
+    pointMultiplier: number;
     icon: string;
     bgUrl: string;
     status: number;
