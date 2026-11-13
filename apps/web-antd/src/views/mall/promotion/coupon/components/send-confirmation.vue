@@ -5,14 +5,15 @@ import { computed } from 'vue';
 
 import { Alert, Button } from 'ant-design-vue';
 
-import { readBatchSnapshot } from './send-session';
+import { isCouponSendBatchTerminal, readBatchSnapshot } from './send-session';
 const props = defineProps<{
   batch: MallCouponApi.SendBatch;
   busy: boolean;
   uncertain: boolean;
 }>();
-defineEmits<{ cancel: []; confirm: []; recover: [] }>();
+defineEmits<{ cancel: []; confirm: []; discard: []; recover: [] }>();
 const snapshot = computed(() => readBatchSnapshot(props.batch));
+const terminal = computed(() => isCouponSendBatchTerminal(props.batch.status));
 const blocked = computed(
   () =>
     props.batch.failureCount > 0 ||
@@ -23,17 +24,27 @@ const blocked = computed(
 <template>
   <section class="space-y-3 rounded border p-4" aria-label="发券二次确认">
     <h3 class="text-lg font-bold">
-      {{ batch.status === 1 ? '发券结果' : '确认发放优惠券' }}
+      {{ terminal ? '发券结果' : '确认发放优惠券' }}
     </h3>
     <Alert
       v-if="uncertain"
       type="warning"
-      message="提交结果待确认，请查询或按同一批次重试。不要新建批次。"
+      message="操作结果待确认，请查询、按同一批次重试发放或安全作废。终态确认前不要新建批次。"
     />
     <Alert
       v-else-if="batch.status === 1"
       type="success"
       :message="`已发放 ${batch.successCount} 人；重复查询不会再次发券`"
+    />
+    <Alert
+      v-else-if="batch.status === 2"
+      type="error"
+      message="批次发放失败，未发放优惠券。请关闭结果，修正后重新预检。"
+    />
+    <Alert
+      v-else-if="batch.status === 3"
+      type="info"
+      message="批次已作废，未发放优惠券。可关闭结果后重新预检。"
     />
     <p>批次号：{{ batch.id }}；操作人：{{ batch.operatorId }}</p>
     <p>模板：{{ snapshot.template.name }}（{{ batch.templateId }}）</p>
@@ -136,7 +147,7 @@ const blocked = computed(
         :disabled="busy || uncertain"
         @click="$emit('cancel')"
       >
-        {{ batch.status === 1 ? '完成' : '取消确认' }}
+        {{ terminal ? '完成' : '取消确认' }}
       </Button>
       <Button
         v-if="batch.status === 0"
@@ -147,6 +158,16 @@ const blocked = computed(
         @click="$emit('confirm')"
       >
         {{ uncertain ? '按此批次重试' : '确认发放' }}
+      </Button>
+      <Button
+        v-if="uncertain && batch.status === 0"
+        v-access:code="['promotion:coupon:send']"
+        data-testid="discard"
+        danger
+        :loading="busy"
+        @click="$emit('discard')"
+      >
+        安全作废批次
       </Button>
       <Button
         v-access:code="['promotion:coupon:query']"

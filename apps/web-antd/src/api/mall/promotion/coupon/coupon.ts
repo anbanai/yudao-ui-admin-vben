@@ -35,7 +35,7 @@ export namespace MallCouponApi {
     id: number;
     templateId: number;
     operatorId?: number;
-    status: number;
+    status: number; // 0 PENDING / 1 SUCCEEDED / 2 FAILED / 3 CANCELED
     totalCount: number;
     successCount: number;
     failureCount: number;
@@ -75,5 +75,12 @@ export function getCouponSendBatch(id: number) {
   return requestClient.get<MallCouponApi.SendBatch>(
     '/promotion/coupon/send-batch',
     { params: { id } },
+  );
+}
+
+/** 持锁作废待提交批次；如果原提交已完成，需查询其真实终态。 */
+export function cancelCouponSendBatch(batchId: number) {
+  return requestClient.post<MallCouponApi.SendBatch>(
+    `/promotion/coupon/send-cancel?batchId=${batchId}`,
   );
 }

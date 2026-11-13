@@ -6,9 +6,15 @@ import { reactive } from 'vue';
 type SendRequest = Omit<MallCouponApi.CouponSendReqVO, 'idempotencyKey'>;
 type Batch = MallCouponApi.SendBatch;
 interface SendApi {
+  cancel: (batchId: number) => Promise<Batch>;
   preview: (request: MallCouponApi.CouponSendReqVO) => Promise<Batch>;
   submit: (batchId: number) => Promise<Batch>;
   read: (batchId: number) => Promise<Batch>;
+}
+
+/** CouponSendBatchStatusEnum: PENDING=0, SUCCEEDED=1, FAILED=2, CANCELED=3. */
+export function isCouponSendBatchTerminal(status?: number) {
+  return status === 1 || status === 2 || status === 3;
 }
 
 export function parseMobileList(text: string) {
@@ -69,6 +75,25 @@ export function createCouponSendSession(
   });
   let fingerprint = '';
   let key = '';
+  async function resolvePending(id: number, operation: SendApi['submit']) {
+    storage?.setItem(pendingKey, String(id));
+    state.uncertain = true;
+    try {
+      state.batch = await operation(id);
+    } catch (error) {
+      try {
+        state.batch = await api.read(id);
+      } catch {
+        throw error;
+      }
+      if (!isCouponSendBatchTerminal(state.batch?.status)) throw error;
+    }
+    readBatchSnapshot(state.batch);
+    if (!isCouponSendBatchTerminal(state.batch.status))
+      throw new Error('操作结果待确认，请查询当前批次');
+    storage?.removeItem(pendingKey);
+    state.uncertain = false;
+  }
   return {
     state,
     async restore() {
@@ -103,6 +128,21 @@ export function createCouponSendSession(
       fingerprint = '';
       key = '';
     },
+    async discard() {
+      if (state.busy || isCouponSendBatchTerminal(state.batch?.status)) return;
+      const batch = state.batch;
+      if (!batch || batch.status !== 0) throw new Error('请先恢复待提交批次');
+      if (pendingId() && pendingId() !== batch.id) {
+        state.uncertain = true;
+        throw new Error('请先查询待确认批次');
+      }
+      state.busy = true;
+      try {
+        await resolvePending(batch.id, api.cancel);
+      } finally {
+        state.busy = false;
+      }
+    },
     async recover(id: number) {
       if (pendingId() && pendingId() !== id)
         throw new Error('请先查询待确认批次');
@@ -114,7 +154,7 @@ export function createCouponSendSession(
         const batch = await api.read(id);
         readBatchSnapshot(batch);
         state.batch = batch;
-        if (!state.uncertain || batch.status === 1) {
+        if (!state.uncertain || isCouponSendBatchTerminal(batch.status)) {
           storage?.removeItem(pendingKey);
           state.uncertain = false;
         }
@@ -123,7 +163,7 @@ export function createCouponSendSession(
       }
     },
     async confirm() {
-      if (state.busy || state.batch?.status === 1) return;
+      if (state.busy || isCouponSendBatchTerminal(state.batch?.status)) return;
       const batch = state.batch;
       if (
         !batch ||
@@ -139,20 +179,7 @@ export function createCouponSendSession(
       }
       state.busy = true;
       try {
-        storage?.setItem(pendingKey, String(batch.id));
-        state.uncertain = true;
-        try {
-          state.batch = await api.submit(batch.id);
-        } catch (error) {
-          try {
-            state.batch = await api.read(batch.id);
-          } catch {
-            throw error;
-          }
-          if (state.batch?.status !== 1) throw error;
-        }
-        storage?.removeItem(pendingKey);
-        state.uncertain = false;
+        await resolvePending(batch.id, api.submit);
       } finally {
         state.busy = false;
       }

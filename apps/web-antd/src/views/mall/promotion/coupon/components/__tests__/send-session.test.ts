@@ -21,6 +21,10 @@ const batch = {
 function setup(overrides = {}) {
   const calls: string[] = [];
   const api = {
+    cancel: async (id: number) => {
+      calls.push(`cancel:${id}`);
+      return { ...batch, status: 3, failureDetails: 'CANCELED_BY_OPERATOR' };
+    },
     preview: async (request: any) => {
       calls.push(`preview:${request.idempotencyKey}`);
       return { ...batch };
@@ -38,6 +42,90 @@ function setup(overrides = {}) {
   return { calls, session: createCouponSendSession(api) };
 }
 describe('coupon issuance session', () => {
+  it.each([1, 2, 3])(
+    'releases recovered terminal status %s for closing and a fresh preview',
+    async (status) => {
+      const values = new Map([['marketing-coupon-pending-batch', '17']]);
+      const storage = {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          values.set(key, value);
+        },
+        removeItem: (key: string) => {
+          values.delete(key);
+        },
+      };
+      const keys: string[] = [];
+      let submitted = 0;
+      const session = createCouponSendSession(
+        {
+          cancel: async () => ({ ...batch, status: 3 }),
+          preview: async (request) => {
+            keys.push(request.idempotencyKey);
+            return { ...batch };
+          },
+          submit: async () => {
+            submitted++;
+            return { ...batch, status: 1 };
+          },
+          read: async () => ({
+            ...batch,
+            status,
+            failureDetails: status === 2 ? '模板已变更' : '',
+          }),
+        },
+        storage,
+      );
+      await session.restore();
+      expect(session.state.batch?.status).toBe(status);
+      expect(session.state.uncertain).toBe(false);
+      expect(values.has('marketing-coupon-pending-batch')).toBe(false);
+      await session.confirm();
+      expect(submitted).toBe(0);
+      session.cancel();
+      expect(session.state.batch).toBeUndefined();
+      await session.preview({ templateId: 1, userIds: [3, 5] });
+      session.cancel();
+      await session.preview({ templateId: 1, userIds: [3, 5] });
+      expect(keys[0]).not.toBe(keys[1]);
+    },
+  );
+  it.each([2, 3])(
+    'handles terminal status %s returned directly by submit',
+    async (status) => {
+      const { session } = setup({ submit: async () => ({ ...batch, status }) });
+      await session.preview({ templateId: 1, userIds: [3, 5] });
+      await session.confirm();
+      expect(session.state.uncertain).toBe(false);
+      session.cancel();
+      expect(session.state.batch).toBeUndefined();
+    },
+  );
+  it.each([2, 3])(
+    'resolves a timed-out submission when the query returns terminal status %s',
+    async (status) => {
+      const { session } = setup({
+        submit: async () => {
+          throw new Error('timeout');
+        },
+        read: async () => ({ ...batch, status }),
+      });
+      await session.preview({ templateId: 1, userIds: [3, 5] });
+      await session.confirm();
+      expect(session.state.batch?.status).toBe(status);
+      expect(session.state.uncertain).toBe(false);
+      session.cancel();
+      expect(session.state.batch).toBeUndefined();
+    },
+  );
+  it('does not release an ambiguous submission on a nonterminal submit response', async () => {
+    const { session } = setup({ submit: async () => ({ ...batch }) });
+    await session.preview({ templateId: 1, userIds: [3, 5] });
+    await session.confirm().catch(() => {});
+    expect(session.state.uncertain).toBe(true);
+    session.cancel();
+    expect(session.state.batch?.id).toBe(17);
+  });
   it('canceling a preview never submits', async () => {
     const { session, calls } = setup();
     await session.preview({ templateId: 1, userIds: [3, 5] });
@@ -110,6 +198,116 @@ describe('coupon issuance session', () => {
     expect(keys[0]).toBe(keys[1]);
   });
 });
+
+describe('safe discard of an uncertain batch', () => {
+  function pendingSession(overrides = {}) {
+    const calls: string[] = [];
+    const values = new Map([['marketing-coupon-pending-batch', '17']]);
+    const session = createCouponSendSession(
+      {
+        preview: async () => {
+          calls.push('preview');
+          return { ...batch };
+        },
+        submit: async () => {
+          calls.push('submit');
+          return { ...batch, status: 1 };
+        },
+        read: async () => {
+          calls.push('read');
+          return { ...batch };
+        },
+        cancel: async (id: number) => {
+          calls.push(`cancel:${id}`);
+          return {
+            ...batch,
+            status: 3,
+            failureDetails: 'CANCELED_BY_OPERATOR',
+          };
+        },
+        ...overrides,
+      },
+      {
+        getItem: (key) => values.get(key) ?? null,
+        setItem: (key, value) => {
+          values.set(key, value);
+        },
+        removeItem: (key) => {
+          values.delete(key);
+        },
+      },
+    );
+    return { session, calls, values };
+  }
+  it('safely discards the same pending batch once without submitting coupons', async () => {
+    const { session, calls, values } = pendingSession();
+    await session.restore();
+    expect(session.state.uncertain).toBe(true);
+    await Promise.all([session.discard(), session.discard()]);
+    expect(calls).toEqual(['read', 'cancel:17']);
+    expect(session.state.batch?.status).toBe(3);
+    expect(session.state.uncertain).toBe(false);
+    expect(values.has('marketing-coupon-pending-batch')).toBe(false);
+    session.cancel();
+    await session.preview({ templateId: 1, userIds: [3, 5] });
+    expect(calls).toEqual(['read', 'cancel:17', 'preview']);
+  });
+  it.each([1, 2, 3])(
+    'uses terminal status %s from the query when discard races a submission or times out',
+    async (status) => {
+      let reads = 0;
+      const { session, values } = pendingSession({
+        cancel: async () => {
+          throw new Error('cancel rejected or timeout');
+        },
+        read: async () =>
+          ++reads === 1
+            ? { ...batch }
+            : { ...batch, status, successCount: status === 1 ? 2 : 0 },
+      });
+      await session.restore();
+      await session.discard();
+      expect(session.state.batch?.status).toBe(status);
+      expect(session.state.batch?.successCount).toBe(status === 1 ? 2 : 0);
+      expect(session.state.uncertain).toBe(false);
+      expect(values.has('marketing-coupon-pending-batch')).toBe(false);
+    },
+  );
+  it.each(['pending', 'offline'])(
+    'retains protection when discard is ambiguous and recovery is %s',
+    async (recovery) => {
+      let reads = 0;
+      const { session, values } = pendingSession({
+        cancel: async () => {
+          throw new Error('cancel timeout');
+        },
+        read: async () => {
+          if (++reads > 1 && recovery === 'offline') throw new Error('offline');
+          return { ...batch };
+        },
+      });
+      await session.restore();
+      await expect(session.discard()).rejects.toThrow('cancel timeout');
+      expect(session.state.uncertain).toBe(true);
+      expect(values.get('marketing-coupon-pending-batch')).toBe('17');
+      session.cancel();
+      expect(session.state.batch?.id).toBe(17);
+      await expect(
+        session.preview({ templateId: 1, userIds: [3] }),
+      ).rejects.toThrow('请先查询或重试当前批次');
+    },
+  );
+  it('does not call the discard API for an already terminal batch', async () => {
+    const { session, calls } = pendingSession({
+      read: async () => ({ ...batch, status: 2 }),
+    });
+    await session.restore();
+    await session.discard();
+    expect(calls).toEqual([]);
+    session.cancel();
+    expect(session.state.batch).toBeUndefined();
+  });
+});
 describe('import and confirmation snapshots', () => {
   it('deduplicates phones, strips BOM and reports malformed rows without inventing accounts', () => {
     expect(
@@ -140,6 +338,7 @@ describe('interrupted browser session', () => {
       },
     };
     const api = {
+      cancel: async () => ({ ...batch, status: 3 }),
       preview: async () => ({ ...batch }),
       submit: async () => {
         throw new Error('timeout');
@@ -182,6 +381,7 @@ it('clears a successful pending batch before starting another browser session', 
     },
   };
   const api = {
+    cancel: async () => ({ ...batch, status: 3 }),
     preview: async () => ({ ...batch }),
     submit: async () => ({ ...batch, status: 1, successCount: 2 }),
     read: async () => ({ ...batch }),
@@ -206,6 +406,7 @@ it('keeps an in-flight batch protected when the query still returns preview stat
     },
   };
   const api = {
+    cancel: async () => ({ ...batch, status: 3 }),
     preview: async () => ({ ...batch }),
     submit: async () => ({ ...batch, status: 1, successCount: 2 }),
     read: async () => ({ ...batch }),
@@ -235,6 +436,7 @@ it('blocks a pre-existing component when another component left a pending batch'
     },
   };
   const api = {
+    cancel: async () => ({ ...batch, status: 3 }),
     preview: async () => ({ ...batch }),
     submit: async () => {
       throw new Error('timeout');

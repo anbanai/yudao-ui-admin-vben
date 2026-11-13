@@ -1,0 +1,18 @@
+[
+  {
+    "check": "eslint",
+    "exitCode": 0
+  },
+  {
+    "check": "oxlint",
+    "exitCode": 0
+  },
+  {
+    "check": "oxfmt",
+    "exitCode": 0
+  },
+  {
+    "check": "sfc",
+    "exitCode": 0
+  }
+]

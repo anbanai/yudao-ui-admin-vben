@@ -19,6 +19,7 @@ import {
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  cancelCouponSendBatch,
   getCouponSendBatch,
   previewCouponSend,
   submitCouponSend,
@@ -39,6 +40,7 @@ const importBusy = ref(false);
 const phones = computed(() => parseMobileList(mobilesText.value));
 const session = createCouponSendSession(
   {
+    cancel: cancelCouponSendBatch,
     preview: previewCouponSend,
     submit: submitCouponSend,
     read: getCouponSendBatch,
@@ -120,6 +122,16 @@ async function handleRecover() {
     message.error('查询失败，请检查批次号和查询权限后重试');
   }
 }
+async function handleDiscard() {
+  modalApi.lock();
+  try {
+    await session.discard();
+  } catch {
+    message.error('作废结果待确认，请查询当前批次，勿新建批次');
+  } finally {
+    modalApi.unlock();
+  }
+}
 const [Grid] = useVbenVxeGrid({
   formOptions: { schema: useFormSchema() },
   gridOptions: {
@@ -189,6 +201,7 @@ const [Modal, modalApi] = useVbenModal({
         @confirm="handleConfirm"
         @cancel="session.cancel"
         @recover="handleRecover"
+        @discard="handleDiscard"
       />
       <Alert
         v-else-if="state.uncertain"

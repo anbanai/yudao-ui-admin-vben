@@ -1,0 +1,85 @@
+
+ RUN  v4.1.11 /Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376
+
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts (27 tests | 7 failed) 10ms
+     × safely discards the same pending batch once without submitting coupons 2ms
+     × uses terminal status 1 from the query when discard races a submission or times out 0ms
+     × uses terminal status 2 from the query when discard races a submission or times out 0ms
+     × uses terminal status 3 from the query when discard races a submission or times out 0ms
+     × retains protection when discard is ambiguous and recovery is pending 0ms
+     × retains protection when discard is ambiguous and recovery is offline 0ms
+     × does not call the discard API for an already terminal batch 0ms
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-confirmation.test.ts (6 tests | 1 failed) 41ms
+     × offers safe discard for a pending unknown result, then allows closing without issuance 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-confirmation.test.ts > confirmation UI > offers safe discard for a pending unknown result, then allows closing without issuance
+TypeError: Cannot read properties of null (reading 'click')
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-confirmation.test.ts:85:72
+     83|     const ui = await mountBatch(batch, true);
+     84|     expect(ui.host.querySelector<HTMLButtonElement>('[data-testid="can…
+     85|     ui.host.querySelector<HTMLButtonElement>('[data-testid="discard"]'…
+       |                                                                        ^
+     86|     await new Promise((resolve) => setTimeout(resolve, 0));
+     87|     await nextTick();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > safe discard of an uncertain batch > safely discards the same pending batch once without submitting coupons
+TypeError: session.discard is not a function
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts:194:32
+    192|     await session.restore();
+    193|     expect(session.state.uncertain).toBe(true);
+    194|     await Promise.all([session.discard(), session.discard()]);
+       |                                ^
+    195|     expect(calls).toEqual(['read', 'cancel:17']);
+    196|     expect(session.state.batch?.status).toBe(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > safe discard of an uncertain batch > uses terminal status 1 from the query when discard races a submission or times out
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > safe discard of an uncertain batch > uses terminal status 2 from the query when discard races a submission or times out
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > safe discard of an uncertain batch > uses terminal status 3 from the query when discard races a submission or times out
+TypeError: recovered.discard is not a function
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts:222:21
+    220|     // Preserve the original pending preview, as seen before a concurr…
+    221|     recovered.state.batch = { ...batch };
+    222|     await recovered.discard();
+       |                     ^
+    223|     expect(recovered.state.batch?.status).toBe(status);
+    224|     expect(recovered.state.batch?.successCount).toBe(status === 1 ? 2 …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > safe discard of an uncertain batch > retains protection when discard is ambiguous and recovery is pending
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > safe discard of an uncertain batch > retains protection when discard is ambiguous and recovery is offline
+TypeError: session.discard is not a function
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts:238:26
+    236|     });
+    237|     await session.restore();
+    238|     await expect(session.discard()).rejects.toThrow('cancel timeout');
+       |                          ^
+    239|     expect(session.state.uncertain).toBe(true);
+    240|     expect(values.get('marketing-coupon-pending-batch')).toBe('17');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > safe discard of an uncertain batch > does not call the discard API for an already terminal batch
+TypeError: session.discard is not a function
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts:248:19
+    246|     const { session, calls } = pendingSession({ read: async () => ({ .…
+    247|     await session.restore();
+    248|     await session.discard();
+       |                   ^
+    249|     expect(calls).toEqual([]);
+    250|     session.cancel();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  8 failed | 25 passed (33)
+   Start at  21:36:25
+   Duration  793ms (transform 243ms, setup 0ms, import 632ms, tests 51ms, environment 146ms)
+
