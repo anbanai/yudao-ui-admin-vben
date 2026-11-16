@@ -5,6 +5,7 @@ import {
   buildPromotionCacheKey,
   buildPromotionContext,
   buildPromotionFilename,
+  findPointOffer,
   createMemberIdentity,
   createShopIdentity,
 } from './promotion-share';
@@ -52,6 +53,73 @@ describe('商品推广数据', () => {
     );
     expect(context.priceText).toBe('¥99.00');
     expect(context.marketPriceText).toBe('¥129.00');
+  });
+
+  it('从有效积分活动中取最低兑换积分及其兑换上限和库存', () => {
+    expect(
+      findPointOffer(88, [
+        {
+          products: [
+            {
+              activityStatus: 0,
+              count: 1,
+              point: 700,
+              price: 0,
+              skuId: 1,
+              spuId: 88,
+              stock: 4,
+            },
+            {
+              activityStatus: 0,
+              count: 3,
+              point: 900,
+              price: 0,
+              skuId: 2,
+              spuId: 88,
+              stock: 8,
+            },
+          ],
+          status: 0,
+          stock: 12,
+          spuId: 88,
+        },
+        {
+          products: [
+            {
+              activityStatus: 0,
+              count: 9,
+              point: 100,
+              price: 0,
+              skuId: 3,
+              spuId: 88,
+              stock: 99,
+            },
+          ],
+          status: 1,
+          stock: 99,
+          spuId: 88,
+        },
+      ]),
+    ).toEqual({ count: 1, point: 700, stock: 12 });
+  });
+
+  it('将积分活动条件写入推广上下文', () => {
+    expect(
+      buildPromotionContext({
+        identity: createShopIdentity('店铺', '/shop.png'),
+        pointOffer: { count: 2, point: 700, stock: 12 },
+        product: {
+          id: 88,
+          name: '明前绿茶',
+          picUrl: '/tea.png',
+          price: 9900,
+        },
+      }),
+    ).toMatchObject({
+      pointCountText: '每次最多兑换 2 件',
+      pointStockText: '活动剩余 12 件',
+      pointText: '兑换 700 积分',
+    });
   });
 
   it('拒绝缺少商品编号', () => {

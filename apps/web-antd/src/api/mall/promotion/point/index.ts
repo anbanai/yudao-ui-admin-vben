@@ -46,7 +46,9 @@ export namespace MallPointActivityApi {
 }
 
 /** 查询积分商城活动分页 */
-export function getPointActivityPage(params: PageParam) {
+export function getPointActivityPage(
+  params: PageParam & { spuId?: number; status?: number },
+) {
   return requestClient.get<PageResult<MallPointActivityApi.PointActivity>>(
     '/promotion/point-activity/page',
     { params },

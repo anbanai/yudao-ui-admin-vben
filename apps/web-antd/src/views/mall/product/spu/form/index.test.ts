@@ -10,6 +10,24 @@ describe('商品 SPU 表单提交状态', () => {
     expect(source).not.toContain("fieldsChanged.includes('specType')");
   });
 
+  it('将全部表单分区呈现在可滚动单页并保留分区导航', () => {
+    expect(source).not.toContain(':tab-list=');
+    expect(source).not.toContain('v-show="activeTabName');
+    expect(source).not.toContain('.ant-tabs-tab-btn');
+    expect(source).toContain('id="product-section-info"');
+    expect(source).toContain('id="product-section-sku"');
+    expect(source).toContain('id="product-section-delivery"');
+    expect(source).toContain('id="product-section-description"');
+    expect(source).toContain('id="product-section-other"');
+    expect(source).toContain('href="#product-section-info"');
+    expect(source).toContain('href="#product-section-sku"');
+    expect(source).toContain('<InfoForm');
+    expect(source).toContain('<SkuForm');
+    expect(source).toContain('<DeliveryForm');
+    expect(source).toContain('<DescriptionForm');
+    expect(source).toContain('<OtherForm');
+  });
+
   it('兼容历史单规格商品并在添加完整属性后迁移为多规格', () => {
     expect(source).toContain('legacySingleSpec');
     expect(source).toContain('res.specType === false');
@@ -29,11 +47,11 @@ describe('商品 SPU 表单提交状态', () => {
     expect(source).toMatch(/const submitLoading = ref\(false\)/);
     expect(source).toMatch(/<Card[\s\S]*:loading="formLoading"/);
 
-    const tabBarExtraContent = source.match(
-      /<template #tabBarExtraContent>([\s\S]*?)<\/template>/,
+    const cardExtraContent = source.match(
+      /<template #extra>([\s\S]*?)<\/template>/,
     )?.[1];
-    expect(tabBarExtraContent).toContain(':loading="submitLoading"');
-    expect(tabBarExtraContent).not.toContain(':loading="formLoading"');
+    expect(cardExtraContent).toContain(':loading="submitLoading"');
+    expect(cardExtraContent).not.toContain(':loading="formLoading"');
 
     const handleSubmit = source.slice(
       source.indexOf('async function handleSubmit()'),

@@ -9,6 +9,7 @@ import PromotionModal from './promotion-modal.vue';
 
 const mocks = vi.hoisted(() => ({
   getSpu: vi.fn(),
+  getPointActivityPage: vi.fn(),
   getWxaQrcode: vi.fn(),
   hasMemberPermission: true,
   messageError: vi.fn(),
@@ -60,6 +61,9 @@ vi.mock('@vben/icons', () => ({
 }));
 
 vi.mock('#/api/mall/product/spu', () => ({ getSpu: mocks.getSpu }));
+vi.mock('#/api/mall/promotion/point', () => ({
+  getPointActivityPage: mocks.getPointActivityPage,
+}));
 vi.mock('#/api/member/social', () => ({
   getWxaQrcode: mocks.getWxaQrcode,
 }));
@@ -190,6 +194,7 @@ describe('product promotion modal', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_MALL_H5_DOMAIN', 'https://mall.example.com/product');
     mocks.getSpu.mockReset();
+    mocks.getPointActivityPage.mockReset();
     mocks.getWxaQrcode.mockReset();
     mocks.renderPromotionAsset.mockReset();
     mocks.modalApi.getData.mockReset();
@@ -210,6 +215,7 @@ describe('product promotion modal', () => {
     });
     vi.stubGlobal('URL', TestUrl);
     mocks.getWxaQrcode.mockResolvedValue('data:image/png;base64,qr');
+    mocks.getPointActivityPage.mockResolvedValue({ list: [] });
     mocks.renderPromotionAsset.mockResolvedValue(
       new Blob(['png'], { type: 'image/png' }),
     );
@@ -243,6 +249,52 @@ describe('product promotion modal', () => {
     expect(mocks.getWxaQrcode).toHaveBeenCalledWith(
       expect.objectContaining({ scene: 'spm=0.2.88.3.2' }),
     );
+  });
+
+  it('按最新商品编号读取积分活动并把兑换条件传入海报', async () => {
+    mocks.getPointActivityPage.mockResolvedValue({
+      list: [
+        {
+          products: [
+            {
+              activityStatus: 0,
+              count: 2,
+              point: 700,
+              price: 0,
+              skuId: 22,
+              spuId: 88,
+              stock: 12,
+            },
+          ],
+          spuId: 88,
+          status: 0,
+          stock: 12,
+        },
+      ],
+    });
+    await openActiveProduct();
+
+    expect(mocks.getPointActivityPage).toHaveBeenCalledWith({
+      pageNo: 1,
+      pageSize: 1,
+      spuId: 88,
+      status: 0,
+    });
+    expect(mocks.renderPromotionAsset.mock.calls[0]?.[0].context).toMatchObject(
+      {
+        pointCountText: '每次最多兑换 2 件',
+        pointStockText: '活动剩余 12 件',
+        pointText: '兑换 700 积分',
+      },
+    );
+  });
+
+  it('积分活动查询失败时显示错误并阻止生成现金海报', async () => {
+    mocks.getPointActivityPage.mockRejectedValue(new Error('积分活动查询失败'));
+    const { host } = await openActiveProduct();
+
+    expect(host.textContent).toContain('积分活动查询失败');
+    expect(mocks.renderPromotionAsset).not.toHaveBeenCalled();
   });
 
   it('商品校验完成后先解锁弹窗再生成预览', async () => {
@@ -444,11 +496,7 @@ describe('product promotion modal', () => {
       revokeObjectUrl.mock.calls
         .map(([url]) => url)
         .toSorted((left, right) => left.localeCompare(right)),
-    ).toEqual([
-      'blob:preview-1',
-      'blob:preview-2',
-      'blob:preview-3',
-    ]);
+    ).toEqual(['blob:preview-1', 'blob:preview-2', 'blob:preview-3']);
   });
 
   it('按素材类型下载对应的安全文件名', async () => {

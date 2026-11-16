@@ -22,6 +22,9 @@ const promotionContext: PromotionContext = {
   miniProgramScene: 'spm=27.2.88.3.2',
   picUrl: 'https://static.example.com/product.png',
   priceText: '¥99.00',
+  pointCountText: '每次最多兑换 2 件',
+  pointStockText: '活动剩余 12 件',
+  pointText: '兑换 700 积分',
   productId: 88,
   productName: '明前绿茶礼盒',
 };
@@ -111,6 +114,25 @@ describe('推广图片渲染', () => {
       deps,
     );
     expect(lastCanvas()?.context.filledTexts).toContain('扫码进入商品详情');
+  });
+
+  it('积分商品海报展示兑换积分、数量上限和剩余库存', async () => {
+    const { deps, lastCanvas } = createFakeRenderDependencies();
+    await renderPromotionAsset(
+      {
+        context: promotionContext,
+        miniProgramQrCode: 'data:image/png;base64,qr',
+        type: 'poster',
+      },
+      deps,
+    );
+    expect(lastCanvas()?.context.filledTexts).toEqual(
+      expect.arrayContaining([
+        '兑换 700 积分',
+        '每次最多兑换 2 件',
+        '活动剩余 12 件',
+      ]),
+    );
   });
 
   it('rejects when canvas export returns a null Blob', async () => {

@@ -36,7 +36,6 @@ import ProductPropertyAddForm from './modules/product-property-add-form.vue';
 const spuId = ref<number>();
 const { params, name } = useRoute();
 const { closeCurrentTab } = useTabs();
-const activeTabName = ref('info');
 const formLoading = ref(Boolean(params.id)); // 表单详情的加载中
 const submitLoading = ref(false); // 表单提交的加载中
 const descriptionUploading = ref(false); // 商品详情图片上传中
@@ -200,11 +199,6 @@ const [OtherForm, otherFormApi] = useVbenForm({
   showDefaultActions: false,
   handleValuesChange: markUnsavedChanges,
 });
-
-/** tab 切换 */
-function handleTabChange(key: string) {
-  activeTabName.value = key;
-}
 
 /** 标记表单存在待保存的修改 */
 function markUnsavedChanges() {
@@ -552,34 +546,7 @@ onMounted(async () => {
     />
 
     <Page auto-content-height>
-      <Card
-        class="h-full w-full"
-        :loading="formLoading"
-        :tab-list="[
-          {
-            key: 'info',
-            tab: '基础设置',
-          },
-          {
-            key: 'sku',
-            tab: '价格库存',
-          },
-          {
-            key: 'delivery',
-            tab: '物流设置',
-          },
-          {
-            key: 'description',
-            tab: '商品详情',
-          },
-          {
-            key: 'other',
-            tab: '其它设置',
-          },
-        ]"
-        :active-key="activeTabName"
-        @tab-change="handleTabChange"
-      >
+      <Card class="h-full w-full" :loading="formLoading">
         <Alert
           v-if="detailLoadFailed"
           class="mb-4"
@@ -592,7 +559,7 @@ onMounted(async () => {
             <Button size="small" @click="getDetail">重试</Button>
           </template>
         </Alert>
-        <template #tabBarExtraContent>
+        <template #extra>
           <Button
             type="primary"
             v-if="!isDetail"
@@ -613,66 +580,100 @@ onMounted(async () => {
           </Button>
         </template>
 
-        <InfoForm class="w-3/5" v-show="activeTabName === 'info'" />
-        <SkuForm class="w-full" v-show="activeTabName === 'sku'">
-          <template #legacySkuList>
-            <SkuList
-              ref="skuListRef"
-              class="w-full"
-              :is-detail="isDetail"
-              :prop-form-data="formData"
-              :property-list="propertyList"
-              :rule-config="ruleConfig"
-            />
-          </template>
-          <template #productAttributes>
-            <div>
-              <Button
-                v-if="!isDetail"
-                class="mb-10px mr-15px"
-                @click="openPropertyAddForm"
-              >
-                添加属性
-              </Button>
-              <ProductAttributes
-                :change-version="specVersion"
+        <nav
+          aria-label="商品设置分区"
+          class="sticky top-0 z-10 mb-5 flex flex-wrap gap-x-5 gap-y-2 border-b bg-white py-3"
+        >
+          <a href="#product-section-info">基础设置</a>
+          <a href="#product-section-sku">价格库存</a>
+          <a href="#product-section-delivery">物流设置</a>
+          <a href="#product-section-description">商品详情</a>
+          <a href="#product-section-other">其它设置</a>
+        </nav>
+
+        <section
+          id="product-section-info"
+          class="scroll-mt-16 space-y-4 border-b pb-8"
+        >
+          <h2 class="text-base font-semibold">基础设置</h2>
+          <InfoForm class="w-full max-w-4xl" />
+        </section>
+
+        <section
+          id="product-section-sku"
+          class="scroll-mt-16 space-y-4 border-b py-8"
+        >
+          <h2 class="text-base font-semibold">价格库存</h2>
+          <SkuForm class="w-full">
+            <template #legacySkuList>
+              <SkuList
+                ref="skuListRef"
+                class="w-full"
                 :is-detail="isDetail"
+                :prop-form-data="formData"
                 :property-list="propertyList"
-                @change="handlePropertyChange"
+                :rule-config="ruleConfig"
               />
-            </div>
-          </template>
-          <template #batchSkuList>
-            <SkuList
-              :batch-reset-key="skuDraftVersion"
-              :is-batch="true"
-              :is-detail="isDetail"
-              :prop-form-data="formData"
-              :property-list="propertyList"
-            />
-          </template>
-          <template #multiSkuList>
-            <SkuList
-              ref="skuListRef"
-              :is-detail="isDetail"
-              :prop-form-data="formData"
-              :property-list="propertyList"
-              :rule-config="ruleConfig"
-            />
-          </template>
-        </SkuForm>
-        <DeliveryForm class="w-3/5" v-show="activeTabName === 'delivery'" />
-        <DescriptionForm
-          class="w-3/5"
-          v-show="activeTabName === 'description'"
-        />
-        <OtherForm class="w-3/5" v-show="activeTabName === 'other'" />
+            </template>
+            <template #productAttributes>
+              <div>
+                <Button
+                  v-if="!isDetail"
+                  class="mb-10px mr-15px"
+                  @click="openPropertyAddForm"
+                >
+                  添加属性
+                </Button>
+                <ProductAttributes
+                  :change-version="specVersion"
+                  :is-detail="isDetail"
+                  :property-list="propertyList"
+                  @change="handlePropertyChange"
+                />
+              </div>
+            </template>
+            <template #batchSkuList>
+              <SkuList
+                :batch-reset-key="skuDraftVersion"
+                :is-batch="true"
+                :is-detail="isDetail"
+                :prop-form-data="formData"
+                :property-list="propertyList"
+              />
+            </template>
+            <template #multiSkuList>
+              <SkuList
+                ref="skuListRef"
+                :is-detail="isDetail"
+                :prop-form-data="formData"
+                :property-list="propertyList"
+                :rule-config="ruleConfig"
+              />
+            </template>
+          </SkuForm>
+        </section>
+
+        <section
+          id="product-section-delivery"
+          class="scroll-mt-16 space-y-4 border-b py-8"
+        >
+          <h2 class="text-base font-semibold">物流设置</h2>
+          <DeliveryForm class="w-full max-w-4xl" />
+        </section>
+
+        <section
+          id="product-section-description"
+          class="scroll-mt-16 space-y-4 border-b py-8"
+        >
+          <h2 class="text-base font-semibold">商品详情</h2>
+          <DescriptionForm class="w-full max-w-4xl" />
+        </section>
+
+        <section id="product-section-other" class="scroll-mt-16 space-y-4 pt-8">
+          <h2 class="text-base font-semibold">其它设置</h2>
+          <OtherForm class="w-full max-w-4xl" />
+        </section>
       </Card>
     </Page>
   </div>
 </template>
-<style lang="scss" scoped>
-:deep(.ant-tabs-tab-btn) {
-  font-size: 14px !important;
-}
-</style>
