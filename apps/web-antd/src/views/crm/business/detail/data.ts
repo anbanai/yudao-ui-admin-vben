@@ -88,38 +88,29 @@ export function useStatusFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'statusId',
       label: '商机状态',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'endStatus',
       label: '商机状态',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       label: '商机阶段',
       component: 'Select',
       dependencies: {
-        triggerFields: [''],
-        async componentProps() {
+        triggerFields: ['statusTypeId'],
+        resolve: async ({ values }) => {
           const statusList = await getBusinessStatusSimpleList(
-            formData.value?.statusTypeId ?? 0,
+            values.statusTypeId ?? formData.value?.statusTypeId ?? 0,
           );
           const statusOptions = statusList.map((item) => ({
             label: `${item.name}(赢单率：${item.percent}%)`,
@@ -131,7 +122,9 @@ export function useStatusFormSchema(
           }));
           statusOptions.push(...options);
           return {
-            options: statusOptions,
+            componentProps: {
+              options: statusOptions,
+            },
           };
         },
       },

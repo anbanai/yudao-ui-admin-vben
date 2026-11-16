@@ -9,7 +9,7 @@ import { Button, message, Spin } from 'ant-design-vue';
 
 import { getMessagePage, sendMessage } from '#/api/mp/message';
 import { getUser } from '#/api/mp/user';
-import { WxReply } from '#/views/mp/components';
+import WxReply from '#/views/mp/components/wx-reply/wx-reply.vue';
 
 import MsgList from './msg-list.vue';
 

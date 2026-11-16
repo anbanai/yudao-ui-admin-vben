@@ -29,10 +29,7 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -43,8 +40,10 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({
-          disabled: !!values.id,
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: !!values.id,
+          },
         }),
       },
       rules: 'required',

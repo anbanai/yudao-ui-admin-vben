@@ -23,9 +23,13 @@
   },
   "dependencies": {
     "@vben/node-utils": "workspace:*",
+    "@vue/compiler-sfc": "catalog:",
     "cac": "catalog:",
     "circular-dependency-scanner": "catalog:",
     "knip": "catalog:",
-    "publint": "catalog:"
+    "postcss": "catalog:",
+    "postcss-scss": "catalog:",
+    "publint": "catalog:",
+    "typescript": "catalog:"
   }
 }

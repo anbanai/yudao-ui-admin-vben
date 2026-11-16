@@ -203,7 +203,7 @@ onMounted(async () => {
             size="large"
           >
             <template #addonBefore>
-              <span class="text-gray-600">服务地址</span>
+              <span class="text-muted-foreground">服务地址</span>
             </template>
           </Input>
           <Button
@@ -218,7 +218,7 @@ onMounted(async () => {
         </div>
 
         <Divider>
-          <span class="text-gray-500">消息发送</span>
+          <span class="text-muted-foreground">消息发送</span>
         </Divider>
 
         <Select
@@ -298,18 +298,18 @@ onMounted(async () => {
               <div class="mb-1 flex items-center justify-between">
                 <div class="flex items-center">
                   <Badge :color="getMessageBadgeColor(msg.type)" />
-                  <span class="ml-1 font-medium text-gray-600">
+                  <span class="ml-1 font-medium text-muted-foreground">
                     {{ getMessageTypeText(msg.type) }}
                   </span>
-                  <span v-if="msg.userId" class="ml-2 text-gray-500">
+                  <span v-if="msg.userId" class="ml-2 text-muted-foreground">
                     用户 ID: {{ msg.userId }}
                   </span>
                 </div>
-                <span class="text-xs text-gray-400">
+                <span class="text-xs text-muted-foreground">
                   {{ formatDate(msg.time) }}
                 </span>
               </div>
-              <div class="mt-2 break-words text-gray-800">
+              <div class="mt-2 break-words text-muted-foreground">
                 {{ msg.text }}
               </div>
             </div>

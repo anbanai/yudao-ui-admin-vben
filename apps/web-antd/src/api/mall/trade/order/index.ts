@@ -44,6 +44,7 @@ export namespace MallOrderApi {
     receiverDetailAddress?: string; // 收件人详细地址
     afterSaleStatus?: number; // 售后状态
     refundPrice?: number; // 退款金额
+    refundStatus?: number; // 退款状态：0-未退款，10-部分退款，20-全部退款
     couponId?: number; // 优惠劵编号
     couponPrice?: number; // 优惠劵减免金额
     pointPrice?: number; // 积分抵扣的金额
@@ -62,6 +63,33 @@ export namespace MallOrderApi {
       nickname?: string; // 用户昵称
     }; // 推广用户信息
     logs?: OrderLog[]; // 订单操作日志
+    subOrders?: OrderSub[]; // 商家履约订单
+  }
+
+  /** 商家履约订单 */
+  export interface OrderSub {
+    id?: number;
+    orderId?: number;
+    no?: string;
+    merchantId?: number;
+    merchantName?: string;
+    status?: number;
+    productCount?: number;
+    totalPrice?: number;
+    discountPrice?: number;
+    couponPrice?: number;
+    pointPrice?: number;
+    vipPrice?: number;
+    adjustPrice?: number;
+    deliveryPrice?: number;
+    payPrice?: number;
+    deliveryType?: number;
+    logisticsId?: number;
+    logisticsNo?: string;
+    deliveryTime?: Date;
+    receiveTime?: Date;
+    refundStatus?: number;
+    afterSaleStatus?: number;
   }
 
   /** 订单项 */
@@ -101,6 +129,7 @@ export namespace MallOrderApi {
   /** 交易订单统计响应 */
   export interface OrderSummaryRespVO {
     orderCount: number; // 订单数量
+    productCount?: number; // 商品销量
     orderPayPrice: number; // 订单金额
     afterSaleCount: number; // 退款单数
     afterSalePrice: number; // 退款金额
@@ -144,6 +173,11 @@ export function getOrderPage(params: PageParam) {
       params,
     },
   );
+}
+
+/** 导出交易订单 Excel */
+export function exportOrder(params: PageParam) {
+  return requestClient.download('/trade/order/export-excel', { params });
 }
 
 /** 查询交易订单统计 */

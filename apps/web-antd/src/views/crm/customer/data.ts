@@ -19,10 +19,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -59,7 +56,9 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'ApiSelect',
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
       componentProps: {
         api: getSimpleUserList,
@@ -231,7 +230,9 @@ export function useImportFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
       rules: 'required',
     },

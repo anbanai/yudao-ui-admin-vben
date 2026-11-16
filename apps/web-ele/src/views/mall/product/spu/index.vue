@@ -189,7 +189,7 @@ onMounted(async () => {
   // 解析路由的 categoryId
   if (route.query.categoryId) {
     await gridApi.formApi.setValues({
-      categoryId: Number(route.query.categoryId),
+      categoryIds: [Number(route.query.categoryId)],
     });
   }
   // 获得每个 Tab 的数量

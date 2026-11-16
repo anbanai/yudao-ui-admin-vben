@@ -23,6 +23,15 @@ getSimpleDeliveryPickUpStoreList().then((data) => {
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
+      fieldName: 'spuName',
+      label: '商品名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入商品名称',
+        allowClear: true,
+      },
+    },
+    {
       fieldName: 'status',
       label: '订单状态',
       component: 'Select',
@@ -84,7 +93,11 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['deliveryType'],
-        show: (values) => values.deliveryType === DeliveryTypeEnum.EXPRESS.type,
+        resolve({ values }) {
+          return {
+            show: values.deliveryType === DeliveryTypeEnum.EXPRESS.type,
+          };
+        },
       },
     },
     {
@@ -100,7 +113,11 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['deliveryType'],
-        show: (values) => values.deliveryType === DeliveryTypeEnum.PICK_UP.type,
+        resolve({ values }) {
+          return {
+            show: values.deliveryType === DeliveryTypeEnum.PICK_UP.type,
+          };
+        },
       },
     },
     {
@@ -113,7 +130,11 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['deliveryType'],
-        show: (values) => values.deliveryType === DeliveryTypeEnum.PICK_UP.type,
+        resolve({ values }) {
+          return {
+            show: values.deliveryType === DeliveryTypeEnum.PICK_UP.type,
+          };
+        },
       },
     },
     {
@@ -158,6 +179,11 @@ export function useGridFormSchema(): VbenFormSchema[] {
 /** 表格列配置 */
 export function useGridColumns(): VxeGridPropTypes.Columns {
   return [
+    {
+      type: 'checkbox',
+      width: 48,
+      fixed: 'left',
+    },
     {
       type: 'expand',
       width: 80,
@@ -212,7 +238,7 @@ export function useGridColumns(): VxeGridPropTypes.Columns {
     {
       field: 'payPrice',
       title: '实际支付',
-      formatter: 'formatAmount2',
+      formatter: 'formatFenToYuanAmount',
       minWidth: 180,
     },
     {
@@ -265,10 +291,7 @@ export function useRemarkFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'remark',
@@ -283,15 +306,45 @@ export function useRemarkFormSchema(): VbenFormSchema[] {
 }
 
 /** 订单调价表单配置 */
-export function usePriceFormSchema(): VbenFormSchema[] {
+export function calculateNewPayPrice(
+  payPrice: number | string,
+  adjustPrice: number | string,
+) {
+  return formatToFraction(
+    convertToInteger(payPrice) + convertToInteger(adjustPrice),
+  );
+}
+
+interface OrderPriceFormApi {
+  getValues(): Promise<{ payPrice?: number | string }>;
+  setFieldValue(fieldName: 'newPayPrice', value: string): Promise<unknown>;
+}
+
+export function createOrderPriceChangeHandler(formApi: OrderPriceFormApi) {
+  let pending = Promise.resolve();
+  return (adjustPrice: null | number) => {
+    const operation = pending
+      .catch(() => undefined)
+      .then(async () => {
+        const values = await formApi.getValues();
+        await formApi.setFieldValue(
+          'newPayPrice',
+          calculateNewPayPrice(values.payPrice ?? 0, adjustPrice ?? 0),
+        );
+      });
+    pending = operation;
+    return operation;
+  };
+}
+
+export function usePriceFormSchema(
+  onAdjustPriceChange?: (adjustPrice: null | number) => Promise<void> | void,
+): VbenFormSchema[] {
   return [
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'payPrice',
@@ -312,6 +365,9 @@ export function usePriceFormSchema(): VbenFormSchema[] {
         placeholder: '请输入订单调价',
         step: 0.1,
         precision: 2,
+        onChange: async (adjustPrice: null | number) => {
+          await onAdjustPriceChange?.(adjustPrice);
+        },
       },
       help: '订单调价。 正数，加价；负数，减价',
       rules: 'required',
@@ -320,19 +376,10 @@ export function usePriceFormSchema(): VbenFormSchema[] {
       fieldName: 'newPayPrice',
       label: '调价后',
       component: 'Input',
+      disabled: true,
       componentProps: {
         placeholder: '',
         formatter: (value: string) => `${value}元`,
-      },
-      dependencies: {
-        triggerFields: ['payPrice', 'adjustPrice'],
-        disabled: true,
-        trigger(values, form) {
-          const originalPrice = convertToInteger(values.payPrice);
-          const adjustPrice = convertToInteger(values.adjustPrice);
-          const newPrice = originalPrice + adjustPrice;
-          form.setFieldValue('newPayPrice', formatToFraction(newPrice));
-        },
       },
     },
   ];
@@ -344,10 +391,7 @@ export function useAddressFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'receiverName',
@@ -400,10 +444,7 @@ export function useDeliveryFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'expressType',
@@ -431,7 +472,11 @@ export function useDeliveryFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['expressType'],
-        show: (values) => values.expressType === 'express',
+        resolve({ values }) {
+          return {
+            show: values.expressType === 'express',
+          };
+        },
       },
       rules: 'required',
     },
@@ -444,7 +489,11 @@ export function useDeliveryFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['expressType'],
-        show: (values) => values.expressType === 'express',
+        resolve({ values }) {
+          return {
+            show: values.expressType === 'express',
+          };
+        },
       },
       rules: 'required',
     },

@@ -108,7 +108,7 @@ function resetImport() {
           <span class="icon-[ant-design--download-outlined]"></span>
           下载《财务初始余额导入模板》
         </Button>
-        <div class="mt-1 text-[13px] text-gray-500">
+        <div class="mt-1 text-[13px] text-muted-foreground">
           模板已带出末级科目；辅助核算项目按“类别:名称/类别:名称”填写
         </div>
       </div>

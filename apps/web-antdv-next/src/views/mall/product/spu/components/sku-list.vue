@@ -318,7 +318,9 @@ defineExpose({
           <ImageUpload
             v-model:value="row.picUrl"
             :max-number="1"
-            :max-size="2"
+            :max-size="3"
+            :accept="['jpg', 'jpeg', 'png', 'bmp']"
+            scene="product"
             :show-description="false"
           />
         </template>

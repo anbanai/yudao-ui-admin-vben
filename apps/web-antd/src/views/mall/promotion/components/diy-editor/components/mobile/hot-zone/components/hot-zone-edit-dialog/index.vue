@@ -4,19 +4,21 @@ import type { ControlDot } from './controller';
 
 import type { AppLink } from '#/views/mall/promotion/components/app-link-input/data';
 
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Image } from 'ant-design-vue';
+import { Button } from 'ant-design-vue';
 
-import { AppLinkSelectDialog } from '#/views/mall/promotion/components';
+import AppLinkSelectDialog from '#/views/mall/promotion/components/app-link-input/select-dialog.vue';
 
 import {
+  clamp,
   CONTROL_DOT_LIST,
   CONTROL_TYPE_ENUM,
   HOT_ZONE_MIN_SIZE,
+  normalizeHotZones,
   useDraggable,
   zoomIn,
   zoomOut,
@@ -55,6 +57,7 @@ function open() {
   // 放大
   formData.value = zoomIn(props.modelValue);
   modalApi.open();
+  void nextTick(normalizeFormData);
 }
 
 defineExpose({ open }); // 提供 open 方法，用于打开弹窗
@@ -76,11 +79,22 @@ function handleRemove(hotZone: HotZoneItemProperty) {
   formData.value = formData.value.filter((item) => item !== hotZone);
 }
 
+/** 图片加载完成后，修正历史热区的越界坐标。 */
+function normalizeFormData() {
+  const size = getContainerSize();
+  if (size.width <= 0 && size.height <= 0) {
+    return;
+  }
+  formData.value = normalizeHotZones(formData.value, size);
+}
+
 /** 移动热区 */
 function handleMove(item: HotZoneItemProperty, e: MouseEvent) {
-  useDraggable(item, e, (left, top, _, __, moveWidth, moveHeight) => {
-    setLeft(item, left + moveWidth);
-    setTop(item, top + moveHeight);
+  useDraggable(item, e, (left, top, _width, _height, moveWidth, moveHeight) => {
+    const { width: containerWidth, height: containerHeight } =
+      getContainerSize();
+    item.left = clamp(left + moveWidth, 0, containerWidth - item.width);
+    item.top = clamp(top + moveHeight, 0, containerHeight - item.height);
   });
 }
 
@@ -91,78 +105,45 @@ function handleResize(
   e: MouseEvent,
 ) {
   useDraggable(item, e, (left, top, width, height, moveWidth, moveHeight) => {
-    ctrlDot.types.forEach((type) => {
-      switch (type) {
-        case CONTROL_TYPE_ENUM.HEIGHT: {
-          {
-            // 左移时，宽度为减少
-            const direction = ctrlDot.types.includes(CONTROL_TYPE_ENUM.TOP)
-              ? -1
-              : 1;
-            setHeight(item, height + moveHeight * direction);
-          }
-          break;
-        }
-        case CONTROL_TYPE_ENUM.LEFT: {
-          setLeft(item, left + moveWidth);
-          break;
-        }
-        case CONTROL_TYPE_ENUM.TOP: {
-          setTop(item, top + moveHeight);
-          break;
-        }
-        case CONTROL_TYPE_ENUM.WIDTH: {
-          {
-            // 上移时，高度为减少
-            const direction = ctrlDot.types.includes(CONTROL_TYPE_ENUM.LEFT)
-              ? -1
-              : 1;
-            setWidth(item, width + moveWidth * direction);
-          }
-          break;
-        }
-      }
-    });
+    const { width: containerWidth, height: containerHeight } =
+      getContainerSize();
+    const types = ctrlDot.types;
+
+    // 水平方向：拖左边缘时固定右边缘，否则固定左边缘
+    if (types.includes(CONTROL_TYPE_ENUM.LEFT)) {
+      const right = left + width;
+      item.left = clamp(left + moveWidth, 0, right - HOT_ZONE_MIN_SIZE);
+      item.width = right - item.left;
+    } else if (types.includes(CONTROL_TYPE_ENUM.WIDTH)) {
+      item.width = clamp(
+        width + moveWidth,
+        HOT_ZONE_MIN_SIZE,
+        containerWidth - left,
+      );
+    }
+
+    // 垂直方向：拖上边缘时固定下边缘，否则固定上边缘
+    if (types.includes(CONTROL_TYPE_ENUM.TOP)) {
+      const bottom = top + height;
+      item.top = clamp(top + moveHeight, 0, bottom - HOT_ZONE_MIN_SIZE);
+      item.height = bottom - item.top;
+    } else if (types.includes(CONTROL_TYPE_ENUM.HEIGHT)) {
+      item.height = clamp(
+        height + moveHeight,
+        HOT_ZONE_MIN_SIZE,
+        containerHeight - top,
+      );
+    }
   });
 }
 
-/** 设置 X 轴坐标 */
-function setLeft(item: HotZoneItemProperty, left: number) {
-  // 不能超出容器
-  if (left >= 0 && left <= container.value!.offsetWidth - item.width) {
-    item.left = left;
-  }
+/** 获取容器的尺寸 */
+function getContainerSize() {
+  return {
+    width: container.value?.offsetWidth || 750,
+    height: container.value?.offsetHeight ?? 0,
+  };
 }
-
-/** 设置Y轴坐标 */
-function setTop(item: HotZoneItemProperty, top: number) {
-  // 不能超出容器
-  if (top >= 0 && top <= container.value!.offsetHeight - item.height) {
-    item.top = top;
-  }
-}
-
-/** 设置宽度 */
-const setWidth = (item: HotZoneItemProperty, width: number) => {
-  // 不能小于最小宽度 && 不能超出容器右边
-  if (
-    width >= HOT_ZONE_MIN_SIZE &&
-    item.left + width <= container.value!.offsetWidth
-  ) {
-    item.width = width;
-  }
-};
-
-/** 设置高度 */
-const setHeight = (item: HotZoneItemProperty, height: number) => {
-  // 不能小于最小高度 && 不能超出容器底部
-  if (
-    height >= HOT_ZONE_MIN_SIZE &&
-    item.top + height <= container.value!.offsetHeight
-  ) {
-    item.height = height;
-  }
-};
 
 const activeHotZone = ref<HotZoneItemProperty>();
 const appLinkDialogRef = ref();
@@ -170,7 +151,7 @@ const appLinkDialogRef = ref();
 /** 显示 App 链接选择对话框 */
 const handleShowAppLinkDialog = (hotZone: HotZoneItemProperty) => {
   activeHotZone.value = hotZone;
-  appLinkDialogRef.value.open(hotZone.url);
+  appLinkDialogRef.value.open(hotZone.url, hotZone.name);
 };
 
 /** 处理 App 链接选择变更 */
@@ -185,11 +166,13 @@ const handleAppLinkChange = (appLink: AppLink) => {
 
 <template>
   <Modal title="设置热区" class="w-[780px]">
-    <div ref="container" class="w-750px relative h-full">
-      <Image
+    <div ref="container" class="relative w-750px">
+      <img
         :src="imgUrl"
-        :preview="false"
-        class="w-750px pointer-events-none h-full select-none"
+        alt=""
+        class="pointer-events-none block h-auto w-750px select-none"
+        draggable="false"
+        @load="normalizeFormData"
       />
       <div
         v-for="(item, hotZoneIndex) in formData"
@@ -213,15 +196,16 @@ const handleAppLinkChange = (appLink: AppLink) => {
         </span>
         <IconifyIcon
           icon="lucide:x"
-          class="absolute right-0 top-0 hidden cursor-pointer rounded-bl-[80%] p-[2px_2px_6px_6px] text-right text-white group-hover:block"
+          class="absolute right-0 top-0 hidden cursor-pointer rounded-bl-[80%] p-[2px_2px_6px_6px] text-right text-primary-foreground group-hover:block"
           :style="{ backgroundColor: 'hsl(var(--primary))' }"
           :size="14"
-          @click="handleRemove(item)"
+          @mousedown.stop.prevent
+          @click.stop="handleRemove(item)"
         />
 
         <!-- 8 个控制点 -->
         <span
-          class="ctrl-dot absolute z-[11] h-2 w-2 rounded-full bg-white"
+          class="ctrl-dot absolute z-[11] h-2 w-2 rounded-full bg-background"
           v-for="(dot, dotIndex) in CONTROL_DOT_LIST"
           :key="dotIndex"
           :style="{ ...dot.style, border: 'inherit' }"

@@ -14,10 +14,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -64,7 +61,7 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['primaryFlag'],
-        show: (values) => values.primaryFlag === false,
+        resolve: ({ values }) => ({ show: values.primaryFlag === false }),
       },
     },
     {
@@ -79,7 +76,7 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['primaryFlag'],
-        show: (values) => values.primaryFlag === false,
+        resolve: ({ values }) => ({ show: values.primaryFlag === false }),
       },
     },
     {

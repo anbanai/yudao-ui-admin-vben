@@ -8,22 +8,11 @@ export { default as NumberRangeInput } from './number-range-input.vue';
 
 export type NumberRangeValue = [number | undefined, number | undefined];
 
-function splitNumberRange(minFieldName: string, maxFieldName: string) {
-  return (
-    value: NumberRangeValue | undefined,
-    setValue: (fieldName: string, value: number | undefined) => void,
-  ) => {
-    setValue(minFieldName, value?.[0]);
-    setValue(maxFieldName, value?.[1]);
-    return undefined;
-  };
-}
-
 export function buildNumberRangeSchema(
   label: string,
   fieldName: string,
-  minFieldName: string,
-  maxFieldName: string,
+  _minFieldName: string,
+  _maxFieldName: string,
   precision: number,
 ): VbenFormSchema {
   return {
@@ -34,6 +23,5 @@ export function buildNumberRangeSchema(
     },
     fieldName,
     label,
-    valueFormat: splitNumberRange(minFieldName, maxFieldName),
   };
 }

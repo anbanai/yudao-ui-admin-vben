@@ -15,11 +15,11 @@ defineProps({
 
 <template>
   <div class="mb-3">
-    <div class="flex items-center justify-between text-gray-600">
+    <div class="flex items-center justify-between text-muted-foreground">
       <span>{{ title }}</span>
       <slot name="extra"></slot>
     </div>
-    <div class="my-2 text-xs text-gray-400">
+    <div class="my-2 text-xs text-muted-foreground">
       {{ desc }}
     </div>
     <slot></slot>

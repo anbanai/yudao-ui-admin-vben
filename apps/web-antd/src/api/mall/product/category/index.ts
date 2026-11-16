@@ -7,6 +7,7 @@ export namespace MallCategoryApi {
     parentId?: number; // 父分类编号
     name: string; // 分类名称
     picUrl: string; // 移动端分类图
+    displayProductCount?: number; // 小程序展示商品数量
     sort: number; // 分类排序
     status: number; // 开启状态
   }

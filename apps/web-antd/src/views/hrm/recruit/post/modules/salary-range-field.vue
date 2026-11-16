@@ -48,14 +48,20 @@ const salaryUnitOptions = getDictOptions(
 /** 是否面议：勾选后禁用范围输入，并清空已填薪资 */
 const salaryNegotiable = () => !!props.values?.salaryNegotiable;
 
-async function handleNegotiableChange(checked: boolean) {
-  await props.formApi?.setFieldValue('salaryNegotiable', checked);
-  if (!checked) {
-    return;
-  }
-  // 对齐源表单：勾选面议后清空最低/最高薪资
-  emit('update:modelValue', undefined);
-  await props.formApi?.setFieldValue('maxSalary', undefined);
+let writeQueue = Promise.resolve();
+function enqueueWrite(write: () => Promise<void> | void): Promise<void> {
+  const result = writeQueue.then(write);
+  writeQueue = result.catch(() => {});
+  return result;
+}
+
+function handleNegotiableChange(checked: boolean) {
+  return enqueueWrite(async () => {
+    await props.formApi?.setFieldValue('salaryNegotiable', checked);
+    if (!checked) return;
+    emit('update:modelValue', undefined);
+    await props.formApi?.setFieldValue('maxSalary', undefined);
+  });
 }
 </script>
 
@@ -82,7 +88,10 @@ async function handleNegotiableChange(checked: boolean) {
         class="!w-0 flex-1"
         placeholder="最高薪资"
         @update:value="
-          (v) => formApi?.setFieldValue('maxSalary', toOptionalNumber(v))
+          (v) =>
+            enqueueWrite(() =>
+              formApi?.setFieldValue('maxSalary', toOptionalNumber(v)),
+            )
         "
       />
       <Select
@@ -92,7 +101,9 @@ async function handleNegotiableChange(checked: boolean) {
         allow-clear
         class="!w-20 shrink-0"
         placeholder="单位"
-        @update:value="(v) => formApi?.setFieldValue('salaryUnit', v)"
+        @update:value="
+          (v) => enqueueWrite(() => formApi?.setFieldValue('salaryUnit', v))
+        "
       />
       <Checkbox
         :checked="salaryNegotiable()"

@@ -4,6 +4,8 @@ import type { SystemAreaApi } from '#/api/system/area';
 
 import { computed, nextTick, ref, watch } from 'vue';
 
+import { isNonNegativeNumber, isPositiveNumber } from '@vben/utils';
+
 import { ElInputNumber, ElTreeSelect } from 'element-plus';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -115,21 +117,21 @@ function validate() {
     if (!item.areaIds || item.areaIds.length === 0) {
       throw new Error(`运费设置第 ${i + 1} 行：区域不能为空`);
     }
-    if (!item.startCount || item.startCount <= 0) {
+    if (!isPositiveNumber(item.startCount)) {
       throw new Error(
         `运费设置第 ${i + 1} 行：${columnTitle.value?.startCountTitle}必须大于 0`,
       );
     }
-    if (!item.startPrice || item.startPrice <= 0) {
-      throw new Error(`运费设置第 ${i + 1} 行：运费必须大于0`);
+    if (!isNonNegativeNumber(item.startPrice)) {
+      throw new Error(`运费设置第 ${i + 1} 行：运费不能小于 0`);
     }
-    if (!item.extraCount || item.extraCount <= 0) {
+    if (!isPositiveNumber(item.extraCount)) {
       throw new Error(
         `运费设置第 ${i + 1} 行：${columnTitle.value?.extraCountTitle}必须大于 0`,
       );
     }
-    if (!item.extraPrice || item.extraPrice <= 0) {
-      throw new Error(`运费设置第 ${i + 1} 行：续费必须大于 0`);
+    if (!isNonNegativeNumber(item.extraPrice)) {
+      throw new Error(`运费设置第 ${i + 1} 行：续费不能小于 0`);
     }
   }
 }

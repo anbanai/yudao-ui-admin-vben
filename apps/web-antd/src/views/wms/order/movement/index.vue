@@ -33,6 +33,7 @@ import {
   getMovementOrderPage,
 } from '#/api/wms/order/movement';
 import { $t } from '#/locales';
+import { createNumberRangesCodec } from '#/utils/form-codec';
 import {
   formatPrice,
   formatQuantity,
@@ -176,6 +177,18 @@ async function handleExport() {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
+    codec: createNumberRangesCodec([
+      {
+        rangeField: 'totalQuantityRange',
+        minField: 'totalQuantityMin',
+        maxField: 'totalQuantityMax',
+      },
+      {
+        rangeField: 'totalPriceRange',
+        minField: 'totalPriceMin',
+        maxField: 'totalPriceMax',
+      },
+    ]),
     collapsed: true,
     schema: useGridFormSchema(),
   },
@@ -243,7 +256,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           <VxeColumn title="商品信息" min-width="220">
             <template #default="{ row: detail }">
               <div>{{ detail.itemName || '-' }}</div>
-              <div v-if="detail.itemCode" class="text-xs text-gray-500">
+              <div v-if="detail.itemCode" class="text-xs text-muted-foreground">
                 商品编号：{{ detail.itemCode }}
               </div>
             </template>
@@ -251,7 +264,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           <VxeColumn title="规格信息" min-width="220">
             <template #default="{ row: detail }">
               <div>{{ detail.skuName || '-' }}</div>
-              <div v-if="detail.skuCode" class="text-xs text-gray-500">
+              <div v-if="detail.skuCode" class="text-xs text-muted-foreground">
                 规格编号：{{ detail.skuCode }}
               </div>
             </template>

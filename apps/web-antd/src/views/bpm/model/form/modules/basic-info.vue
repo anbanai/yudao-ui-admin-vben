@@ -338,18 +338,18 @@ defineExpose({ validate });
           <div
             v-for="user in selectedStartUsers"
             :key="user.id"
-            class="relative flex h-8 items-center rounded-lg bg-gray-100 pr-2 hover:bg-gray-200 dark:border dark:border-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600"
+            class="relative flex h-8 items-center rounded-lg bg-muted pr-2 hover:bg-muted dark:border dark:border-border dark:bg-muted dark:hover:bg-muted"
           >
             <Avatar class="m-1 size-7" v-if="user.avatar" :src="user.avatar" />
             <Avatar class="m-1 size-7" v-else>
               {{ user.nickname?.substring(0, 1) }}
             </Avatar>
-            <span class="text-gray-700 dark:text-gray-200">
+            <span class="text-muted-foreground dark:text-muted-foreground">
               {{ user.nickname }}
             </span>
             <IconifyIcon
               icon="lucide:x"
-              class="ml-2 size-4 cursor-pointer text-gray-400 hover:text-red-500 dark:text-gray-200"
+              class="ml-2 size-4 cursor-pointer text-muted-foreground hover:text-red-500 dark:text-muted-foreground"
               @click="handleRemoveStartUser(user)"
             />
           </div>
@@ -371,15 +371,15 @@ defineExpose({ validate });
           <div
             v-for="dept in selectedStartDepts"
             :key="dept.id"
-            class="relative flex h-8 items-center rounded-lg bg-gray-100 pr-2 shadow-sm hover:bg-gray-200 dark:border dark:border-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600"
+            class="relative flex h-8 items-center rounded-lg bg-muted pr-2 shadow-sm hover:bg-muted dark:border dark:border-border dark:bg-muted dark:hover:bg-muted"
           >
             <IconifyIcon icon="lucide:building" class="size-6 px-1" />
-            <span class="text-gray-700 dark:text-gray-200">
+            <span class="text-muted-foreground dark:text-muted-foreground">
               {{ dept.name }}
             </span>
             <IconifyIcon
               icon="lucide:x"
-              class="ml-2 size-4 cursor-pointer text-gray-400 hover:text-red-500"
+              class="ml-2 size-4 cursor-pointer text-muted-foreground hover:text-red-500"
               @click="handleRemoveStartDept(dept)"
             />
           </div>
@@ -400,18 +400,18 @@ defineExpose({ validate });
           <div
             v-for="user in selectedManagerUsers"
             :key="user.id"
-            class="relative flex h-9 items-center rounded-full bg-gray-100 pr-2 hover:bg-gray-200 dark:border dark:border-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600"
+            class="relative flex h-9 items-center rounded-full bg-muted pr-2 hover:bg-muted dark:border dark:border-border dark:bg-muted dark:hover:bg-muted"
           >
             <Avatar class="m-1 size-7" v-if="user.avatar" :src="user.avatar" />
             <Avatar class="m-1 size-7" v-else>
               {{ user.nickname?.substring(0, 1) }}
             </Avatar>
-            <span class="text-gray-700 dark:text-gray-200">
+            <span class="text-muted-foreground dark:text-muted-foreground">
               {{ user.nickname }}
             </span>
             <IconifyIcon
               icon="lucide:x"
-              class="ml-2 size-4 cursor-pointer text-gray-400 hover:text-red-500"
+              class="ml-2 size-4 cursor-pointer text-muted-foreground hover:text-red-500"
               @click="handleRemoveManagerUser(user)"
             />
           </div>

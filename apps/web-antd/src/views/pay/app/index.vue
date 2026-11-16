@@ -244,6 +244,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
           :actions="createChannelConfigAction(row, PayChannelEnum.WX_BAR.code)"
         />
       </template>
+      <template #yeepayWxLiteConfig="{ row }">
+        <TableAction
+          :actions="
+            createChannelConfigAction(row, PayChannelEnum.YEEPAY_WX_LITE.code)
+          "
+        />
+      </template>
       <template #walletConfig="{ row }">
         <TableAction
           :actions="createChannelConfigAction(row, PayChannelEnum.WALLET.code)"

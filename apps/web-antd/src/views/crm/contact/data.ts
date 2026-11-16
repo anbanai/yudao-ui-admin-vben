@@ -1,4 +1,4 @@
-import type { VbenFormSchema } from '#/adapter/form';
+import type { VbenFormApi, VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 
 import { markRaw } from 'vue';
@@ -13,16 +13,25 @@ import { getSimpleUserList } from '#/api/system/user';
 import { AreaCascader } from '#/components/area';
 
 /** 新增/修改的表单 */
-export function useFormSchema(): VbenFormSchema[] {
+export interface ContactFormSchemaOptions {
+  onCustomerChange?: () => Promise<void>;
+}
+
+export async function resetContactCustomerValues(
+  formApi: Pick<VbenFormApi, 'setValues'>,
+) {
+  await formApi.setValues({ parentId: undefined });
+}
+
+export function useFormSchema({
+  onCustomerChange,
+}: ContactFormSchemaOptions = {}): VbenFormSchema[] {
   const userStore = useUserStore();
   return [
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -40,7 +49,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
       componentProps: {
         api: getSimpleUserList,
@@ -55,13 +66,13 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '客户名称',
       component: 'ApiSelect',
       rules: 'required',
-      componentProps: (_values, form) => ({
+      componentProps: {
         api: getCustomerSimpleList,
         labelField: 'name',
         valueField: 'id',
         placeholder: '请选择客户',
-        onChange: () => form.setFieldValue('parentId', undefined),
-      }),
+        onChange: onCustomerChange,
+      },
     },
     {
       fieldName: 'mobile',
@@ -142,19 +153,24 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['customerId', 'id'],
-        disabled: (values) => !values.customerId,
-        async componentProps(values) {
+        resolve: async ({ values }) => {
           if (!values.customerId) {
-            return { options: [], placeholder: '请先选择客户' };
+            return {
+              componentProps: { options: [], placeholder: '请先选择客户' },
+              disabled: !values.customerId,
+            };
           }
           const contacts = await getContactListByCustomer(values.customerId);
           return {
-            options: contacts.map((item) => ({
-              disabled: item.id === values.id,
-              label: item.name,
-              value: item.id,
-            })),
-            placeholder: '请选择直属上级',
+            componentProps: {
+              options: contacts.map((item) => ({
+                disabled: item.id === values.id,
+                label: item.name,
+                value: item.id,
+              })),
+              placeholder: '请选择直属上级',
+            },
+            disabled: !values.customerId,
           };
         },
       },

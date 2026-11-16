@@ -184,28 +184,28 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'checkFlag',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
       defaultValue: true,
     },
     {
       fieldName: 'routeId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'processId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'itemId',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -275,12 +275,14 @@ export function useFormSchema(
       component: markRaw(ProTaskSelect),
       dependencies: {
         triggerFields: ['workOrderId', 'workstationId'],
-        componentProps: (values) => ({
-          disabled: isHeaderReadonly || !values.workOrderId,
-          placeholder: values.workOrderId ? '请选择任务' : '请先选择工单',
-          statuses: [MesProTaskStatusEnum.PREPARE],
-          workOrderId: values.workOrderId,
-          workstationId: values.workstationId,
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: isHeaderReadonly || !values.workOrderId,
+            placeholder: values.workOrderId ? '请选择任务' : '请先选择工单',
+            statuses: [MesProTaskStatusEnum.PREPARE],
+            workOrderId: values.workOrderId,
+            workstationId: values.workstationId,
+          },
         }),
       },
       // 任务变更：自动填充关联字段、产品信息、checkFlag
@@ -337,7 +339,7 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['itemCode'],
-        show: (values) => !!values.itemCode,
+        resolve: ({ values }) => ({ show: !!values.itemCode }),
       },
     },
     {
@@ -349,7 +351,7 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['itemCode'],
-        show: (values) => !!values.itemCode,
+        resolve: ({ values }) => ({ show: !!values.itemCode }),
       },
     },
     {
@@ -361,7 +363,7 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['itemCode'],
-        show: (values) => !!values.itemCode,
+        resolve: ({ values }) => ({ show: !!values.itemCode }),
       },
     },
     {
@@ -373,7 +375,7 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['itemCode'],
-        show: (values) => !!values.itemCode,
+        resolve: ({ values }) => ({ show: !!values.itemCode }),
       },
     },
     {
@@ -387,13 +389,14 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['checkFlag'],
-        // 非质检工序时，报工数量 = 合格 + 不良，禁用直接编辑
-        componentProps: (values) => ({
-          class: 'w-full',
-          disabled: !values.checkFlag,
-          min: 0,
-          placeholder: '请输入报工数量',
-          precision: 2,
+        resolve: ({ values }) => ({
+          componentProps: {
+            class: 'w-full',
+            disabled: !values.checkFlag,
+            min: 0,
+            placeholder: '请输入报工数量',
+            precision: 2,
+          },
         }),
       },
       rules: 'required',
@@ -419,7 +422,7 @@ export function useFormSchema(
       defaultValue: 0,
       dependencies: {
         triggerFields: ['checkFlag'],
-        show: (values) => !values.checkFlag,
+        resolve: ({ values }) => ({ show: !values.checkFlag }),
       },
     },
     {
@@ -443,7 +446,7 @@ export function useFormSchema(
       defaultValue: 0,
       dependencies: {
         triggerFields: ['checkFlag'],
-        show: (values) => !values.checkFlag,
+        resolve: ({ values }) => ({ show: !values.checkFlag }),
       },
     },
     {
@@ -470,8 +473,9 @@ export function useFormSchema(
       defaultValue: 0,
       dependencies: {
         triggerFields: ['checkFlag', 'unqualifiedQuantity'],
-        show: (values) =>
-          !values.checkFlag && (values.unqualifiedQuantity || 0) > 0,
+        resolve: ({ values }) => ({
+          show: !values.checkFlag && (values.unqualifiedQuantity || 0) > 0,
+        }),
       },
     },
     {
@@ -498,8 +502,9 @@ export function useFormSchema(
       defaultValue: 0,
       dependencies: {
         triggerFields: ['checkFlag', 'unqualifiedQuantity'],
-        show: (values) =>
-          !values.checkFlag && (values.unqualifiedQuantity || 0) > 0,
+        resolve: ({ values }) => ({
+          show: !values.checkFlag && (values.unqualifiedQuantity || 0) > 0,
+        }),
       },
     },
     {
@@ -526,8 +531,9 @@ export function useFormSchema(
       defaultValue: 0,
       dependencies: {
         triggerFields: ['checkFlag', 'unqualifiedQuantity'],
-        show: (values) =>
-          !values.checkFlag && (values.unqualifiedQuantity || 0) > 0,
+        resolve: ({ values }) => ({
+          show: !values.checkFlag && (values.unqualifiedQuantity || 0) > 0,
+        }),
       },
     },
     {

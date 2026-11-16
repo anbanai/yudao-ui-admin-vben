@@ -12,10 +12,7 @@ export function usePropertyFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -102,27 +99,24 @@ export function useValueFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'propertyId',
       label: '属性',
       component: 'ApiSelect',
-      componentProps: (values) => {
-        return {
-          api: getPropertySimpleList,
-          placeholder: '请选择属性',
-          labelField: 'name',
-          valueField: 'id',
-          disabled: !!values.id,
-        };
+      componentProps: {
+        api: getPropertySimpleList,
+        placeholder: '请选择属性',
+        labelField: 'name',
+        valueField: 'id',
       },
       rules: 'required',
       dependencies: {
-        triggerFields: [''],
+        triggerFields: ['id'],
+        resolve({ values }) {
+          return { componentProps: { disabled: !!values.id } };
+        },
       },
     },
     {

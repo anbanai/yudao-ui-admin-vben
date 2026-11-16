@@ -11,6 +11,47 @@ import { getSimpleContactList } from '#/api/crm/contact';
 import { getCustomerSimpleList } from '#/api/crm/customer';
 import { getSimpleUserList } from '#/api/system/user';
 
+export function calculateProductTotals(
+  totalProductPrice = 0,
+  discountPercent: null | number | undefined = 0,
+) {
+  const discountPrice =
+    discountPercent === null
+      ? 0
+      : (erpPriceMultiply(totalProductPrice, discountPercent / 100) ?? 0);
+  return { totalPrice: totalProductPrice - discountPrice, totalProductPrice };
+}
+
+export async function applyProductUpdate<
+  T extends { discountPercent?: null | number },
+  P extends { totalPrice: number },
+>(
+  formApi: {
+    setValues: (
+      values: T & {
+        products: P[];
+        totalPrice: number;
+        totalProductPrice: number;
+      },
+    ) => Promise<void> | void;
+  },
+  formData: T,
+  products: P[],
+) {
+  const totalProductPrice = products.reduce(
+    (total, product) => total + product.totalPrice,
+    0,
+  );
+  const values = {
+    ...formData,
+    products,
+    ...calculateProductTotals(totalProductPrice, formData.discountPercent),
+  };
+  Object.assign(formData, values);
+  await formApi.setValues(values);
+  return values;
+}
+
 /** 新增/修改的表单 */
 export function useFormSchema(): VbenFormSchema[] {
   const userStore = useUserStore();
@@ -18,10 +59,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'no',
@@ -52,7 +90,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
       defaultValue: userStore.userInfo?.id,
       rules: 'required',
@@ -79,12 +119,14 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['customerId'],
-        disabled: (values) => !values.customerId,
-        async componentProps(values) {
+        resolve: async ({ values }) => {
           if (!values.customerId) {
             return {
-              options: [],
-              placeholder: '请选择客户',
+              componentProps: {
+                options: [],
+                placeholder: '请选择客户',
+              },
+              disabled: !values.customerId,
             };
           }
           const res = await getSimpleBusinessList();
@@ -92,11 +134,14 @@ export function useFormSchema(): VbenFormSchema[] {
             (item) => item.customerId === values.customerId,
           );
           return {
-            options: list.map((item) => ({
-              label: item.name,
-              value: item.id,
-            })),
-            placeholder: '请选择商机',
+            componentProps: {
+              options: list.map((item) => ({
+                label: item.name,
+                value: item.id,
+              })),
+              placeholder: '请选择商机',
+            },
+            disabled: !values.customerId,
           };
         },
       },
@@ -156,12 +201,14 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['customerId'],
-        disabled: (values) => !values.customerId,
-        async componentProps(values) {
+        resolve: async ({ values }) => {
           if (!values.customerId) {
             return {
-              options: [],
-              placeholder: '请选择客户',
+              componentProps: {
+                options: [],
+                placeholder: '请选择客户',
+              },
+              disabled: !values.customerId,
             };
           }
           const res = await getSimpleContactList();
@@ -169,11 +216,14 @@ export function useFormSchema(): VbenFormSchema[] {
             (item) => item.customerId === values.customerId,
           );
           return {
-            options: list.map((item) => ({
-              label: item.name,
-              value: item.id,
-            })),
-            placeholder: '请选择客户签约人',
+            componentProps: {
+              options: list.map((item) => ({
+                label: item.name,
+                value: item.id,
+              })),
+              placeholder: '请选择客户签约人',
+            },
+            disabled: !values.customerId,
           };
         },
       },
@@ -203,6 +253,22 @@ export function useFormSchema(): VbenFormSchema[] {
         precision: 2,
         placeholder: '请输入产品总金额',
       },
+      dependencies: {
+        triggerFields: ['discountPercent'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (totalProductPrice = 0) => {
+              actions.setFieldValue(
+                'totalPrice',
+                calculateProductTotals(
+                  totalProductPrice,
+                  values.discountPercent,
+                ).totalPrice,
+              );
+            },
+          },
+        }),
+      },
       rules: z.number().min(0).optional().default(0),
     },
     {
@@ -215,6 +281,22 @@ export function useFormSchema(): VbenFormSchema[] {
         precision: 2,
         placeholder: '请输入整单折扣',
       },
+      dependencies: {
+        triggerFields: ['totalProductPrice'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (discountPercent = 0) => {
+              actions.setFieldValue(
+                'totalPrice',
+                calculateProductTotals(
+                  values.totalProductPrice,
+                  discountPercent,
+                ).totalPrice,
+              );
+            },
+          },
+        }),
+      },
       rules: z.number().min(0).max(100).optional().default(0),
     },
     {
@@ -226,20 +308,6 @@ export function useFormSchema(): VbenFormSchema[] {
         min: 0,
         precision: 2,
         disabled: true,
-      },
-      dependencies: {
-        triggerFields: ['totalProductPrice', 'discountPercent'],
-        trigger(values, form) {
-          const discountPrice =
-            erpPriceMultiply(
-              values.totalProductPrice,
-              values.discountPercent / 100,
-            ) ?? 0;
-          form.setFieldValue(
-            'totalPrice',
-            values.totalProductPrice - discountPrice,
-          );
-        },
       },
     },
   ];

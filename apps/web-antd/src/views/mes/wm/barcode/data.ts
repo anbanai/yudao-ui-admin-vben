@@ -126,7 +126,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.WAREHOUSE,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.WAREHOUSE,
+        }),
       },
       rules: 'required',
     },
@@ -146,7 +148,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.LOCATION,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.LOCATION,
+        }),
       },
     },
     {
@@ -155,11 +159,13 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       component: markRaw(WmWarehouseLocationSelect),
       dependencies: {
         triggerFields: ['bizType', 'locationWarehouseId'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.LOCATION,
-        componentProps: (values) => ({
-          onChange: (item: any) => syncBizDetail(formApi, item),
-          placeholder: '请选择库区',
-          warehouseId: values.locationWarehouseId,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.LOCATION,
+          componentProps: {
+            onChange: (item: any) => syncBizDetail(formApi, item),
+            placeholder: '请选择库区',
+            warehouseId: values.locationWarehouseId,
+          },
         }),
       },
       rules: 'required',
@@ -181,7 +187,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.AREA,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.AREA,
+        }),
       },
     },
     {
@@ -189,18 +197,20 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       label: '库位·库区',
       component: markRaw(WmWarehouseLocationSelect),
       dependencies: {
-        triggerFields: ['bizType', 'areaWarehouseId'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.AREA,
-        componentProps: (values) => ({
-          onChange: () =>
-            formApi?.setValues({
-              bizId: undefined,
-              bizCode: undefined,
-              bizName: undefined,
-              content: undefined,
-            }),
-          placeholder: '请选择库区',
-          warehouseId: values.areaWarehouseId,
+        triggerFields: ['areaWarehouseId', 'bizType'],
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.AREA,
+          componentProps: {
+            onChange: () =>
+              formApi?.setValues({
+                bizId: undefined,
+                bizCode: undefined,
+                bizName: undefined,
+                content: undefined,
+              }),
+            placeholder: '请选择库区',
+            warehouseId: values.areaWarehouseId,
+          },
         }),
       },
     },
@@ -209,12 +219,14 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       label: '库位',
       component: markRaw(WmWarehouseAreaSelect),
       dependencies: {
-        triggerFields: ['bizType', 'areaLocationId'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.AREA,
-        componentProps: (values) => ({
-          locationId: values.areaLocationId,
-          onChange: (item: any) => syncBizDetail(formApi, item),
-          placeholder: '请选择库位',
+        triggerFields: ['areaLocationId', 'bizType'],
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.AREA,
+          componentProps: {
+            locationId: values.areaLocationId,
+            onChange: (item: any) => syncBizDetail(formApi, item),
+            placeholder: '请选择库位',
+          },
         }),
       },
       rules: 'required',
@@ -229,7 +241,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.WORKORDER,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.WORKORDER,
+        }),
       },
       rules: 'required',
     },
@@ -242,7 +256,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.MACHINERY,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.MACHINERY,
+        }),
       },
       rules: 'required',
     },
@@ -255,7 +271,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.ITEM,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.ITEM,
+        }),
       },
       rules: 'required',
     },
@@ -268,7 +286,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.VENDOR,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.VENDOR,
+        }),
       },
       rules: 'required',
     },
@@ -281,7 +301,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.WORKSTATION,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.WORKSTATION,
+        }),
       },
       rules: 'required',
     },
@@ -294,7 +316,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.WORKSHOP,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.WORKSHOP,
+        }),
       },
       rules: 'required',
     },
@@ -307,7 +331,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.CLIENT,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.CLIENT,
+        }),
       },
       rules: 'required',
     },
@@ -320,7 +346,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.TOOL,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.TOOL,
+        }),
       },
       rules: 'required',
     },
@@ -333,7 +361,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.STOCK,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.STOCK,
+        }),
       },
       rules: 'required',
     },
@@ -347,7 +377,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.PACKAGE,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.PACKAGE,
+        }),
       },
       rules: 'required',
     },
@@ -360,7 +392,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.BATCH,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.BATCH,
+        }),
       },
       rules: 'required',
     },
@@ -373,7 +407,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.PROCARD,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.PROCARD,
+        }),
       },
       rules: 'required',
     },
@@ -386,7 +422,9 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) => values.bizType === BarcodeBizTypeEnum.USER,
+        resolve: ({ values }) => ({
+          show: values.bizType === BarcodeBizTypeEnum.USER,
+        }),
       },
       rules: 'required',
     },
@@ -401,26 +439,28 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['bizType'],
-        show: (values) =>
-          values.bizType !== undefined &&
-          ![
-            BarcodeBizTypeEnum.AREA,
-            BarcodeBizTypeEnum.BATCH,
-            BarcodeBizTypeEnum.CLIENT,
-            BarcodeBizTypeEnum.ITEM,
-            BarcodeBizTypeEnum.LOCATION,
-            BarcodeBizTypeEnum.MACHINERY,
-            BarcodeBizTypeEnum.PACKAGE,
-            BarcodeBizTypeEnum.PROCARD,
-            BarcodeBizTypeEnum.STOCK,
-            BarcodeBizTypeEnum.TOOL,
-            BarcodeBizTypeEnum.USER,
-            BarcodeBizTypeEnum.VENDOR,
-            BarcodeBizTypeEnum.WAREHOUSE,
-            BarcodeBizTypeEnum.WORKORDER,
-            BarcodeBizTypeEnum.WORKSHOP,
-            BarcodeBizTypeEnum.WORKSTATION,
-          ].includes(values.bizType),
+        resolve: ({ values }) => ({
+          show:
+            values.bizType !== undefined &&
+            ![
+              BarcodeBizTypeEnum.AREA,
+              BarcodeBizTypeEnum.BATCH,
+              BarcodeBizTypeEnum.CLIENT,
+              BarcodeBizTypeEnum.ITEM,
+              BarcodeBizTypeEnum.LOCATION,
+              BarcodeBizTypeEnum.MACHINERY,
+              BarcodeBizTypeEnum.PACKAGE,
+              BarcodeBizTypeEnum.PROCARD,
+              BarcodeBizTypeEnum.STOCK,
+              BarcodeBizTypeEnum.TOOL,
+              BarcodeBizTypeEnum.USER,
+              BarcodeBizTypeEnum.VENDOR,
+              BarcodeBizTypeEnum.WAREHOUSE,
+              BarcodeBizTypeEnum.WORKORDER,
+              BarcodeBizTypeEnum.WORKSHOP,
+              BarcodeBizTypeEnum.WORKSTATION,
+            ].includes(values.bizType),
+        }),
       },
     },
     {

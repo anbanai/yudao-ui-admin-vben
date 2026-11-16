@@ -10,7 +10,7 @@ import { message } from 'ant-design-vue';
 import { createContact, getContact, updateContact } from '#/api/crm/contact';
 import { $t } from '#/locales';
 
-import { useFormSchema } from '../data';
+import { resetContactCustomerValues, useFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
 const formData = ref<CrmContactApi.Contact>();
@@ -28,9 +28,13 @@ const [Form, formApi] = useVbenForm({
   },
   wrapperClass: 'grid-cols-2',
   layout: 'horizontal',
-  schema: useFormSchema(),
+  schema: useFormSchema({ onCustomerChange: handleCustomerChange }),
   showDefaultActions: false,
 });
+
+async function handleCustomerChange() {
+  await resetContactCustomerValues(formApi);
+}
 
 const [Modal, modalApi] = useVbenModal({
   async onConfirm() {

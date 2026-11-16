@@ -9,6 +9,7 @@ import { Button } from 'antdv-next';
 
 import { VerticalButtonGroup } from '#/views/mall/promotion/components';
 
+import { getComponentBackgroundStyle } from '../util';
 import { components } from './mobile';
 
 /**
@@ -69,10 +70,7 @@ const style = computed(() => {
     borderBottomRightRadius: `${componentStyle.borderBottomRightRadius || 0}px`,
     borderBottomLeftRadius: `${componentStyle.borderBottomLeftRadius || 0}px`,
     overflow: 'hidden',
-    background:
-      componentStyle.bgType === 'color'
-        ? componentStyle.bgColor
-        : `url(${componentStyle.bgImg})`,
+    ...getComponentBackgroundStyle(componentStyle),
   };
 });
 

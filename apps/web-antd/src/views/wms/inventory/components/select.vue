@@ -189,7 +189,7 @@ defineExpose({ open: openModal });
       <template #itemInfo="{ row }">
         <div class="flex flex-col gap-1 py-1 leading-5">
           <div>{{ row.itemName || '-' }}</div>
-          <div v-if="row.itemCode" class="text-xs text-gray-500">
+          <div v-if="row.itemCode" class="text-xs text-muted-foreground">
             商品编号：{{ row.itemCode }}
           </div>
         </div>
@@ -197,7 +197,7 @@ defineExpose({ open: openModal });
       <template #skuInfo="{ row }">
         <div class="flex flex-col gap-1 py-1 leading-5">
           <div>{{ row.skuName || '-' }}</div>
-          <div v-if="row.skuCode" class="text-xs text-gray-500">
+          <div v-if="row.skuCode" class="text-xs text-muted-foreground">
             规格编号：{{ row.skuCode }}
           </div>
         </div>

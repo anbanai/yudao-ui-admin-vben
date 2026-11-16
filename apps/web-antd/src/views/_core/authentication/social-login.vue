@@ -142,19 +142,14 @@ const formSchema = computed((): VbenFormSchema[] => {
           value: item.id.toString(),
         })),
         placeholder: $t('authentication.tenantTip'),
+        onChange: (tenantId: string) => {
+          if (tenantId) accessStore.setTenantId(Number(tenantId));
+        },
       },
       fieldName: 'tenantId',
       label: $t('authentication.tenant'),
       rules: z.string().min(1, { message: $t('authentication.tenantTip') }),
-      dependencies: {
-        triggerFields: ['tenantId'],
-        if: tenantEnable,
-        trigger(values) {
-          if (values.tenantId) {
-            accessStore.setTenantId(Number(values.tenantId));
-          }
-        },
-      },
+      hide: !tenantEnable,
     },
     {
       component: 'VbenInput',
@@ -192,7 +187,6 @@ const formSchema = computed((): VbenFormSchema[] => {
       :loading="authStore.loginLoading"
       :show-code-login="false"
       :show-qrcode-login="false"
-      :show-third-party-login="false"
       :show-register="false"
       @submit="handleLogin"
     />

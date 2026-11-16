@@ -15,11 +15,9 @@ import {
 } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import {
-  AppLinkInput,
-  ColorInput,
-  Draggable,
-} from '#/views/mall/promotion/components';
+import AppLinkInput from '#/views/mall/promotion/components/app-link-input/index.vue';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
+import Draggable from '#/views/mall/promotion/components/draggable/index.vue';
 
 import { component, THEME_LIST } from './config';
 
@@ -94,7 +92,7 @@ const handleThemeChange = () => {
       </FormItem>
 
       <div class="mb-2 text-base">图标设置</div>
-      <div class="mb-2 text-xs text-gray-500">
+      <div class="mb-2 text-xs text-muted-foreground">
         拖动左上角的小圆点可对其排序, 图标建议尺寸 44*44
       </div>
       <Draggable v-model="formData.items" :limit="5">

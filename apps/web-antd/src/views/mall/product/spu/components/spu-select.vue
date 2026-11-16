@@ -2,17 +2,13 @@
 import type { PropertyAndValues } from './type';
 
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { MallCategoryApi } from '#/api/mall/product/category';
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
-import { computed, nextTick, onMounted, ref } from 'vue';
-
-import { handleTree } from '@vben/utils';
+import { computed, nextTick, ref } from 'vue';
 
 import { message, Modal } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getCategoryList } from '#/api/mall/product/category';
 import { getSpu, getSpuPage } from '#/api/mall/product/spu';
 
 import { getPropertyList } from './property-util';
@@ -38,8 +34,6 @@ interface SpuSelectProps {
 }
 
 // ============ 数据状态 ============
-const categoryList = ref<MallCategoryApi.Category[]>([]); // 分类列表
-const categoryTreeList = ref<MallCategoryApi.Category[]>([]); // 分类树
 const propertyList = ref<PropertyAndValues[]>([]); // 商品属性列表
 const spuData = ref<MallSpuApi.Spu>(); // 当前展开的商品详情
 const isExpand = ref(false); // 控制 SKU 列表显示
@@ -160,7 +154,7 @@ async function expandChange(
   isExpand.value = true;
 }
 
-const formSchema = computed(() => useGridFormSchema(categoryTreeList)); // 搜索表单 Schema
+const formSchema = useGridFormSchema(); // 搜索表单 Schema
 const gridColumns = computed<VxeTableGridOptions['columns']>(() => {
   const columns = useGridColumns(props.isSelectSku);
   // 将 checkbox 替换为 radio
@@ -174,7 +168,7 @@ const gridColumns = computed<VxeTableGridOptions['columns']>(() => {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
-    schema: formSchema.value,
+    schema: formSchema,
     layout: 'horizontal',
     collapsed: false,
   },
@@ -276,16 +270,6 @@ function handleConfirm() {
 /** 对外暴露的方法 */
 defineExpose({
   open: openModal,
-});
-
-/** 初始化分类数据 */
-onMounted(async () => {
-  categoryList.value = await getCategoryList({});
-  categoryTreeList.value = handleTree(
-    categoryList.value,
-    'id',
-    'parentId',
-  ) as MallCategoryApi.Category[];
 });
 </script>
 

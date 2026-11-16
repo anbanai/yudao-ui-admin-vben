@@ -14,7 +14,9 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDraftPage } from '#/api/mp/draft';
 import { getFreePublishPage } from '#/api/mp/freePublish';
 import { getMaterialPage } from '#/api/mp/material';
-import { WxNews, WxVideoPlayer, WxVoicePlayer } from '#/views/mp/components';
+import WxNews from '#/views/mp/components/wx-news/wx-news.vue';
+import WxVideoPlayer from '#/views/mp/components/wx-video-play/wx-video-play.vue';
+import WxVoicePlayer from '#/views/mp/components/wx-voice-play/wx-voice-play.vue';
 
 /** 微信素材选择 */
 defineOptions({ name: 'WxMaterialSelect' });

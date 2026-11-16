@@ -15,10 +15,7 @@ export function useTypeFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -33,15 +30,15 @@ export function useTypeFormSchema(): VbenFormSchema[] {
       fieldName: 'type',
       label: '字典类型',
       component: 'Input',
-      componentProps: (values) => {
-        return {
-          placeholder: '请输入字典类型',
-          disabled: !!values.id,
-        };
+      componentProps: {
+        placeholder: '请输入字典类型',
       },
       rules: 'required',
       dependencies: {
-        triggerFields: [''],
+        triggerFields: ['id'],
+        resolve({ values }) {
+          return { componentProps: { disabled: !!values.id } };
+        },
       },
     },
     {
@@ -169,27 +166,24 @@ export function useDataFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'dictType',
       label: '字典类型',
       component: 'ApiSelect',
-      componentProps: (values) => {
-        return {
-          api: getSimpleDictTypeList,
-          placeholder: '请输入字典类型',
-          labelField: 'name',
-          valueField: 'type',
-          disabled: !!values.id,
-        };
+      componentProps: {
+        api: getSimpleDictTypeList,
+        placeholder: '请输入字典类型',
+        labelField: 'name',
+        valueField: 'type',
       },
       rules: 'required',
       dependencies: {
-        triggerFields: [''],
+        triggerFields: ['id'],
+        resolve({ values }) {
+          return { componentProps: { disabled: !!values.id } };
+        },
       },
     },
     {

@@ -77,7 +77,7 @@ const shortcuts = [
           @click="emit('navigate', item.routeName)"
         >
           <div
-            class="flex size-12 items-center justify-center rounded-xl text-white"
+            class="flex size-12 items-center justify-center rounded-xl text-primary-foreground"
             :style="{ background: item.bgColor }"
           >
             <IconifyIcon class="size-6" :icon="item.icon" />

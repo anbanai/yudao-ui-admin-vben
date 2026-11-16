@@ -17,10 +17,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       component: 'Input',
@@ -129,19 +126,13 @@ export function useBindFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       component: 'Input',
       fieldName: 'name',
       label: '门店名称',
-      dependencies: {
-        triggerFields: ['id'],
-        disabled: true,
-      },
+      disabled: true,
     },
     {
       component: 'ApiSelect',

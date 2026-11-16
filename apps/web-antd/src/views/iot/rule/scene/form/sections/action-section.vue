@@ -196,7 +196,7 @@ function onActionTypeChange(action: RuleSceneApi.Action, type: number) {
                 class="font-semibold flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300"
               >
                 <div
-                  class="flex w-[22px] h-[22px] items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white"
+                  class="flex w-[22px] h-[22px] items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-primary-foreground"
                 >
                   {{ index + 1 }}
                 </div>

@@ -126,7 +126,7 @@ function deleteParamItem(index: number) {
   <div
     v-for="(item, index) in thingModelParams"
     :key="index"
-    class="mb-2.5 flex w-full justify-between bg-gray-100 px-2.5 dark:bg-gray-800"
+    class="mb-2.5 flex w-full justify-between bg-muted px-2.5 dark:bg-muted"
   >
     <span>参数名称：{{ item.name }}</span>
     <div>

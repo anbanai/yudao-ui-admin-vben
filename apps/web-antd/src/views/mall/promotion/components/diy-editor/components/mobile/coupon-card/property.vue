@@ -5,7 +5,6 @@ import type { MallCouponTemplateApi } from '#/api/mall/promotion/coupon/couponTe
 
 import { ref, watch } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
 import {
   CouponTemplateTakeTypeEnum,
   PromotionDiscountTypeEnum,
@@ -27,7 +26,7 @@ import {
 
 import { getCouponTemplateList } from '#/api/mall/promotion/coupon/couponTemplate';
 import UploadImg from '#/components/upload/image-upload.vue';
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 import CouponSelect from '#/views/mall/promotion/coupon/components/select.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
@@ -43,14 +42,11 @@ const formData = useVModel(props, 'modelValue', emit);
 
 const couponList = ref<MallCouponTemplateApi.CouponTemplate[]>([]); // 已选择的优惠券列表
 
-const [CouponSelectModal, couponSelectModalApi] = useVbenModal({
-  connectedComponent: CouponSelect,
-  destroyOnClose: true,
-});
+const couponSelectRef = ref<InstanceType<typeof CouponSelect>>(); // 优惠券选择弹窗
 
 /** 添加优惠劵 */
 const handleAddCoupon = () => {
-  couponSelectModalApi.open();
+  couponSelectRef.value?.open();
 };
 
 /** 处理优惠劵选择 */
@@ -173,8 +169,9 @@ watch(
   </ComponentContainerProperty>
 
   <!-- 优惠券选择 -->
-  <CouponSelectModal
+  <CouponSelect
+    ref="couponSelectRef"
     :take-type="CouponTemplateTakeTypeEnum.USER.type"
-    @success="handleCouponSelect"
+    @change="handleCouponSelect"
   />
 </template>

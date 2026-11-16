@@ -214,7 +214,7 @@ onUnmounted(() => {
     <!-- 文件上传按钮 -->
     <button
       type="button"
-      class="relative flex h-8 w-8 items-center justify-center rounded-full border-0 bg-transparent text-gray-600 transition-all duration-200 hover:bg-gray-100"
+      class="relative flex h-8 w-8 items-center justify-center rounded-full border-0 bg-transparent text-muted-foreground transition-all duration-200 hover:bg-muted"
       :class="{ 'text-blue-500 hover:bg-blue-50': hasFiles }"
       :disabled="isLimitReached"
       @click="triggerFileInput"
@@ -223,7 +223,7 @@ onUnmounted(() => {
       <!-- 文件数量徽章 -->
       <span
         v-if="hasFiles"
-        class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium leading-none text-white"
+        class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium leading-none text-primary-foreground"
       >
         {{ fileList.length }}
       </span>
@@ -242,16 +242,16 @@ onUnmounted(() => {
     <!-- Hover 显示的文件列表 -->
     <div
       v-if="hasFiles && showTooltip"
-      class="absolute bottom-[calc(100%+8px)] left-1/2 z-[1000] min-w-[240px] max-w-[320px] -translate-x-1/2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg duration-200 animate-in fade-in slide-in-from-bottom-1"
+      class="absolute bottom-[calc(100%+8px)] left-1/2 z-[1000] min-w-[240px] max-w-[320px] -translate-x-1/2 rounded-lg border border-border bg-background p-2 shadow-lg duration-200 animate-in fade-in slide-in-from-bottom-1"
       @mouseenter="showTooltipHandler"
       @mouseleave="hideTooltipHandler"
     >
       <!-- Tooltip 箭头 -->
       <div
-        class="absolute -bottom-[5px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-gray-200"
+        class="absolute -bottom-[5px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-border"
       >
         <div
-          class="absolute bottom-[1px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-t-white"
+          class="absolute bottom-[1px] left-1/2 h-0 w-0 -translate-x-1/2 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-border"
         ></div>
       </div>
       <!-- 文件列表 -->
@@ -261,7 +261,7 @@ onUnmounted(() => {
         <div
           v-for="(file, index) in fileList"
           :key="index"
-          class="mb-1 flex items-center justify-between rounded-md bg-gray-50 p-2 text-xs transition-all duration-200 last:mb-0 hover:bg-gray-100"
+          class="mb-1 flex items-center justify-between rounded-md bg-muted p-2 text-xs transition-all duration-200 last:mb-0 hover:bg-muted"
           :class="{ 'opacity-70': file.uploading }"
         >
           <div class="flex min-w-0 flex-1 items-center">
@@ -270,18 +270,18 @@ onUnmounted(() => {
               class="mr-2 flex-shrink-0 text-blue-500"
             />
             <span
-              class="mr-1 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-medium text-gray-900"
+              class="mr-1 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-medium text-muted-foreground"
             >
               {{ file.name }}
             </span>
-            <span class="flex-shrink-0 text-[11px] text-gray-500">
+            <span class="flex-shrink-0 text-[11px] text-muted-foreground">
               ({{ formatFileSize(file.size) }})
             </span>
           </div>
           <div class="ml-2 flex flex-shrink-0 items-center gap-1">
             <div
               v-if="file.uploading"
-              class="h-1 w-[60px] overflow-hidden rounded-full bg-gray-200"
+              class="h-1 w-[60px] overflow-hidden rounded-full bg-muted"
             >
               <div
                 class="h-full bg-blue-500 transition-all duration-300"

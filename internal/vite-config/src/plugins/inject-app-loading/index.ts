@@ -26,7 +26,12 @@ async function viteInjectAppLoadingPlugin(
   const injectScript = `
   <script data-app-loading="inject-js">
   var theme = localStorage.getItem(${cacheName});
-  document.documentElement.classList.toggle('dark', /dark/.test(theme));
+  try {
+    theme = theme ? JSON.parse(theme) : theme;
+    theme = theme && typeof theme === 'object' && 'value' in theme ? theme.value : theme;
+  } catch (_) {}
+  var systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.classList.toggle('dark', theme === 'dark' || ((theme === null || theme === 'auto') && systemPrefersDark));
 </script>
 `;
 

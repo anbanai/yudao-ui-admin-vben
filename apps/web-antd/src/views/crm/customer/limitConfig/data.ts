@@ -16,18 +16,12 @@ export function useFormSchema(confType: LimitConfType): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'type',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'userIds',
@@ -83,10 +77,7 @@ export function useFormSchema(confType: LimitConfType): VbenFormSchema[] {
         buttonStyle: 'solid',
         optionType: 'button',
       },
-      dependencies: {
-        triggerFields: [''],
-        show: () => confType === LimitConfType.CUSTOMER_QUANTITY_LIMIT,
-      },
+      hide: confType !== LimitConfType.CUSTOMER_QUANTITY_LIMIT,
       defaultValue: false,
     },
   ];

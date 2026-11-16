@@ -268,7 +268,7 @@ function showTime(item: MallKefuMessageApi.Message, index: number) {
       </div>
       <div
         ref="scrollbarRef"
-        class="mb-4 flex h-full flex-col overflow-x-auto rounded-lg bg-gray-100 p-2"
+        class="mb-4 flex h-full flex-col overflow-x-auto rounded-lg bg-muted p-2"
       >
         <div class="flex flex-col">
           <!-- 消息列表 -->
@@ -284,14 +284,14 @@ function showTime(item: MallKefuMessageApi.Message, index: number) {
                   item.contentType !== KeFuMessageContentTypeEnum.SYSTEM &&
                   showTime(item, index)
                 "
-                class="w-fit rounded-lg bg-black/10 px-2 text-xs"
+                class="w-fit rounded-lg bg-foreground/10 px-2 text-xs"
               >
                 {{ formatDate(item.createTime) }}
               </div>
               <!-- 系统消息 -->
               <div
                 v-if="item.contentType === KeFuMessageContentTypeEnum.SYSTEM"
-                class="w-fit rounded-lg bg-black/10 px-2 text-xs"
+                class="w-fit rounded-lg bg-foreground/10 px-2 text-xs"
               >
                 {{ item.content }}
               </div>
@@ -314,9 +314,9 @@ function showTime(item: MallKefuMessageApi.Message, index: number) {
               />
               <div
                 :class="{
-                  'w-auto max-w-[50%] p-1 font-medium text-gray-500 transition-all duration-200 hover:scale-105':
+                  'w-auto max-w-[50%] p-1 font-medium text-muted-foreground transition-all duration-200 hover:scale-105':
                     KeFuMessageContentTypeEnum.TEXT === item.contentType,
-                  'm-1 break-words rounded-lg bg-gray-100':
+                  'm-1 break-words rounded-lg bg-muted':
                     KeFuMessageContentTypeEnum.TEXT === item.contentType &&
                     item.senderType === UserTypeEnum.MEMBER,
                   'm-1 break-words rounded-lg bg-blue-50':

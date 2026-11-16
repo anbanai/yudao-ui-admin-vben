@@ -2,13 +2,15 @@
 import type { MallDeliveryExpressTemplateApi } from '#/api/mall/trade/delivery/expressTemplate';
 import type { SystemAreaApi } from '#/api/system/area';
 
-import { computed, nextTick, ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
+
+import { isNonNegativeNumber } from '@vben/utils';
 
 import { InputNumber, TreeSelect } from 'ant-design-vue';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 
-import { FREE_MODE_TITLE_MAP, useFreesColumns } from '../data';
+import { useFreesColumns } from '../data';
 
 interface Props {
   items?: MallDeliveryExpressTemplateApi.DeliveryExpressTemplateFree[];
@@ -25,8 +27,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['update:items']);
 
 const tableData = ref<any[]>([]);
-const columnTitle = computed(() => FREE_MODE_TITLE_MAP[props.chargeMode]);
-
 /** 表格配置 */
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -113,13 +113,11 @@ function validate() {
     if (!item.areaIds || item.areaIds.length === 0) {
       throw new Error(`包邮设置第 ${i + 1} 行：区域不能为空`);
     }
-    if (!item.freeCount || item.freeCount <= 0) {
-      throw new Error(
-        `包邮设置第 ${i + 1} 行：${columnTitle.value?.freeCountTitle}必须大于 0`,
-      );
+    if (!isNonNegativeNumber(item.freeCount)) {
+      throw new Error(`包邮设置第 ${i + 1} 行：包邮门槛不能小于 0`);
     }
-    if (!item.freePrice || item.freePrice <= 0) {
-      throw new Error(`包邮设置第 ${i + 1} 行：包邮金额必须大于 0`);
+    if (!isNonNegativeNumber(item.freePrice)) {
+      throw new Error(`包邮设置第 ${i + 1} 行：包邮金额不能小于 0`);
     }
   }
 }
@@ -152,7 +150,7 @@ defineExpose({
     <template #freeCount="{ row }">
       <InputNumber
         v-model:value="row.freeCount"
-        :min="1"
+        :min="0"
         @change="handleRowChange(row)"
       />
     </template>

@@ -9,8 +9,7 @@ import type {
 
 import { computed } from 'vue';
 
-import appNavbarMp from '#/assets/imgs/diy/app-nav-bar-mp.png';
-
+import { MALL_DIY_ASSETS } from '../../../static-assets';
 import SearchBar from '../search-bar/index.vue';
 
 /** 页面顶部导航栏 */
@@ -62,7 +61,7 @@ const getSearchProp = computed(() => (cell: NavigationBarCellProperty) => {
 </script>
 <template>
   <div
-    class="flex h-[50px] items-center justify-between bg-white px-[6px]"
+    class="flex h-[50px] items-center justify-between bg-background px-[6px]"
     :style="bgStyle"
   >
     <div class="flex h-full w-full items-center">
@@ -83,7 +82,7 @@ const getSearchProp = computed(() => (cell: NavigationBarCellProperty) => {
     </div>
     <img
       v-if="property._local?.previewMp"
-      :src="appNavbarMp"
+      :src="MALL_DIY_ASSETS.appNavBarMp"
       alt=""
       style="width: 86px; height: 30px"
     />

@@ -59,7 +59,7 @@ function onMaterialSelected(item: any) {
 
 /** 上传前校验 */
 const onBeforeUpload: UploadProps['beforeUpload'] = (file: UploadRawFile) =>
-  useBeforeUpload(UploadType.Image, 2)(file as any);
+  useBeforeUpload(UploadType.Image, 10)(file as any);
 
 function onUploadSuccess(res: any) {
   const data = res?.data;

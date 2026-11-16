@@ -135,14 +135,14 @@ onMounted(async () => {
             {{ formatDateTime(item.createTime) }}
           </div>
           <div
-            class="relative flex flex-col break-words rounded-lg bg-gray-100 p-2.5 pb-1 pt-2.5 shadow-sm"
+            class="relative flex flex-col break-words rounded-lg bg-muted p-2.5 pb-1 pt-2.5 shadow-sm"
           >
             <MessageReasoning
               :reasoning-content="item.reasoningContent || ''"
               :content="item.content || ''"
             />
             <MarkdownView
-              class="text-sm text-gray-600"
+              class="text-sm text-muted-foreground"
               :content="item.content"
             />
             <MessageFiles :attachment-urls="item.attachmentUrls" />
@@ -154,7 +154,7 @@ onMounted(async () => {
           </div>
           <div class="mt-2 flex flex-row">
             <Button
-              class="flex items-center bg-transparent px-1.5 hover:bg-gray-100"
+              class="flex items-center bg-transparent px-1.5 hover:bg-muted"
               type="text"
               @click="copyContent(item.content)"
             >
@@ -162,7 +162,7 @@ onMounted(async () => {
             </Button>
             <Button
               v-if="item.id > 0"
-              class="flex items-center bg-transparent px-1.5 hover:bg-gray-100"
+              class="flex items-center bg-transparent px-1.5 hover:bg-muted"
               type="text"
               @click="handleDelete(item.id)"
             >
@@ -190,35 +190,35 @@ onMounted(async () => {
           <div class="flex flex-row-reverse">
             <div
               v-if="item.content && item.content.trim()"
-              class="inline w-auto whitespace-pre-wrap break-words rounded-lg bg-blue-500 p-2.5 text-sm text-white shadow-sm"
+              class="inline w-auto whitespace-pre-wrap break-words rounded-lg bg-blue-500 p-2.5 text-sm text-primary-foreground shadow-sm"
             >
               {{ item.content }}
             </div>
           </div>
           <div class="mt-2 flex flex-row-reverse">
             <Button
-              class="flex items-center bg-transparent px-1.5 hover:bg-gray-100"
+              class="flex items-center bg-transparent px-1.5 hover:bg-muted"
               type="text"
               @click="copyContent(item.content)"
             >
               <IconifyIcon icon="lucide:copy" />
             </Button>
             <Button
-              class="flex items-center bg-transparent px-1.5 hover:bg-gray-100"
+              class="flex items-center bg-transparent px-1.5 hover:bg-muted"
               type="text"
               @click="handleDelete(item.id)"
             >
               <IconifyIcon icon="lucide:trash" />
             </Button>
             <Button
-              class="flex items-center bg-transparent px-1.5 hover:bg-gray-100"
+              class="flex items-center bg-transparent px-1.5 hover:bg-muted"
               type="text"
               @click="handleRefresh(item)"
             >
               <IconifyIcon icon="lucide:refresh-cw" />
             </Button>
             <Button
-              class="flex items-center bg-transparent px-1.5 hover:bg-gray-100"
+              class="flex items-center bg-transparent px-1.5 hover:bg-muted"
               type="text"
               @click="handleEdit(item)"
             >

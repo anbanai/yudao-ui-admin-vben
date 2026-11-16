@@ -500,13 +500,13 @@ function handleRenameSuccess() {
             <!-- drag-handle 标识可以拖动，不能删掉 -->
             <IconifyIcon
               icon="ic:round-drag-indicator"
-              class="drag-handle ml-2.5 cursor-move text-2xl text-gray-500"
+              class="drag-handle ml-2.5 cursor-move text-2xl text-muted-foreground"
             />
           </Tooltip>
           <div class="ml-4 mr-2 text-lg font-medium">
             {{ categoryInfo.name }}
           </div>
-          <div class="text-gray-500">
+          <div class="text-muted-foreground">
             ({{ categoryInfo.modelList?.length || 0 }})
           </div>
         </div>
@@ -521,7 +521,7 @@ function handleRenameSuccess() {
           >
             <IconifyIcon
               icon="lucide:chevron-down"
-              class="text-3xl text-gray-400"
+              class="text-3xl text-muted-foreground"
             />
           </div>
 
@@ -600,12 +600,12 @@ function handleRenameSuccess() {
                   <!-- drag-handle 标识用于推动排序。 useSortable 用到 -->
                   <IconifyIcon
                     icon="ic:round-drag-indicator"
-                    class="drag-handle mr-2.5 flex-shrink-0 cursor-move text-2xl text-gray-500"
+                    class="drag-handle mr-2.5 flex-shrink-0 cursor-move text-2xl text-muted-foreground"
                   />
                 </Tooltip>
                 <div
                   v-if="!row.icon"
-                  class="mr-2.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-blue-500 text-white"
+                  class="mr-2.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-blue-500 text-primary-foreground"
                 >
                   <span class="text-xs">
                     {{ row.name.substring(0, 2) }}

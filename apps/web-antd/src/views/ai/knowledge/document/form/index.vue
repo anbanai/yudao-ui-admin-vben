@@ -156,15 +156,15 @@ onMounted(async () => {
               :class="[
                 currentStep === index
                   ? 'border-b-2 border-solid border-blue-500 text-blue-500'
-                  : 'text-gray-500',
+                  : 'text-muted-foreground',
               ]"
             >
               <div
                 class="mr-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-solid text-base"
                 :class="[
                   currentStep === index
-                    ? 'border-blue-500 bg-blue-500 text-white'
-                    : 'border-gray-300 bg-white text-gray-500',
+                    ? 'border-blue-500 bg-blue-500 text-primary-foreground'
+                    : 'border-border bg-background text-muted-foreground',
                 ]"
               >
                 {{ index + 1 }}

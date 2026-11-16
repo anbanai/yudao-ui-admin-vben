@@ -30,7 +30,7 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'warehouseId',
@@ -52,16 +52,18 @@ export function useFormSchema(
       component: 'ApiSelect',
       dependencies: {
         triggerFields: ['warehouseId'],
-        componentProps: (values) => ({
-          allowClear: true,
-          api: () =>
-            getWarehouseLocationSimpleList(values.warehouseId as number),
-          // 改变 warehouseId 时强制刷新选项
-          params: { warehouseId: values.warehouseId },
-          disabled: !values.warehouseId,
-          labelField: 'name',
-          valueField: 'id',
-          placeholder: '请选择库区',
+        resolve: ({ values }) => ({
+          componentProps: {
+            allowClear: true,
+            api: () =>
+              getWarehouseLocationSimpleList(values.warehouseId as number),
+            // 改变 warehouseId 时强制刷新选项
+            params: { warehouseId: values.warehouseId },
+            disabled: !values.warehouseId,
+            labelField: 'name',
+            valueField: 'id',
+            placeholder: '请选择库区',
+          },
         }),
       },
       rules: 'required',

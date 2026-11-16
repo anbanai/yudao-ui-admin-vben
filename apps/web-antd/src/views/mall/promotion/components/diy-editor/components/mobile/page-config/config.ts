@@ -1,4 +1,4 @@
-import type { DiyComponent } from '../../../util';
+import type { DiyComponent } from '../../../types';
 
 /** 页面设置属性 */
 export interface PageConfigProperty {

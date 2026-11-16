@@ -5,13 +5,13 @@ import type { MallSpuApi } from '#/api/mall/product/spu';
 import { handleTree, treeToString } from '@vben/utils';
 
 import { getCategoryList } from '#/api/mall/product/category';
+import { getSimpleMerchantList } from '#/api/mall/product/merchant';
 import { getRangePickerDefaultProps } from '#/utils';
 
-/** 关联数据 */
+import { useSpuGroupFilterSchema } from './components/group-filter';
+
+/** 分类树缓存：供表格分类名称列显示 */
 let categoryList: any[] = [];
-getCategoryList({}).then((data) => {
-  categoryList = handleTree(data, 'id', 'parentId', 'children');
-});
 
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
@@ -26,16 +26,38 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
     },
     {
-      fieldName: 'categoryId',
+      fieldName: 'merchantId',
+      label: '所属商家',
+      component: 'ApiSelect',
+      componentProps: {
+        api: getSimpleMerchantList,
+        labelField: 'storeName',
+        valueField: 'id',
+        showSearch: true,
+        optionFilterProp: 'label',
+        placeholder: '请选择商家',
+        allowClear: true,
+      },
+    },
+    {
+      fieldName: 'categoryIds',
       label: '商品分类',
       component: 'ApiTreeSelect',
       componentProps: {
+        api: async () => {
+          const data = await getCategoryList({});
+          categoryList = handleTree(data, 'id', 'parentId', 'children');
+          return categoryList;
+        },
         placeholder: '请选择商品分类',
         allowClear: true,
-        options: categoryList,
-        fieldNames: { label: 'name', value: 'id', children: 'children' },
+        multiple: true,
+        labelField: 'name',
+        valueField: 'id',
+        childrenField: 'children',
       },
     },
+    ...useSpuGroupFilterSchema(),
     {
       fieldName: 'createTime',
       label: '创建时间',
@@ -56,6 +78,11 @@ export function useGridColumns(
   ) => PromiseLike<boolean | undefined>,
 ): VxeTableGridOptions['columns'] {
   return [
+    {
+      type: 'checkbox',
+      width: 48,
+      fixed: 'left',
+    },
     {
       field: 'id',
       title: '商品编号',
@@ -83,6 +110,18 @@ export function useGridColumns(
       formatter: ({ row }) => {
         return treeToString(categoryList, row.categoryId);
       },
+    },
+    {
+      field: 'merchantName',
+      title: '所属商家',
+      minWidth: 160,
+      formatter: ({ row }) => row.merchantName || row.merchantId || '-',
+    },
+    {
+      field: 'groupIds',
+      title: '商品分组',
+      minWidth: 200,
+      slots: { default: 'groups' },
     },
     {
       field: 'status',
@@ -150,7 +189,7 @@ export function useGridColumns(
     },
     {
       title: '操作',
-      width: 300,
+      width: 360,
       fixed: 'right',
       slots: { default: 'actions' },
     },

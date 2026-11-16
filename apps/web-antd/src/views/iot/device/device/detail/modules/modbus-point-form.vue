@@ -49,26 +49,17 @@ function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       component: 'Input',
       fieldName: 'identifier',
-      dependencies: {
-        triggerFields: [''], // 隐藏字段：identifier（由物模型属性选择自动填充）
-        show: () => false,
-      },
+      hide: true,
     },
     {
       component: 'Input',
       fieldName: 'name',
-      dependencies: {
-        triggerFields: [''], // 隐藏字段：name（由物模型属性选择自动填充）
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'thingModelId',
@@ -82,13 +73,23 @@ function useFormSchema(): VbenFormSchema[] {
         },
       },
       dependencies: {
-        triggerFields: [''],
-        componentProps: () => ({
-          options: propertyList.value.map((item) => ({
-            value: item.id,
-            label: `${item.name} (${item.identifier})`,
-          })),
-        }),
+        triggerFields: ['thingModelId'],
+        resolve: ({ values }) => {
+          const selectedId = values.thingModelId;
+          const options = propertyList.value
+            .map((item) => ({
+              value: item.id,
+              label: `${item.name} (${item.identifier})`,
+            }))
+            .toSorted((left, right) => {
+              if (left.value === selectedId) return -1;
+              if (right.value === selectedId) return 1;
+              return 0;
+            });
+          return {
+            componentProps: { options },
+          };
+        },
       },
       rules: 'required',
     },
@@ -123,7 +124,7 @@ function useFormSchema(): VbenFormSchema[] {
         }
         return h(
           'span',
-          { class: 'text-gray-400' },
+          { class: 'text-muted-foreground' },
           `0x${Number(addr).toString(16).toUpperCase().padStart(4, '0')}`,
         );
       },
@@ -162,13 +163,15 @@ function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['rawDataType'],
-        componentProps: (values) => ({
-          options: values.rawDataType
-            ? getByteOrderOptions(values.rawDataType).map((item) => ({
-                value: item.value,
-                label: `${item.label} - ${item.description}`,
-              }))
-            : [],
+        resolve: ({ values }) => ({
+          componentProps: {
+            options: values.rawDataType
+              ? getByteOrderOptions(values.rawDataType).map((item) => ({
+                  value: item.value,
+                  label: `${item.label} - ${item.description}`,
+                }))
+              : [],
+          },
         }),
       },
       rules: 'required',

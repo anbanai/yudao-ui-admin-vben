@@ -6,19 +6,11 @@ import type { SystemTenantApi } from '#/api/system/tenant';
 import { computed, onMounted, ref, watch } from 'vue';
 
 import { useAccess } from '@vben/access';
-import { AuthenticationLoginExpiredModal, useVbenModal } from '@vben/common-ui';
-import { VBEN_DOC_URL, VBEN_GITHUB_URL } from '@vben/constants';
+import { AuthenticationLoginExpiredModal } from '@vben/common-ui';
 import { isTenantEnable, useTabs, useWatermark } from '@vben/hooks';
-import {
-  AntdProfileOutlined,
-  BookOpenText,
-  CircleHelp,
-  IconifyIcon,
-  SvgGithubIcon,
-} from '@vben/icons';
+import { AntdProfileOutlined, IconifyIcon } from '@vben/icons';
 import {
   BasicLayout,
-  Help,
   LockScreen,
   Notification,
   TenantDropdown,
@@ -26,7 +18,7 @@ import {
 } from '@vben/layouts';
 import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
-import { formatDateTime, openWindow } from '@vben/utils';
+import { formatDateTime } from '@vben/utils';
 
 import { message, Tooltip } from 'ant-design-vue';
 
@@ -53,46 +45,25 @@ const { closeOtherTabs, refreshTab } = useTabs();
 const notifications = ref<NotificationItem[]>([]);
 const unreadCount = ref(0);
 const showDot = computed(() => unreadCount.value > 0);
+const notificationPopupRef = ref<null | { toggle: () => void }>(null);
 
-const [HelpModal, helpModalApi] = useVbenModal({
-  connectedComponent: Help,
-});
 const { isDark } = usePreferences();
 
 const menus = computed(() => [
-  {
-    handler: () => {
-      router.push({ name: 'Profile' });
-    },
-    icon: AntdProfileOutlined,
-    text: $t('ui.widgets.profile'),
-  },
-  {
-    handler: () => {
-      openWindow(VBEN_DOC_URL, {
-        target: '_blank',
-      });
-    },
-    icon: BookOpenText,
-    text: $t('ui.widgets.document'),
-  },
-  {
-    handler: () => {
-      openWindow(VBEN_GITHUB_URL, {
-        target: '_blank',
-      });
-    },
-    icon: SvgGithubIcon,
-    text: 'GitHub',
-  },
-  {
-    handler: () => {
-      helpModalApi.open();
-    },
-    icon: CircleHelp,
-    text: $t('ui.widgets.qa'),
-  },
+  ...(authStore.authMode === 'merchant'
+    ? []
+    : [
+        {
+          handler: () => {
+            router.push({ name: 'Profile' });
+          },
+          icon: AntdProfileOutlined,
+          text: $t('ui.widgets.profile'),
+        },
+      ]),
 ]);
+
+const merchantMode = computed(() => authStore.authMode === 'merchant');
 
 const avatar = computed(() => {
   return userStore.userInfo?.avatar ?? preferences.app.defaultAvatar;
@@ -158,6 +129,11 @@ function handleNotificationOpen(open: boolean) {
   handleNotificationGetUnreadCount();
 }
 
+function handleNotificationToggle() {
+  notificationPopupRef.value?.toggle();
+  handleNotificationOpen(true);
+}
+
 /** 打开 IM 聊天 */
 function handleOpenImHome() {
   const { href } = router.resolve({ name: 'ImHome' });
@@ -195,6 +171,9 @@ async function handleTenantChange(tenant: SystemTenantApi.Tenant) {
 
 // ========== 初始化 ==========
 onMounted(() => {
+  if (merchantMode.value) {
+    return;
+  }
   // 首次加载未读数量
   handleNotificationGetUnreadCount();
   // 获取租户列表
@@ -291,9 +270,24 @@ watch(
         :tag-text="userStore.userInfo?.username"
         @clear-preferences-and-logout="handleLogout"
         @logout="handleLogout"
-      />
+        @notification="handleNotificationToggle"
+      >
+        <template v-if="!merchantMode" #notification>
+          <Notification
+            ref="notificationPopupRef"
+            :dot="showDot"
+            :notifications="notifications"
+            @clear="handleNotificationClear"
+            @make-all="handleNotificationMakeAll"
+            @view-all="handleNotificationViewAll"
+            @open="handleNotificationOpen"
+            @read="handleNotificationRead"
+            @on-click="handleClick"
+          />
+        </template>
+      </UserDropdown>
     </template>
-    <template #notification>
+    <template v-if="!merchantMode" #notification>
       <Notification
         :dot="showDot"
         :notifications="notifications"
@@ -306,8 +300,8 @@ watch(
       />
     </template>
     <template #header-right-1>
-      <FmsAccountSetSwitch />
-      <div v-if="tenantEnable">
+      <FmsAccountSetSwitch v-if="!merchantMode" />
+      <div v-if="tenantEnable && !merchantMode">
         <TenantDropdown
           class="mr-2"
           :tenant-list="tenants"
@@ -316,7 +310,7 @@ watch(
         />
       </div>
     </template>
-    <template #header-right-900>
+    <template v-if="!merchantMode" #header-right-900>
       <Tooltip title="IM 聊天">
         <button
           class="hover:bg-accent hover:text-accent-foreground mr-1 inline-flex size-8 items-center justify-center rounded-md transition-colors"
@@ -339,5 +333,4 @@ watch(
       <LockScreen :avatar @to-login="handleLogout" />
     </template>
   </BasicLayout>
-  <HelpModal />
 </template>

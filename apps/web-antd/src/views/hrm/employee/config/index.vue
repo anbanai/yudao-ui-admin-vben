@@ -15,14 +15,14 @@ const saving = ref(false);
 const createFieldConfigRef = ref<InstanceType<typeof CreateFieldConfig>>();
 const archiveFieldConfigRef = ref<InstanceType<typeof ArchiveFieldConfig>>();
 
-async function submitForm() {
+async function submit() {
   saving.value = true;
   try {
     if (activeTab.value === 'create') {
-      await createFieldConfigRef.value?.submitForm();
+      await createFieldConfigRef.value?.submit();
       return;
     }
-    await archiveFieldConfigRef.value?.submitForm();
+    await archiveFieldConfigRef.value?.submit();
   } finally {
     saving.value = false;
   }
@@ -43,7 +43,7 @@ async function submitForm() {
           v-access:code="['hrm:employee:config:update']"
           :loading="saving"
           type="primary"
-          @click="submitForm"
+          @click="submit"
         >
           保存
         </Button>

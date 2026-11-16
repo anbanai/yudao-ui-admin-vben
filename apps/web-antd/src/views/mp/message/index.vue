@@ -33,7 +33,7 @@ const messageBoxUserId = ref(0);
 /** 公众号变化时查询数据 */
 function handleAccountChange(accountId: number) {
   gridApi.formApi.setValues({ accountId });
-  gridApi.formApi.submitForm();
+  gridApi.formApi.submit();
 }
 
 /** 打开消息发送窗口 */

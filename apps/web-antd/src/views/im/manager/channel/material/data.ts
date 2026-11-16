@@ -16,10 +16,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'channelId',
@@ -72,7 +69,11 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RichTextarea',
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === 1,
+        resolve({ values }) {
+          return {
+            show: values.type === 1,
+          };
+        },
       },
     },
     {
@@ -84,7 +85,11 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type !== 1,
+        resolve({ values }) {
+          return {
+            show: values.type !== 1,
+          };
+        },
       },
     },
   ];

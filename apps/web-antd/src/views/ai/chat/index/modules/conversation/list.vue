@@ -349,7 +349,7 @@ onMounted(async () => {
             class="mt-1"
           >
             <div
-              class="mb-2 flex cursor-pointer flex-row items-center justify-between rounded-lg px-2 leading-10 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+              class="mb-2 flex cursor-pointer flex-row items-center justify-between rounded-lg px-2 leading-10 transition-colors hover:bg-muted dark:hover:bg-muted"
               :class="[
                 conversation.id === activeConversationId
                   ? 'bg-primary/10 dark:bg-primary/20'
@@ -372,7 +372,7 @@ onMounted(async () => {
 
               <div
                 v-show="hoverConversationId === conversation.id"
-                class="relative right-0.5 flex items-center text-gray-400"
+                class="relative right-0.5 flex items-center text-muted-foreground"
               >
                 <Button
                   class="mr-0 px-1"
@@ -414,17 +414,17 @@ onMounted(async () => {
 
     <!-- 左底部：工具栏 -->
     <div
-      class="absolute bottom-1 left-0 right-0 mb-4 flex items-center justify-between bg-card px-5 leading-9 text-gray-400 shadow-sm"
+      class="absolute bottom-1 left-0 right-0 mb-4 flex items-center justify-between bg-card px-5 leading-9 text-muted-foreground shadow-sm"
     >
       <div
-        class="flex cursor-pointer items-center text-gray-400"
+        class="flex cursor-pointer items-center text-muted-foreground"
         @click="handleRoleRepository"
       >
         <IconifyIcon icon="lucide:user" />
         <span class="ml-1">角色仓库</span>
       </div>
       <div
-        class="flex cursor-pointer items-center text-gray-400"
+        class="flex cursor-pointer items-center text-muted-foreground"
         @click="handleClearConversation"
       >
         <IconifyIcon icon="lucide:trash" />

@@ -45,10 +45,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -71,10 +68,10 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({
-          disabled: !!values.id,
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
+          rules: values.id ? null : 'required',
         }),
-        rules: (values) => (values.id ? null : 'required'),
       },
     },
     {
@@ -86,10 +83,10 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({
-          disabled: !!values.id,
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
+          rules: values.id ? null : 'required',
         }),
-        rules: (values) => (values.id ? null : 'required'),
       },
     },
     {
@@ -113,10 +110,10 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({
-          disabled: !!values.id,
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
+          rules: values.id ? null : 'required',
         }),
-        rules: (values) => (values.id ? null : 'required'),
       },
     },
   ];

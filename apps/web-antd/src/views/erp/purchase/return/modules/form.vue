@@ -80,6 +80,14 @@ const [Form, formApi] = useVbenForm({
       if (changedFields.includes('discountPercent')) {
         formData.value.discountPercent = values.discountPercent;
       }
+      if (
+        changedFields.includes('totalPrice') ||
+        changedFields.includes('otherPrice')
+      ) {
+        const discountedPrice =
+          (values.totalPrice ?? 0) - (values.otherPrice ?? 0);
+        formApi.setValues({ discountedPrice });
+      }
     }
   },
 });

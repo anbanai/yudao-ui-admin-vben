@@ -31,7 +31,7 @@ defineExpose({
       class="text-success no-underline"
     >
       <div
-        class="flex items-center rounded-[5px] border border-[#e8e8e8] bg-white p-2.5 transition hover:border-black/10 hover:shadow-sm"
+        class="flex items-center rounded-[5px] border border-[#e8e8e8] bg-background p-2.5 transition hover:border-border/10 hover:shadow-sm"
       >
         <div
           class="mr-3 h-[60px] w-[60px] overflow-hidden rounded-[4px] border border-transparent"

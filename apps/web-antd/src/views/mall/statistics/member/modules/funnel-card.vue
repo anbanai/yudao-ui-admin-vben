@@ -73,7 +73,7 @@ const calculateRelativeRate = (value?: number, reference?: number) => {
           </div>
         </div>
         <div
-          class="-ml-[154px] mt-1.5 flex w-[308px] flex-col items-center justify-center bg-blue-500 text-sm text-white [transform:perspective(5em)_rotateX(-11deg)]"
+          class="-ml-[154px] mt-1.5 flex w-[308px] flex-col items-center justify-center bg-blue-500 text-sm text-primary-foreground [transform:perspective(5em)_rotateX(-11deg)]"
         >
           <span class="text-2xl font-bold">
             {{ analyseData?.visitUserCount || 0 }}
@@ -100,7 +100,7 @@ const calculateRelativeRate = (value?: number, reference?: number) => {
           </div>
         </div>
         <div
-          class="-ml-[112px] mt-[6.8px] flex h-[100px] w-[224px] flex-col items-center justify-center bg-cyan-500 text-sm text-white [transform:perspective(7em)_rotateX(-20deg)]"
+          class="-ml-[112px] mt-[6.8px] flex h-[100px] w-[224px] flex-col items-center justify-center bg-cyan-500 text-sm text-primary-foreground [transform:perspective(7em)_rotateX(-20deg)]"
         >
           <span class="text-2xl font-bold">
             {{ analyseData?.orderUserCount || 0 }}
@@ -109,7 +109,7 @@ const calculateRelativeRate = (value?: number, reference?: number) => {
         </div>
       </div>
       <div class="flex h-24">
-        <div class="flex w-[75%] bg-slate-50">
+        <div class="flex w-[75%] bg-muted">
           <div class="ml-[50px] flex flex-row gap-x-16">
             <div class="flex flex-col justify-center">
               <div class="font-bold">
@@ -134,7 +134,7 @@ const calculateRelativeRate = (value?: number, reference?: number) => {
           </div>
         </div>
         <div
-          class="-ml-[72px] mt-[13px] flex h-[92px] w-[144px] flex-col items-center justify-center bg-slate-500 text-sm text-white [transform:perspective(3em)_rotateX(-13deg)]"
+          class="-ml-[72px] mt-[13px] flex h-[92px] w-[144px] flex-col items-center justify-center bg-muted text-sm text-primary-foreground [transform:perspective(3em)_rotateX(-13deg)]"
         >
           <span class="text-2xl font-bold">
             {{ analyseData?.payUserCount || 0 }}

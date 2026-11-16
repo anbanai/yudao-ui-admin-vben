@@ -26,12 +26,13 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
     },
     {
-      fieldName: 'categoryId',
+      fieldName: 'categoryIds',
       label: '商品分类',
       component: 'ApiTreeSelect',
       componentProps: {
         placeholder: '请选择商品分类',
         allowClear: true,
+        multiple: true,
         options: categoryList,
         fieldNames: { label: 'name', value: 'id', children: 'children' },
       },

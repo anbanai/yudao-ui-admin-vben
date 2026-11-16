@@ -68,13 +68,17 @@ const handleSave = () => {
   modalApi.close();
 };
 
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<{ headers: string }>({
   destroyOnClose: true,
   onOpenChange(isOpen) {
     if (!isOpen) {
       return;
     }
-    const { headers } = modalApi.getData();
+    const data = modalApi.getData();
+    if (!data) {
+      return;
+    }
+    const { headers } = data;
     headerList.value = parseHeaders(headers);
   },
   onConfirm: handleSave,
@@ -96,7 +100,7 @@ const [Modal, modalApi] = useVbenModal({
             class="w-48"
             allow-clear
           />
-          <span class="font-medium text-gray-600">:</span>
+          <span class="font-medium text-muted-foreground">:</span>
           <Input
             v-model:value="item.value"
             placeholder="请输入参数值 (支持表达式 ${变量名})"

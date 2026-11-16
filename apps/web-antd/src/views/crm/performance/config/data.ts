@@ -83,8 +83,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['objectType'],
-        show: (values) =>
-          values.objectType === PerformanceConfigObjectTypeEnum.DEPT,
+        resolve: ({ values }) => ({
+          show: values.objectType === PerformanceConfigObjectTypeEnum.DEPT,
+        }),
       },
     },
     {
@@ -101,8 +102,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['objectType'],
-        show: (values) =>
-          values.objectType === PerformanceConfigObjectTypeEnum.USER,
+        resolve: ({ values }) => ({
+          show: values.objectType === PerformanceConfigObjectTypeEnum.USER,
+        }),
       },
     },
   ];
@@ -114,10 +116,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'year',
@@ -166,8 +165,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['objectType'],
-        show: (values) =>
-          values.objectType === PerformanceConfigObjectTypeEnum.DEPT,
+        resolve: ({ values }) => ({
+          show: values.objectType === PerformanceConfigObjectTypeEnum.DEPT,
+        }),
       },
     },
     {
@@ -184,8 +184,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['objectType'],
-        show: (values) =>
-          values.objectType === PerformanceConfigObjectTypeEnum.USER,
+        resolve: ({ values }) => ({
+          show: values.objectType === PerformanceConfigObjectTypeEnum.USER,
+        }),
       },
     },
     ...monthFields.map((item) => ({

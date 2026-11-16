@@ -18,6 +18,7 @@ export interface FileUploadProps {
     onUploadProgress?: AxiosProgressEvent,
   ) => Promise<AxiosResponse>;
   directory?: string; // 上传的目录
+  scene?: 'material' | 'product'; // 图片上传业务场景
   disabled?: boolean;
   drag?: boolean; // 是否支持拖拽上传
   helpText?: string;

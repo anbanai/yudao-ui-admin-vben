@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue';
+import type { MallCategoryApi } from '#/api/mall/product/category';
+
+import { computed, ref, watch } from 'vue';
 
 import { handleTree } from '@vben/utils';
 
@@ -26,27 +28,65 @@ const props = defineProps({
 });
 
 /** 分类选择 */
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  categorySelected: [category?: { id: number; name: string }];
+  'update:modelValue': [value?: number | number[]];
+}>();
 
-const categoryList = ref<any[]>([]); // 分类树
+type CategoryTree = MallCategoryApi.Category & { children?: CategoryTree[] };
+type SelectedCategory = { id: number; name: string };
+
+const categoryList = ref<CategoryTree[]>([]); // 分类树
 
 /** 选中的分类 ID */
 const selectCategoryId = computed({
   get: () => {
     return props.modelValue;
   },
-  set: (val: number | number[]) => {
+  set: (val: number | number[] | undefined) => {
     emit('update:modelValue', val);
+    const category = findCategory(categoryList.value, val);
+    emit('categorySelected', category);
   },
 });
 
-/** 初始化 */
-onMounted(async () => {
-  const data = await getCategoryList({
-    parentId: props.parentId,
-  });
-  categoryList.value = handleTree(data, 'id', 'parentId');
-});
+function findCategory(
+  list: CategoryTree[],
+  value?: number | number[],
+): SelectedCategory | undefined {
+  if (value === undefined || Array.isArray(value)) {
+    return undefined;
+  }
+  for (const category of list) {
+    if (category.id === value && typeof category.id === 'number') {
+      return { id: category.id, name: category.name };
+    }
+    const child: SelectedCategory | undefined = findCategory(
+      category.children || [],
+      value,
+    );
+    if (child) {
+      return child;
+    }
+  }
+  return undefined;
+}
+
+watch(
+  () => props.parentId,
+  async (parentId, _oldParentId, onCleanup) => {
+    let cancelled = false;
+    onCleanup(() => {
+      cancelled = true;
+    });
+    categoryList.value = [];
+    const data = await getCategoryList({ parentId });
+    if (!cancelled) {
+      categoryList.value = handleTree(data, 'id', 'parentId') as CategoryTree[];
+    }
+  },
+  { immediate: true },
+);
 </script>
 <template>
   <TreeSelect

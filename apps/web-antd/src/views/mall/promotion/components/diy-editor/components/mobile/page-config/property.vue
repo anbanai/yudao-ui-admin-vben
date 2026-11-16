@@ -5,7 +5,7 @@ import { useVModel } from '@vueuse/core';
 import { Form, FormItem, Textarea } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 /** 导航栏属性面板 */
 defineOptions({ name: 'PageConfigProperty' });

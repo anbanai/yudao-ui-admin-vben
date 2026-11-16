@@ -144,7 +144,9 @@ export function useOrderPriceSchema(): DescriptionItemSchema[] {
 }
 
 /** 收货信息 schema */
-export function useDeliveryInfoSchema(): DescriptionItemSchema[] {
+export function useDeliveryInfoSchema(
+  getLogisticsName: (id?: number) => string | undefined = () => undefined,
+): DescriptionItemSchema[] {
   return [
     {
       field: 'deliveryType',
@@ -164,14 +166,25 @@ export function useDeliveryInfoSchema(): DescriptionItemSchema[] {
       label: '联系电话',
     },
     {
-      field: 'receiverAddress',
+      field: 'receiverDetailAddress',
       label: '收货地址',
-      render: (val, data) => `${data?.receiverAreaName} ${val}`.trim(),
+      render: (val, data) =>
+        [data?.receiverAreaName, val].filter(Boolean).join(' '),
     },
     {
       field: 'deliveryTime',
       label: '发货时间',
       render: (val) => formatDateTime(val) as string,
+    },
+    {
+      field: 'logisticsId',
+      label: '物流公司',
+      render: (val) => getLogisticsName(val) || '-',
+    },
+    {
+      field: 'logisticsNo',
+      label: '物流单号',
+      render: (val) => val || '-',
     },
   ];
 }
@@ -184,6 +197,12 @@ export function useProductColumns(): VxeTableGridOptions['columns'] {
       title: '商品',
       minWidth: 300,
       slots: { default: 'spuName' },
+    },
+    {
+      field: 'merchantName',
+      title: '所属商家',
+      width: 160,
+      formatter: ({ row }) => row.merchantName || row.merchantId || '-',
     },
     {
       field: 'price',

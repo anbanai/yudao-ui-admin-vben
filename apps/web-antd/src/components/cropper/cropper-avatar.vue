@@ -75,18 +75,18 @@ defineExpose({
   <div class="inline-block text-center" :style="getStyle">
     <!-- 图片包装器 -->
     <div
-      class="group relative cursor-pointer overflow-hidden rounded-full border border-gray-200 bg-card"
+      class="group relative cursor-pointer overflow-hidden rounded-full border border-border bg-card"
       :style="getImageWrapperStyle"
       @click="openModal"
     >
       <!-- 遮罩层 -->
       <div
-        class="duration-400 absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black bg-opacity-40 opacity-0 transition-opacity group-hover:opacity-100"
+        class="duration-400 absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-foreground bg-opacity-40 opacity-0 transition-opacity group-hover:opacity-100"
         :style="getImageWrapperStyle"
       >
         <IconifyIcon
           icon="lucide:cloud-upload"
-          class="m-auto text-gray-400"
+          class="m-auto text-muted-foreground"
           :style="{
             ...getImageWrapperStyle,
             width: getIconWidth,

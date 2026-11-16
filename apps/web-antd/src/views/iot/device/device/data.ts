@@ -15,10 +15,7 @@ export function useBasicFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'productId',
@@ -32,17 +29,14 @@ export function useBasicFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values: any) => !!values?.id,
+        resolve: ({ values }) => ({ disabled: !!values.id }),
       },
       rules: 'required',
     },
     {
       component: 'Input',
       fieldName: 'deviceType',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'deviceName',
@@ -53,7 +47,7 @@ export function useBasicFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values: any) => !!values?.id,
+        resolve: ({ values }) => ({ disabled: !!values.id }),
       },
       rules: z
         .string()

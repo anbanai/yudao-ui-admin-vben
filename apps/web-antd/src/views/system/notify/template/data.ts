@@ -14,10 +14,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -161,10 +158,7 @@ export function useSendNotifyFormSchema(): VbenFormSchema[] {
       fieldName: 'templateCode',
       label: '模板编码',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'userType',
@@ -183,10 +177,10 @@ export function useSendNotifyFormSchema(): VbenFormSchema[] {
         placeholder: '请输入用户编号',
       },
       dependencies: {
-        show(values) {
-          return values.userType === UserTypeEnum.MEMBER;
-        },
         triggerFields: ['userType'],
+        resolve: ({ values }) => ({
+          show: values.userType === UserTypeEnum.MEMBER,
+        }),
       },
       rules: 'required',
     },
@@ -201,10 +195,10 @@ export function useSendNotifyFormSchema(): VbenFormSchema[] {
         placeholder: '请选择接收人',
       },
       dependencies: {
-        show(values) {
-          return values.userType === UserTypeEnum.ADMIN;
-        },
         triggerFields: ['userType'],
+        resolve: ({ values }) => ({
+          show: values.userType === UserTypeEnum.ADMIN,
+        }),
       },
       rules: 'required',
     },
@@ -212,10 +206,7 @@ export function useSendNotifyFormSchema(): VbenFormSchema[] {
       fieldName: 'templateParams',
       label: '模板参数',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
   ];
 }

@@ -1,5 +1,7 @@
 import type { ComponentStyle, DiyComponent } from '../../../util';
 
+import { MALL_DIY_ASSETS } from '../../../static-assets';
+
 /** 公告栏属性 */
 export interface NoticeBarProperty {
   iconUrl: string; // 图标地址
@@ -21,7 +23,7 @@ export const component = {
   name: '公告栏',
   icon: 'lucide:bell',
   property: {
-    iconUrl: 'http://mall.yudao.iocoder.cn/static/images/xinjian.png',
+    iconUrl: MALL_DIY_ASSETS.noticeIcon,
     contents: [
       {
         text: '',

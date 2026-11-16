@@ -11,6 +11,16 @@ export const schema: VbenFormSchema[] = [
         { label: '不提醒', value: false },
       ],
     },
+    dependencies: {
+      triggerFields: ['notifyEnabled'],
+      resolve: ({ values, actions }) => ({
+        componentProps: {
+          onChange: (enabled = values.notifyEnabled) => {
+            if (!enabled) actions.setFieldValue('notifyDays', undefined);
+          },
+        },
+      }),
+    },
     defaultValue: true,
   },
   {
@@ -27,12 +37,7 @@ export const schema: VbenFormSchema[] = [
     }),
     dependencies: {
       triggerFields: ['notifyEnabled'],
-      show: (values) => values.notifyEnabled,
-      trigger(values) {
-        if (!values.notifyEnabled) {
-          values.notifyDays = undefined;
-        }
-      },
+      resolve: ({ values }) => ({ show: values.notifyEnabled }),
     },
   },
 ];

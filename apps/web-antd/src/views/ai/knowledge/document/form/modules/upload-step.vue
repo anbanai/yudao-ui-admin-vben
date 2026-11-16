@@ -188,7 +188,7 @@ onMounted(() => {
     <Form.Item class="mb-5">
       <div class="w-full">
         <div
-          class="w-full rounded-md border-2 border-dashed border-gray-200 p-5 text-center hover:border-blue-500"
+          class="w-full rounded-md border-2 border-dashed border-border p-5 text-center hover:border-blue-500"
         >
           <UploadDragger
             class="upload-demo"
@@ -203,15 +203,15 @@ onMounted(() => {
             <div class="flex flex-col items-center justify-center py-5">
               <IconifyIcon
                 icon="ep:upload-filled"
-                class="mb-2.5 text-xs text-gray-400"
+                class="mb-2.5 text-xs text-muted-foreground"
               />
-              <div class="ant-upload-text text-base text-gray-400">
+              <div class="ant-upload-text text-base text-muted-foreground">
                 拖拽文件至此，或者
                 <em class="cursor-pointer not-italic text-blue-500">
                   选择文件
                 </em>
               </div>
-              <div class="mt-2.5 text-sm text-gray-400">
+              <div class="mt-2.5 text-sm text-muted-foreground">
                 已支持 {{ supportedFileTypes.join('、') }}，每个文件不超过
                 {{ maxFileSize }} MB。
               </div>
@@ -229,7 +229,7 @@ onMounted(() => {
           >
             <div class="flex items-center">
               <IconifyIcon icon="lucide:file-text" class="mr-2 text-blue-500" />
-              <span class="break-all text-sm text-gray-600">
+              <span class="break-all text-sm text-muted-foreground">
                 {{ file.name }}
               </span>
             </div>

@@ -8,18 +8,6 @@ import { NumberRangeInput } from '#/components/number-range-input';
 import FmsVoucherWordSelect from '#/views/fms/config/voucher-word/components/voucher-word-select.vue';
 import { formatMoney } from '#/views/fms/utils/format';
 
-/** 拆分数字区间到最小/最大查询字段 */
-function splitNumberRange(minFieldName: string, maxFieldName: string) {
-  return (
-    value: [number | undefined, number | undefined] | undefined,
-    setValue: (fieldName: string, value: number | undefined) => void,
-  ) => {
-    setValue(minFieldName, value?.[0]);
-    setValue(maxFieldName, value?.[1]);
-    return undefined;
-  };
-}
-
 /** 列表搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
@@ -56,7 +44,6 @@ export function useGridFormSchema(): VbenFormSchema[] {
         minPlaceholder: '起始号',
         maxPlaceholder: '结束号',
       },
-      valueFormat: splitNumberRange('minVoucherNumber', 'maxVoucherNumber'),
     },
     {
       fieldName: 'levelRange',
@@ -69,7 +56,6 @@ export function useGridFormSchema(): VbenFormSchema[] {
         minPlaceholder: '',
         maxPlaceholder: '',
       },
-      valueFormat: splitNumberRange('minLevel', 'maxLevel'),
     },
   ];
 }

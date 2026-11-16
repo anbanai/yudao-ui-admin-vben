@@ -13,10 +13,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -65,13 +62,18 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
-      fieldName: 'pointMultiplier',
-      label: '积分倍率(%)',
+      fieldName: 'pointTradeGiveMultiplierDisplay',
+      label: '返积分倍率',
       component: 'InputNumber',
-      defaultValue: 100,
-      rules: z.number().int().min(100).max(1000),
-      help: '100为1倍，150为1.5倍；命中双倍时段固定2倍，不与等级倍率相乘。',
-      componentProps: { min: 100, max: 1000, precision: 0, class: '!w-full' },
+      componentProps: {
+        class: '!w-full',
+        min: 0,
+        max: 10,
+        step: 0.1,
+        precision: 1,
+        placeholder: '例如 1.2 倍',
+      },
+      rules: 'required',
     },
     {
       fieldName: 'icon',
@@ -175,7 +177,12 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '享受折扣(%)',
       minWidth: 120,
     },
-    { field: 'pointMultiplier', title: '积分倍率(%)', minWidth: 120 },
+    {
+      field: 'pointTradeGiveMultiplier',
+      title: '返积分倍率',
+      minWidth: 150,
+      slots: { default: 'pointMultiplier' },
+    },
     {
       field: 'status',
       title: '状态',

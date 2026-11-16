@@ -13,7 +13,7 @@ import {
   Tooltip,
 } from 'ant-design-vue';
 
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 /** 导航栏属性面板 */
 defineOptions({ name: 'DividerProperty' });

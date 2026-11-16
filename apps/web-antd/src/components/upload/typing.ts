@@ -18,6 +18,7 @@ export interface FileUploadProps {
     onUploadProgress?: AxiosProgressEvent,
   ) => Promise<AxiosResponse>;
   directory?: string; // 上传的目录
+  scene?: 'material' | 'product'; // 图片上传业务场景
   disabled?: boolean;
   drag?: boolean; // 是否支持拖拽上传
   helpText?: string;
@@ -28,6 +29,7 @@ export interface FileUploadProps {
   multiple?: boolean; // 是否支持多选
   resultField?: string; // support xxx.xxx.xx
   returnText?: boolean; // 是否返回文件文本内容
+  sortable?: boolean; // 是否支持已上传文件拖拽排序
   showDescription?: boolean; // 是否显示下面的描述
   showDownloadIcon?: boolean; // 是否显示下载按钮
   value?: string | string[];

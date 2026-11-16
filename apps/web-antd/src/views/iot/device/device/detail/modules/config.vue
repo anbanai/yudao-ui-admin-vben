@@ -137,7 +137,7 @@ async function updateDeviceConfig() {
     <!-- 代码视图 - 只读展示 -->
     <pre
       v-if="!isEditing"
-      class="m-0 h-[460px] overflow-y-auto whitespace-pre-wrap break-words rounded border border-[#d9d9d9] bg-[#f5f5f5] p-3 font-mono text-[13px] leading-normal text-[#333] dark:border-[#3a3a3a] dark:bg-[#1a1a1a] dark:text-gray-300"
+      class="m-0 h-[460px] overflow-y-auto whitespace-pre-wrap break-words rounded border border-border bg-muted p-3 font-mono text-[13px] leading-normal text-foreground"
       v-text="formattedConfig"
     ></pre>
 

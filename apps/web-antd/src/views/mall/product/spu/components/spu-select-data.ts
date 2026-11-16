@@ -1,19 +1,18 @@
-import type { Ref } from 'vue';
-
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeGridProps, VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MallCategoryApi } from '#/api/mall/product/category';
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
-import { computed } from 'vue';
+import { fenToYuan, handleTree } from '@vben/utils';
 
-import { fenToYuan } from '@vben/utils';
-
+import { getCategoryList } from '#/api/mall/product/category';
 import { getRangePickerDefaultProps } from '#/utils';
+
+import { useSpuGroupFilterSchema } from './group-filter';
 
 /** 列表的搜索表单 */
 export function useGridFormSchema(
-  categoryTreeList: Ref<MallCategoryApi.Category[] | unknown[]>,
+  onLoaded?: (categories: MallCategoryApi.Category[]) => void,
 ): VbenFormSchema[] {
   return [
     {
@@ -28,20 +27,27 @@ export function useGridFormSchema(
     {
       fieldName: 'categoryId',
       label: '商品分类',
-      component: 'TreeSelect',
+      component: 'ApiTreeSelect',
       componentProps: {
-        treeData: computed(() => categoryTreeList.value),
-        fieldNames: {
-          label: 'name',
-          value: 'id',
+        api: async () => {
+          const categories = await getCategoryList({});
+          onLoaded?.(categories);
+          return handleTree(
+            categories.map((category) => ({ ...category })),
+            'id',
+            'parentId',
+          );
         },
-        treeCheckStrictly: true,
+        labelField: 'name',
+        valueField: 'id',
+        childrenField: 'children',
         placeholder: '请选择商品分类',
         allowClear: true,
         showSearch: true,
-        treeNodeFilterProp: 'name',
+        treeNodeFilterProp: 'label',
       },
     },
+    ...useSpuGroupFilterSchema(),
     {
       fieldName: 'createTime',
       label: '创建时间',

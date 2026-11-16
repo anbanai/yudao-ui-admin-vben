@@ -13,20 +13,38 @@ export function useDisagreeFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       component: 'Textarea',
-      fieldName: 'reason',
+      fieldName: 'auditReason',
       label: '拒绝原因',
       componentProps: {
         placeholder: '请输入拒绝原因',
         rows: 4,
       },
       rules: z.string().min(2, { message: '拒绝原因不能少于 2 个字符' }),
+    },
+  ];
+}
+
+/** 拒绝收货表单的 schema 配置 */
+export function useRefuseFormSchema(): VbenFormSchema[] {
+  return [
+    {
+      component: 'Input',
+      fieldName: 'id',
+      hide: true,
+    },
+    {
+      component: 'Textarea',
+      fieldName: 'refuseMemo',
+      label: '收货备注',
+      componentProps: {
+        placeholder: '请输入收货备注',
+        rows: 4,
+      },
+      rules: z.string().min(2, { message: '收货备注不能少于 2 个字符' }),
     },
   ];
 }
@@ -89,6 +107,27 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
     },
     {
+      fieldName: 'returnShipmentStatus',
+      label: '逆向物流状态',
+      component: 'Select',
+      componentProps: {
+        options: [
+          { label: '创建中', value: 'CREATING' },
+          { label: '未知处理中', value: 'UNKNOWN' },
+          { label: '待取件', value: 'PICKUP_PENDING' },
+          { label: '已揽收', value: 'PICKED_UP' },
+          { label: '运输中', value: 'IN_TRANSIT' },
+          { label: '已签收', value: 'DELIVERED' },
+          { label: '创建失败', value: 'CREATE_FAILED' },
+          { label: '取消中', value: 'CANCEL_REQUESTED' },
+          { label: '已取消', value: 'CANCELLED' },
+          { label: '异常', value: 'EXCEPTION' },
+        ],
+        placeholder: '请选择逆向物流状态',
+        allowClear: true,
+      },
+    },
+    {
       fieldName: 'createTime',
       label: '创建时间',
       component: 'RangePicker',
@@ -126,7 +165,7 @@ export function useGridColumns(): VxeGridPropTypes.Columns {
       field: 'refundPrice',
       title: '订单金额',
       width: 120,
-      formatter: 'formatAmount2',
+      formatter: 'formatFenToYuanAmount',
     },
     {
       field: 'user.nickname',

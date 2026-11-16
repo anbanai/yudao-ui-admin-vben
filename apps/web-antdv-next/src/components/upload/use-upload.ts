@@ -91,7 +91,7 @@ export function useUploadType({
  * @param directory 上传目录
  * @returns 上传 URL 和自定义上传方法
  */
-export function useUpload(directory?: string) {
+export function useUpload(directory?: string, scene?: 'material' | 'product') {
   // 后端上传地址
   const uploadUrl = getUploadUrl();
   // 是否使用前端直连上传
@@ -102,6 +102,9 @@ export function useUpload(directory?: string) {
     file: File,
     onUploadProgress?: AxiosProgressEvent,
   ) {
+    if (scene) {
+      return uploadFile({ file, directory, scene }, onUploadProgress);
+    }
     // 模式一：前端上传
     if (isClientUpload) {
       // 1.1 生成文件名称
@@ -123,7 +126,7 @@ export function useUpload(directory?: string) {
         });
     } else {
       // 模式二：后端上传
-      return uploadFile({ file, directory }, onUploadProgress);
+      return uploadFile({ file, directory, scene }, onUploadProgress);
     }
   }
 

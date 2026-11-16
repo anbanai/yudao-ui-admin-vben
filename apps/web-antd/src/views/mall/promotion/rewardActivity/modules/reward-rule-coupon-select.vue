@@ -14,6 +14,8 @@ import { DictTag } from '#/components/dict-tag';
 import { CouponSelect } from '#/views/mall/promotion/coupon/components';
 import { discountFormat } from '#/views/mall/promotion/coupon/formatter';
 
+import { withGiveCouponTemplateCounts } from './reward-rule-utils';
+
 defineOptions({ name: 'RewardRuleCouponSelect' });
 
 const props = defineProps<{
@@ -21,7 +23,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'update:modelValue', v: any): void;
+  (e: 'update:modelValue', v: MallRewardActivityApi.RewardRule): void;
 }>();
 
 /** 选择赠送的优惠类型拓展 */
@@ -85,12 +87,7 @@ watch(
     if (!rewardRule.value) {
       return;
     }
-    // 核心：清空 giveCouponTemplateCounts，解决删除不生效的问题
-    rewardRule.value.giveCouponTemplateCounts = {};
-    // 设置优惠券和其数量的对应
-    val.forEach((item) => {
-      rewardRule.value.giveCouponTemplateCounts![item.id] = item.giveCount!;
-    });
+    rewardRule.value = withGiveCouponTemplateCounts(rewardRule.value, val);
   },
   { deep: true },
 );
@@ -108,17 +105,17 @@ onMounted(async () => {
       <div
         v-for="(item, index) in list"
         :key="item.id"
-        class="flex items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 transition-all hover:border-blue-400 hover:shadow-sm"
+        class="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 transition-all hover:border-blue-400 hover:shadow-sm"
       >
         <div class="flex flex-wrap items-center gap-3">
-          <span class="font-medium text-gray-800">{{ item.name }}</span>
-          <span class="flex items-center gap-1 text-sm text-gray-500">
+          <span class="font-medium text-foreground">{{ item.name }}</span>
+          <span class="flex items-center gap-1 text-sm text-muted-foreground">
             <DictTag
               :type="DICT_TYPE.PROMOTION_PRODUCT_SCOPE"
               :value="item.productScope"
             />
           </span>
-          <span class="flex items-center gap-1 text-sm text-gray-500">
+          <span class="flex items-center gap-1 text-sm text-muted-foreground">
             <DictTag
               :type="DICT_TYPE.PROMOTION_DISCOUNT_TYPE"
               :value="item.discountType"
@@ -127,7 +124,7 @@ onMounted(async () => {
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <span class="text-gray-500">送</span>
+          <span class="text-muted-foreground">送</span>
           <Input
             v-model:value="item.giveCount"
             class="!w-20"
@@ -135,7 +132,7 @@ onMounted(async () => {
             type="number"
             size="small"
           />
-          <span class="text-gray-500">张</span>
+          <span class="text-muted-foreground">张</span>
           <Button type="link" danger size="small" @click="handleDelete(index)">
             删除
           </Button>

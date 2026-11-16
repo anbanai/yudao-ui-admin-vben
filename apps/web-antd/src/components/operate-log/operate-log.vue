@@ -41,13 +41,13 @@ function getUserTypeColor(userType: number) {
         <template #dot>
           <span
             :style="{ backgroundColor: getUserTypeColor(log.userType) }"
-            class="flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-white"
+            class="flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-primary-foreground"
           >
             {{ getDictLabel(DICT_TYPE.USER_TYPE, log.userType)[0] }}
           </span>
         </template>
         <div class="ml-2 flex flex-wrap items-center gap-2 leading-[22px]">
-          <span class="w-[140px] shrink-0 text-[13px] text-gray-400">
+          <span class="w-[140px] shrink-0 text-[13px] text-muted-foreground">
             {{ formatDateTime(log.createTime) }}
           </span>
           <Tag color="success" class="!mr-0">{{ log.userName }}</Tag>

@@ -98,8 +98,7 @@ function handleQuery() {
   if (keyword) {
     // 如果有搜索关键字，进行过滤
     filteredProcessDefinitionList.value = processDefinitionList.value.filter(
-      (definition: any) =>
-        definition.name.toLowerCase().includes(keyword),
+      (definition: any) => definition.name.toLowerCase().includes(keyword),
     );
     // 如果有匹配，切换到第一个包含匹配结果的分类
     activeCategory.value = availableCategories.value[0]?.code;
@@ -250,7 +249,7 @@ onMounted(() => {
                         v-else
                         class="flex size-12 flex-shrink-0 items-center justify-center rounded bg-primary"
                       >
-                        <span class="text-xs text-white">
+                        <span class="text-xs text-primary-foreground">
                           {{ definition.name?.slice(0, 2) }}
                         </span>
                       </div>
@@ -271,7 +270,7 @@ onMounted(() => {
         </div>
         <div v-else class="!py-48 text-center">
           <Space direction="vertical" size="large">
-            <span class="text-gray-500">没有找到搜索结果</span>
+            <span class="text-muted-foreground">没有找到搜索结果</span>
           </Space>
         </div>
       </Card>

@@ -48,7 +48,7 @@ function handleEditableChange(field: HrmEmployeeConfigApi.FieldConfig) {
   if (field.editable) field.visible = true;
 }
 
-async function submitForm() {
+async function submit() {
   await saveEmployeeArchiveFieldConfig({
     fields: list.value.map(({ name, visible, editable }) => ({
       name,
@@ -61,7 +61,7 @@ async function submitForm() {
 }
 
 onMounted(getList);
-defineExpose({ submitForm });
+defineExpose({ submit });
 </script>
 
 <template>

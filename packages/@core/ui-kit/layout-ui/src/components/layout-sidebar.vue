@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue';
 
-import { computed, onUnmounted, shallowRef, useSlots, watchEffect } from 'vue';
+import {
+  computed,
+  onUnmounted,
+  shallowRef,
+  useSlots,
+  watch,
+  watchEffect,
+} from 'vue';
 
 import { useScrollLock } from '@vben-core/composables';
 import { VbenScrollbar } from '@vben-core/shadcn-ui';
@@ -72,6 +79,16 @@ interface Props {
    */
   paddingTop?: number;
   /**
+   * 悬浮面板模式：侧边栏以圆角卡片形式悬浮于画布之上
+   * @default false
+   */
+  panelFloat?: boolean;
+  /**
+   * 悬浮面板模式下，面板与画布边缘的间距
+   * @default 12
+   */
+  panelGap?: number;
+  /**
    * 是否显示
    * @default true
    */
@@ -116,6 +133,8 @@ const props = withDefaults(defineProps<Props>(), {
   isSidebarMixed: false,
   marginTop: 0,
   mixedWidth: 70,
+  panelFloat: false,
+  panelGap: 12,
   paddingTop: 0,
   show: true,
   showCollapseButton: true,
@@ -149,40 +168,88 @@ const hiddenSideStyle = computed((): CSSProperties => {
 
 const sidebarVisualWidth = computed(() => {
   const currentWidth = Number.parseFloat(getMenuWidthValue(false));
-  return !props.isMobile && !props.isSidebarMixed
-    ? Math.max(currentWidth, props.expandedWidth)
-    : currentWidth;
+  if (!props.isMobile && !props.isSidebarMixed) {
+    return Math.max(currentWidth, props.expandedWidth);
+  }
+  if (
+    props.isSidebarMixed &&
+    props.panelFloat &&
+    props.show &&
+    props.width > 0 &&
+    extraVisible.value
+  ) {
+    return props.width + props.panelGap + props.extraWidth;
+  }
+  return currentWidth;
 });
 
 const dragBarStyle = computed((): CSSProperties => {
   const currentWidth = Number.parseFloat(getMenuWidthValue(false));
   return {
-    right: `${Math.max(0, sidebarVisualWidth.value - currentWidth)}px`,
+    right: props.isSidebarMixed
+      ? '0px'
+      : `${Math.max(0, sidebarVisualWidth.value - currentWidth)}px`,
   };
 });
 
+// 悬浮面板模式下，双列扩展面板"收起"等价于"隐藏"，避免残留空白竖条；
+// 重新显示（点击一级菜单/悬停）时自动恢复为完整宽度
+watchEffect(() => {
+  if (props.panelFloat && extraCollapse.value && extraVisible.value) {
+    extraVisible.value = false;
+  }
+});
+watch(extraVisible, (visible) => {
+  if (props.panelFloat && visible && extraCollapse.value) {
+    extraCollapse.value = false;
+  }
+});
+
 const style = computed((): CSSProperties => {
-  const { isSidebarMixed, marginTop, paddingTop, zIndex } = props;
+  const {
+    isSidebarMixed,
+    marginTop,
+    panelFloat,
+    panelGap,
+    paddingTop,
+    show,
+    zIndex,
+  } = props;
 
   return {
     '--scroll-shadow': 'var(--sidebar)',
     ...calcMenuWidthStyle(),
-    height: `calc(100% - ${marginTop}px)`,
+    height: `calc(100% - ${marginTop + (panelFloat ? panelGap * 2 : 0)}px)`,
     marginTop: `${marginTop}px`,
     paddingTop: `${paddingTop}px`,
     zIndex,
+    // 悬浮偏移仅在显示时生效，隐藏时保持 left-0 以配合负 margin 完全移出屏幕
+    ...(panelFloat && show
+      ? { left: `${panelGap}px`, top: `${panelGap}px` }
+      : {}),
     ...(isSidebarMixed && extraVisible.value ? { transition: 'none' } : {}),
   };
 });
 
 const extraStyle = computed((): CSSProperties => {
-  const { extraWidth, show, width, zIndex } = props;
+  const { extraWidth, panelFloat, panelGap, show, width, zIndex } = props;
 
   return {
-    left: `${width}px`,
+    // The transformed aside is the containing block for this fixed panel.
+    left: `${width + (panelFloat ? panelGap : 0)}px`,
     width: extraVisible.value && show ? `${extraWidth}px` : 0,
     zIndex,
   };
+});
+
+const extraPanelStyle = computed((): CSSProperties => {
+  const { marginTop, panelFloat, panelGap } = props;
+  return panelFloat
+    ? {
+        height: `calc(100% - ${marginTop + panelGap * 2}px)`,
+        top: `${marginTop + panelGap}px`,
+      }
+    : {};
 });
 
 const extraTitleStyle = computed((): CSSProperties => {
@@ -246,24 +313,33 @@ function getMenuWidthValue(isHiddenDom: boolean) {
     mixedWidth,
     fixedExtra,
     isSidebarMixed,
+    panelFloat,
+    panelGap,
     width,
   } = props;
 
+  const extraVisibleFixed = isSidebarMixed && fixedExtra && extraVisible.value;
+
   let widthValue =
-    width === 0
-      ? '0px'
-      : `${width + (isSidebarMixed && fixedExtra && extraVisible.value ? extraWidth : 0)}px`;
+    width === 0 ? 0 : width + (extraVisibleFixed ? extraWidth : 0);
 
   if (isHiddenDom && expandOnHovering.value && !expandOnHover.value) {
-    widthValue = isSidebarMixed ? `${mixedWidth}px` : `${collapseWidth}px`;
+    widthValue = isSidebarMixed ? mixedWidth : collapseWidth;
   }
-  return widthValue;
+  // 悬浮面板模式：占位区域需要额外包含面板两侧以及双列面板之间的间距
+  if (isHiddenDom && panelFloat && width > 0) {
+    widthValue += panelGap * (extraVisibleFixed ? 3 : 2);
+  }
+
+  return `${widthValue}px`;
 }
 
 function calcMenuWidthStyle(): CSSProperties {
   const widthValue = getMenuWidthValue(false);
   const currentWidth = Number.parseFloat(widthValue);
-  const clippedWidth = Math.max(0, sidebarVisualWidth.value - currentWidth);
+  const clippedWidth = props.isSidebarMixed
+    ? 0
+    : Math.max(0, sidebarVisualWidth.value - currentWidth);
   let transform: CSSProperties['transform'];
 
   if (props.isMobile) {
@@ -317,9 +393,13 @@ function handleMouseleave() {
 const { startDrag, endDrag } = useSidebarDrag();
 
 const handleDragSidebar = (e: MouseEvent) => {
-  const { isSidebarMixed, collapseWidth, width } = props;
-  const minLimit = isSidebarMixed ? width + collapseWidth : collapseWidth;
-  const maxLimit = isSidebarMixed ? width + 320 : 320;
+  const { isSidebarMixed, collapseWidth, panelFloat, panelGap, width } = props;
+  const mixedPanelOffset =
+    width + (panelFloat && extraVisible.value ? panelGap : 0);
+  const minLimit = isSidebarMixed
+    ? mixedPanelOffset + collapseWidth
+    : collapseWidth;
+  const maxLimit = isSidebarMixed ? mixedPanelOffset + 320 : 320;
 
   startDrag(
     e,
@@ -333,9 +413,9 @@ const handleDragSidebar = (e: MouseEvent) => {
     },
     (newWidth) => {
       if (isSidebarMixed) {
-        emit('update:width', newWidth - width);
-        extraCollapse.value = collapse.value =
-          newWidth - width <= collapseWidth;
+        const extraWidth = newWidth - mixedPanelOffset;
+        emit('update:width', extraWidth);
+        extraCollapse.value = collapse.value = extraWidth <= collapseWidth;
       } else {
         emit('update:width', newWidth);
         collapse.value = extraCollapse.value = newWidth <= collapseWidth;
@@ -383,6 +463,9 @@ onUnmounted(() => {
             'bg-sidebar-deep': isSidebarMixed,
             'border-r border-border bg-sidebar': !isSidebarMixed,
           },
+          panelFloat
+            ? 'border-border overflow-hidden rounded-xl border shadow-sm'
+            : '',
         ]"
         :style="{ width: `${width}px` }"
       >
@@ -408,10 +491,13 @@ onUnmounted(() => {
         :class="[
           themeSub,
           {
-            'border-l': extraVisible,
+            'border-l': extraVisible && !panelFloat,
           },
+          panelFloat
+            ? 'border-border bg-sidebar overflow-hidden rounded-xl border shadow-sm'
+            : '',
         ]"
-        :style="extraStyle"
+        :style="[extraStyle, extraPanelStyle]"
         class="fixed top-0 h-full overflow-hidden border-r border-border bg-sidebar transition-[left,width] duration-300 ease-out"
       >
         <SidebarCollapseButton

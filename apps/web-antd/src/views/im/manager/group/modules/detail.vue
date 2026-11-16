@@ -88,7 +88,7 @@ defineExpose({ open });
           :type="DICT_TYPE.INFRA_BOOLEAN_STRING"
           :value="detail.banned"
         />
-        <span v-if="detail.banned" class="ml-2 text-gray-400">
+        <span v-if="detail.banned" class="ml-2 text-muted-foreground">
           {{ detail.bannedReason }}
         </span>
       </DescriptionsItem>
@@ -151,7 +151,7 @@ defineExpose({ open });
             "
           >
             <Tag color="error">禁言中</Tag>
-            <div class="mt-1 text-xs text-gray-400">
+            <div class="mt-1 text-xs text-muted-foreground">
               {{ formatDateTimeText(record.muteEndTime) }}
             </div>
           </template>

@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import type { IotDeviceModbusConfigApi } from '#/api/iot/device/modbus/config';
 
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import {
@@ -24,14 +24,6 @@ const emit = defineEmits(['success']);
 
 const formData = ref<IotDeviceModbusConfigApi.ModbusConfig>();
 const deviceId = ref<number>(0);
-const protocolType = ref<string>('');
-
-const isClient = computed(
-  () => protocolType.value === ProtocolTypeEnum.MODBUS_TCP_CLIENT,
-); // 是否为 Client 模式
-const isServer = computed(
-  () => protocolType.value === ProtocolTypeEnum.MODBUS_TCP_SERVER,
-); // 是否为 Server 模式
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -46,10 +38,12 @@ const [Form, formApi] = useVbenForm({
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
+    },
+    {
+      component: 'Input',
+      fieldName: 'protocolType',
+      hide: true,
     },
     {
       fieldName: 'ip',
@@ -60,10 +54,15 @@ const [Form, formApi] = useVbenForm({
       },
       // Client 模式专有字段：必填；Server 模式不显示也不校验
       dependencies: {
-        triggerFields: [''],
-        show: () => isClient.value,
-        rules: () =>
-          isClient.value ? z.string().min(1, '请输入 IP 地址') : null,
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const client =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT;
+          return {
+            show: client,
+            rules: client ? z.string().min(1, '请输入 IP 地址') : null,
+          };
+        },
       },
     },
     {
@@ -77,12 +76,17 @@ const [Form, formApi] = useVbenForm({
         max: 65_535,
       },
       dependencies: {
-        triggerFields: [''],
-        show: () => isClient.value,
-        rules: () =>
-          isClient.value
-            ? z.number({ message: '请输入端口' }).min(1).max(65_535)
-            : null,
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const client =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT;
+          return {
+            show: client,
+            rules: client
+              ? z.number({ message: '请输入端口' }).min(1).max(65_535)
+              : null,
+          };
+        },
       },
       defaultValue: 502,
     },
@@ -110,12 +114,17 @@ const [Form, formApi] = useVbenForm({
         step: 1000,
       },
       dependencies: {
-        triggerFields: [''],
-        show: () => isClient.value,
-        rules: () =>
-          isClient.value
-            ? z.number({ message: '请输入连接超时时间' }).min(1000)
-            : null,
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const client =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT;
+          return {
+            show: client,
+            rules: client
+              ? z.number({ message: '请输入连接超时时间' }).min(1000)
+              : null,
+          };
+        },
       },
       defaultValue: 3000,
     },
@@ -130,12 +139,17 @@ const [Form, formApi] = useVbenForm({
         step: 1000,
       },
       dependencies: {
-        triggerFields: [''],
-        show: () => isClient.value,
-        rules: () =>
-          isClient.value
-            ? z.number({ message: '请输入重试间隔' }).min(1000)
-            : null,
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const client =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_CLIENT;
+          return {
+            show: client,
+            rules: client
+              ? z.number({ message: '请输入重试间隔' }).min(1000)
+              : null,
+          };
+        },
       },
       defaultValue: 10_000,
     },
@@ -147,8 +161,12 @@ const [Form, formApi] = useVbenForm({
         options: getDictOptions(DICT_TYPE.IOT_MODBUS_MODE, 'number'),
       },
       dependencies: {
-        triggerFields: [''],
-        show: () => isServer.value, // Server 模式专有字段：工作模式
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const server =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_SERVER;
+          return { show: server };
+        },
       },
       rules: 'required',
       defaultValue: ModbusModeEnum.POLLING,
@@ -161,8 +179,12 @@ const [Form, formApi] = useVbenForm({
         options: getDictOptions(DICT_TYPE.IOT_MODBUS_FRAME_FORMAT, 'number'),
       },
       dependencies: {
-        triggerFields: [''],
-        show: () => isServer.value, // Server 模式专有字段：帧格式
+        triggerFields: ['protocolType'],
+        resolve: ({ values }) => {
+          const server =
+            values.protocolType === ProtocolTypeEnum.MODBUS_TCP_SERVER;
+          return { show: server };
+        },
       },
       rules: 'required',
       defaultValue: ModbusFrameFormatEnum.MODBUS_TCP,
@@ -218,10 +240,8 @@ const [Modal, modalApi] = useVbenModal({
       return;
     }
     deviceId.value = data.deviceId;
-    protocolType.value = data.protocolType;
-    if (!data.config) {
-      return;
-    }
+    await formApi.setFieldValue('protocolType', data.protocolType);
+    if (!data.config) return;
     // 设置到 values
     formData.value = { ...data.config };
     await formApi.setValues(formData.value);

@@ -2,27 +2,50 @@
 import type { NavigationBarProperty } from './components/mobile/navigation-bar/config';
 import type { DiyComponent, DiyComponentLibrary, PageConfig } from './util';
 
-import { onMounted, ref, unref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, unref, watch } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 import { cloneDeep, isEmpty, isString } from '@vben/utils';
 
-import { Button, Card, Col, QRCode, Row, Tag, Tooltip } from 'ant-design-vue';
+import {
+  Button,
+  Card,
+  Col,
+  message,
+  QRCode,
+  Row,
+  Tag,
+  Tooltip,
+} from 'ant-design-vue';
 import draggable from 'vuedraggable';
-
-import statusBarImg from '#/assets/imgs/diy/statusBar.png';
 
 import ComponentContainer from './components/component-container.vue';
 import ComponentLibrary from './components/component-library.vue';
 import { componentConfigs, components } from './components/mobile';
+import { migrateLegacyProductGroupComponent } from './components/mobile/component-migration';
 import {
   isNavigationBarAlwaysShow,
   isNavigationBarShowType,
   component as NAVIGATION_BAR_COMPONENT,
 } from './components/mobile/navigation-bar/config';
 import { component as PAGE_CONFIG_COMPONENT } from './components/mobile/page-config/config';
+import {
+  clampProductCategoryPageSize,
+  getProductCategoryValidationError,
+  normalizeCategoryIds,
+  normalizeProductCategoryProperty,
+} from './components/mobile/product-category/utils';
+import {
+  clampProductGroupPageSize,
+  getProductGroupValidationError,
+  normalizeGroupIds,
+  normalizeProductGroupProperty,
+} from './components/mobile/product-group/utils';
+import { getProductListValidationError } from './components/mobile/product-list/utils';
 import { component as TAB_BAR_COMPONENT } from './components/mobile/tab-bar/config';
+import { MALL_DIY_ASSETS, normalizeMallDiyAssetUrls } from './static-assets';
+import { getPageBackgroundStyle } from './util';
 
 /** 页面装修详情页 */
 defineOptions({
@@ -83,10 +106,11 @@ function normalizeNavigationBarProperty(property: NavigationBarProperty) {
 watch(
   () => props.modelValue,
   () => {
-    const modelValue =
+    const parsedModelValue =
       isString(props.modelValue) && !isEmpty(props.modelValue)
         ? (JSON.parse(props.modelValue) as PageConfig)
         : props.modelValue;
+    const modelValue = normalizeMallDiyAssetUrls(parsedModelValue);
     // noinspection SuspiciousTypeOfGuard
     pageConfigComponent.value.property =
       (typeof modelValue !== 'string' && modelValue?.page) ||
@@ -106,8 +130,15 @@ watch(
       (typeof modelValue !== 'string' && modelValue?.components) ||
       []
     ).map((item: any) => {
-      const component = componentConfigs[item.id];
-      return { ...component, property: item.property };
+      const migratedItem = migrateLegacyProductGroupComponent(item);
+      const component = componentConfigs[migratedItem.id];
+      let property = migratedItem.property;
+      if (migratedItem.id === 'ProductGroup') {
+        property = normalizeProductGroupProperty(migratedItem.property);
+      } else if (migratedItem.id === 'ProductCategory') {
+        property = normalizeProductCategoryProperty(migratedItem.property);
+      }
+      return { ...component, property };
     });
   },
   {
@@ -135,7 +166,45 @@ watch(
 
 /** 保存 */
 function handleSave() {
-  // 发送保存通知，由外部保存
+  for (const [index, component] of pageComponents.value.entries()) {
+    let validationError: string | undefined;
+    if (component.id === 'ProductGroup') {
+      component.property.groupIds = normalizeGroupIds(
+        component.property.groupIds || [],
+      );
+      component.property.pageSize = clampProductGroupPageSize(
+        component.property.pageSize,
+      );
+      validationError = getProductGroupValidationError(component.property);
+    } else if (component.id === 'ProductList') {
+      if (component.property.sourceType === 'group') {
+        component.property.groupIds = normalizeGroupIds(
+          component.property.groupIds,
+        );
+        component.property.pageSize = clampProductGroupPageSize(
+          component.property.pageSize ?? 10,
+        );
+      }
+      validationError = getProductListValidationError(component.property);
+    } else if (component.id === 'ProductCategory') {
+      component.property.categoryIds = normalizeCategoryIds(
+        component.property.categoryIds || [],
+      );
+      component.property.pageSize = clampProductCategoryPageSize(
+        component.property.pageSize,
+      );
+      validationError = getProductCategoryValidationError(component.property);
+    } else {
+      continue;
+    }
+    if (validationError) {
+      handleComponentSelected(component, index);
+      message.warning(validationError);
+      return;
+    }
+  }
+  // 先同步编辑器内部已规范化的配置，保证外部保存拿到最新值
+  pageConfigChange();
   emits('save');
 }
 
@@ -283,14 +352,87 @@ const [PreviewModal, previewModalApi] = useVbenModal({
   showConfirmButton: false,
   showCancelButton: false,
   onCancel() {
+    clearPreviewTimeout();
+    previewStatus.value = 'idle';
     previewModalApi.close();
   },
 });
 
+type PreviewStatus = 'failed' | 'idle' | 'loaded' | 'loading';
+
+const PREVIEW_TIMEOUT = 8000;
+function isSameOriginPreviewUrl(url: string) {
+  try {
+    return new URL(url, window.location.href).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+const previewStatus = ref<PreviewStatus>(
+  props.previewUrl && isSameOriginPreviewUrl(props.previewUrl)
+    ? 'loading'
+    : 'failed',
+);
+let previewTimeout: ReturnType<typeof setTimeout> | undefined;
+
+function clearPreviewTimeout() {
+  if (previewTimeout) {
+    clearTimeout(previewTimeout);
+    previewTimeout = undefined;
+  }
+}
+
+function markPreviewFailed() {
+  clearPreviewTimeout();
+  previewStatus.value = 'failed';
+}
+
+function startPreviewLoading() {
+  clearPreviewTimeout();
+  if (!props.previewUrl) {
+    markPreviewFailed();
+    return;
+  }
+  // Cross-origin documents cannot be inspected. Treat them as unavailable so
+  // challenge pages or unrelated redirects are never shown in the editor.
+  if (!isSameOriginPreviewUrl(props.previewUrl)) {
+    markPreviewFailed();
+    return;
+  }
+  previewStatus.value = 'loading';
+  previewTimeout = setTimeout(markPreviewFailed, PREVIEW_TIMEOUT);
+}
+
+function handlePreviewLoad() {
+  if (previewStatus.value !== 'loading') return;
+  clearPreviewTimeout();
+  previewStatus.value = 'loaded';
+}
+
+function handlePreviewError() {
+  if (previewStatus.value !== 'loading') return;
+  markPreviewFailed();
+}
+
 /** 预览 */
 function handlePreview() {
+  startPreviewLoading();
   previewModalApi.open();
 }
+
+watch(
+  () => props.previewUrl,
+  () => {
+    clearPreviewTimeout();
+    previewStatus.value =
+      props.previewUrl && isSameOriginPreviewUrl(props.previewUrl)
+        ? 'loading'
+        : 'failed';
+  },
+);
+
+onBeforeUnmount(clearPreviewTimeout);
 
 /** 设置默认选中的组件 */
 function setDefaultSelectedComponent() {
@@ -365,7 +507,7 @@ onMounted(() => {
           <!-- 手机顶部 -->
           <div class="mx-auto flex w-96 flex-col">
             <!-- 手机顶部状态栏 -->
-            <img alt="" class="h-6 bg-card" :src="statusBarImg" />
+            <img alt="" class="h-6 bg-card" :src="MALL_DIY_ASSETS.statusBar" />
             <!-- 手机顶部导航栏 -->
             <ComponentContainer
               v-if="showNavigationBar"
@@ -394,10 +536,7 @@ onMounted(() => {
           <!-- 手机页面编辑区域 -->
           <div
             class="mx-auto min-h-full w-96 bg-no-repeat"
-            :style="{
-              // backgroundColor: pageConfigComponent.property.backgroundColor,
-              backgroundImage: `url(${pageConfigComponent.property.backgroundImage})`,
-            }"
+            :style="getPageBackgroundStyle(pageConfigComponent.property)"
           >
             <div
               class="relative my-0 min-h-full w-full items-center justify-center bg-auto bg-no-repeat"
@@ -510,13 +649,46 @@ onMounted(() => {
     </Row>
 
     <!-- 预览弹框 -->
-    <PreviewModal title="预览" class="w-[700px]">
-      <div class="flex justify-around">
-        <iframe
-          :src="previewUrl"
-          class="h-[667px] w-96 rounded-lg border-4 border-solid p-0.5"
-        ></iframe>
-        <div class="flex flex-col">
+    <PreviewModal title="商城 H5 预览" class="w-[700px]">
+      <div class="flex flex-wrap justify-around gap-8">
+        <div
+          class="relative h-[667px] w-96 overflow-hidden rounded-lg border-4 border-solid bg-background p-0.5"
+        >
+          <iframe
+            :key="previewUrl"
+            v-if="
+              previewUrl &&
+              (previewStatus === 'loading' || previewStatus === 'loaded')
+            "
+            :src="previewUrl"
+            class="h-full w-full rounded-md border-0"
+            :class="{ invisible: previewStatus !== 'loaded' }"
+            @error="handlePreviewError"
+            @load="handlePreviewLoad"
+          ></iframe>
+          <div
+            v-if="previewStatus !== 'loaded'"
+            class="absolute inset-0 flex flex-col gap-4 bg-background p-6"
+            role="status"
+            aria-live="polite"
+          >
+            <div class="h-8 w-3/5 animate-pulse rounded bg-muted"></div>
+            <div class="h-32 animate-pulse rounded bg-muted"></div>
+            <div class="h-4 w-4/5 animate-pulse rounded bg-muted"></div>
+            <div class="h-4 w-3/5 animate-pulse rounded bg-muted"></div>
+            <div class="h-48 animate-pulse rounded bg-muted"></div>
+            <div
+              v-if="previewStatus === 'failed'"
+              class="absolute inset-x-4 top-1/2 -translate-y-1/2 text-center text-sm text-muted-foreground"
+            >
+              当前预览地址不可用，请检查配置后重试
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="previewStatus === 'loading' || previewStatus === 'loaded'"
+          class="flex flex-col"
+        >
           <div class="text-base">手机扫码预览</div>
           <QRCode :value="previewUrl" error-level="H" />
         </div>

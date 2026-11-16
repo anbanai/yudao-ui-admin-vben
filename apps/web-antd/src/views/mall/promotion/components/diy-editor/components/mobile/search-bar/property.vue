@@ -19,7 +19,8 @@ import {
   Tooltip,
 } from 'ant-design-vue';
 
-import { ColorInput, Draggable } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
+import Draggable from '#/views/mall/promotion/components/draggable/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 

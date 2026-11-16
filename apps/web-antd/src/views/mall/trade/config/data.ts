@@ -7,18 +7,31 @@ export const schema: VbenFormSchema[] = [
   {
     component: 'Input',
     fieldName: 'id',
-    dependencies: {
-      triggerFields: [''],
-      show: () => false,
-    },
+    hide: true,
   },
   {
     component: 'Input',
     fieldName: 'type',
-    dependencies: {
-      triggerFields: [''],
-      show: () => false,
+    hide: true,
+    defaultValue: 'afterSale',
+  },
+  {
+    fieldName: 'kefuWechatQrCodeUrl',
+    label: '客服图片',
+    component: 'ImageUpload',
+    componentProps: {
+      maxNumber: 1,
+      placeholder: '请上传企微二维码或企微联系人图片',
     },
+    dependencies: {
+      triggerFields: ['type'],
+      resolve({ values }) {
+        return {
+          show: values.type === 'kefu',
+        };
+      },
+    },
+    help: '建议上传企微二维码或企微联系人图片，用户将在小程序中长按识别',
   },
   {
     fieldName: 'afterSaleRefundReasons',
@@ -31,7 +44,11 @@ export const schema: VbenFormSchema[] = [
     },
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'afterSale',
+      resolve({ values }) {
+        return {
+          show: values.type === 'afterSale',
+        };
+      },
     },
   },
   {
@@ -44,7 +61,11 @@ export const schema: VbenFormSchema[] = [
     },
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'afterSale',
+      resolve({ values }) {
+        return {
+          show: values.type === 'afterSale',
+        };
+      },
     },
   },
   {
@@ -54,7 +75,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'delivery',
+      resolve({ values }) {
+        return {
+          show: values.type === 'delivery',
+        };
+      },
     },
     help: '商城是否启用全场包邮',
   },
@@ -71,7 +96,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'delivery',
+      resolve({ values }) {
+        return {
+          show: values.type === 'delivery',
+        };
+      },
     },
     help: '商城商品满多少金额即可包邮，单位：元',
   },
@@ -82,7 +111,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'delivery',
+      resolve({ values }) {
+        return {
+          show: values.type === 'delivery',
+        };
+      },
     },
   },
   {
@@ -92,7 +125,11 @@ export const schema: VbenFormSchema[] = [
     help: '商城是否开启分销模式',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
   },
   {
@@ -107,7 +144,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
     help: '人人分销：每个用户都可以成为推广员 \n 指定分销：仅可在后台手动设置推广员',
   },
@@ -123,7 +164,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
     help: '首次绑定：只要用户没有推广人，随时都可以绑定推广关系 \n 注册绑定：只有新用户注册时或首次进入系统时才可以绑定推广关系',
   },
@@ -136,7 +181,11 @@ export const schema: VbenFormSchema[] = [
     },
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
     help: '个人中心分销海报图片，建议尺寸 600x1000',
   },
@@ -153,7 +202,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
     help: '订单交易成功后给推广人返佣的百分比',
   },
@@ -170,7 +223,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
     help: '订单交易成功后给推广人的推荐人返佣的百分比',
   },
@@ -186,7 +243,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
     help: '防止用户退款，佣金被提现了，所以需要设置佣金冻结时间，单位：天',
   },
@@ -203,7 +264,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
     help: '用户提现最低金额限制，单位：元',
   },
@@ -221,7 +286,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
     help: '提现手续费百分比，范围 0-100，0 为无提现手续费。例：设置 10，即收取 10% 手续费，提现10 元，到账 9 元，1 元手续费',
   },
@@ -235,7 +304,11 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
     dependencies: {
       triggerFields: ['type'],
-      show: (values) => values.type === 'brokerage',
+      resolve({ values }) {
+        return {
+          show: values.type === 'brokerage',
+        };
+      },
     },
     help: '商城开通提现的付款方式',
   },

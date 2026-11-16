@@ -254,7 +254,10 @@ function plusNews() {
         </ElRow>
         <!--富文本编辑器组件-->
         <ElRow class="mb-5 last:mb-0">
-          <RichTextarea v-model="activeNewsItem.content" />
+          <RichTextarea
+            v-model="activeNewsItem.content"
+            image-upload-scene="material"
+          />
         </ElRow>
       </div>
     </ElMain>

@@ -8,6 +8,7 @@ export namespace MallSpuApi {
     id?: number; // 商品编号
     name?: string; // 商品名称
     categoryId?: number; // 商品分类
+    groupIds?: number[]; // 商品分组
     keyword?: string; // 关键字
     unit?: number; // 单位
     picUrl?: string; // 商品封面图
@@ -16,8 +17,15 @@ export namespace MallSpuApi {
     deliveryTypes?: number[]; // 配送方式
     deliveryTemplateId?: number; // 运费模版
     brandId?: number; // 商品品牌编号
-    specType?: boolean; // 商品规格
+    merchantId?: number; // 销售商家编号
+    merchantName?: string; // 商家名称
+    specType?: boolean; // 商品规格（新增商品固定为多规格）
     subCommissionType?: boolean; // 分销类型
+    isPreSale?: boolean; // 是否预售
+    deliveryDays?: number; // 付款后发货天数
+    buyLimit?: number; // 限购数量，0 表示不限购
+    buyLimitLevel?: 'ALL' | 'L0' | 'L1' | 'L2' | 'L3'; // 等级限购
+    pointDiscountRate?: number; // 积分抵扣比例，范围 0-1
     skus?: Sku[]; // sku数组
     description?: string; // 商品详情
     sort?: number; // 商品排序
@@ -33,22 +41,7 @@ export namespace MallSpuApi {
     createTime?: Date; // 商品创建时间
     status?: number; // 商品状态
     browseCount?: number; // 浏览量
-    /** 商品编辑扩展配置，供推广入口和移动端消费 */
-    marketingConfig?: MarketingConfig;
-  }
-
-  export interface MarketingConfig {
-    groups?: string[];
-    preSaleDays?: number;
-    purchaseLimit?: number;
-    memberLevels?: string[];
-    pointRules?: string[];
-    userGroups?: string[];
-    priceSymbol?: string;
-    skuColumnWidth?: number;
-    hideSingleSku?: boolean;
-    pointProduct?: boolean;
-    pointQuantity?: number;
+    groupSort?: number; // 组内排序（仅分组成员分页返回）
   }
 
   /** 商品 SKU */
@@ -87,21 +80,42 @@ export namespace MallSpuApi {
 
 /** 获得商品 SPU 列表 */
 export function getSpuPage(params: PageParam) {
-  return requestClient.get<PageResult<MallSpuApi.Spu>>('/product/spu/page', {
-    params,
-  });
+  const query = resolveSpuGroupQuery(params);
+  return requestClient.get<PageResult<MallSpuApi.Spu>>(
+    query.hasGroupFilter
+      ? '/product/group/spu-filter-page'
+      : '/product/spu/page',
+    { params: query.params },
+  );
 }
 
 /** 获得商品 SPU 列表 tabsCount（支持按 name/categoryId/createTime 筛选） */
 export function getTabsCount(params?: Record<string, any>) {
-  return requestClient.get<Record<string, number>>('/product/spu/get-count', {
-    params,
-  });
+  const query = resolveSpuGroupQuery(params);
+  return requestClient.get<Record<string, number>>(
+    query.hasGroupFilter
+      ? '/product/group/spu-filter-count'
+      : '/product/spu/get-count',
+    { params: query.params },
+  );
+}
+
+/** 只在使用分组条件时切换接口，保留分类、名称、时间和销售标签的交集。 */
+function resolveSpuGroupQuery(params?: Record<string, any>) {
+  if (!params) return { hasGroupFilter: false, params };
+  const { groupIds, ungrouped, ...filters } = params;
+  if (ungrouped === true) {
+    return { hasGroupFilter: true, params: { ...filters, ungrouped: true } };
+  }
+  if (Array.isArray(groupIds) && groupIds.length > 0) {
+    return { hasGroupFilter: true, params: { ...filters, groupIds } };
+  }
+  return { hasGroupFilter: false, params: filters };
 }
 
 /** 创建商品 SPU */
 export function createSpu(data: MallSpuApi.Spu) {
-  return requestClient.post('/product/spu/create', data);
+  return requestClient.post<number>('/product/spu/create', data);
 }
 
 /** 更新商品 SPU */
@@ -131,7 +145,13 @@ export function deleteSpu(id: number) {
 
 /** 导出商品 SPU Excel */
 export function exportSpu(params: PageParam) {
-  return requestClient.download('/product/spu/export-excel', { params });
+  const query = resolveSpuGroupQuery(params);
+  return requestClient.download(
+    query.hasGroupFilter
+      ? '/product/group/spu-filter-export'
+      : '/product/spu/export-excel',
+    { params: query.params },
+  );
 }
 
 /** 获得商品 SPU 精简列表 */

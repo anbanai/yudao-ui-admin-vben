@@ -30,18 +30,12 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
       defaultValue: MesCalPlanStatusEnum.PREPARE,
     },
     {
@@ -134,8 +128,11 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['shiftType'],
-        show: (values) =>
-          !!values.shiftType && values.shiftType !== MesCalShiftTypeEnum.SINGLE,
+        resolve: ({ values }) => ({
+          show:
+            !!values.shiftType &&
+            values.shiftType !== MesCalShiftTypeEnum.SINGLE,
+        }),
       },
     },
     {
@@ -149,7 +146,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['shiftMethod'],
-        show: (values) => values.shiftMethod === MesCalShiftMethodEnum.DAY,
+        resolve: ({ values }) => ({
+          show: values.shiftMethod === MesCalShiftMethodEnum.DAY,
+        }),
       },
     },
     {

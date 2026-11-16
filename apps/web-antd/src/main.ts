@@ -1,7 +1,15 @@
-import { initPreferences } from '@vben/preferences';
+import {
+  initPreferences,
+  preferences,
+  updatePreferences,
+} from '@vben/preferences';
 import { unmountGlobalLoading } from '@vben/utils';
 
-import { overridesPreferences, preferencesExtension } from './preferences';
+import {
+  initializeSidebarPreferences,
+  overridesPreferences,
+  preferencesExtension,
+} from './preferences';
 
 /**
  * 应用初始化完成之后再进行页面加载渲染
@@ -13,11 +21,15 @@ async function initApplication() {
   const appVersion = import.meta.env.VITE_APP_VERSION;
   const namespace = `${import.meta.env.VITE_APP_NAMESPACE}-${appVersion}-${env}`;
 
-  // app偏好设置初始化
-  await initPreferences({
-    extension: preferencesExtension,
-    namespace,
-    overrides: overridesPreferences,
+  await initializeSidebarPreferences({
+    initialize: () =>
+      initPreferences({
+        extension: preferencesExtension,
+        namespace,
+        overrides: overridesPreferences,
+      }),
+    readWidth: () => preferences.sidebar.width,
+    writeWidth: (width) => updatePreferences({ sidebar: { width } }),
   });
 
   // 启动应用并挂载

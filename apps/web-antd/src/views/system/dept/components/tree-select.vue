@@ -88,7 +88,7 @@ onMounted(async () => {
         :tree-data="deptTree"
         @select="handleSelect"
       />
-      <div v-else-if="!loading" class="py-4 text-center text-gray-500">
+      <div v-else-if="!loading" class="py-4 text-center text-muted-foreground">
         暂无数据
       </div>
     </Spin>

@@ -20,6 +20,10 @@ import {
 
 import { Button, message, Upload } from 'ant-design-vue';
 
+import {
+  getMaterialImageValidationError,
+  getProductImageValidationError,
+} from './policy';
 import { UploadResultStatus } from './typing';
 import { useUpload, useUploadType } from './use-upload';
 
@@ -163,6 +167,16 @@ async function beforeUpload(file: File) {
   }
 
   const { maxSize, accept } = props;
+  if (props.scene === 'product' || props.scene === 'material') {
+    const error =
+      props.scene === 'product'
+        ? getProductImageValidationError(file.name, file.size)
+        : getMaterialImageValidationError(file.name, file.size);
+    if (error) {
+      message.error(error);
+      return Upload.LIST_IGNORE;
+    }
+  }
   const isAct = checkFileType(file, accept);
   if (!isAct) {
     message.error($t('ui.upload.acceptUpload', [accept]));
@@ -193,7 +207,7 @@ async function beforeUpload(file: File) {
 async function customRequest(info: UploadRequestOption) {
   let { api } = props;
   if (!api || !isFunction(api)) {
-    api = useUpload(props.directory).httpRequest;
+    api = useUpload(props.directory, props.scene).httpRequest;
   }
   try {
     // 上传文件
@@ -280,12 +294,8 @@ function getValue() {
     return singleValue;
   }
 
-  // 多文件情况，根据输入参数类型决定返回格式
-  if (isUsingModelValue.value) {
-    return Array.isArray(props.modelValue) ? list : list.join(',');
-  }
-
-  return Array.isArray(props.value) ? list : list.join(',');
+  // 多文件情况：固定返回数组，保证与后端 List 字段一致（避免 modelValue 为 null/字符串时被 join 成字符串）
+  return list;
 }
 </script>
 
@@ -344,31 +354,31 @@ function getValue() {
 .upload-drag-area {
   padding: 20px;
   text-align: center;
-  background-color: #fafafa;
-  border: 2px dashed #d9d9d9;
+  background-color: hsl(var(--muted));
+  border: 2px dashed hsl(var(--border));
   border-radius: 8px;
   transition: border-color 0.3s;
 }
 
 .upload-drag-area:hover {
-  border-color: #1890ff;
+  border-color: hsl(var(--primary));
 }
 
 .ant-upload-drag-icon {
   margin-bottom: 16px;
   font-size: 48px;
-  color: #d9d9d9;
+  color: hsl(var(--muted-foreground));
 }
 
 .ant-upload-text {
   margin-bottom: 8px;
   font-size: 16px;
-  color: #666;
+  color: hsl(var(--foreground));
 }
 
 .ant-upload-hint {
   font-size: 14px;
-  color: #999;
+  color: hsl(var(--muted-foreground));
 }
 </style>
 

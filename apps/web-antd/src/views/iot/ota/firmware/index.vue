@@ -122,7 +122,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         >
           {{ getProductName(row.productId) }}
         </a>
-        <span v-else class="text-gray-400">-</span>
+        <span v-else class="text-muted-foreground">-</span>
       </template>
       <!-- 固件文件列 -->
       <template #fileUrl="{ row }">
@@ -143,7 +143,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             下载固件
           </a>
         </div>
-        <span v-else class="text-gray-400">无文件</span>
+        <span v-else class="text-muted-foreground">无文件</span>
       </template>
       <template #actions="{ row }">
         <TableAction

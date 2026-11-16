@@ -54,6 +54,7 @@ const props = withDefaults(defineProps<Props>(), {
   headerVisible: true,
   isMobile: false,
   layout: 'sidebar-nav',
+  panelFloat: false,
   sidebarCollapsedButton: true,
   sidebarCollapseShowTitle: false,
   sidebarExtraCollapsedWidth: 60,
@@ -74,6 +75,12 @@ const emit = defineEmits<{
   toggleSidebar: [];
   'update:sidebarWidth': [value: number];
 }>();
+
+/**
+ * 悬浮面板模式下，面板与画布边缘、面板与面板之间的间距
+ */
+const PANEL_GAP = 12;
+
 const sidebarDraggable = defineModel<boolean>('sidebarDraggable', {
   default: true,
 });
@@ -119,6 +126,13 @@ const {
   isMixedNav,
   isSidebarMixedNav,
 } = useLayout(props);
+
+/**
+ * 是否启用悬浮面板模式（移动端与全屏内容布局下自动退化为普通模式）
+ */
+const isPanelFloat = computed(
+  () => props.panelFloat && !props.isMobile && !isFullContent.value,
+);
 
 /**
  * 顶栏是否自动隐藏
@@ -186,7 +200,13 @@ const sidebarEnableState = computed(() => {
  */
 const sidebarMarginTop = computed(() => {
   const { headerHeight, isMobile } = props;
-  return isMixedNav.value && !isMobile ? headerHeight : 0;
+  if (!isMixedNav.value || isMobile) {
+    return 0;
+  }
+  // 悬浮面板模式下，侧边栏需要避开整个顶栏（含标签栏）
+  return isPanelFloat.value
+    ? headerWrapperHeight.value + PANEL_GAP
+    : headerHeight;
 });
 
 /**
@@ -289,8 +309,8 @@ const mainStyle = computed(() => {
         : props.sidebarWidth;
 
       // 100% - 侧边菜单混合宽度 - 菜单宽度
-      sidebarAndExtraWidth = `${sideCollapseWidth + sideWidth}px`;
-      width = `calc(100% - ${sidebarAndExtraWidth})`;
+      sidebarAndExtraWidth = `${sideCollapseWidth + sideWidth + (isPanelFloat.value ? PANEL_GAP * 3 : 0)}px`;
+      width = `calc(100% - ${sidebarAndExtraWidth}${isPanelFloat.value ? ` - ${PANEL_GAP}px` : ''})`;
     } else {
       let sidebarWidth = getSidebarWidth.value;
       if (sidebarExpandOnHovering.value && !sidebarExpandOnHover.value) {
@@ -299,8 +319,17 @@ const mainStyle = computed(() => {
             ? props.sidebarMixedWidth
             : getSideCollapseWidth.value;
       }
-      sidebarAndExtraWidth = `${sidebarWidth}px`;
-      width = `calc(100% - ${sidebarAndExtraWidth})`;
+      sidebarAndExtraWidth = `${sidebarWidth + (isPanelFloat.value ? PANEL_GAP * 2 : 0)}px`;
+      width = `calc(100% - ${sidebarAndExtraWidth}${isPanelFloat.value ? ` - ${PANEL_GAP}px` : ''})`;
+    }
+  }
+  if (isPanelFloat.value) {
+    // 悬浮面板模式下，内容区域两侧与画布边缘保留间距
+    if (sidebarAndExtraWidth === 'unset') {
+      sidebarAndExtraWidth = `${PANEL_GAP}px`;
+    }
+    if (width === '100%') {
+      width = `calc(100% - ${PANEL_GAP * 2}px)`;
     }
   }
   return {
@@ -311,6 +340,11 @@ const mainStyle = computed(() => {
 
 // 计算 tabbar 的样式
 const tabbarStyle = computed((): CSSProperties => {
+  // 悬浮面板模式下，顶栏整体已经避开了侧边区域，tabbar 直接占满顶栏
+  if (isPanelFloat.value) {
+    return { marginLeft: '0px', width: '100%' };
+  }
+
   let width: string;
   let marginLeft = 0;
 
@@ -343,6 +377,7 @@ const tabbarStyle = computed((): CSSProperties => {
 
 const layoutScrollStyle = computed((): CSSProperties => {
   const fixed = headerFixed.value;
+  const panelGap = isPanelFloat.value ? PANEL_GAP : 0;
 
   if (!fixed) {
     return {
@@ -354,7 +389,9 @@ const layoutScrollStyle = computed((): CSSProperties => {
   if (isHeaderOverlayModeActive.value) {
     return {
       marginTop: 0,
-      paddingTop: isFullContent.value ? 0 : `${headerWrapperHeight.value}px`,
+      paddingTop: isFullContent.value
+        ? 0
+        : `${headerWrapperHeight.value + panelGap}px`,
     };
   }
 
@@ -364,7 +401,7 @@ const layoutScrollStyle = computed((): CSSProperties => {
       !isFullContent.value &&
       !headerIsHidden.value &&
       (!isHeaderAutoActive.value || scrollY.value < headerWrapperHeight.value)
-        ? `${headerWrapperHeight.value}px`
+        ? `${headerWrapperHeight.value + panelGap}px`
         : 0,
     paddingTop: 0,
   };
@@ -374,7 +411,10 @@ const contentStyle = computed((): CSSProperties => {
   const { footerEnable, footerFixed, footerHeight } = props;
   return {
     minHeight: footerEnable && !footerFixed ? undefined : 0,
-    paddingBottom: `${footerEnable && footerFixed ? footerHeight : 0}px`,
+    paddingBottom: `${
+      (footerEnable && footerFixed ? footerHeight : 0) +
+      (isPanelFloat.value ? PANEL_GAP : 0)
+    }px`,
   };
 });
 
@@ -387,15 +427,33 @@ const headerZIndex = computed(() => {
 const headerWrapperStyle = computed((): CSSProperties => {
   const fixed = headerFixed.value;
   const hidden = headerIsHidden.value || isFullContent.value;
+  let left: CSSProperties['left'] = mainStyle.value.sidebarAndExtraWidth;
+  let top: CSSProperties['top'] = 0;
+
+  if (isPanelFloat.value) {
+    left =
+      mainStyle.value.sidebarAndExtraWidth === 'unset'
+        ? `${PANEL_GAP}px`
+        : mainStyle.value.sidebarAndExtraWidth;
+    top = `${PANEL_GAP}px`;
+  } else if (isMixedNav.value) {
+    left = 0;
+  }
+
+  const hiddenOffset =
+    hidden && isPanelFloat.value
+      ? `calc(-100% - ${PANEL_GAP}px)`
+      : hidden
+        ? '-100%'
+        : '0';
 
   return {
     height: isFullContent.value ? '0' : `${headerWrapperHeight.value}px`,
-    left: isMixedNav.value ? 0 : mainStyle.value.sidebarAndExtraWidth,
+    // 悬浮面板模式：顶栏整体避开侧边区域并与画布边缘保留间距
+    left,
     position: fixed ? 'fixed' : 'static',
-    top: 0,
-    transform: fixed
-      ? `translate3d(0, ${hidden ? '-100%' : '0'}, 0)`
-      : undefined,
+    top,
+    transform: fixed ? `translate3d(0, ${hiddenOffset}, 0)` : undefined,
     transitionDuration: fixed ? undefined : '0ms',
     width: mainStyle.value.width,
     willChange: fixed ? 'transform' : undefined,
@@ -583,6 +641,7 @@ const layoutStaticHeaderTarget = `#${idLayoutStaticHeader}`;
     :data-layout="currentLayout"
     :data-mobile="isMobile"
     :data-sidebar-collapsed="activeSidebarCollapse"
+    :class="isPanelFloat ? 'bg-background-deep' : ''"
     class="relative flex h-full min-h-0 w-full overflow-hidden"
   >
     <LayoutSidebar
@@ -608,6 +667,8 @@ const layoutStaticHeaderTarget = `#${idLayoutStaticHeader}`;
       :is-mobile="isMobile"
       :margin-top="sidebarMarginTop"
       :mixed-width="sidebarMixedWidth"
+      :panel-float="isPanelFloat"
+      :panel-gap="PANEL_GAP"
       :show="showSidebar"
       :theme="sidebarTheme"
       :theme-sub="sidebarThemeSub"
@@ -645,7 +706,9 @@ const layoutStaticHeaderTarget = `#${idLayoutStaticHeader}`;
           data-layout-region="header"
           :class="[
             {
-              'shadow-[0_16px_24px_hsl(var(--background))]': headerHasShadow,
+              'shadow-[0_16px_24px_hsl(var(--background))]':
+                headerHasShadow && !isPanelFloat,
+              'border-border rounded-xl border shadow-sm': isPanelFloat,
             },
             SCROLL_FIXED_CLASS,
           ]"
@@ -713,6 +776,8 @@ const layoutStaticHeaderTarget = `#${idLayoutStaticHeader}`;
           :padding-left="contentPaddingLeft"
           :padding-right="contentPaddingRight"
           :padding-top="contentPaddingTop"
+          :panel-float="isPanelFloat"
+          :panel-gap="PANEL_GAP"
           :style="contentStyle"
         >
           <slot name="content"></slot>

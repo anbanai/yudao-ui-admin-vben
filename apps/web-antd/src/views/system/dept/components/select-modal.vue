@@ -36,6 +36,9 @@ const emit = defineEmits<{
 }>();
 
 type checkedKeys = number[] | { checked: number[]; halfChecked: number[] };
+interface DeptSelectModalData {
+  selectedList?: SystemDeptApi.Dept[];
+}
 const deptTree = ref<DataNode[]>([]); // 部门树形结构
 const selectedDeptIds = ref<checkedKeys>([]); // 选中的部门 ID 列表
 const deptData = ref<SystemDeptApi.Dept[]>([]); // 部门数据
@@ -49,7 +52,7 @@ function buildDeptTreeNode(dept: SystemDeptApi.Dept): DataNode {
   };
 }
 
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<DeptSelectModalData>({
   async onConfirm() {
     // 获取选中的部门 ID
     const selectedIds: number[] = Array.isArray(selectedDeptIds.value)
@@ -83,7 +86,7 @@ const [Modal, modalApi] = useVbenModal({
       if (data.selectedList?.length) {
         const selectedIds = data.selectedList
           .map((dept: SystemDeptApi.Dept) => dept.id)
-          .filter((id: number) => id !== undefined);
+          .filter((id): id is number => id !== undefined);
         selectedDeptIds.value = props.checkStrictly
           ? {
               checked: selectedIds,

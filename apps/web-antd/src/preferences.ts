@@ -1,3 +1,5 @@
+import { watch } from 'vue';
+
 import {
   defineOverridesPreferences,
   definePreferencesExtension,
@@ -8,6 +10,37 @@ interface WebAntdPreferencesExtension {
   enableFormFullscreen: boolean;
   reportTitle: string;
   tenantMode: 'multi' | 'single';
+}
+
+interface SidebarPreferencesRuntime {
+  initialize: () => Promise<void>;
+  readWidth: () => number;
+  writeWidth: (width: number) => void;
+}
+
+const MIN_SIDEBAR_WIDTH = 260;
+
+export function normalizeSidebarWidth(width: number) {
+  return Number.isFinite(width)
+    ? Math.max(width, MIN_SIDEBAR_WIDTH)
+    : MIN_SIDEBAR_WIDTH;
+}
+
+export async function initializeSidebarPreferences(
+  runtime: SidebarPreferencesRuntime,
+) {
+  await runtime.initialize();
+
+  return watch(
+    runtime.readWidth,
+    (width) => {
+      const normalizedWidth = normalizeSidebarWidth(width);
+      if (normalizedWidth !== width) {
+        runtime.writeWidth(normalizedWidth);
+      }
+    },
+    { flush: 'sync', immediate: true },
+  );
 }
 
 /**
@@ -22,6 +55,26 @@ export const overridesPreferences = defineOverridesPreferences({
     accessMode: 'backend',
     name: import.meta.env.VITE_APP_TITLE,
     enableRefreshToken: true,
+    /** 双列菜单布局（参照有赞后台：左侧主导航 + 二级菜单面板） */
+    layout: 'sidebar-mixed-nav',
+    /** 悬浮面板模式：侧边栏/顶栏/内容区以圆角卡片悬浮于画布之上 */
+    panelFloat: true,
+    /** 仅在 Ant Design 应用中开放悬浮面板切换 */
+    panelFloatSettingShow: true,
+  },
+  logo: {
+    source: '/branding/logo-mark.png',
+  },
+  sidebar: {
+    width: MIN_SIDEBAR_WIDTH,
+  },
+  tabbar: {
+    /** 朴素风格标签页，配合悬浮面板更接近有赞样式 */
+    styleType: 'plain',
+  },
+  theme: {
+    /** 加大全局圆角，匹配悬浮面板风格 */
+    radius: '0.75',
   },
   footer: {
     /** 默认关闭 footer 页脚，因为有一定遮挡 */
@@ -29,8 +82,11 @@ export const overridesPreferences = defineOverridesPreferences({
     fixed: false,
   },
   copyright: {
-    companyName: import.meta.env.VITE_APP_TITLE,
-    companySiteLink: 'https://gitee.com/yudaocode/yudao-ui-admin-vben',
+    companyName: '峨眉山不忍独享茶业有限公司',
+    companySiteLink: 'https://teaworthshare.com',
+    date: '2026',
+    icp: '蜀ICP备2025128192号-2',
+    icpLink: 'https://beian.miit.gov.cn/',
   },
 });
 

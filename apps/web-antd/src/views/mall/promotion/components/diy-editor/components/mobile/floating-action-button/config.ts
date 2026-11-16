@@ -13,6 +13,10 @@ export interface FloatingActionButtonItemProperty {
   url: string; // 跳转连接
   text: string; // 文字
   textColor: string; // 文字颜色
+  type?: 'link' | 'popup'; // 动作类型：link-跳转链接，popup-弹窗卡片
+  popupTitle?: string; // 弹窗卡片标题
+  popupContent?: string; // 弹窗卡片内容
+  popupImgUrl?: string; // 弹窗卡片图片
 }
 
 /** 定义组件 */
@@ -24,6 +28,6 @@ export const component = {
   property: {
     direction: 'vertical',
     showText: true,
-    list: [{ textColor: '#fff' }],
+    list: [{ textColor: '#fff', type: 'link' }],
   },
 } as DiyComponent<FloatingActionButtonProperty>;

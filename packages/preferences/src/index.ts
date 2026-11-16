@@ -24,7 +24,9 @@ function definePreferencesExtension<
 
 /** 应用级 ICP 备案配置，供各 app 的 preferences 覆盖使用 */
 const appCopyrightPreferences = {
-  icp: '闽ICP备19024351号',
+  companyName: '峨眉山不忍独享茶业有限公司',
+  companySiteLink: 'https://teaworthshare.com',
+  icp: '蜀ICP备2025128192号-2',
   icpLink: 'https://beian.miit.gov.cn/',
 } satisfies DeepPartial<Preferences>['copyright'];
 

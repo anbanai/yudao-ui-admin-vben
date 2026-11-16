@@ -19,7 +19,7 @@ interface UploadData {
 const beforeImageUpload: UploadProps['beforeUpload'] = function (
   rawFile: UploadRawFile,
 ) {
-  return useBeforeUpload(UploadType.Image, 2)(rawFile);
+  return useBeforeUpload(UploadType.Image, 10)(rawFile);
 };
 
 const beforeVoiceUpload: UploadProps['beforeUpload'] = function (

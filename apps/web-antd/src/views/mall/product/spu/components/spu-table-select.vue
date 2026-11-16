@@ -1,20 +1,22 @@
 <!-- SPU 商品选择弹窗组件 -->
 <script lang="ts" setup>
-import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { MallCategoryApi } from '#/api/mall/product/category';
 import type { MallSpuApi } from '#/api/mall/product/spu';
 
-import { computed, nextTick, onMounted, ref } from 'vue';
-
-import { handleTree } from '@vben/utils';
+import { computed, nextTick, ref } from 'vue';
 
 import { Modal } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getCategoryList } from '#/api/mall/product/category';
 import { getSpuPage } from '#/api/mall/product/spu';
-import { getRangePickerDefaultProps } from '#/utils';
+
+import { useGridFormSchema } from './spu-select-data';
+import {
+  createSpuSelectionRowsLoader,
+  createSpuSelectionSession,
+  createSpuSelectionStore,
+} from './spu-table-select-utils';
 
 interface SpuTableSelectProps {
   multiple?: boolean; // 是否单选：true - checkbox；false - radio
@@ -29,11 +31,42 @@ const emit = defineEmits<{
 }>();
 
 const categoryList = ref<MallCategoryApi.Category[]>([]); // 分类列表
-const categoryTreeList = ref<any[]>([]); // 分类树
 
 /** 弹窗显示状态 */
 const visible = ref(false);
-const initData = ref<MallSpuApi.Spu | MallSpuApi.Spu[]>();
+const loadSelectionRows = createSpuSelectionRowsLoader();
+const selectionSession = createSpuSelectionSession();
+const selectionStore = createSpuSelectionStore();
+let currentSessionId: number | undefined;
+
+/** 获取当前查询结果 */
+function getCurrentSpus() {
+  return gridApi.grid.getTableData().fullData as MallSpuApi.Spu[];
+}
+
+/** 将当前查询结果的勾选变化同步到弹窗独立状态 */
+function handleCheckboxSelectionChange() {
+  selectionStore.reconcilePage(
+    getCurrentSpus(),
+    gridApi.grid.getCheckboxRecords() as MallSpuApi.Spu[],
+  );
+}
+
+/** 查询、搜索或分页后恢复当前结果中的已选商品 */
+async function restoreCheckboxSelection(sessionId = currentSessionId) {
+  if (
+    sessionId === undefined ||
+    !selectionSession.isActive(sessionId) ||
+    !props.multiple ||
+    !visible.value
+  ) {
+    return;
+  }
+  const selectedRows = selectionStore.getSelectedFromPage(getCurrentSpus());
+  if (selectedRows.length > 0) {
+    await gridApi.grid.setCheckboxRow(selectedRows, true);
+  }
+}
 
 /** 单选：处理选中变化 */
 function handleRadioChange() {
@@ -45,44 +78,10 @@ function handleRadioChange() {
 }
 
 /** 搜索表单 Schema */
-const formSchema = computed<VbenFormSchema[]>(() => [
-  {
-    fieldName: 'name',
-    label: '商品名称',
-    component: 'Input',
-    componentProps: {
-      placeholder: '请输入商品名称',
-      allowClear: true,
-    },
-  },
-  {
-    fieldName: 'categoryId',
-    label: '商品分类',
-    component: 'TreeSelect',
-    // TODO @芋艿：可能要测试下；
-    componentProps: {
-      treeData: categoryTreeList,
-      fieldNames: {
-        label: 'name',
-        value: 'id',
-      },
-      treeCheckStrictly: true,
-      placeholder: '请选择商品分类',
-      allowClear: true,
-      showSearch: true,
-      treeNodeFilterProp: 'name',
-    },
-  },
-  {
-    fieldName: 'createTime',
-    label: '创建时间',
-    component: 'RangePicker',
-    componentProps: {
-      ...getRangePickerDefaultProps(),
-      allowClear: true,
-    },
-  },
-]);
+const formSchema = useGridFormSchema((categories) => {
+  categoryList.value = categories;
+  gridApi.grid?.refreshColumn();
+});
 
 /** 表格列配置 */
 const gridColumns = computed<VxeGridProps['columns']>(() => {
@@ -128,7 +127,7 @@ const gridColumns = computed<VxeGridProps['columns']>(() => {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
-    schema: formSchema.value,
+    schema: formSchema,
     layout: 'horizontal',
     collapsed: false,
   },
@@ -147,6 +146,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     proxyConfig: {
+      autoLoad: false,
       ajax: {
         async query({ page }: any, formValues: any) {
           return await getSpuPage({
@@ -160,57 +160,77 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
   },
   gridEvents: {
+    checkboxAll: handleCheckboxSelectionChange,
+    checkboxChange: handleCheckboxSelectionChange,
+    dataRendered: () => {
+      void restoreCheckboxSelection();
+    },
+    initRendered: () => {
+      void restoreCheckboxSelection();
+    },
     radioChange: handleRadioChange,
   },
 });
 
 /** 打开弹窗 */
 async function openModal(data?: MallSpuApi.Spu | MallSpuApi.Spu[]) {
-  initData.value = data;
+  const sessionId = selectionSession.begin();
+  currentSessionId = sessionId;
+  selectionStore.replace(props.multiple && Array.isArray(data) ? data : []);
   visible.value = true;
   // 等待 Grid 组件完全初始化后再查询数据
   await nextTick();
-  if (gridApi.grid) {
-    // 1. 先查询数据
-    await gridApi.query();
+  if (selectionSession.isActive(sessionId) && gridApi.grid) {
+    await Promise.all([
+      gridApi.grid.clearCheckboxRow(),
+      gridApi.grid.clearCheckboxReserve(),
+      gridApi.grid.clearRadioRow(),
+      gridApi.grid.clearRadioReserve(),
+    ]);
+    if (!selectionSession.isActive(sessionId)) {
+      return;
+    }
+    // 1. 查询完成并渲染表格数据
+    const tableData = await loadSelectionRows(
+      async () => {
+        await gridApi.query();
+        await nextTick();
+      },
+      () => selectionSession.isActive(sessionId),
+      () => gridApi.grid.getTableData().fullData as MallSpuApi.Spu[],
+    );
+    if (!selectionSession.isActive(sessionId)) {
+      return;
+    }
     // 2. 设置已选中行
     if (props.multiple && Array.isArray(data) && data.length > 0) {
-      setTimeout(() => {
-        const tableData = gridApi.grid.getTableData().fullData;
-        data.forEach((spu) => {
-          const row = tableData.find(
-            (item: MallSpuApi.Spu) => item.id === spu.id,
-          );
-          if (row) {
-            gridApi.grid.setCheckboxRow(row, true);
-          }
-        });
-      }, 300);
+      await restoreCheckboxSelection(sessionId);
     } else if (!props.multiple && data && !Array.isArray(data)) {
-      setTimeout(() => {
-        const tableData = gridApi.grid.getTableData().fullData;
-        const row = tableData.find(
-          (item: MallSpuApi.Spu) => item.id === data.id,
-        );
-        if (row) {
-          gridApi.grid.setRadioRow(row);
-        }
-      }, 300);
+      const row = tableData.find((item) => item.id === data.id);
+      if (row) {
+        await gridApi.grid.setRadioRow(row);
+      }
     }
   }
 }
 
 /** 关闭弹窗 */
 async function closeModal() {
+  selectionSession.invalidate();
+  currentSessionId = undefined;
   visible.value = false;
-  await gridApi.grid.clearCheckboxRow();
-  await gridApi.grid.clearRadioRow();
-  initData.value = undefined;
+  selectionStore.replace([]);
+  await Promise.all([
+    gridApi.grid.clearCheckboxRow(),
+    gridApi.grid.clearCheckboxReserve(),
+    gridApi.grid.clearRadioRow(),
+    gridApi.grid.clearRadioReserve(),
+  ]);
 }
 
 /** 确认选择（多选模式） */
 function handleConfirm() {
-  const selectedRows = gridApi.grid.getCheckboxRecords() as MallSpuApi.Spu[];
+  const selectedRows = selectionStore.getSelected();
   emit('change', selectedRows);
   closeModal();
 }
@@ -218,12 +238,6 @@ function handleConfirm() {
 defineExpose({
   open: openModal,
 }); // 对外暴露的方法
-
-/** 初始化分类数据 */
-onMounted(async () => {
-  categoryList.value = await getCategoryList({});
-  categoryTreeList.value = handleTree(categoryList.value, 'id', 'parentId');
-});
 </script>
 
 <template>

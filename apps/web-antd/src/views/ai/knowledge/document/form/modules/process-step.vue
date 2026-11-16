@@ -123,7 +123,7 @@ onBeforeUnmount(() => {
         <!-- 文件图标和名称 -->
         <div class="mr-2 flex min-w-48 items-center">
           <IconifyIcon icon="lucide:file-text" class="mr-2 text-blue-500" />
-          <span class="break-all text-sm text-gray-600">
+          <span class="break-all text-sm text-muted-foreground">
             {{ file.name }}
           </span>
         </div>
@@ -138,7 +138,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 分段数量 -->
-        <div class="ml-2 text-sm text-gray-400">
+        <div class="ml-2 text-sm text-muted-foreground">
           分段数量：{{ file.count ? file.count : '-' }}
         </div>
       </div>

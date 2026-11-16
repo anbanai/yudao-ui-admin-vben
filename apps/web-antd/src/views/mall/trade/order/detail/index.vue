@@ -14,8 +14,9 @@ import {
   TradeOrderStatusEnum,
 } from '@vben/constants';
 import { useTabs } from '@vben/hooks';
+import { fenToYuan, formatDateTime } from '@vben/utils';
 
-import { message, Tag } from 'ant-design-vue';
+import { Card, message, Tag } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getSimpleDeliveryExpressList } from '#/api/mall/trade/delivery/express';
@@ -33,6 +34,7 @@ import AddressForm from '../modules/address-form.vue';
 import DeliveryForm from '../modules/delivery-form.vue';
 import PriceForm from '../modules/price-form.vue';
 import RemarkForm from '../modules/remark-form.vue';
+import SfDeliveryForm from '../modules/sf-delivery-form.vue';
 import {
   useDeliveryInfoSchema,
   useExpressTrackColumns,
@@ -89,7 +91,9 @@ const [DeliveryInfoDescriptions] = useDescription({
   bordered: false,
   column: 3,
   class: 'mx-4',
-  schema: useDeliveryInfoSchema(),
+  schema: useDeliveryInfoSchema(
+    (id) => deliveryExpressList.value.find((item) => item.id === id)?.name,
+  ),
 });
 
 const [ProductGrid, productGridApi] = useVbenVxeGrid({
@@ -143,6 +147,11 @@ const [OperateLogGrid, operateLogGridApi] = useVbenVxeGrid({
 
 const [DeliveryFormModal, deliveryFormModalApi] = useVbenModal({
   connectedComponent: DeliveryForm,
+  destroyOnClose: true,
+});
+
+const [SfDeliveryFormModal, sfDeliveryFormModalApi] = useVbenModal({
+  connectedComponent: SfDeliveryForm,
   destroyOnClose: true,
 });
 
@@ -202,6 +211,10 @@ const handleRemark = () => {
 
 const handleDelivery = () => {
   deliveryFormModalApi.setData(order.value).open();
+};
+
+const handleSfDelivery = () => {
+  sfDeliveryFormModalApi.setData(order.value).open();
 };
 
 const handleUpdateAddress = () => {
@@ -264,8 +277,18 @@ onMounted(async () => {
             onClick: handleRemark,
           },
           {
-            label: '发货',
+            label: '顺丰打单发货',
             type: 'primary',
+            auth: ['trade:logistics:sf-waybill:create', 'trade:order:update'],
+            onClick: handleSfDelivery,
+            ifShow:
+              order.status === TradeOrderStatusEnum.UNDELIVERED.status &&
+              order.deliveryType === DeliveryTypeEnum.EXPRESS.type,
+          },
+          {
+            label: '手工发货',
+            type: 'default',
+            auth: ['trade:order:update'],
             onClick: handleDelivery,
             ifShow:
               order.status === TradeOrderStatusEnum.UNDELIVERED.status &&
@@ -293,6 +316,7 @@ onMounted(async () => {
 
     <!-- 各种操作的弹窗 -->
     <DeliveryFormModal @success="getDetail" />
+    <SfDeliveryFormModal @success="getDetail" />
     <RemarkFormModal @success="getDetail" />
     <AddressFormModal @success="getDetail" />
     <PriceFormModal @success="getDetail" />
@@ -304,6 +328,37 @@ onMounted(async () => {
     <!-- 订单状态 -->
     <div class="mb-4">
       <OrderStatusDescriptions :data="order" />
+    </div>
+    <!-- 商家履约订单 -->
+    <div v-if="order.subOrders?.length" class="mb-4">
+      <Card size="small" title="商家履约订单">
+        <div class="space-y-3">
+          <div
+            v-for="subOrder in order.subOrders"
+            :key="subOrder.id"
+            class="rounded border border-solid border-gray-200 p-3"
+          >
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span class="font-medium">{{
+                subOrder.merchantName || `商家 #${subOrder.merchantId}`
+              }}</span>
+              <span>子订单号：{{ subOrder.no || '-' }}</span>
+              <span>状态：<DictTag
+                  :type="DICT_TYPE.TRADE_ORDER_STATUS"
+                  :value="subOrder.status"
+              /></span>
+              <span>商品数：{{ subOrder.productCount || 0 }}</span>
+              <span>应付：{{ fenToYuan(subOrder.payPrice || 0) }} 元</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-500">
+              <span>物流单号：{{ subOrder.logisticsNo || '-' }}</span>
+              <span class="ml-4">发货时间：{{
+                  formatDateTime(subOrder.deliveryTime) || '-'
+                }}</span>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
     <!-- 商品信息 -->
     <div class="mb-4">

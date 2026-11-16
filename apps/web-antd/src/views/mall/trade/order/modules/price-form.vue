@@ -6,13 +6,12 @@ import { ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 import { fenToYuan } from '@vben/utils';
 
-import { message } from 'ant-design-vue';
-
 import { useVbenForm } from '#/adapter/form';
 import { updateOrderPrice } from '#/api/mall/trade/order';
 import { $t } from '#/locales';
+import { withOperationFeedback } from '#/utils/operation-feedback';
 
-import { usePriceFormSchema } from '../data';
+import { createOrderPriceChangeHandler, usePriceFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
 
@@ -21,6 +20,15 @@ const formData = ref({
   payPrice: '0',
   adjustPrice: '0',
   newPayPrice: '0',
+});
+
+const handleAdjustPriceChange = createOrderPriceChangeHandler({
+  async getValues() {
+    return await formApi.getValues();
+  },
+  async setFieldValue(fieldName, value) {
+    await formApi.setFieldValue(fieldName, value);
+  },
 });
 
 const [Form, formApi] = useVbenForm({
@@ -32,7 +40,7 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: usePriceFormSchema(),
+  schema: usePriceFormSchema(handleAdjustPriceChange),
   showDefaultActions: false,
 });
 
@@ -46,14 +54,14 @@ const [Modal, modalApi] = useVbenModal({
     // 提交表单
     const data = await formApi.getValues();
     try {
-      await updateOrderPrice({
-        id: data.id,
-        adjustPrice: data.adjustPrice * 100, // 转换为分
+      await withOperationFeedback(async () => {
+        await updateOrderPrice({
+          id: data.id,
+          adjustPrice: data.adjustPrice * 100, // 转换为分
+        });
+        await modalApi.close();
+        emit('success');
       });
-      // 关闭并提示
-      await modalApi.close();
-      emit('success');
-      message.success($t('ui.actionMessage.operationSuccess'));
     } finally {
       modalApi.unlock();
     }

@@ -45,7 +45,7 @@ const handleDelete = function (index: number) {
 </script>
 
 <template>
-  <div class="text-sm text-gray-500">拖动左上角的小圆点可对其排序</div>
+  <div class="text-sm text-muted-foreground">拖动左上角的小圆点可对其排序</div>
   <VueDraggable
     :list="formData"
     :force-fallback="true"
@@ -55,7 +55,7 @@ const handleDelete = function (index: number) {
     item-key="index"
   >
     <template #item="{ element, index }">
-      <div class="mb-1 flex flex-col gap-1 rounded border border-gray-200 p-2">
+      <div class="mb-1 flex flex-col gap-1 rounded border border-border p-2">
         <!-- 操作按钮区 -->
         <div
           class="-m-2 mb-1 flex flex-row items-center justify-between rounded-t bg-secondary p-2"
@@ -63,7 +63,7 @@ const handleDelete = function (index: number) {
           <Tooltip title="拖动排序">
             <IconifyIcon
               icon="lucide:move"
-              class="drag-icon cursor-move text-gray-500"
+              class="drag-icon cursor-move text-muted-foreground"
             />
           </Tooltip>
           <Tooltip title="删除">

@@ -42,7 +42,16 @@ const [Modal, modalApi] = useVbenModal({
     }
     modalApi.lock();
     // 提交表单
-    const data = (await formApi.getValues()) as MemberLevelApi.Level;
+    const values = (await formApi.getValues()) as MemberLevelApi.Level & {
+      pointTradeGiveMultiplierDisplay: number;
+    };
+    const data = {
+      ...values,
+      pointTradeGiveMultiplier: Math.round(
+        values.pointTradeGiveMultiplierDisplay * 1000,
+      ),
+    };
+    delete (data as Partial<typeof data>).pointTradeGiveMultiplierDisplay;
     try {
       await (formData.value?.id ? updateLevel(data) : createLevel(data));
       // 关闭并提示
@@ -61,13 +70,18 @@ const [Modal, modalApi] = useVbenModal({
     // 加载数据
     const data = modalApi.getData() as MemberLevelApi.Level;
     if (!data || !data.id) {
+      await formApi.setValues({ pointTradeGiveMultiplierDisplay: 1 });
       return;
     }
     modalApi.lock();
     try {
       formData.value = await getLevel(data.id);
       // 设置到 values
-      await formApi.setValues(formData.value);
+      await formApi.setValues({
+        ...formData.value,
+        pointTradeGiveMultiplierDisplay:
+          (formData.value.pointTradeGiveMultiplier ?? 1000) / 1000,
+      });
     } finally {
       modalApi.unlock();
     }

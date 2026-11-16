@@ -18,7 +18,7 @@ import {
   Upload,
 } from 'ant-design-vue';
 
-import { WxMaterialSelect } from '#/views/mp/components';
+import WxMaterialSelect from '#/views/mp/components/wx-material-select/wx-material-select.vue';
 import { UploadType, useBeforeUpload } from '#/views/mp/hooks/useUpload';
 
 defineOptions({ name: 'TabMusic' });
@@ -49,7 +49,7 @@ const uploadData = reactive({
 
 /** 图片上传前校验 */
 function beforeImageUpload(rawFile: UploadRawFile) {
-  return useBeforeUpload(UploadType.Image, 2)(rawFile);
+  return useBeforeUpload(UploadType.Image, 10)(rawFile);
 }
 
 /** 自定义上传请求 */
@@ -118,7 +118,7 @@ function selectMaterial(item: any) {
               v-else
               icon="lucide:plus"
               :size="40"
-              class="text-gray-400"
+              class="text-muted-foreground"
             />
           </div>
           <div class="flex items-center justify-center">

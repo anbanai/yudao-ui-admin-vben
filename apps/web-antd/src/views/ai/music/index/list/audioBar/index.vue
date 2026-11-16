@@ -97,7 +97,7 @@ watch(currentAudioUrl, () => {
       />
       <div>
         <div>{{ currentSong.title || '暂无音乐' }}</div>
-        <div class="text-xs text-gray-400">
+        <div class="text-xs text-muted-foreground">
           {{ currentSong.singer || currentSong.desc }}
         </div>
       </div>
@@ -106,7 +106,7 @@ watch(currentAudioUrl, () => {
     <div class="flex items-center gap-3">
       <IconifyIcon
         icon="majesticons:back-circle"
-        class="size-5 cursor-pointer text-gray-300"
+        class="size-5 cursor-pointer text-muted-foreground"
       />
       <IconifyIcon
         :icon="
@@ -119,7 +119,7 @@ watch(currentAudioUrl, () => {
       />
       <IconifyIcon
         icon="majesticons:next-circle"
-        class="size-5 cursor-pointer text-gray-300"
+        class="size-5 cursor-pointer text-muted-foreground"
       />
       <div class="flex items-center gap-4">
         <span>{{ audioProps.currentTime }}</span>

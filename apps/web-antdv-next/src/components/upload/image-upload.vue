@@ -19,6 +19,10 @@ import {
 
 import { message, Modal, Upload } from 'antdv-next';
 
+import {
+  getMaterialImageValidationError,
+  getProductImageValidationError,
+} from './policy';
 import { UploadResultStatus } from './typing';
 import { useUpload, useUploadType } from './use-upload';
 
@@ -176,6 +180,17 @@ async function beforeUpload(file: File) {
     return Upload.LIST_IGNORE;
   }
 
+  if (props.scene === 'product' || props.scene === 'material') {
+    const error =
+      props.scene === 'product'
+        ? getProductImageValidationError(file.name, file.size)
+        : getMaterialImageValidationError(file.name, file.size);
+    if (error) {
+      message.error(error);
+      return Upload.LIST_IGNORE;
+    }
+  }
+
   const { maxSize, accept } = props;
   const isAct = isImage(file.name, accept);
   if (!isAct) {
@@ -203,7 +218,7 @@ async function beforeUpload(file: File) {
 async function customRequest(info: UploadRequestOption) {
   let { api } = props;
   if (!api || !isFunction(api)) {
-    api = useUpload(props.directory).httpRequest;
+    api = useUpload(props.directory, props.scene).httpRequest;
   }
   try {
     // 上传文件
@@ -296,12 +311,8 @@ function getValue() {
     return singleValue;
   }
 
-  // 多文件情况，根据输入参数类型决定返回格式
-  if (isUsingModelValue.value) {
-    return Array.isArray(props.modelValue) ? list : list.join(',');
-  }
-
-  return Array.isArray(props.value) ? list : list.join(',');
+  // 多文件情况：固定返回数组，保证与后端 List 字段一致（避免 modelValue 为 null/字符串时被 join 成字符串）
+  return list;
 }
 </script>
 

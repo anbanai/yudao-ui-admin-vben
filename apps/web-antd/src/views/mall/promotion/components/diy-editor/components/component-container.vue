@@ -7,8 +7,7 @@ import { IconifyIcon } from '@vben/icons';
 
 import { Button } from 'ant-design-vue';
 
-import { VerticalButtonGroup } from '#/views/mall/promotion/components';
-
+import { getComponentBackgroundStyle, getComponentOverflow } from '../util';
 import { components } from './mobile';
 
 /**
@@ -68,11 +67,11 @@ const style = computed(() => {
     borderTopRightRadius: `${componentStyle.borderTopRightRadius || 0}px`,
     borderBottomRightRadius: `${componentStyle.borderBottomRightRadius || 0}px`,
     borderBottomLeftRadius: `${componentStyle.borderBottomLeftRadius || 0}px`,
-    overflow: 'hidden',
-    background:
-      componentStyle.bgType === 'color'
-        ? componentStyle.bgColor
-        : `url(${componentStyle.bgImg})`,
+    overflow: getComponentOverflow(
+      props.component.id,
+      props.component.property.sticky === true,
+    ),
+    ...getComponentBackgroundStyle(componentStyle),
   };
 });
 
@@ -108,7 +107,7 @@ const handleDeleteComponent = () => {
         class="component-toolbar"
         v-if="showToolbar && component.name && active"
       >
-        <VerticalButtonGroup size="small">
+        <div class="component-toolbar-buttons">
           <Button
             :disabled="!canMoveUp"
             type="primary"
@@ -163,7 +162,7 @@ const handleDeleteComponent = () => {
           >
             <IconifyIcon icon="lucide:trash-2" />
           </Button>
-        </VerticalButtonGroup>
+        </div>
       </div>
     </div>
   </div>
@@ -237,6 +236,26 @@ $toolbar-position: -55px;
         content: ' ';
         border: 5px solid transparent;
         border-right-color: hsl(var(--primary));
+      }
+
+      .component-toolbar-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+
+        :deep(.ant-btn) {
+          border-radius: 0;
+
+          &:first-child {
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+          }
+
+          &:last-child {
+            border-bottom-right-radius: 2px;
+            border-bottom-left-radius: 2px;
+          }
+        }
       }
     }
   }

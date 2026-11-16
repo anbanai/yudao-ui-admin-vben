@@ -111,7 +111,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             查看消息
           </Button>
         </Popover>
-        <span v-else class="text-gray-400">-</span>
+        <span v-else class="text-muted-foreground">-</span>
       </template>
       <template #actions="{ row }">
         <TableAction

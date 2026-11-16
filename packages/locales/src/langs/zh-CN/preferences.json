@@ -9,6 +9,11 @@
   "appearance": "外观",
   "layout": "布局",
   "content": "内容",
+  "panel": {
+    "title": "面板风格",
+    "float": "悬浮面板",
+    "floatTip": "侧边栏、顶栏与内容区以圆角卡片形式悬浮于画布之上（移动端自动关闭）"
+  },
   "other": "其它",
   "wide": "流式",
   "compact": "定宽",

@@ -38,14 +38,20 @@ function toOptionalNumber(
 /** 是否不限年龄：勾选后禁用范围输入，并清空已填年龄 */
 const ageUnlimited = () => !!props.values?.ageUnlimited;
 
-async function handleUnlimitedChange(checked: boolean) {
-  await props.formApi?.setFieldValue('ageUnlimited', checked);
-  if (!checked) {
-    return;
-  }
-  // 对齐源表单：勾选不限后清空最小/最大年龄
-  emit('update:modelValue', undefined);
-  await props.formApi?.setFieldValue('maxAge', undefined);
+let writeQueue = Promise.resolve();
+function enqueueWrite(write: () => Promise<void> | void): Promise<void> {
+  const result = writeQueue.then(write);
+  writeQueue = result.catch(() => {});
+  return result;
+}
+
+function handleUnlimitedChange(checked: boolean) {
+  return enqueueWrite(async () => {
+    await props.formApi?.setFieldValue('ageUnlimited', checked);
+    if (!checked) return;
+    emit('update:modelValue', undefined);
+    await props.formApi?.setFieldValue('maxAge', undefined);
+  });
 }
 </script>
 
@@ -70,7 +76,10 @@ async function handleUnlimitedChange(checked: boolean) {
         class="!w-0 flex-1"
         placeholder="最大年龄"
         @update:value="
-          (v) => formApi?.setFieldValue('maxAge', toOptionalNumber(v))
+          (v) =>
+            enqueueWrite(() =>
+              formApi?.setFieldValue('maxAge', toOptionalNumber(v)),
+            )
         "
       />
       <Checkbox

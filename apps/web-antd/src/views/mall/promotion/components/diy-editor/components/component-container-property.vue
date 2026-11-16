@@ -19,7 +19,7 @@ import {
 } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import { ColorInput } from '#/views/mall/promotion/components';
+import ColorInput from '#/views/mall/promotion/components/color-input/index.vue';
 
 /**
  * 组件容器属性：目前右边部分
@@ -137,7 +137,7 @@ function handleSliderChange(prop: string) {
 
     <!-- 每个组件的通用内容 -->
     <TabPane tab="样式" key="style" force-render>
-      <div class="mb-2 bg-gray-100 p-2 text-sm">组件样式：</div>
+      <div class="mb-2 bg-muted p-2 text-sm">组件样式：</div>
       <div class="flex flex-col gap-2 rounded-md p-4 shadow-lg">
         <Form :model="formData">
           <FormItem

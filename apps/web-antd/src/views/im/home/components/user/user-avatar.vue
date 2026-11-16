@@ -128,7 +128,7 @@ function handleClick(e: MouseEvent) {
     />
     <div
       v-else
-      class="flex items-center justify-center text-white font-medium select-none"
+      class="flex items-center justify-center text-primary-foreground font-medium select-none"
       :style="textStyle"
     >
       {{ avatarText }}

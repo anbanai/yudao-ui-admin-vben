@@ -203,7 +203,7 @@ function calculateWidth() {
         <!-- 文字按钮 -->
         <span
           v-if="property.btnBuy.type === 'text'"
-          class="rounded-full px-3 py-1 text-xs text-white"
+          class="rounded-full px-3 py-1 text-xs text-primary-foreground"
           :style="{
             background: `linear-gradient(to right, ${property.btnBuy.bgBeginColor}, ${property.btnBuy.bgEndColor}`,
           }"

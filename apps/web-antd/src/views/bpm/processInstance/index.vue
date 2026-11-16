@@ -141,7 +141,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           v-if="row.summary && row.summary.length > 0"
         >
           <div v-for="(item, index) in row.summary" :key="index">
-            <span class="text-gray-500">
+            <span class="text-muted-foreground">
               {{ item.key }} : {{ item.value }}
             </span>
           </div>

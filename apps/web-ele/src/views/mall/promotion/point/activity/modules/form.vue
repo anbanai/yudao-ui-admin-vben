@@ -8,7 +8,7 @@ import type {
 
 import { computed, ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { confirm, useVbenModal } from '@vben/common-ui';
 import { cloneDeep, convertToInteger, formatToFraction } from '@vben/utils';
 
 import { ElButton, ElInputNumber, ElMessage } from 'element-plus';
@@ -84,6 +84,40 @@ function openSpuSelect() {
 
 /** 选择商品后的回调 */
 async function handleSpuSelected(spuId: number, skuIds?: number[]) {
+  const existingSpu = spuList.value[0];
+  // 同一商品追加选择时，合并已选 SKU 并保留已填写的配置，避免被覆盖重置
+  if (existingSpu?.id === spuId) {
+    const existingSkus = (existingSpu.skus ?? []) as (MallSpuApi.Sku & {
+      productConfig?: MallPointActivityApi.PointProduct;
+    })[];
+    const mergedSkuIds = [
+      ...new Set([...existingSkus.map((sku) => sku.id!), ...(skuIds ?? [])]),
+    ];
+    // 已填写的配置（价格当前为元，转为分以复用回填逻辑）
+    const products = cloneDeep(
+      existingSkus
+        .map((sku) => sku.productConfig)
+        .filter(
+          (config): config is MallPointActivityApi.PointProduct => !!config,
+        ),
+    );
+    products.forEach((item) => {
+      item.price = convertToInteger(item.price);
+    });
+    await formApi.setFieldValue('spuId', spuId);
+    await getSpuDetails(spuId, mergedSkuIds, products);
+    return;
+  }
+  // 切换为其它商品时，活动仅支持一个商品，需确认替换
+  if (existingSpu) {
+    try {
+      await confirm(
+        '积分商城活动仅支持一个商品，重新选择将替换已选商品及其配置，是否继续？',
+      );
+    } catch {
+      return;
+    }
+  }
   await formApi.setFieldValue('spuId', spuId);
   await getSpuDetails(spuId, skuIds);
 }

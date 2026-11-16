@@ -12,13 +12,17 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { useTabs } from '@vben/hooks';
 import { convertToInteger, formatToFraction } from '@vben/utils';
 
-import { Button, Card, message, Select } from 'ant-design-vue';
-import draggable from 'vuedraggable';
+import { Alert, Button, Card, message, Modal } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { createSpu, getSpu, updateSpu } from '#/api/mall/product/spu';
+import { withOperationFeedback } from '#/utils/operation-feedback';
 import { getPropertyList, SkuList } from '#/views/mall/product/spu/components';
 
+import {
+  isSkuPropertiesSubset,
+  reconcileSkus,
+} from '../components/sku-reconcile';
 import {
   useDeliveryFormSchema,
   useDescriptionFormSchema,
@@ -28,21 +32,30 @@ import {
 } from './data';
 import ProductAttributes from './modules/product-attributes.vue';
 import ProductPropertyAddForm from './modules/product-property-add-form.vue';
-import PromotionPanel from '../components/promotion-panel.vue';
 
 const spuId = ref<number>();
 const { params, name } = useRoute();
 const { closeCurrentTab } = useTabs();
 const activeTabName = ref('info');
-const formLoading = ref(false); // 表单的加载中：1）修改时的数据加载；2）提交的按钮禁用
+const formLoading = ref(Boolean(params.id)); // 表单详情的加载中
+const submitLoading = ref(false); // 表单提交的加载中
+const descriptionUploading = ref(false); // 商品详情图片上传中
+const hasUnsavedChanges = ref(!params.id); // 是否存在待保存的修改
+const detailLoadFailed = ref(false); // 商品详情加载是否失败
+const changeVersion = ref(0); // 表单变更版本，用于识别保存期间的修改
+const savedPayloadSnapshot = ref<null | string>(null);
 const isDetail = ref(name === 'ProductSpuDetail'); // 是否查看详情
 const initializingForm = ref(false); // 详情回填时不触发 SKU 重置逻辑
+const legacySingleSpec = ref(false); // 兼容存量单规格商品，新增商品仍固定为多规格
+const propertyChangeVersion = ref(0);
+const specVersion = ref(0);
+const skuDraftVersion = ref(0);
 const skuListRef = ref(); // 商品属性列表 Ref
-const promotionOpen = ref(false);
 
 const formData = ref<MallSpuApi.Spu>({
   name: '',
   categoryId: undefined,
+  groupIds: [],
   keyword: '',
   picUrl: '',
   sliderPicUrls: [],
@@ -50,8 +63,13 @@ const formData = ref<MallSpuApi.Spu>({
   deliveryTypes: [],
   deliveryTemplateId: undefined,
   brandId: undefined,
-  specType: false,
+  specType: true,
   subCommissionType: false,
+  isPreSale: false,
+  deliveryDays: undefined,
+  buyLimit: 0,
+  buyLimitLevel: 'ALL',
+  pointDiscountRate: 0,
   skus: [
     {
       name: '', // SKU 名称，提交时会自动使用 SPU 名称
@@ -71,17 +89,6 @@ const formData = ref<MallSpuApi.Spu>({
   sort: 0,
   giveIntegral: 0,
   virtualSalesCount: 0,
-  marketingConfig: {
-    groups: [],
-    memberLevels: [],
-    pointRules: [],
-    userGroups: [],
-    priceSymbol: '¥',
-    skuColumnWidth: 168,
-    hideSingleSku: false,
-    pointProduct: false,
-    pointQuantity: 0,
-  },
 }); // spu 表单数据
 const propertyList = ref<PropertyAndValues[]>([]); // 商品属性列表
 const ruleConfig: RuleConfig[] = [
@@ -118,6 +125,7 @@ const [InfoForm, infoFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useInfoFormSchema(),
   showDefaultActions: false,
+  handleValuesChange: markUnsavedChanges,
 });
 
 const [SkuForm, skuFormApi] = useVbenForm({
@@ -125,7 +133,11 @@ const [SkuForm, skuFormApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: useSkuFormSchema(propertyList.value, isDetail.value),
+  schema: useSkuFormSchema(
+    propertyList.value,
+    isDetail.value,
+    legacySingleSpec.value,
+  ),
   showDefaultActions: false,
   handleValuesChange: (values, fieldsChanged) => {
     if (initializingForm.value) {
@@ -138,13 +150,7 @@ const [SkuForm, skuFormApi] = useVbenForm({
       formData.value.subCommissionType = values.subCommissionType;
       handleChangeSubCommissionType();
     }
-    if (
-      fieldsChanged.includes('specType') &&
-      values.specType !== formData.value.specType
-    ) {
-      formData.value.specType = values.specType;
-      handleChangeSpec();
-    }
+    markUnsavedChanges();
   },
 });
 
@@ -164,6 +170,7 @@ const [DeliveryForm, deliveryFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useDeliveryFormSchema(),
   showDefaultActions: false,
+  handleValuesChange: markUnsavedChanges,
 });
 
 const [DescriptionForm, descriptionFormApi] = useVbenForm({
@@ -175,8 +182,9 @@ const [DescriptionForm, descriptionFormApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'vertical',
-  schema: useDescriptionFormSchema(),
+  schema: useDescriptionFormSchema(handleDescriptionUploadingChange),
   showDefaultActions: false,
+  handleValuesChange: markUnsavedChanges,
 });
 
 const [OtherForm, otherFormApi] = useVbenForm({
@@ -190,6 +198,7 @@ const [OtherForm, otherFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useOtherFormSchema(),
   showDefaultActions: false,
+  handleValuesChange: markUnsavedChanges,
 });
 
 /** tab 切换 */
@@ -197,56 +206,109 @@ function handleTabChange(key: string) {
   activeTabName.value = key;
 }
 
+/** 标记表单存在待保存的修改 */
+function markUnsavedChanges() {
+  if (initializingForm.value) {
+    return;
+  }
+  changeVersion.value += 1;
+  hasUnsavedChanges.value = true;
+}
+
+/** 更新商品详情图片上传状态 */
+function handleDescriptionUploadingChange(uploading: boolean) {
+  descriptionUploading.value = uploading;
+}
+
+/** 转换表单值为接口提交格式 */
+type ProductFormValues = MallSpuApi.Spu & {
+  customDeliveryDays?: number;
+  deliveryDaysPreset?: 'custom' | number;
+};
+
+function prepareSubmissionValues(values: ProductFormValues): MallSpuApi.Spu {
+  const { customDeliveryDays, deliveryDaysPreset, ...formValues } = values;
+  const preparedValues = {
+    ...formValues,
+    specType: formData.value.specType ?? true,
+    deliveryDays: formValues.isPreSale
+      ? deliveryDaysPreset === 'custom'
+        ? customDeliveryDays
+        : Number(deliveryDaysPreset)
+      : undefined,
+    skus: (formData.value.skus ?? []).map((item) => ({
+      ...item,
+      name: values.name,
+      price: convertToInteger(item.price),
+      marketPrice: convertToInteger(item.marketPrice),
+      costPrice: convertToInteger(item.costPrice),
+      firstBrokeragePrice: convertToInteger(item.firstBrokeragePrice),
+      secondBrokeragePrice: convertToInteger(item.secondBrokeragePrice),
+    })),
+    sliderPicUrls: (formValues.sliderPicUrls ?? []).map((item: any) =>
+      typeof item === 'object' ? item.url : item,
+    ),
+  };
+  return preparedValues;
+}
+
 /** 提交表单 */
 async function handleSubmit() {
-  const values: MallSpuApi.Spu = await infoFormApi
-    .merge(skuFormApi)
-    .merge(deliveryFormApi)
-    .merge(descriptionFormApi)
-    .merge(otherFormApi)
-    .submitAllForm(true);
-  // 校验商品名称不能为空（用于 SKU name）
-  if (!values.name || values.name.trim() === '') {
-    message.error('商品名称不能为空');
+  if (
+    formLoading.value ||
+    detailLoadFailed.value ||
+    descriptionUploading.value ||
+    !hasUnsavedChanges.value ||
+    submitLoading.value
+  ) {
     return;
   }
+  submitLoading.value = true;
+  const submittedChangeVersion = changeVersion.value;
   try {
-    // 校验 sku
-    skuListRef.value.validateSku();
-  } catch {
-    message.error('【库存价格】不完善，请填写相关信息');
-    return;
-  }
-  // 金额转换：元转分
-  values.skus = formData.value.skus!.map((item) => ({
-    ...item,
-    name: values.name,
-    price: convertToInteger(item.price),
-    marketPrice: convertToInteger(item.marketPrice),
-    costPrice: convertToInteger(item.costPrice),
-    firstBrokeragePrice: convertToInteger(item.firstBrokeragePrice),
-    secondBrokeragePrice: convertToInteger(item.secondBrokeragePrice),
-  }));
-  // 处理轮播图列表：上传组件可能返回对象或字符串，统一处理成字符串数组
-  const newSliderPicUrls: any[] = [];
-  values.sliderPicUrls!.forEach((item: any) => {
-    // 如果是前端选的图
-    typeof item === 'object'
-      ? newSliderPicUrls.push(item.url)
-      : newSliderPicUrls.push(item);
-  });
-  values.sliderPicUrls = newSliderPicUrls;
-  values.marketingConfig = {
-    ...formData.value.marketingConfig,
-    ...values.marketingConfig,
-  };
+    const values: MallSpuApi.Spu = await infoFormApi
+      .merge(skuFormApi)
+      .merge(deliveryFormApi)
+      .merge(descriptionFormApi)
+      .merge(otherFormApi)
+      .submitAllForm(true);
+    // 校验商品名称不能为空（用于 SKU name）
+    if (!values.name || values.name.trim() === '') {
+      message.error('商品名称不能为空');
+      return;
+    }
+    try {
+      // 校验 sku
+      skuListRef.value.validateSku();
+    } catch {
+      message.error('【库存价格】不完善，请填写相关信息');
+      return;
+    }
+    const preparedValues = prepareSubmissionValues(values);
 
-  // 提交数据
-  await (spuId.value ? updateSpu(values) : createSpu(values));
+    if (savedPayloadSnapshot.value === JSON.stringify(preparedValues)) {
+      hasUnsavedChanges.value = false;
+      return;
+    }
+
+    const savedSpuId = await withOperationFeedback(() =>
+      spuId.value ? updateSpu(preparedValues) : createSpu(preparedValues),
+    );
+    if (!spuId.value) {
+      spuId.value = savedSpuId;
+    }
+    savedPayloadSnapshot.value = JSON.stringify(preparedValues);
+    if (changeVersion.value === submittedChangeVersion) {
+      hasUnsavedChanges.value = false;
+    }
+  } finally {
+    submitLoading.value = false;
+  }
 }
 
 /** 获得详情 */
 async function getDetail() {
+  specVersion.value += 1;
   if (isDetail.value) {
     isDetail.value = true;
     infoFormApi.setDisabled(true);
@@ -257,21 +319,11 @@ async function getDetail() {
   }
   // 将 SKU 的属性，整理成 PropertyAndValues 数组
   propertyList.value = getPropertyList(formData.value);
+  detailLoadFailed.value = false;
+  savedPayloadSnapshot.value = null;
   formLoading.value = true;
   try {
     const res = await getSpu(spuId.value!);
-    res.marketingConfig = {
-      groups: [],
-      memberLevels: [],
-      pointRules: [],
-      userGroups: [],
-      priceSymbol: '¥',
-      skuColumnWidth: 168,
-      hideSingleSku: false,
-      pointProduct: false,
-      pointQuantity: 0,
-      ...res.marketingConfig,
-    };
     // 金额转换：分转元
     res.skus = res.skus?.map((item) => ({
       ...item,
@@ -281,18 +333,56 @@ async function getDetail() {
       firstBrokeragePrice: Number(formatToFraction(item.firstBrokeragePrice)),
       secondBrokeragePrice: Number(formatToFraction(item.secondBrokeragePrice)),
     }));
+    legacySingleSpec.value = res.specType === false;
+    const normalizedRes: MallSpuApi.Spu = {
+      ...res,
+      buyLimit: res.buyLimit ?? 0,
+      buyLimitLevel: res.buyLimitLevel ?? 'ALL',
+      isPreSale: res.isPreSale ?? false,
+      pointDiscountRate: res.pointDiscountRate ?? 0,
+      specType: res.specType ?? true,
+    };
     initializingForm.value = true;
-    formData.value = res;
+    formData.value = normalizedRes;
     // 将 SKU 的属性，整理成 PropertyAndValues 数组
     propertyList.value = getPropertyList(formData.value);
+    // Card 的 loading 骨架不会渲染默认插槽，需先关闭骨架让表单完成挂载。
+    formLoading.value = false;
+    await nextTick();
     // 初始化各表单值
-    void infoFormApi.setValues(res);
-    void skuFormApi.setValues(res);
-    void deliveryFormApi.setValues(res);
-    void descriptionFormApi.setValues(res);
-    void otherFormApi.setValues(res);
+    await Promise.all([
+      infoFormApi.setValues({
+        ...normalizedRes,
+        deliveryDaysPreset:
+          normalizedRes.deliveryDays &&
+          [3, 5, 7, 15].includes(normalizedRes.deliveryDays)
+            ? normalizedRes.deliveryDays
+            : normalizedRes.deliveryDays
+              ? 'custom'
+              : undefined,
+        customDeliveryDays: normalizedRes.deliveryDays,
+      }),
+      skuFormApi.setValues(normalizedRes),
+      deliveryFormApi.setValues(normalizedRes),
+      descriptionFormApi.setValues(normalizedRes),
+      otherFormApi.setValues(normalizedRes),
+    ]);
     await nextTick();
     await nextTick();
+    const initialValues = (await infoFormApi
+      .merge(skuFormApi)
+      .merge(deliveryFormApi)
+      .merge(descriptionFormApi)
+      .merge(otherFormApi)
+      .getValues()) as MallSpuApi.Spu;
+    savedPayloadSnapshot.value = JSON.stringify(
+      prepareSubmissionValues(initialValues),
+    );
+    hasUnsavedChanges.value = false;
+  } catch {
+    detailLoadFailed.value = true;
+    hasUnsavedChanges.value = false;
+    message.error('商品详情加载失败，请重试');
   } finally {
     initializingForm.value = false;
     formLoading.value = false;
@@ -306,9 +396,98 @@ function openPropertyAddForm() {
   productPropertyAddFormApi.open();
 }
 
-/** 调用 SkuList generateTableData 方法*/
-function generateSkus(propertyList: PropertyAndValues[]) {
-  skuListRef.value.generateTableData(propertyList);
+function hasSkuData(sku: MallSpuApi.Sku): boolean {
+  const numericValues = [
+    sku.price,
+    sku.marketPrice,
+    sku.costPrice,
+    sku.stock,
+    sku.weight,
+    sku.volume,
+    sku.firstBrokeragePrice,
+    sku.secondBrokeragePrice,
+  ];
+  return Boolean(
+    sku.id ||
+    sku.barCode ||
+    sku.picUrl ||
+    numericValues.some((value) => {
+      const numericValue = Number(value);
+      return Number.isFinite(numericValue) && numericValue !== 0;
+    }),
+  );
+}
+
+function hasCompleteProperties(list: PropertyAndValues[]): boolean {
+  return (
+    list.length > 0 &&
+    list.every(
+      (property) =>
+        Array.isArray(property.values) && property.values.length > 0,
+    )
+  );
+}
+
+function confirmDataReset(content: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const settle = (value: boolean) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve(value);
+    };
+    Modal.confirm({
+      title: '确认清空当前规格数据？',
+      content,
+      onOk: () => settle(true),
+      onCancel: () => settle(false),
+    });
+  });
+}
+
+/** 由父组件统一接收属性变化并对账 SKU。 */
+async function handlePropertyChange(nextList: PropertyAndValues[]) {
+  let migratingLegacy = false;
+  if (legacySingleSpec.value && hasCompleteProperties(nextList)) {
+    migratingLegacy = true;
+  }
+  const requestVersion = ++propertyChangeVersion.value;
+  const currentSkus = formData.value.skus ?? [];
+  let nextSkus = reconcileSkus(nextList, currentSkus);
+  const discardedRows = migratingLegacy
+    ? []
+    : currentSkus.filter(
+        (sku) =>
+          !nextSkus.some((nextSku) =>
+            isSkuPropertiesSubset(sku.properties, nextSku.properties),
+          ) && hasSkuData(sku),
+      );
+
+  if (discardedRows.length > 0) {
+    const confirmed = await confirmDataReset(
+      '删除属性值会移除对应的 SKU 行，已填写的价格、库存等数据将无法恢复。',
+    );
+    if (requestVersion !== propertyChangeVersion.value) {
+      return;
+    }
+    if (!confirmed) {
+      propertyList.value = [...propertyList.value];
+      return;
+    }
+    // 确认期间仍可能编辑保留的 SKU，必须基于最新数据重新对账。
+    nextSkus = reconcileSkus(nextList, formData.value.skus ?? []);
+  }
+
+  propertyList.value = nextList;
+  formData.value.skus = nextSkus;
+  if (migratingLegacy) {
+    legacySingleSpec.value = false;
+    formData.value.specType = true;
+  }
+  skuDraftVersion.value += 1;
+  markUnsavedChanges();
 }
 
 /** 分销类型 */
@@ -320,43 +499,45 @@ function handleChangeSubCommissionType() {
   }
 }
 
-/** 选择规格 */
-function handleChangeSpec() {
-  // 重置商品属性列表
-  propertyList.value = [];
-  // 重置 sku 列表
-  formData.value.skus = [
-    {
-      name: '', // SKU 名称，提交时会自动使用 SPU 名称
-      price: 0,
-      marketPrice: 0,
-      costPrice: 0,
-      barCode: '',
-      picUrl: '',
-      stock: 0,
-      weight: 0,
-      volume: 0,
-      firstBrokeragePrice: 0,
-      secondBrokeragePrice: 0,
-    },
-  ];
-}
-
 /** 监听 sku form schema 变化，更新表单 */
 watch(
-  propertyList,
+  [propertyList, legacySingleSpec],
   () => {
     skuFormApi.updateSchema(
-      useSkuFormSchema(propertyList.value, isDetail.value),
+      useSkuFormSchema(
+        propertyList.value,
+        isDetail.value,
+        legacySingleSpec.value,
+      ),
     );
   },
   { deep: true },
 );
 
+// SKU 表格直接修改 formData，表单组件的变更回调无法覆盖这类输入。
+watch(formData, markUnsavedChanges, { deep: true });
+
 /** 初始化 */
 onMounted(async () => {
   spuId.value = params.id as unknown as number;
   if (!spuId.value) {
+    initializingForm.value = true;
+    try {
+      await nextTick();
+      await Promise.all([
+        infoFormApi.setValues({
+          ...formData.value,
+          deliveryDaysPreset: undefined,
+          customDeliveryDays: undefined,
+        }),
+        skuFormApi.setValues({ ...formData.value, specType: true }),
+        deliveryFormApi.setValues(formData.value),
+        descriptionFormApi.setValues(formData.value),
+        otherFormApi.setValues(formData.value),
+      ]);
+    } finally {
+      initializingForm.value = false;
+    }
     return;
   }
   await getDetail();
@@ -365,7 +546,10 @@ onMounted(async () => {
 
 <template>
   <div>
-    <ProductPropertyAddFormModal :property-list="propertyList" />
+    <ProductPropertyAddFormModal
+      :property-list="propertyList"
+      @success="handlePropertyChange"
+    />
 
     <Page auto-content-height>
       <Card
@@ -396,32 +580,42 @@ onMounted(async () => {
         :active-key="activeTabName"
         @tab-change="handleTabChange"
       >
+        <Alert
+          v-if="detailLoadFailed"
+          class="mb-4"
+          message="商品详情加载失败"
+          description="请重试后再编辑和保存商品"
+          type="error"
+          show-icon
+        >
+          <template #action>
+            <Button size="small" @click="getDetail">重试</Button>
+          </template>
+        </Alert>
         <template #tabBarExtraContent>
-          <Button type="primary" v-if="!isDetail" @click="handleSubmit">
+          <Button
+            type="primary"
+            v-if="!isDetail"
+            :disabled="
+              formLoading ||
+              detailLoadFailed ||
+              descriptionUploading ||
+              !hasUnsavedChanges ||
+              submitLoading
+            "
+            :loading="submitLoading"
+            @click="handleSubmit"
+          >
             保存
           </Button>
-          <Button v-if="spuId" @click="promotionOpen = true">推广</Button>
           <Button type="default" v-else @click="() => closeCurrentTab()">
             返回列表
           </Button>
         </template>
 
-        <div v-show="activeTabName === 'info'" class="w-3/5">
-          <InfoForm />
-          <div class="mt-4 rounded border p-4">
-            <div class="mb-2 font-medium">轮播图排序</div>
-            <draggable v-model="formData.sliderPicUrls" :item-key="(item: any) => typeof item === 'string' ? item : item.url" class="flex flex-wrap gap-2" :disabled="isDetail">
-              <template #item="{ element, index }">
-                <div class="relative h-20 w-20 overflow-hidden rounded border" :title="`第 ${index + 1} 张`">
-                  <img :src="typeof element === 'string' ? element : element.url" class="h-full w-full object-cover" />
-                  <span class="absolute bottom-0 left-0 bg-black/60 px-1 text-xs text-white">{{ index + 1 }}</span>
-                </div>
-              </template>
-            </draggable>
-          </div>
-        </div>
+        <InfoForm class="w-3/5" v-show="activeTabName === 'info'" />
         <SkuForm class="w-full" v-show="activeTabName === 'sku'">
-          <template #singleSkuList>
+          <template #legacySkuList>
             <SkuList
               ref="skuListRef"
               class="w-full"
@@ -433,18 +627,24 @@ onMounted(async () => {
           </template>
           <template #productAttributes>
             <div>
-              <Button class="mb-10px mr-15px" @click="openPropertyAddForm">
+              <Button
+                v-if="!isDetail"
+                class="mb-10px mr-15px"
+                @click="openPropertyAddForm"
+              >
                 添加属性
               </Button>
               <ProductAttributes
+                :change-version="specVersion"
                 :is-detail="isDetail"
                 :property-list="propertyList"
-                @success="generateSkus"
+                @change="handlePropertyChange"
               />
             </div>
           </template>
           <template #batchSkuList>
             <SkuList
+              :batch-reset-key="skuDraftVersion"
               :is-batch="true"
               :is-detail="isDetail"
               :prop-form-data="formData"
@@ -466,28 +666,9 @@ onMounted(async () => {
           class="w-3/5"
           v-show="activeTabName === 'description'"
         />
-        <div v-show="activeTabName === 'other'" class="w-3/5">
-          <OtherForm />
-          <div class="mt-4 rounded border p-4">
-            <div class="mb-3 font-medium">营销与展示</div>
-            <div class="grid grid-cols-2 gap-3">
-              <label>商品分组<Select v-model:value="formData.marketingConfig!.groups" mode="tags" class="w-full" /></label>
-              <label>预售周期（天）<input v-model.number="formData.marketingConfig!.preSaleDays" type="number" min="0" class="form-input" /></label>
-              <label>限购数量<input v-model.number="formData.marketingConfig!.purchaseLimit" type="number" min="0" class="form-input" /></label>
-              <label>价格符号<input v-model="formData.marketingConfig!.priceSymbol" class="form-input" maxlength="3" /></label>
-              <label>规格展示宽度<input v-model.number="formData.marketingConfig!.skuColumnWidth" type="number" min="80" max="360" class="form-input" /></label>
-              <label class="flex items-center gap-2"><input v-model="formData.marketingConfig!.hideSingleSku" type="checkbox" />隐藏单规格</label>
-              <label class="flex items-center gap-2"><input v-model="formData.marketingConfig!.pointProduct" type="checkbox" />积分商品</label>
-              <label>兑换积分<input v-model.number="formData.marketingConfig!.pointQuantity" type="number" min="0" class="form-input" /></label>
-              <label>会员等级<Select v-model:value="formData.marketingConfig!.memberLevels" mode="tags" class="w-full" /></label>
-              <label>积分规则<Select v-model:value="formData.marketingConfig!.pointRules" mode="tags" class="w-full" /></label>
-              <label>人群项<Select v-model:value="formData.marketingConfig!.userGroups" mode="tags" class="w-full" /></label>
-            </div>
-          </div>
-        </div>
+        <OtherForm class="w-3/5" v-show="activeTabName === 'other'" />
       </Card>
     </Page>
-    <PromotionPanel v-model="promotionOpen" :spu-id="spuId" />
   </div>
 </template>
 <style lang="scss" scoped>

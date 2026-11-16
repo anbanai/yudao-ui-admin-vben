@@ -102,6 +102,11 @@ interface VbenLayoutProps {
    */
   layout?: LayoutType;
   /**
+   * 悬浮面板模式：侧边栏、顶栏、内容区以圆角卡片形式悬浮于画布之上
+   * @default false
+   */
+  panelFloat?: boolean;
+  /**
    * 侧边菜单折叠状态
    * @default false
    */

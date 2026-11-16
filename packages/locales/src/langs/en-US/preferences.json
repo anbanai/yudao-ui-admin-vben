@@ -9,6 +9,11 @@
   "appearance": "Appearance",
   "layout": "Layout",
   "content": "Content",
+  "panel": {
+    "title": "Panel Style",
+    "float": "Floating Panels",
+    "floatTip": "Sidebar, header and content float on the canvas as rounded cards (disabled on mobile)"
+  },
   "other": "Other",
   "wide": "Wide",
   "compact": "Fixed",

@@ -135,7 +135,7 @@ class PreferenceManager {
       this.customPreferencesExtension,
     );
 
-    // 加载缓存的偏好设置，并仅用缓存补齐初始化配置中未显式设置的字段
+    // 加载缓存的偏好设置，用户缓存优先，初始设置仅补齐缺失字段
     const cachedPreferences = (await this.loadFromCache()) || {};
     // 修复历史脏数据：早期版本用 defu(merge) 合并数组，导致 widget.order
     // 在每次 updatePreferences 时被 concat 追加，膨胀到几十/上百条重复 key。
@@ -143,9 +143,24 @@ class PreferenceManager {
     this.sanitizeCachedArray(cachedPreferences, 'widget', 'order');
     const mergedPreference = mergeWithArrayOverride(
       {},
-      cachedPreferences, // 用户缓存的设置优先
-      this.initialPreferences, // 初始设置仅补齐缺失字段
+      cachedPreferences,
+      this.initialPreferences,
     );
+
+    // Logo 属于应用品牌资源，更新应用后必须覆盖旧缓存；其他设置继续尊重用户选择
+    if (overrides?.logo) {
+      mergedPreference.logo = merge({}, overrides.logo, mergedPreference.logo);
+    }
+
+    // Copyright / ICP 备案属于合规展示信息，必须以代码配置为准，
+    // 避免用户浏览器中的旧缓存导致页脚显示过期备案号
+    if (overrides?.copyright) {
+      mergedPreference.copyright = merge(
+        {},
+        overrides.copyright,
+        mergedPreference.copyright,
+      );
+    }
 
     // 更新偏好设置
     this.updatePreferences(mergedPreference);

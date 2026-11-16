@@ -27,10 +27,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -474,17 +471,14 @@ export function useInterviewFormSchema(): VbenFormSchema[] {
       component: 'Input',
       dependencies: {
         triggerFields: ['formType'],
-        show: (values) => values.formType === 'batch',
+        resolve: ({ values }) => ({ show: values.formType === 'batch' }),
       },
       componentProps: { disabled: true },
     },
     {
       fieldName: 'formType',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'type',
@@ -577,10 +571,7 @@ export function useInterviewResultFormSchema(
       label: '面试结果',
       component: 'Select',
       rules: 'required',
-      dependencies: {
-        triggerFields: [''],
-        show: () => !cancelMode,
-      },
+      hide: cancelMode,
       componentProps: {
         options: resultOptions,
         placeholder: '请选择面试结果',
@@ -594,8 +585,10 @@ export function useInterviewResultFormSchema(
       rules: 'required',
       dependencies: {
         triggerFields: ['result'],
-        show: (values) =>
-          cancelMode || values.result === HrmRecruitInterviewResult.CANCELED,
+        resolve: ({ values }) => ({
+          show:
+            cancelMode || values.result === HrmRecruitInterviewResult.CANCELED,
+        }),
       },
       componentProps: {
         placeholder: '请输入取消原因',
@@ -610,8 +603,10 @@ export function useInterviewResultFormSchema(
       component: 'Textarea',
       dependencies: {
         triggerFields: ['result'],
-        show: (values) =>
-          !cancelMode && values.result !== HrmRecruitInterviewResult.CANCELED,
+        resolve: ({ values }) => ({
+          show:
+            !cancelMode && values.result !== HrmRecruitInterviewResult.CANCELED,
+        }),
       },
       componentProps: {
         placeholder: '请输入面试评价',

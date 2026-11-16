@@ -19,9 +19,22 @@ interface Props {
   paddingLeft: number;
   paddingRight: number;
   paddingTop: number;
+  /**
+   * 悬浮面板模式：内容区域包裹在圆角卡片中
+   * @default false
+   */
+  panelFloat?: boolean;
+  /**
+   * 悬浮面板模式下，卡片与画布边缘的间距
+   * @default 12
+   */
+  panelGap?: number;
 }
 
-const props = withDefaults(defineProps<Props>(), {});
+const props = withDefaults(defineProps<Props>(), {
+  panelFloat: false,
+  panelGap: 12,
+});
 
 const overlayViewportStyle: CSSProperties = {
   height:
@@ -31,6 +44,8 @@ const overlayViewportStyle: CSSProperties = {
 const style = computed((): CSSProperties => {
   const {
     contentCompact,
+    panelFloat,
+    panelGap,
     padding,
     paddingBottom,
     paddingLeft,
@@ -42,6 +57,15 @@ const style = computed((): CSSProperties => {
     contentCompact === 'compact'
       ? { margin: '0 auto', width: `${props.contentCompactWidth}px` }
       : {};
+  if (panelFloat) {
+    // 悬浮面板模式：内容卡片与画布边缘保留间距，原有内边距由卡片承担
+    return {
+      ...compactStyle,
+      flex: 1,
+      minWidth: 0,
+      padding: `${panelGap}px`,
+    };
+  }
   return {
     ...compactStyle,
     flex: 1,
@@ -53,10 +77,26 @@ const style = computed((): CSSProperties => {
     paddingTop: `${paddingTop}px`,
   };
 });
+
+const cardStyle = computed((): CSSProperties => {
+  const { paddingBottom, paddingLeft, paddingRight, paddingTop, padding } =
+    props;
+  return {
+    padding: `${padding}px`,
+    paddingBottom: `${paddingBottom}px`,
+    paddingLeft: `${paddingLeft}px`,
+    paddingRight: `${paddingRight}px`,
+    paddingTop: `${paddingTop}px`,
+  };
+});
 </script>
 
 <template>
-  <main :style="style" class="relative min-w-0">
+  <main
+    :class="{ 'flex flex-col': panelFloat }"
+    :style="style"
+    class="relative min-w-0 bg-background-deep"
+  >
     <div
       v-if="$slots.overlay"
       data-layout-region="content-overlay"
@@ -70,6 +110,15 @@ const style = computed((): CSSProperties => {
         <slot name="overlay"></slot>
       </div>
     </div>
-    <slot></slot>
+    <div
+      v-if="panelFloat"
+      class="border-border bg-background flex-1 rounded-xl border shadow-sm"
+      :style="cardStyle"
+    >
+      <slot></slot>
+    </div>
+    <template v-else>
+      <slot></slot>
+    </template>
   </main>
 </template>

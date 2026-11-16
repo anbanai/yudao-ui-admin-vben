@@ -3,6 +3,8 @@ import type { UserOrderProperty } from './config';
 
 import { Image } from 'ant-design-vue';
 
+import { MALL_DIY_ASSETS } from '../../../static-assets';
+
 /** 用户订单 */
 defineOptions({ name: 'UserOrder' });
 
@@ -10,8 +12,5 @@ defineOptions({ name: 'UserOrder' });
 defineProps<{ property: UserOrderProperty }>();
 </script>
 <template>
-  <Image
-    src="https://shopro.sheepjs.com/admin/static/images/shop/decorate/orderCardStyle.png"
-    :preview="false"
-  />
+  <Image :src="MALL_DIY_ASSETS.userOrder" :preview="false" />
 </template>

@@ -24,6 +24,7 @@ export enum APP_LINK_TYPE_ENUM {
   PRODUCT_DETAIL_NORMAL, // 商品详情
   PRODUCT_DETAIL_SECKILL, // 秒杀商品详情
   PRODUCT_LIST, // 商品列表
+  PRODUCT_GROUP_LIST, // 分组商品列表（追加枚举以兼容已保存的类型值）
 }
 
 /** APP 链接列表（做一下持久化？） */
@@ -74,6 +75,15 @@ export const APP_LINK_GROUP_LIST = [
   {
     name: '商品',
     links: [
+      {
+        name: '商品分组浏览',
+        path: '/pages/goods/group-index',
+      },
+      {
+        name: '分组商品列表',
+        path: '/pages/goods/group-list',
+        type: APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST,
+      },
       {
         name: '商品列表',
         path: '/pages/goods/list',

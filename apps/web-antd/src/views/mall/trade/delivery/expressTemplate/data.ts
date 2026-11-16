@@ -85,13 +85,13 @@ export function useFreesColumns(
     },
     {
       field: 'freeCount',
-      title: freeTitleMap?.freeCountTitle,
+      title: `${freeTitleMap?.freeCountTitle}(0表示不设门槛)`,
       width: 120,
       slots: { default: 'freeCount' },
     },
     {
       field: 'freePrice',
-      title: '包邮金额(元)',
+      title: '包邮金额(元，0表示不设门槛)',
       width: 120,
       slots: { default: 'freePrice' },
     },
@@ -110,10 +110,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       component: 'Input',

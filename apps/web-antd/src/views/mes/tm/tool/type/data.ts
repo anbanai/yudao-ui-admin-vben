@@ -28,10 +28,7 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -90,7 +87,7 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['codeFlag'],
-        show: (values) => !!values.codeFlag,
+        resolve: ({ values }) => ({ show: !!values.codeFlag }),
       },
       rules: 'selectRequired',
     },
@@ -105,11 +102,13 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['codeFlag', 'maintenType'],
-        show: (values) =>
-          !!values.codeFlag &&
-          [MesMaintenTypeEnum.REGULAR, MesMaintenTypeEnum.USAGE].includes(
-            values.maintenType,
-          ),
+        resolve: ({ values }) => ({
+          show:
+            !!values.codeFlag &&
+            [MesMaintenTypeEnum.REGULAR, MesMaintenTypeEnum.USAGE].includes(
+              values.maintenType,
+            ),
+        }),
       },
       rules: 'required',
     },

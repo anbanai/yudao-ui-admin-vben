@@ -13,6 +13,7 @@ export namespace MemberConfigApi {
     pointTradeDeductUnitPrice: number;
     pointTradeDeductMaxPrice: number;
     pointTradeGivePoint: number;
+    pointTradeGiveTiming: number;
   }
 }
 

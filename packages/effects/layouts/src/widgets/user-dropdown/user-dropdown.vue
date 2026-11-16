@@ -5,7 +5,14 @@ import type { LanguageOption } from '@vben/constants';
 import type { SupportedLanguagesType } from '@vben/locales';
 import type { AnyFunction } from '@vben/types';
 
-import { computed, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import {
+  computed,
+  onUnmounted,
+  ref,
+  useSlots,
+  useTemplateRef,
+  watch,
+} from 'vue';
 
 import { onSupportLanguagesChange } from '@vben/constants';
 import { useHoverToggle, useRefresh } from '@vben/hooks';
@@ -98,7 +105,12 @@ const props = withDefaults(defineProps<Props>(), {
   hoverDelay: 500,
 });
 
-const emit = defineEmits<{ clearPreferencesAndLogout: []; logout: [] }>();
+const emit = defineEmits<{
+  clearPreferencesAndLogout: [];
+  logout: [];
+  notification: [];
+}>();
+const slots = useSlots();
 
 const {
   globalLogoutShortcutKey,
@@ -275,6 +287,10 @@ function handleFullscreenSelect() {
 // 通知
 function handleNotificationSelect(event?: Event) {
   event?.preventDefault();
+  if (slots.notification) {
+    emit('notification');
+    return;
+  }
   refNotification.value?.toggle();
 }
 
@@ -526,7 +542,11 @@ if (preferences.shortcutKeys.enable) {
             class="mx-1 flex cursor-pointer items-center rounded-sm py-1 leading-8"
             @select="handleNotificationSelect"
           >
-            <Notification ref="refNotification" class="mr-2" />
+            <span aria-hidden="true" class="pointer-events-none" inert>
+              <slot name="notification">
+                <Notification ref="refNotification" class="mr-2" />
+              </slot>
+            </span>
             {{ $t('preferences.widget.notification') }}
           </DropdownMenuItem>
           <DropdownMenuItem

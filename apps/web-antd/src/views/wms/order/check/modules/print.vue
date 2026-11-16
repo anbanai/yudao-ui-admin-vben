@@ -115,7 +115,7 @@ defineExpose({ print });
   <Teleport to="body">
     <div
       id="wmsCheckOrderPrint"
-      class="wms-check-order-print pointer-events-none fixed left-0 top-0 z-[-1] w-full bg-white text-[#303133] opacity-0"
+      class="wms-check-order-print pointer-events-none fixed left-0 top-0 z-[-1] w-full bg-background text-[#303133] opacity-0"
     >
       <div class="relative mb-2">
         <h2 class="m-0 text-center text-[1.5em] font-bold leading-[1.2]">

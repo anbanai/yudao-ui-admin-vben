@@ -81,7 +81,10 @@ const [Modal, modalApi] = useVbenModal({
       formData.value.changeType = 1; // 默认增加余额
       formData.value.changeBalance = 0; // 变动余额默认 0
       // 设置到 values
-      await formApi.setValues(formData.value);
+      await formApi.setValues({
+        ...formData.value,
+        balanceResult: formData.value.balance,
+      });
     } finally {
       modalApi.unlock();
     }

@@ -166,13 +166,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
           />
           <div
             v-if="row.auditTime"
-            class="mt-1 text-left text-xs text-gray-500"
+            class="mt-1 text-left text-xs text-muted-foreground"
           >
             时间：{{ formatDateTime(row.auditTime) }}
           </div>
           <div
             v-if="row.auditReason"
-            class="mt-1 text-left text-xs text-gray-500"
+            class="mt-1 text-left text-xs text-muted-foreground"
           >
             审核原因：{{ row.auditReason }}
           </div>

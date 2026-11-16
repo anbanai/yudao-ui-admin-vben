@@ -1,8 +1,7 @@
 <script lang="ts" setup>
-import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { HrmPerformancePlanApi } from '#/api/hrm/performance/plan';
 
-import { computed, nextTick, watch } from 'vue';
+import { computed } from 'vue';
 
 import {
   Button,
@@ -13,9 +12,9 @@ import {
   Row,
   Select,
   Switch,
+  Table,
 } from 'ant-design-vue';
 
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import EmployeeSelect from '#/views/hrm/employee/components/employee-select.vue';
 import RaterLevelSelect from '#/views/hrm/performance/components/rater-level-select.vue';
 import {
@@ -27,7 +26,6 @@ import {
   HrmPerformanceReviewVisibleContent,
 } from '#/views/hrm/utils/constants';
 
-import { useReviewEditGridColumns } from '../../data';
 import HandlerStageForm from './handler-stage-form.vue';
 
 defineOptions({ name: 'HrmPerformancePlanProcessForm' });
@@ -90,18 +88,6 @@ const resultConfirmation = computed({
   },
 });
 
-const [ReviewGrid, reviewGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    border: true,
-    columns: useReviewEditGridColumns(),
-    data: [],
-    minHeight: 180,
-    pagerConfig: { enabled: false },
-    rowConfig: { isHover: true },
-    toolbarConfig: { enabled: false },
-  } as VxeTableGridOptions<any>,
-});
-
 function createDefaultHandlerStage(): HrmPerformancePlanApi.PerformanceHandlerStage {
   return {
     type: HrmPerformanceRaterType.DEPT_LEADER,
@@ -143,30 +129,27 @@ function clearTargetConfirmation() {
 }
 
 function addReviewStage(raterType: number) {
-  model.value.reviewStages = [
-    ...(model.value.reviewStages || []),
-    {
-      rater: {
-        type: raterType,
-        level:
-          raterType === HrmPerformanceRaterType.SUPERIOR ||
-          raterType === HrmPerformanceRaterType.DEPT_LEADER
-            ? 1
-            : undefined,
-      },
-      weight: 0,
-      scoringType: HrmPerformanceReviewScoringType.QUOTA,
-      visibleContent: HrmPerformanceReviewVisibleContent.ALL,
-      requiredSetting: false,
-      rejectAuthority: raterType !== HrmPerformanceRaterType.SELF,
+  const reviewStages = model.value.reviewStages || [];
+  reviewStages.push({
+    rater: {
+      type: raterType,
+      level:
+        raterType === HrmPerformanceRaterType.SUPERIOR ||
+        raterType === HrmPerformanceRaterType.DEPT_LEADER
+          ? 1
+          : undefined,
     },
-  ];
+    weight: 0,
+    scoringType: HrmPerformanceReviewScoringType.QUOTA,
+    visibleContent: HrmPerformanceReviewVisibleContent.ALL,
+    requiredSetting: false,
+    rejectAuthority: raterType !== HrmPerformanceRaterType.SELF,
+  });
+  model.value.reviewStages = reviewStages;
 }
 
 function removeReviewStage(index: number) {
-  model.value.reviewStages = (model.value.reviewStages || []).filter(
-    (_, stageIndex) => stageIndex !== index,
-  );
+  model.value.reviewStages?.splice(index, 1);
 }
 
 function handleRaterTypeChange(
@@ -184,14 +167,26 @@ function handleRaterTypeChange(
   }
 }
 
-watch(
-  () => model.value.reviewStages,
-  async (rows) => {
-    await nextTick();
-    await reviewGridApi.grid.reloadData(rows || []);
+const reviewColumns = [
+  { title: '评分人', key: 'raterType', width: 145 },
+  { title: '评分人范围', key: 'raterScope', minWidth: 190 },
+  { title: '评分权重', key: 'weight', width: 125 },
+  { title: '评分方式', key: 'scoringType', minWidth: 160 },
+  { title: '可见内容', key: 'visibleContent', minWidth: 145 },
+  {
+    title: '评语必填',
+    key: 'requiredSetting',
+    width: 95,
+    align: 'center' as const,
   },
-  { immediate: true },
-);
+  {
+    title: '允许驳回',
+    key: 'rejectAuthority',
+    width: 95,
+    align: 'center' as const,
+  },
+  { title: '操作', key: 'action', width: 72, align: 'center' as const },
+];
 </script>
 
 <template>
@@ -261,7 +256,7 @@ watch(
               v-else-if="
                 targetConfirmationStage.type === HrmPerformanceRaterType.SELF
               "
-              class="text-gray-500"
+              class="text-muted-foreground"
             >
               当前被考核员工
             </span>
@@ -299,117 +294,125 @@ watch(
             </Button>
           </div>
         </div>
-        <ReviewGrid class="w-full">
-          <template #raterType="{ row }">
-            <Select
-              v-model:value="row.rater.type"
-              :disabled="disabled"
-              :options="[
-                { label: '被考核人', value: HrmPerformanceRaterType.SELF },
-                { label: '上级', value: HrmPerformanceRaterType.SUPERIOR },
-                {
-                  label: '部门负责人',
-                  value: HrmPerformanceRaterType.DEPT_LEADER,
-                },
-                {
-                  label: '指定评分人',
-                  value: HrmPerformanceRaterType.SPECIFIED,
-                },
-              ]"
-              class="w-full"
-              @change="handleRaterTypeChange(row)"
-            />
-          </template>
-          <template #raterScope="{ row }">
-            <RaterLevelSelect
-              v-if="
-                row.rater.type === HrmPerformanceRaterType.SUPERIOR ||
-                row.rater.type === HrmPerformanceRaterType.DEPT_LEADER
-              "
-              v-model="row.rater.level"
-              :disabled="disabled"
-              :rater-type="row.rater.type"
-            />
-            <EmployeeSelect
-              v-else-if="row.rater.type === HrmPerformanceRaterType.SPECIFIED"
-              v-model="row.rater.employeeId"
-              :disabled="disabled"
-              placeholder="请选择评分人"
-            />
-            <span v-else class="text-gray-500">当前被考核员工</span>
-          </template>
-          <template #weight="{ row }">
-            <div class="flex items-center gap-1">
-              <InputNumber
-                v-model:value="row.weight"
-                :controls="false"
+        <Table
+          :columns="reviewColumns"
+          :data-source="model.reviewStages || []"
+          :pagination="false"
+          bordered
+          size="small"
+        >
+          <template #bodyCell="{ column, record, index }">
+            <template v-if="column.key === 'raterType'">
+              <Select
+                v-model:value="record.rater.type"
                 :disabled="disabled"
-                :max="100"
-                :min="0.01"
-                :precision="2"
+                :options="[
+                  { label: '被考核人', value: HrmPerformanceRaterType.SELF },
+                  { label: '上级', value: HrmPerformanceRaterType.SUPERIOR },
+                  {
+                    label: '部门负责人',
+                    value: HrmPerformanceRaterType.DEPT_LEADER,
+                  },
+                  {
+                    label: '指定评分人',
+                    value: HrmPerformanceRaterType.SPECIFIED,
+                  },
+                ]"
+                class="w-full"
+                @change="handleRaterTypeChange(record)"
+              />
+            </template>
+            <template v-else-if="column.key === 'raterScope'">
+              <RaterLevelSelect
+                v-if="
+                  record.rater.type === HrmPerformanceRaterType.SUPERIOR ||
+                  record.rater.type === HrmPerformanceRaterType.DEPT_LEADER
+                "
+                v-model="record.rater.level"
+                :disabled="disabled"
+                :rater-type="record.rater.type"
+              />
+              <EmployeeSelect
+                v-else-if="
+                  record.rater.type === HrmPerformanceRaterType.SPECIFIED
+                "
+                v-model="record.rater.employeeId"
+                :disabled="disabled"
+                placeholder="请选择评分人"
+              />
+              <span v-else class="text-muted-foreground">当前被考核员工</span>
+            </template>
+            <template v-else-if="column.key === 'weight'">
+              <div class="flex items-center gap-1">
+                <InputNumber
+                  v-model:value="record.weight"
+                  :controls="false"
+                  :disabled="disabled"
+                  :max="100"
+                  :min="0.01"
+                  :precision="2"
+                  class="w-full"
+                />
+                <span class="text-muted-foreground">%</span>
+              </div>
+            </template>
+            <template v-else-if="column.key === 'scoringType'">
+              <Select
+                v-model:value="record.scoringType"
+                :disabled="disabled"
+                :options="[
+                  {
+                    label: '按指标评分',
+                    value: HrmPerformanceReviewScoringType.QUOTA,
+                  },
+                ]"
                 class="w-full"
               />
-              <span class="text-gray-500">%</span>
-            </div>
+            </template>
+            <template v-else-if="column.key === 'visibleContent'">
+              <Select
+                v-model:value="record.visibleContent"
+                :disabled="disabled"
+                :options="[
+                  {
+                    label: '全部评分',
+                    value: HrmPerformanceReviewVisibleContent.ALL,
+                  },
+                  {
+                    label: '仅自己',
+                    value: HrmPerformanceReviewVisibleContent.SELF,
+                  },
+                ]"
+                class="w-full"
+              />
+            </template>
+            <template v-else-if="column.key === 'requiredSetting'">
+              <Switch
+                v-model:checked="record.requiredSetting"
+                :disabled="disabled"
+              />
+            </template>
+            <template v-else-if="column.key === 'rejectAuthority'">
+              <Switch
+                v-model:checked="record.rejectAuthority"
+                :disabled="
+                  disabled || record.rater.type === HrmPerformanceRaterType.SELF
+                "
+              />
+            </template>
+            <template v-else-if="column.key === 'action'">
+              <Button
+                :disabled="disabled"
+                danger
+                title="删除评分阶段"
+                type="link"
+                @click="removeReviewStage(index)"
+              >
+                删除
+              </Button>
+            </template>
           </template>
-          <template #scoringType="{ row }">
-            <Select
-              v-model:value="row.scoringType"
-              :disabled="disabled"
-              :options="[
-                {
-                  label: '按指标评分',
-                  value: HrmPerformanceReviewScoringType.QUOTA,
-                },
-              ]"
-              class="w-full"
-            />
-          </template>
-          <template #visibleContent="{ row }">
-            <Select
-              v-model:value="row.visibleContent"
-              :disabled="disabled"
-              :options="[
-                {
-                  label: '全部评分',
-                  value: HrmPerformanceReviewVisibleContent.ALL,
-                },
-                {
-                  label: '仅自己',
-                  value: HrmPerformanceReviewVisibleContent.SELF,
-                },
-              ]"
-              class="w-full"
-            />
-          </template>
-          <template #requiredSetting="{ row }">
-            <Switch
-              v-model:checked="row.requiredSetting"
-              :disabled="disabled"
-            />
-          </template>
-          <template #rejectAuthority="{ row }">
-            <Switch
-              v-model:checked="row.rejectAuthority"
-              :disabled="
-                disabled || row.rater.type === HrmPerformanceRaterType.SELF
-              "
-            />
-          </template>
-          <template #actions="{ row }">
-            <Button
-              :disabled="disabled"
-              danger
-              title="删除评分阶段"
-              type="link"
-              @click="
-                removeReviewStage((model.reviewStages || []).indexOf(row))
-              "
-            >
-              删除
-            </Button>
-          </template>
-        </ReviewGrid>
+        </Table>
       </div>
     </Form.Item>
 

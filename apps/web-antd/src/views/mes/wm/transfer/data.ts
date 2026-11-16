@@ -50,18 +50,12 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -134,7 +128,9 @@ export function useFormSchema(
       rules: z.boolean().default(false),
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesWmTransferTypeEnum.OUTER,
+        resolve: ({ values }) => ({
+          show: values.type === MesWmTransferTypeEnum.OUTER,
+        }),
       },
     },
     {
@@ -146,7 +142,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) => values.type === MesWmTransferTypeEnum.OUTER,
+        resolve: ({ values }) => ({
+          show: values.type === MesWmTransferTypeEnum.OUTER,
+        }),
       },
     },
     {
@@ -158,9 +156,12 @@ export function useFormSchema(
         placeholder: '请输入收货人',
       },
       dependencies: {
-        triggerFields: ['type', 'deliveryFlag'],
-        show: (values) =>
-          values.type === MesWmTransferTypeEnum.OUTER && !!values.deliveryFlag,
+        triggerFields: ['deliveryFlag', 'type'],
+        resolve: ({ values }) => ({
+          show:
+            values.type === MesWmTransferTypeEnum.OUTER &&
+            !!values.deliveryFlag,
+        }),
       },
     },
     {
@@ -172,9 +173,12 @@ export function useFormSchema(
         placeholder: '请输入联系电话',
       },
       dependencies: {
-        triggerFields: ['type', 'deliveryFlag'],
-        show: (values) =>
-          values.type === MesWmTransferTypeEnum.OUTER && !!values.deliveryFlag,
+        triggerFields: ['deliveryFlag', 'type'],
+        resolve: ({ values }) => ({
+          show:
+            values.type === MesWmTransferTypeEnum.OUTER &&
+            !!values.deliveryFlag,
+        }),
       },
     },
     {
@@ -186,9 +190,12 @@ export function useFormSchema(
         placeholder: '请输入承运商',
       },
       dependencies: {
-        triggerFields: ['type', 'deliveryFlag'],
-        show: (values) =>
-          values.type === MesWmTransferTypeEnum.OUTER && !!values.deliveryFlag,
+        triggerFields: ['deliveryFlag', 'type'],
+        resolve: ({ values }) => ({
+          show:
+            values.type === MesWmTransferTypeEnum.OUTER &&
+            !!values.deliveryFlag,
+        }),
       },
     },
     {
@@ -200,9 +207,12 @@ export function useFormSchema(
         placeholder: '请输入运输单号',
       },
       dependencies: {
-        triggerFields: ['type', 'deliveryFlag'],
-        show: (values) =>
-          values.type === MesWmTransferTypeEnum.OUTER && !!values.deliveryFlag,
+        triggerFields: ['deliveryFlag', 'type'],
+        resolve: ({ values }) => ({
+          show:
+            values.type === MesWmTransferTypeEnum.OUTER &&
+            !!values.deliveryFlag,
+        }),
       },
     },
     {
@@ -215,9 +225,12 @@ export function useFormSchema(
         placeholder: '请输入目的地',
       },
       dependencies: {
-        triggerFields: ['type', 'deliveryFlag'],
-        show: (values) =>
-          values.type === MesWmTransferTypeEnum.OUTER && !!values.deliveryFlag,
+        triggerFields: ['deliveryFlag', 'type'],
+        resolve: ({ values }) => ({
+          show:
+            values.type === MesWmTransferTypeEnum.OUTER &&
+            !!values.deliveryFlag,
+        }),
       },
     },
     {
@@ -409,18 +422,12 @@ export function useLineFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
     {
       fieldName: 'quantityMax',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'batchId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'materialStockId',
@@ -464,12 +471,14 @@ export function useLineFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['quantityMax'],
-        componentProps: (values) => ({
-          class: '!w-full',
-          max: values.quantityMax,
-          min: 0,
-          placeholder: '请输入转移数量',
-          precision: 2,
+        resolve: ({ values }) => ({
+          componentProps: {
+            class: '!w-full',
+            max: values.quantityMax,
+            min: 0,
+            placeholder: '请输入转移数量',
+            precision: 2,
+          },
         }),
       },
     },
@@ -498,9 +507,11 @@ export function useLineFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['fromWarehouseId'],
-        componentProps: (values) => ({
-          disabled: true,
-          warehouseId: values.fromWarehouseId,
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: true,
+            warehouseId: values.fromWarehouseId,
+          },
         }),
       },
     },
@@ -513,9 +524,11 @@ export function useLineFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['fromLocationId'],
-        componentProps: (values) => ({
-          disabled: true,
-          locationId: values.fromLocationId,
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: true,
+            locationId: values.fromLocationId,
+          },
         }),
       },
     },
@@ -600,9 +613,11 @@ export function useDetailFormSchema(): VbenFormSchema[] {
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['toWarehouseId'],
-        componentProps: (values) => ({
-          placeholder: '请选择移入库区',
-          warehouseId: values.toWarehouseId,
+        resolve: ({ values }) => ({
+          componentProps: {
+            placeholder: '请选择移入库区',
+            warehouseId: values.toWarehouseId,
+          },
         }),
       },
     },
@@ -616,9 +631,11 @@ export function useDetailFormSchema(): VbenFormSchema[] {
       rules: 'selectRequired',
       dependencies: {
         triggerFields: ['toLocationId'],
-        componentProps: (values) => ({
-          locationId: values.toLocationId,
-          placeholder: '请选择移入库位',
+        resolve: ({ values }) => ({
+          componentProps: {
+            locationId: values.toLocationId,
+            placeholder: '请选择移入库位',
+          },
         }),
       },
     },

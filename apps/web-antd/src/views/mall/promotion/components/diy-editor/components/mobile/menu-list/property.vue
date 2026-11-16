@@ -5,11 +5,9 @@ import { useVModel } from '@vueuse/core';
 import { Form, FormItem } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import {
-  AppLinkInput,
-  Draggable,
-  InputWithColor,
-} from '#/views/mall/promotion/components';
+import AppLinkInput from '#/views/mall/promotion/components/app-link-input/index.vue';
+import Draggable from '#/views/mall/promotion/components/draggable/index.vue';
+import InputWithColor from '#/views/mall/promotion/components/input-with-color/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 import { EMPTY_MENU_LIST_ITEM_PROPERTY } from './config';
@@ -27,7 +25,7 @@ const formData = useVModel(props, 'modelValue', emit);
 <template>
   <ComponentContainerProperty v-model="formData.style">
     <p class="text-base font-bold">菜单设置</p>
-    <p class="text-xs text-gray-500">拖动左侧的小圆点可以调整顺序</p>
+    <p class="text-xs text-muted-foreground">拖动左侧的小圆点可以调整顺序</p>
     <Form
       :label-col="{ style: { width: '60px' } }"
       :model="formData"

@@ -58,7 +58,7 @@ onMounted(async () => {
   font-size: 0.95rem;
   font-weight: 400;
   line-height: 1.6rem;
-  color: #3b3e55;
+  color: hsl(var(--foreground));
   text-align: left;
   letter-spacing: 0;
 
@@ -112,7 +112,7 @@ onMounted(async () => {
   h6 {
     margin: 24px 0 8px;
     font-weight: 600;
-    color: #3b3e55;
+    color: hsl(var(--foreground));
   }
 
   h1 {
@@ -152,7 +152,7 @@ onMounted(async () => {
     margin: 0 0 8px;
     font-size: 16px;
     line-height: 24px;
-    color: #3b3e55; // var(--color-CG600);
+    color: hsl(var(--foreground));
   }
 
   li {
@@ -178,7 +178,7 @@ onMounted(async () => {
     margin-bottom: 1rem;
     font-size: 16px;
     line-height: 24px;
-    color: #3b3e55; // var(--color-G900);
+    color: hsl(var(--foreground));
     list-style-type: disc;
   }
 

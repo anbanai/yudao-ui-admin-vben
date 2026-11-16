@@ -47,7 +47,7 @@ const qualityRate = computed(() => {
       >
         <div class="flex items-center gap-4">
           <div
-            class="flex size-14 flex-shrink-0 items-center justify-center rounded-xl text-white"
+            class="flex size-14 flex-shrink-0 items-center justify-center rounded-xl text-primary-foreground"
             style="background: linear-gradient(135deg, #409eff, #66b1ff)"
           >
             <IconifyIcon class="size-7" icon="lucide:file-text" />
@@ -78,7 +78,7 @@ const qualityRate = computed(() => {
       >
         <div class="flex items-center gap-4">
           <div
-            class="flex size-14 flex-shrink-0 items-center justify-center rounded-xl text-white"
+            class="flex size-14 flex-shrink-0 items-center justify-center rounded-xl text-primary-foreground"
             style="background: linear-gradient(135deg, #67c23a, #85ce61)"
           >
             <IconifyIcon class="size-7" icon="lucide:bar-chart-3" />
@@ -107,7 +107,7 @@ const qualityRate = computed(() => {
       >
         <div class="flex items-center gap-4">
           <div
-            class="flex size-14 flex-shrink-0 items-center justify-center rounded-xl text-white"
+            class="flex size-14 flex-shrink-0 items-center justify-center rounded-xl text-primary-foreground"
             style="background: linear-gradient(135deg, #e6a23c, #ebb563)"
           >
             <IconifyIcon class="size-7" icon="lucide:circle-check" />
@@ -142,7 +142,7 @@ const qualityRate = computed(() => {
       >
         <div class="flex items-center gap-4">
           <div
-            class="flex size-14 flex-shrink-0 items-center justify-center rounded-xl text-white"
+            class="flex size-14 flex-shrink-0 items-center justify-center rounded-xl text-primary-foreground"
             style="background: linear-gradient(135deg, #7c3aed, #9461f5)"
           >
             <IconifyIcon class="size-7" icon="lucide:cpu" />

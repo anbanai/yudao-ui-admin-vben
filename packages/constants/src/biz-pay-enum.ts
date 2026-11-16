@@ -26,6 +26,10 @@ export const PayChannelEnum = {
     code: 'wx_bar',
     name: '微信条码支付',
   },
+  YEEPAY_WX_LITE: {
+    code: 'yeepay_wx_lite',
+    name: '易宝微信小程序聚合支付',
+  },
   ALIPAY_PC: {
     code: 'alipay_pc',
     name: '支付宝 PC 网站支付',

@@ -21,10 +21,7 @@ export function useBasicFormSchema(
     {
       component: 'Input',
       fieldName: 'id',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'productKey',
@@ -35,9 +32,7 @@ export function useBasicFormSchema(
       },
       dependencies: {
         triggerFields: ['id'],
-        if(values) {
-          return !values.id;
-        },
+        resolve: ({ values }) => ({ show: !values.id }),
       },
       rules: z
         .string()
@@ -68,9 +63,7 @@ export function useBasicFormSchema(
       },
       dependencies: {
         triggerFields: ['id'],
-        if(values) {
-          return !!values.id;
-        },
+        resolve: ({ values }) => ({ show: !!values.id }),
       },
       rules: z
         .string()
@@ -112,9 +105,8 @@ export function useBasicFormSchema(
       },
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({
-          // 编辑时设备类型不可改
-          disabled: !!values.id,
+        resolve: ({ values }) => ({
+          componentProps: { disabled: !!values.id },
         }),
       },
       rules: 'required',
@@ -130,10 +122,11 @@ export function useBasicFormSchema(
       // 网关子设备走网关联网，不需要联网方式
       dependencies: {
         triggerFields: ['deviceType'],
-        show: (values) =>
-          [DeviceTypeEnum.DEVICE, DeviceTypeEnum.GATEWAY].includes(
+        resolve: ({ values }) => ({
+          show: [DeviceTypeEnum.DEVICE, DeviceTypeEnum.GATEWAY].includes(
             values.deviceType,
           ),
+        }),
       },
       rules: 'required',
     },

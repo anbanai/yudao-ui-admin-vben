@@ -148,13 +148,15 @@ function onCycleConfirm(): void {
 }
 
 // 帮助说明 Modal
+let closeHelpModal = () => {};
 const [HelpModal, helpModalApi] = useVbenModal({
   class: 'w-[600px]',
   title: '格式说明',
   showCancelButton: false,
   confirmText: '关闭',
-  onConfirm: () => helpModalApi.close(),
+  onConfirm: () => closeHelpModal(),
 });
+closeHelpModal = () => helpModalApi.close();
 
 // 点击输入框时弹窗
 function handleInputClick(): void {

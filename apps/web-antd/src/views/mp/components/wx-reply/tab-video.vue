@@ -18,7 +18,8 @@ import {
   Upload,
 } from 'ant-design-vue';
 
-import { WxMaterialSelect, WxVideoPlayer } from '#/views/mp/components';
+import WxMaterialSelect from '#/views/mp/components/wx-material-select/wx-material-select.vue';
+import WxVideoPlayer from '#/views/mp/components/wx-video-play/wx-video-play.vue';
 import { UploadType, useBeforeUpload } from '#/views/mp/hooks/useUpload';
 
 defineOptions({ name: 'TabVideo' });

@@ -11,6 +11,8 @@ export namespace MallBrandApi {
     sort?: number; // 品牌排序
     description?: string; // 品牌描述
     status: number; // 开启状态
+    merchantId?: number; // 默认归属商家
+    merchantName?: string; // 商家名称
   }
 }
 
@@ -45,8 +47,9 @@ export function getBrandPage(params: PageParam) {
 }
 
 /** 获得商品品牌精简信息列表 */
-export function getSimpleBrandList() {
+export function getSimpleBrandList(params?: { merchantId?: number }) {
   return requestClient.get<MallBrandApi.Brand[]>(
     '/product/brand/list-all-simple',
+    { params },
   );
 }

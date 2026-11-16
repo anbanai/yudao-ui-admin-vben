@@ -89,7 +89,7 @@ async function handleTabsScroll() {
         </div>
         <!-- 描述信息 -->
         <div
-          class="mt-2 line-clamp-2 h-10 overflow-hidden text-sm text-gray-600"
+          class="mt-2 line-clamp-2 h-10 overflow-hidden text-sm text-muted-foreground"
         >
           {{ role.description }}
         </div>

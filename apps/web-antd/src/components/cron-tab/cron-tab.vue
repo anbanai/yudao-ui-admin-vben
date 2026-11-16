@@ -947,7 +947,7 @@ function inputChange() {
 }
 
 .sc-cron :deep(.ant-tabs-tab.ant-tabs-tab-active) .sc-cron-num h4 {
-  color: #fff;
+  color: hsl(var(--primary-foreground));
   background: hsl(var(--primary));
 }
 

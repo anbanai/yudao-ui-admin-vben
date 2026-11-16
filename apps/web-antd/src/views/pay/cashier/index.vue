@@ -330,7 +330,7 @@ onBeforeUnmount(() => {
     <Card title="选择支付宝支付" class="mt-4">
       <div class="flex">
         <div
-          class="mr-4 w-40 cursor-pointer items-center border-2 border-gray-200 pb-1 pt-4 text-center hover:border-blue-500"
+          class="mr-4 w-40 cursor-pointer items-center border-2 border-border pb-1 pt-4 text-center hover:border-blue-500"
           v-for="channel in channelsAlipay"
           :key="channel.code"
           @click="handlePay(channel.code)"
@@ -345,7 +345,7 @@ onBeforeUnmount(() => {
     <Card title="选择微信支付" class="mt-4">
       <div class="flex">
         <div
-          class="mr-4 w-40 cursor-pointer items-center border-2 border-gray-200 pb-1 pt-4 text-center hover:border-blue-500"
+          class="mr-4 w-40 cursor-pointer items-center border-2 border-border pb-1 pt-4 text-center hover:border-blue-500"
           v-for="channel in channelsWechat"
           :key="channel.code"
           @click="handlePay(channel.code)"
@@ -360,7 +360,7 @@ onBeforeUnmount(() => {
     <Card title="选择其它支付" class="mt-4">
       <div class="flex">
         <div
-          class="mr-4 w-40 cursor-pointer items-center border-2 border-gray-200 pb-1 pt-4 text-center hover:border-blue-500"
+          class="mr-4 w-40 cursor-pointer items-center border-2 border-border pb-1 pt-4 text-center hover:border-blue-500"
           v-for="channel in channelsMock"
           :key="channel.code"
           @click="handlePay(channel.code)"

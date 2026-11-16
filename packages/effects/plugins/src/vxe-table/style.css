@@ -1,6 +1,8 @@
 @reference "@vben/tailwind-config/theme";
 
-:root .vxe-grid {
+:root .vxe-grid,
+/* 裸 VxeTable（非 Grid，如商城活动表单内的商品/SKU 表格）同样需要映射应用主题变量，否则暗黑模式下不生效 */
+:root .vxe-table {
   --vxe-ui-font-color: hsl(var(--foreground));
   --vxe-ui-font-primary-color: hsl(var(--primary));
 
@@ -50,7 +52,9 @@
   --vxe-ui-font-primary-tinge-color: hsl(var(--primary));
   --vxe-ui-font-primary-lighten-color: hsl(var(--primary) / 60%);
   --vxe-ui-font-primary-darken-color: hsl(var(--primary));
+}
 
+:root .vxe-grid {
   height: auto !important;
 
   /* --vxe-ui-table-fixed-scrolling-box-shadow-color: rgb(0 0 0 / 80%); */

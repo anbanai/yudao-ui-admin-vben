@@ -10,7 +10,7 @@ import { useAccessStore } from '@vben/stores';
 
 import { Button, Col, message, Modal, Row, Upload } from 'ant-design-vue';
 
-import { WxMaterialSelect } from '#/views/mp/components';
+import WxMaterialSelect from '#/views/mp/components/wx-material-select/wx-material-select.vue';
 import { UploadType, useBeforeUpload } from '#/views/mp/hooks/useUpload';
 
 defineOptions({ name: 'TabImage' });
@@ -42,7 +42,7 @@ const uploadData = reactive({
 
 /** 图片上传前校验 */
 function beforeImageUpload(rawFile: UploadRawFile) {
-  return useBeforeUpload(UploadType.Image, 2)(rawFile);
+  return useBeforeUpload(UploadType.Image, 10)(rawFile);
 }
 
 /** 自定义上传请求 */

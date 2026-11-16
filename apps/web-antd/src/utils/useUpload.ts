@@ -20,13 +20,11 @@ const useBeforeUpload = (type: UploadType, maxSizeMB: number) => {
           'image/bmp',
           'image/jpg',
         ];
-        maxSizeMB = 2;
         name = '图片';
         break;
       }
       case UploadType.Video: {
         allowTypes = ['video/mp4'];
-        maxSizeMB = 10;
         name = '视频';
         break;
       }
@@ -38,7 +36,6 @@ const useBeforeUpload = (type: UploadType, maxSizeMB: number) => {
           'audio/wav',
           'audio/amr',
         ];
-        maxSizeMB = 2;
         name = '语音';
         break;
       }

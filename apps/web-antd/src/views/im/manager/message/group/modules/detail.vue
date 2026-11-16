@@ -79,7 +79,7 @@ defineExpose({ open });
             </template>
             <template v-else>
               @{{ detail.atUserNicknames?.[index] || userId }}
-              <span class="text-gray-400">({{ userId }})</span>
+              <span class="text-muted-foreground">({{ userId }})</span>
             </template>
           </span>
         </template>
@@ -97,7 +97,7 @@ defineExpose({ open });
       </DescriptionsItem>
       <DescriptionsItem label="原始 JSON" :span="2">
         <pre
-          class="m-0 whitespace-pre-wrap break-all rounded bg-gray-100 p-2 font-mono text-xs"
+          class="m-0 whitespace-pre-wrap break-all rounded bg-muted p-2 font-mono text-xs"
         >
           {{ formatJsonText(detail.content) }}
         </pre>

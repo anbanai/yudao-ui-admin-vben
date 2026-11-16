@@ -4,21 +4,14 @@ import type { PropType } from 'vue';
 
 import type { ActionItem, PopConfirm } from './typing';
 
-import { computed, unref } from 'vue';
+import { computed, watch } from 'vue';
 
 import { useAccess } from '@vben/access';
 import { IconifyIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
 import { isBoolean, isFunction } from '@vben/utils';
 
-import {
-  Button,
-  Dropdown,
-  Menu,
-  Popconfirm,
-  Space,
-  Tooltip,
-} from 'ant-design-vue';
+import { Button, Dropdown, Menu, Popconfirm, Tooltip } from 'ant-design-vue';
 
 const props = defineProps({
   actions: {
@@ -70,9 +63,9 @@ const getDropdownList = computed(() => {
   return dropDownActions.filter((action: ActionItem) => isIfShow(action));
 });
 
-/** Space 组件的 size */
-const spaceSize = computed(() => {
-  const actions = unref(getActions);
+/** 操作按钮间距 */
+const actionGap = computed(() => {
+  const actions = getActions.value;
   return actions?.some((item: ActionItem) => item.type === 'link') ? 0 : 8;
 });
 
@@ -136,11 +129,20 @@ function handleButtonClick(action: ActionItem) {
     action.onClick();
   }
 }
+
+/** 监听 props 变化，强制重新计算 */
+watch(
+  () => [props.actions, props.dropDownActions],
+  () => {
+    // 这里不需要额外处理，computed 会自动重新计算
+  },
+  { deep: true },
+);
 </script>
 
 <template>
   <div class="table-actions">
-    <Space :size="spaceSize">
+    <div class="table-actions__buttons" :style="{ gap: `${actionGap}px` }">
       <template
         v-for="(action, index) in getActions"
         :key="getActionKey(action, index)"
@@ -173,7 +175,7 @@ function handleButtonClick(action: ActionItem) {
           </Button>
         </Tooltip>
       </template>
-    </Space>
+    </div>
 
     <Dropdown v-if="getDropdownList.length > 0" :trigger="['hover']">
       <slot name="more">
@@ -200,7 +202,7 @@ function handleButtonClick(action: ActionItem) {
                 <div
                   :class="
                     action.disabled === true
-                      ? 'cursor-not-allowed text-gray-300'
+                      ? 'cursor-not-allowed text-muted-foreground'
                       : ''
                   "
                 >
@@ -215,7 +217,7 @@ function handleButtonClick(action: ActionItem) {
               <div
                 :class="
                   action.disabled === true
-                    ? 'cursor-not-allowed text-gray-300'
+                    ? 'cursor-not-allowed text-muted-foreground'
                     : ''
                 "
               >
@@ -232,6 +234,11 @@ function handleButtonClick(action: ActionItem) {
 
 <style lang="scss">
 .table-actions {
+  &__buttons {
+    display: inline-flex;
+    align-items: center;
+  }
+
   .ant-btn-link {
     padding: 4px;
     margin-left: 0;

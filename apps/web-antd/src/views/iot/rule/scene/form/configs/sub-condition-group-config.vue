@@ -118,7 +118,7 @@ function updateCondition(
           >
             <div class="flex items-center gap-2">
               <div
-                class="flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-white"
+                class="flex size-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground"
               >
                 {{ conditionIndex + 1 }}
               </div>

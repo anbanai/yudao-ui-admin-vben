@@ -15,16 +15,31 @@ describe('useUserStore', () => {
     expect(store.userInfo).toEqual(userInfo);
   });
 
-  // 测试重置用户信息时的行为
-  it('clears userInfo and userRoles when setting null userInfo', () => {
+  it('manages user info and roles independently', () => {
     const store = useUserStore();
-    store.setUserInfo({
-      roles: [{ roleName: 'User', value: 'user' }],
-    } as any);
-    expect(store.userInfo).not.toBeNull();
-    expect(store.userRoles.length).toBeGreaterThan(0);
+    store.setUserRoles(['user']);
 
-    store.setUserInfo(null as any);
+    store.setUserInfo({ name: 'Jane Doe' } as any);
+    expect(store.userInfo).not.toBeNull();
+    expect(store.userRoles).toEqual(['user']);
+
+    store.setUserInfo(null);
+    expect(store.userInfo).toBeNull();
+    expect(store.userRoles).toEqual(['user']);
+
+    store.setUserInfo({ name: 'John Doe' } as any);
+    store.setUserRoles(['admin']);
+    expect(store.userInfo).toEqual({ name: 'John Doe' });
+    expect(store.userRoles).toEqual(['admin']);
+  });
+
+  it('resets user info and roles together', () => {
+    const store = useUserStore();
+    store.setUserInfo({ name: 'Jane Doe' } as any);
+    store.setUserRoles(['user']);
+
+    store.$reset();
+
     expect(store.userInfo).toBeNull();
     expect(store.userRoles).toEqual([]);
   });

@@ -5,8 +5,12 @@ import { computed, ref } from 'vue';
 
 import { $t } from '@vben/locales';
 
-import { ElButton, ElUpload } from 'element-plus';
+import { ElButton, ElMessage, ElUpload } from 'element-plus';
 
+import {
+  getMaterialImageValidationError,
+  getProductImageValidationError,
+} from '#/components/upload/policy';
 import { useUpload } from '#/components/upload/use-upload';
 
 defineOptions({ name: 'TinymceImageUpload' });
@@ -20,6 +24,10 @@ const props = defineProps({
     default: false,
     type: Boolean,
   }, // 图片上传，是否放到全屏的位置
+  scene: {
+    default: undefined,
+    type: String,
+  },
 });
 
 const emit = defineEmits(['uploading', 'done', 'error']);
@@ -43,7 +51,10 @@ async function customRequest(options: UploadRequestOptions) {
   }
 
   // 2. 执行上传
-  const { httpRequest } = useUpload();
+  const { httpRequest } = useUpload(
+    undefined,
+    props.scene as 'material' | 'product' | undefined,
+  );
   try {
     const url = await httpRequest(file);
     emit('done', name, url);
@@ -57,13 +68,34 @@ async function customRequest(options: UploadRequestOptions) {
     uploading.value = false;
   }
 }
+
+function beforeUpload(file: File) {
+  let error: null | string = null;
+  if (props.scene === 'product') {
+    error = getProductImageValidationError(file.name, file.size);
+  } else if (props.scene === 'material') {
+    error = getMaterialImageValidationError(file.name, file.size);
+  }
+  if (error) {
+    ElMessage.error(error);
+    return false;
+  }
+  return true;
+}
+
+function getAccept(scene?: string) {
+  if (scene === 'product') return '.jpg,.jpeg,.png,.bmp';
+  if (scene === 'material') return '.gif,.jpg,.jpeg,.png,.bmp';
+  return '.jpg,.jpeg,.gif,.png,.webp';
+}
 </script>
 <template>
   <div :class="[{ fullscreen }]" class="tinymce-image-upload">
     <ElUpload
       :show-file-list="false"
-      accept=".jpg,.jpeg,.gif,.png,.webp"
+      :accept="getAccept(scene)"
       multiple
+      :before-upload="beforeUpload"
       :http-request="customRequest"
     >
       <ElButton type="primary" v-bind="{ ...getButtonProps }">

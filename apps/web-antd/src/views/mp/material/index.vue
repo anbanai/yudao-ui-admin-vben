@@ -114,7 +114,7 @@ async function handleAccountChange(id: number) {
   accountId.value = id;
   // 同步设置表单值
   await gridApi.formApi.setValues({ accountId: id });
-  await gridApi.formApi.submitForm();
+  await gridApi.formApi.submit();
 }
 
 async function handleRefresh() {

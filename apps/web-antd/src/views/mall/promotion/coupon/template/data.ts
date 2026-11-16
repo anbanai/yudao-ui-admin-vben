@@ -11,8 +11,8 @@ import {
   PromotionProductScopeEnum,
 } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
+import { convertToInteger, formatToFraction } from '@vben/utils';
 
-import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
 import {
@@ -23,16 +23,255 @@ import {
   validityTypeFormat,
 } from '../formatter';
 
+export interface ProductScopeFormValues {
+  productCategoryIds?: number | number[];
+  productScope?: number;
+  productScopeValues?: number[];
+  productSpuIds?: number[];
+}
+
+export type CouponTemplateFormValues = Omit<
+  Partial<MallCouponTemplateApi.CouponTemplate>,
+  'discountLimitPrice' | 'discountPrice' | 'usePrice'
+> & {
+  discountLimitPrice?: number | string;
+  discountPrice?: number | string;
+  productCategoryIds?: number | number[];
+  productSpuIds?: number[];
+  usePrice?: number | string;
+  validTimes?: Date[];
+};
+
+export interface CouponScopeChangeEvent {
+  target: { value: null | number | undefined };
+}
+
+interface CouponScopeFormApi {
+  setValues(values: CouponTemplateFormValues): Promise<unknown>;
+}
+
+interface CouponSubmitFormApi {
+  getValues(): Promise<CouponTemplateFormValues>;
+  validate(): Promise<{ valid: boolean }>;
+}
+
+interface CouponSubmitModalApi {
+  close(): Promise<unknown>;
+  lock(): void;
+  unlock(): void;
+}
+
+interface CouponOpenFormApi {
+  reset(options: { values: CouponTemplateFormValues }): Promise<unknown>;
+  setValues(values: CouponTemplateFormValues): Promise<unknown>;
+}
+
+interface CouponOpenModalApi {
+  getData(): unknown;
+  lock(): void;
+  unlock(): void;
+}
+
+type CouponTemplateLoadData = Partial<MallCouponTemplateApi.CouponTemplate> &
+  Pick<
+    MallCouponTemplateApi.CouponTemplate,
+    'discountLimitPrice' | 'discountPrice' | 'usePrice'
+  >;
+
+export function createDefaultCouponFormData(): CouponTemplateFormValues {
+  return {
+    productCategoryIds: undefined,
+    productScope: PromotionProductScopeEnum.ALL.scope,
+    productSpuIds: [],
+  };
+}
+
+function normalizeIds(value: number | number[] | undefined): number[] {
+  if (Array.isArray(value)) {
+    return [...value];
+  }
+  return value === undefined ? [] : [value];
+}
+
+/** Convert the active selector to the API's persisted scope shape. */
+export function getProductScopeValues(
+  values: ProductScopeFormValues,
+): number[] {
+  if (values.productScope === PromotionProductScopeEnum.SPU.scope) {
+    return [...(values.productSpuIds ?? [])];
+  }
+  if (values.productScope === PromotionProductScopeEnum.CATEGORY.scope) {
+    return normalizeIds(values.productCategoryIds);
+  }
+  return [];
+}
+
+/** Expand the API scope shape into the fields rendered by the form. */
+export function expandProductScopeValues<T extends ProductScopeFormValues>(
+  values: T,
+): T {
+  const scopeValues = [...(values.productScopeValues ?? [])];
+  return {
+    ...values,
+    productCategoryIds:
+      values.productScope === PromotionProductScopeEnum.CATEGORY.scope
+        ? scopeValues[0]
+        : undefined,
+    productSpuIds:
+      values.productScope === PromotionProductScopeEnum.SPU.scope
+        ? scopeValues
+        : [],
+  } as T;
+}
+
+export function processCouponLoadData(
+  data: CouponTemplateLoadData,
+): CouponTemplateFormValues {
+  return expandProductScopeValues({
+    ...data,
+    discountPrice: formatToFraction(data.discountPrice),
+    discountPercent:
+      data.discountPercent === undefined
+        ? undefined
+        : data.discountPercent / 10,
+    discountLimitPrice: formatToFraction(data.discountLimitPrice),
+    usePrice: formatToFraction(data.usePrice),
+    validTimes:
+      data.validStartTime && data.validEndTime
+        ? [data.validStartTime, data.validEndTime]
+        : [],
+  });
+}
+
+export function processCouponSubmitData(
+  formValues: CouponTemplateFormValues,
+): MallCouponTemplateApi.CouponTemplate {
+  return {
+    ...formValues,
+    productScopeValues: getProductScopeValues(formValues),
+    discountPrice: convertToInteger(formValues.discountPrice),
+    discountPercent:
+      formValues.discountPercent === undefined
+        ? undefined
+        : formValues.discountPercent * 10,
+    discountLimitPrice: convertToInteger(formValues.discountLimitPrice),
+    usePrice: convertToInteger(formValues.usePrice),
+    validStartTime:
+      formValues.validTimes?.length === 2
+        ? formValues.validTimes[0]
+        : undefined,
+    validEndTime:
+      formValues.validTimes?.length === 2
+        ? formValues.validTimes[1]
+        : undefined,
+    totalCount:
+      formValues.takeType === CouponTemplateTakeTypeEnum.USER.type
+        ? formValues.totalCount
+        : -1,
+    takeLimitCount:
+      formValues.takeType === CouponTemplateTakeTypeEnum.USER.type
+        ? formValues.takeLimitCount
+        : -1,
+  } as MallCouponTemplateApi.CouponTemplate;
+}
+
+export function createCouponScopeChangeHandler(formApi: CouponScopeFormApi) {
+  let pending = Promise.resolve();
+  return (event: CouponScopeChangeEvent) => {
+    const productScope =
+      event.target.value ?? PromotionProductScopeEnum.ALL.scope;
+    const operation = pending
+      .catch(() => undefined)
+      .then(async () => {
+        await formApi.setValues({
+          productCategoryIds: undefined,
+          productScope,
+          productSpuIds: [],
+        });
+      });
+    pending = operation;
+    return operation;
+  };
+}
+
+export async function submitCouponTemplateForm({
+  createCouponTemplate,
+  editingId,
+  formApi,
+  modalApi,
+  onSuccess,
+  updateCouponTemplate,
+}: {
+  createCouponTemplate: (
+    data: MallCouponTemplateApi.CouponTemplate,
+  ) => Promise<unknown>;
+  editingId: number | undefined;
+  formApi: CouponSubmitFormApi;
+  modalApi: CouponSubmitModalApi;
+  onSuccess: () => void;
+  updateCouponTemplate: (
+    data: MallCouponTemplateApi.CouponTemplate,
+  ) => Promise<unknown>;
+}) {
+  const { valid } = await formApi.validate();
+  if (!valid) return false;
+  modalApi.lock();
+  try {
+    const data = processCouponSubmitData(await formApi.getValues());
+    await (editingId ? updateCouponTemplate(data) : createCouponTemplate(data));
+    await modalApi.close();
+    onSuccess();
+    return true;
+  } finally {
+    modalApi.unlock();
+  }
+}
+
+export async function syncCouponTemplateFormOpen({
+  formApi,
+  getCouponTemplate,
+  isOpen,
+  modalApi,
+  setEditingId,
+}: {
+  formApi: CouponOpenFormApi;
+  getCouponTemplate: (id: number) => Promise<CouponTemplateLoadData>;
+  isOpen: boolean;
+  modalApi: CouponOpenModalApi;
+  setEditingId: (id: number | undefined) => void;
+}) {
+  if (!isOpen) {
+    setEditingId(undefined);
+    await formApi.reset({ values: createDefaultCouponFormData() });
+    return;
+  }
+  const data = modalApi.getData() as undefined | { id?: number };
+  if (!data?.id) {
+    setEditingId(undefined);
+    await formApi.reset({ values: createDefaultCouponFormData() });
+    return;
+  }
+  modalApi.lock();
+  try {
+    const result = await getCouponTemplate(data.id);
+    setEditingId(result.id);
+    await formApi.setValues(processCouponLoadData(result));
+  } finally {
+    modalApi.unlock();
+  }
+}
+
 /** 新增/修改的表单 */
-export function useFormSchema(): VbenFormSchema[] {
+export function useFormSchema(
+  onProductScopeChange?: (
+    event: CouponScopeChangeEvent,
+  ) => Promise<void> | void,
+): VbenFormSchema[] {
   return [
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'name',
@@ -44,90 +283,6 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
-      fieldName: 'couponType',
-      label: '券用途',
-      component: 'RadioGroup',
-      defaultValue: 1,
-      componentProps: {
-        options: [
-          { label: '优惠券', value: 1 },
-          { label: '商品兑换券', value: 2 },
-        ],
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'exchangeSpuId',
-      label: '兑换商品SPU',
-      component: 'InputNumber',
-      componentProps: {
-        min: 1,
-        precision: 0,
-        placeholder: '选择兑换商品和规格',
-      },
-      dependencies: {
-        triggerFields: ['couponType'],
-        show: (v) => v.couponType === 2,
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'exchangeSkuId',
-      label: '兑换规格SKU',
-      component: 'InputNumber',
-      componentProps: { min: 1, precision: 0 },
-      dependencies: {
-        triggerFields: ['couponType'],
-        show: (v) => v.couponType === 2,
-      },
-      rules: 'required',
-      help: '绑定一个真实规格；兑换按正常订单履约，可能另付运费。',
-    },
-    {
-      fieldName: 'canStack',
-      label: '允许券叠加',
-      component: 'Switch',
-      defaultValue: false,
-      dependencies: {
-        triggerFields: ['couponType'],
-        show: (v) => v.couponType !== 2,
-      },
-    },
-    {
-      fieldName: 'stackLimit',
-      label: '同组叠加上限',
-      component: 'InputNumber',
-      defaultValue: 1,
-      componentProps: { min: 1, max: 10, precision: 0 },
-      rules: z.number().int().min(1).max(10),
-      dependencies: {
-        triggerFields: ['canStack', 'couponType'],
-        show: (v) => v.couponType !== 2 && v.canStack,
-      },
-    },
-    {
-      fieldName: 'stackWithPromotion',
-      label: '可同用其他营销',
-      component: 'Switch',
-      defaultValue: false,
-      help: '包括折扣、会员优惠、满减和积分抵扣；所有选中券都必须允许。',
-      dependencies: {
-        triggerFields: ['couponType'],
-        show: (v) => v.couponType !== 2,
-      },
-    },
-    {
-      fieldName: 'newcomerOnly',
-      label: '首页新人券',
-      component: 'Switch',
-      defaultValue: false,
-      help: '限用户主动领取模板；资格和升级隐藏由后台判断，已领取券有效期固定。',
-      dependencies: {
-        triggerFields: ['takeType'],
-        show: (v) => v.takeType === CouponTemplateTakeTypeEnum.USER.type,
-      },
-    },
-    {
       fieldName: 'description',
       label: '优惠券描述',
       component: 'Textarea',
@@ -137,14 +292,13 @@ export function useFormSchema(): VbenFormSchema[] {
     },
     {
       fieldName: 'productScope',
-      dependencies: {
-        triggerFields: ['couponType'],
-        show: (v) => v.couponType !== 2,
-      },
-      label: '商品适用范围',
+      label: '优惠劵类型',
       component: 'RadioGroup',
       componentProps: {
         options: getDictOptions(DICT_TYPE.PROMOTION_PRODUCT_SCOPE, 'number'),
+        onChange: async (event: CouponScopeChangeEvent) => {
+          await onProductScopeChange?.(event);
+        },
       },
       rules: 'required',
       defaultValue: PromotionProductScopeEnum.ALL.scope,
@@ -154,18 +308,11 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '商品',
       component: 'Input',
       dependencies: {
-        triggerFields: ['productScope', 'productScopeValues', 'couponType'],
-        show: (model) =>
-          model.couponType !== 2 &&
-          model.productScope === PromotionProductScopeEnum.SPU.scope,
-        trigger(values, form) {
-          // 当加载已有数据时，根据 productScopeValues 设置 productSpuIds
-          if (
-            values.productScope === PromotionProductScopeEnum.SPU.scope &&
-            values.productScopeValues
-          ) {
-            form.setFieldValue('productSpuIds', values.productScopeValues);
-          }
+        triggerFields: ['productScope'],
+        resolve({ values }) {
+          return {
+            show: values.productScope === PromotionProductScopeEnum.SPU.scope,
+          };
         },
       },
       rules: 'required',
@@ -175,35 +322,18 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '商品分类',
       component: 'Input',
       dependencies: {
-        triggerFields: ['productScope', 'productScopeValues', 'couponType'],
-        show: (model) =>
-          model.couponType !== 2 &&
-          model.productScope === PromotionProductScopeEnum.CATEGORY.scope,
-        trigger(values, form) {
-          // 当加载已有数据时，根据 productScopeValues 设置 productCategoryIds
-          if (
-            values.productScope === PromotionProductScopeEnum.CATEGORY.scope &&
-            values.productScopeValues
-          ) {
-            const categoryIds = values.productScopeValues;
-            // 单选时使用数组不能反显，取第一个元素
-            form.setFieldValue(
-              'productCategoryIds',
-              Array.isArray(categoryIds) && categoryIds.length > 0
-                ? categoryIds[0]
-                : categoryIds,
-            );
-          }
+        triggerFields: ['productScope'],
+        resolve({ values }) {
+          return {
+            show:
+              values.productScope === PromotionProductScopeEnum.CATEGORY.scope,
+          };
         },
       },
       rules: 'required',
     },
     {
       fieldName: 'discountType',
-      dependencies: {
-        triggerFields: ['couponType'],
-        show: (v) => v.couponType !== 2,
-      },
       label: '优惠类型',
       component: 'RadioGroup',
       componentProps: {
@@ -224,10 +354,12 @@ export function useFormSchema(): VbenFormSchema[] {
         addonAfter: '元',
       },
       dependencies: {
-        triggerFields: ['discountType', 'couponType'],
-        show: (model) =>
-          model.couponType !== 2 &&
-          model.discountType === PromotionDiscountTypeEnum.PRICE.type,
+        triggerFields: ['discountType'],
+        resolve({ values }) {
+          return {
+            show: values.discountType === PromotionDiscountTypeEnum.PRICE.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -244,10 +376,13 @@ export function useFormSchema(): VbenFormSchema[] {
         addonAfter: '折',
       },
       dependencies: {
-        triggerFields: ['discountType', 'couponType'],
-        show: (model) =>
-          model.couponType !== 2 &&
-          model.discountType === PromotionDiscountTypeEnum.PERCENT.type,
+        triggerFields: ['discountType'],
+        resolve({ values }) {
+          return {
+            show:
+              values.discountType === PromotionDiscountTypeEnum.PERCENT.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -263,16 +398,18 @@ export function useFormSchema(): VbenFormSchema[] {
         addonAfter: '元',
       },
       dependencies: {
-        triggerFields: ['discountType', 'couponType'],
-        show: (model) =>
-          model.couponType !== 2 &&
-          model.discountType === PromotionDiscountTypeEnum.PERCENT.type,
+        triggerFields: ['discountType'],
+        resolve({ values }) {
+          return {
+            show:
+              values.discountType === PromotionDiscountTypeEnum.PERCENT.type,
+          };
+        },
       },
       rules: 'required',
     },
     {
       fieldName: 'usePrice',
-      defaultValue: 0,
       label: '满多少元可以使用',
       component: 'InputNumber',
       componentProps: {
@@ -304,7 +441,14 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '发放数量，没有之后不能领取或发放，-1 为不限制',
         addonAfter: '张',
       },
-
+      dependencies: {
+        triggerFields: ['takeType'],
+        resolve({ values }) {
+          return {
+            show: values.takeType === CouponTemplateTakeTypeEnum.USER.type,
+          };
+        },
+      },
       rules: 'required',
     },
     {
@@ -317,7 +461,14 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: '设置为 -1 时，可无限领取',
         addonAfter: '张',
       },
-
+      dependencies: {
+        triggerFields: ['takeType'],
+        resolve({ values }) {
+          return {
+            show: values.takeType === 1,
+          };
+        },
+      },
       rules: 'required',
     },
     {
@@ -339,12 +490,16 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'RangePicker',
       componentProps: {
         ...getRangePickerDefaultProps(),
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
       },
       dependencies: {
         triggerFields: ['validityType'],
-        show: (model) =>
-          model.validityType === CouponTemplateValidityTypeEnum.DATE.type,
+        resolve({ values }) {
+          return {
+            show:
+              values.validityType === CouponTemplateValidityTypeEnum.DATE.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -361,8 +516,12 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['validityType'],
-        show: (model) =>
-          model.validityType === CouponTemplateValidityTypeEnum.TERM.type,
+        resolve({ values }) {
+          return {
+            show:
+              values.validityType === CouponTemplateValidityTypeEnum.TERM.type,
+          };
+        },
       },
       rules: 'required',
     },
@@ -378,33 +537,14 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['validityType'],
-        show: (model) =>
-          model.validityType === CouponTemplateValidityTypeEnum.TERM.type,
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'productScopeValues',
-      component: 'Input',
-      dependencies: {
-        triggerFields: ['productScope', 'productSpuIds', 'productCategoryIds'],
-        show: () => false,
-        trigger(values, form) {
-          switch (values.productScope) {
-            case PromotionProductScopeEnum.CATEGORY.scope: {
-              const categoryIds = Array.isArray(values.productCategoryIds)
-                ? values.productCategoryIds
-                : [values.productCategoryIds];
-              form.setFieldValue('productScopeValues', categoryIds);
-              break;
-            }
-            case PromotionProductScopeEnum.SPU.scope: {
-              form.setFieldValue('productScopeValues', values.productSpuIds);
-              break;
-            }
-          }
+        resolve({ values }) {
+          return {
+            show:
+              values.validityType === CouponTemplateValidityTypeEnum.TERM.type,
+          };
         },
       },
+      rules: 'required',
     },
   ];
 }
@@ -465,18 +605,6 @@ export function useGridColumns(
       field: 'name',
       title: '优惠券名称',
       minWidth: 140,
-    },
-    {
-      field: 'couponType',
-      title: '券用途',
-      minWidth: 110,
-      formatter: ({ cellValue }) => (cellValue === 2 ? '商品兑换券' : '优惠券'),
-    },
-    {
-      field: 'newcomerOnly',
-      title: '新人专享',
-      minWidth: 90,
-      formatter: ({ cellValue }) => (cellValue ? '是' : '否'),
     },
     {
       field: 'productScope',

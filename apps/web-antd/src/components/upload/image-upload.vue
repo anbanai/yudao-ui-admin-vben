@@ -2,12 +2,23 @@
 import type { UploadFile, UploadProps } from 'ant-design-vue';
 import type { UploadRequestOption } from 'ant-design-vue/lib/vc-upload/interface';
 
+import type { Sortable } from '@vben/hooks';
+
 import type { FileUploadProps } from './typing';
 
 import type { AxiosProgressEvent } from '#/api/infra/file';
 
-import { computed, ref, toRefs, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  toRefs,
+  watch,
+} from 'vue';
 
+import { useSortable } from '@vben/hooks';
 import { IconifyIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
 import {
@@ -20,6 +31,11 @@ import {
 
 import { message, Modal, Upload } from 'ant-design-vue';
 
+import {
+  getMaterialImageValidationError,
+  getProductImageValidationError,
+} from './policy';
+import { moveArrayItem } from './sortable';
 import { UploadResultStatus } from './typing';
 import { useUpload, useUploadType } from './use-upload';
 
@@ -39,6 +55,7 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   api: undefined,
   resultField: '',
   showDescription: true,
+  sortable: false,
 });
 const emit = defineEmits([
   'change',
@@ -74,6 +91,44 @@ const isActMsg = ref<boolean>(true); // 文件类型错误提示
 const isFirstRender = ref<boolean>(true); // 是否第一次渲染
 const uploadNumber = ref<number>(0); // 上传文件计数器
 const uploadList = ref<any[]>([]); // 临时上传列表
+const uploadRoot = ref<HTMLElement>();
+let sortableInstance: null | Sortable = null;
+
+function emitSortedValue() {
+  const value = getValue();
+  isInnerOperate.value = true;
+  emit('update:value', value);
+  emit('update:modelValue', value);
+  emit('change', value);
+}
+
+async function initializeSortable() {
+  if (!props.sortable || props.disabled) {
+    sortableInstance?.destroy();
+    sortableInstance = null;
+    return;
+  }
+  await nextTick();
+  const container =
+    uploadRoot.value?.querySelector<HTMLElement>('.ant-upload-list');
+  if (!container) {
+    sortableInstance?.destroy();
+    sortableInstance = null;
+    return;
+  }
+  sortableInstance?.destroy();
+  const { initializeSortable: createSortable } = useSortable(container, {
+    animation: 200,
+    onEnd({ oldIndex, newIndex }) {
+      if (oldIndex === undefined || newIndex === undefined) {
+        return;
+      }
+      fileList.value = moveArrayItem(fileList.value ?? [], oldIndex, newIndex);
+      emitSortedValue();
+    },
+  });
+  sortableInstance = await createSortable();
+}
 
 watch(
   currentValue,
@@ -115,6 +170,17 @@ watch(
     deep: true,
   },
 );
+
+watch(
+  () => [props.disabled, props.sortable, fileList.value?.length ?? 0],
+  () => void initializeSortable(),
+);
+
+onMounted(() => void initializeSortable());
+onUnmounted(() => {
+  sortableInstance?.destroy();
+  sortableInstance = null;
+});
 
 /** 将文件转换为 Base64 格式 */
 function getBase64<T extends ArrayBuffer | null | string>(file: File) {
@@ -175,6 +241,17 @@ async function beforeUpload(file: File) {
     return Upload.LIST_IGNORE;
   }
 
+  if (props.scene === 'product' || props.scene === 'material') {
+    const error =
+      props.scene === 'product'
+        ? getProductImageValidationError(file.name, file.size)
+        : getMaterialImageValidationError(file.name, file.size);
+    if (error) {
+      message.error(error);
+      return Upload.LIST_IGNORE;
+    }
+  }
+
   const { maxSize, accept } = props;
   const isAct = isImage(file.name, accept);
   if (!isAct) {
@@ -202,7 +279,7 @@ async function beforeUpload(file: File) {
 async function customRequest(info: UploadRequestOption) {
   let { api } = props;
   if (!api || !isFunction(api)) {
-    api = useUpload(props.directory).httpRequest;
+    api = useUpload(props.directory, props.scene).httpRequest;
   }
   try {
     // 上传文件
@@ -295,17 +372,16 @@ function getValue() {
     return singleValue;
   }
 
-  // 多文件情况，根据输入参数类型决定返回格式
-  if (isUsingModelValue.value) {
-    return Array.isArray(props.modelValue) ? list : list.join(',');
-  }
-
-  return Array.isArray(props.value) ? list : list.join(',');
+  // 多文件情况：固定返回数组，保证与后端 List 字段一致（避免 modelValue 为 null/字符串时被 join 成字符串）
+  return list;
 }
 </script>
 
 <template>
-  <div>
+  <div
+    ref="uploadRoot"
+    :data-image-upload-sortable="sortable ? 'true' : undefined"
+  >
     <Upload
       v-bind="$attrs"
       v-model:file-list="fileList"
@@ -354,5 +430,9 @@ function getValue() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+[data-image-upload-sortable='true'] .ant-upload-list-item {
+  cursor: grab;
 }
 </style>

@@ -120,7 +120,7 @@ function handleAuthInfoDialogClose() {
               查看地图
             </Button>
           </template>
-          <span v-else class="text-gray-400">暂无位置信息</span>
+          <span v-else class="text-muted-foreground">暂无位置信息</span>
         </Descriptions.Item>
         <Descriptions.Item label="MQTT 连接参数">
           <Button size="small" type="link" @click="handleAuthInfoDialogOpen">

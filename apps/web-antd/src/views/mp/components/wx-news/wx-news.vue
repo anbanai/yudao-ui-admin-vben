@@ -17,7 +17,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="mx-auto flex w-full flex-col gap-[10px] bg-white">
+  <div class="mx-auto flex w-full flex-col gap-[10px] bg-background">
     <div v-for="(article, index) in articles" :key="index">
       <!-- 头条 -->
       <a v-if="index === 0" :href="article.url" target="_blank">
@@ -29,7 +29,7 @@ defineExpose({
               class="w-[100px] object-cover"
             />
             <div
-              class="absolute bottom-0 left-0 ml-[10px] inline-block w-[98%] whitespace-normal p-[1%] text-base text-white"
+              class="absolute bottom-0 left-0 ml-[10px] inline-block w-[98%] whitespace-normal p-[1%] text-base text-primary-foreground"
             >
               <span>{{ article.title }}</span>
             </div>
@@ -38,7 +38,7 @@ defineExpose({
       </a>
       <!-- 二条/三条等等 -->
       <a v-else :href="article.url" target="_blank">
-        <div class="bg-white">
+        <div class="bg-background">
           <div class="relative box-border p-[10px]">
             <div class="flex items-center">
               <div class="flex-1 text-sm">{{ article.title }}</div>

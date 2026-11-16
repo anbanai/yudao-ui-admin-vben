@@ -27,7 +27,7 @@ async function handlerPromptClick(prompt: any) {
           v-for="prompt in promptList"
           :key="prompt.prompt"
           @click="handlerPromptClick(prompt)"
-          class="m-2.5 flex w-44 cursor-pointer justify-center rounded-lg border border-gray-200 leading-10 hover:bg-gray-100"
+          class="m-2.5 flex w-44 cursor-pointer justify-center rounded-lg border border-border leading-10 hover:bg-muted"
         >
           {{ prompt.prompt }}
         </div>

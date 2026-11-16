@@ -5,18 +5,19 @@ import type { HrmInsuranceSchemeApi } from '#/api/hrm/insurance/scheme';
 import { computed, ref } from 'vue';
 
 import { useVbenForm, useVbenModal } from '@vben/common-ui';
+import { DICT_TYPE } from '@vben/constants';
 
-import { message } from 'ant-design-vue';
+import { InputNumber, message, Table } from 'ant-design-vue';
 
 import {
   getInsuranceMonthEmployeeRecord,
   updateInsuranceMonthEmployeeRecord,
 } from '#/api/hrm/insurance/month-record/employee';
 import { getInsuranceScheme } from '#/api/hrm/insurance/scheme';
+import { DictTag } from '#/components/dict-tag';
+import InsuranceSchemeSelect from '#/views/hrm/insurance/scheme/components/insurance-scheme-select.vue';
 import { HrmInsuranceSchemeType } from '#/views/hrm/utils/constants';
-
-import { useEmployeeRecordFormSchema } from '../data';
-import ProjectGrid from './project-grid.vue';
+import { formatHrmRate } from '#/views/hrm/utils/format';
 
 defineOptions({ name: 'HrmInsuranceEmployeeRecordForm' });
 
@@ -39,8 +40,50 @@ const [Form, formApi] = useVbenForm({
     componentProps: { class: 'w-full' },
   },
   layout: 'horizontal',
-  schema: useEmployeeRecordFormSchema(handleSchemeChange),
+  schema: [
+    {
+      fieldName: 'employeeDisplay',
+      label: '员工',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'schemeId',
+      label: '社保方案',
+      component: 'Input',
+      rules: 'required',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Input',
+    },
+  ],
   showDefaultActions: false,
+});
+
+const projectColumns = computed(() => {
+  const columns = [
+    {
+      title: '类型',
+      dataIndex: 'type',
+      width: 130,
+    },
+    { title: '项目名称', dataIndex: 'name', minWidth: 150 },
+  ];
+  if (isProportionScheme.value) {
+    columns.push(
+      { title: '缴纳基数', dataIndex: 'baseAmount', width: 150 },
+      { title: '公司比例', dataIndex: 'corporateRate', width: 120 },
+      { title: '个人比例', dataIndex: 'personalRate', width: 120 },
+    );
+  } else {
+    columns.push(
+      { title: '公司金额', dataIndex: 'corporateAmount', width: 150 },
+      { title: '个人金额', dataIndex: 'personalAmount', width: 150 },
+    );
+  }
+  return columns;
 });
 
 function buildProjectUpdateList(): HrmInsuranceMonthEmployeeRecordApi.ProjectUpdateReq[] {
@@ -121,15 +164,83 @@ const [Modal, modalApi] = useVbenModal({
     }
   },
 });
+
+defineExpose({
+  open: (
+    row: HrmInsuranceMonthEmployeeRecordApi.InsuranceMonthEmployeeRecord,
+  ) => {
+    modalApi.setData(row).open();
+  },
+});
 </script>
 
 <template>
   <Modal class="w-[960px]">
-    <Form class="mx-4" />
-    <ProjectGrid
+    <Form class="mx-4">
+      <template #schemeId="slotProps">
+        <InsuranceSchemeSelect
+          v-bind="slotProps.componentProps"
+          @change="handleSchemeChange"
+        />
+      </template>
+      <template #status="slotProps">
+        <DictTag
+          v-bind="slotProps.componentProps"
+          :type="DICT_TYPE.HRM_INSURANCE_EMP_STATUS"
+          :value="slotProps.componentProps?.value ?? ''"
+        />
+      </template>
+    </Form>
+    <Table
+      :columns="projectColumns"
+      :data-source="projectList"
+      :pagination="false"
+      bordered
       class="mx-4 mb-4"
-      :rows="projectList"
-      :scheme-type="formData.schemeType"
-    />
+      row-key="schemeProjectId"
+      size="small"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.dataIndex === 'type'">
+          <DictTag
+            :type="DICT_TYPE.HRM_INSURANCE_PROJECT_TYPE"
+            :value="record.type"
+          />
+        </template>
+        <template v-else-if="column.dataIndex === 'baseAmount'">
+          <InputNumber
+            v-model:value="record.baseAmount"
+            :controls="false"
+            :min="0"
+            :precision="2"
+            class="w-full"
+          />
+        </template>
+        <template v-else-if="column.dataIndex === 'corporateRate'">
+          {{ formatHrmRate(record.corporateRate) }}
+        </template>
+        <template v-else-if="column.dataIndex === 'personalRate'">
+          {{ formatHrmRate(record.personalRate) }}
+        </template>
+        <template v-else-if="column.dataIndex === 'corporateAmount'">
+          <InputNumber
+            v-model:value="record.corporateAmount"
+            :controls="false"
+            :min="0"
+            :precision="2"
+            class="w-full"
+          />
+        </template>
+        <template v-else-if="column.dataIndex === 'personalAmount'">
+          <InputNumber
+            v-model:value="record.personalAmount"
+            :controls="false"
+            :min="0"
+            :precision="2"
+            class="w-full"
+          />
+        </template>
+      </template>
+    </Table>
   </Modal>
 </template>

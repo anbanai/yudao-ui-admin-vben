@@ -216,7 +216,7 @@ const handleAppLinkChange = (appLink: AppLink) => {
           class="absolute right-0 top-0 hidden cursor-pointer rounded-bl-[80%] p-[2px_2px_6px_6px] text-right text-white group-hover:block"
           :style="{ backgroundColor: 'hsl(var(--primary))' }"
           :size="14"
-          @click="handleRemove(item)"
+          @click.stop="handleRemove(item)"
         />
 
         <!-- 8 个控制点 -->

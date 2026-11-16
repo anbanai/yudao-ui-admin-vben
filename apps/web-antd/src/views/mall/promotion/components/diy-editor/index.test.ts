@@ -1,0 +1,179 @@
+import type { Component } from 'vue';
+
+import { createApp, nextTick } from 'vue';
+
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@vben/common-ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vben/common-ui')>();
+  return {
+    ...actual,
+    Page: { template: '<div><slot /></div>' },
+    useVbenModal: () => [
+      { template: '<div><slot /></div>' },
+      { close: vi.fn(), open: vi.fn() },
+    ],
+  };
+});
+
+vi.mock('@vben/icons', () => ({
+  IconifyIcon: { template: '<i />' },
+}));
+
+vi.mock('#/api/mall/product/group', () => ({
+  getGroupSpuPage: vi.fn().mockResolvedValue({ list: [], total: 0 }),
+  getSimpleGroupList: vi.fn().mockResolvedValue([]),
+}));
+
+const legacyBannerUrl = 'https://static.iocoder.cn/mall/banner-01.jpg';
+const ossBaseUrl = 'https://static.teaworthshare.com';
+
+let DiyEditor: Component;
+
+describe('diy editor', () => {
+  beforeAll(async () => {
+    vi.stubEnv('VITE_OSS_BASE_URL', ossBaseUrl);
+    const diyEditorModule = await import('./index.vue');
+    DiyEditor = diyEditorModule.default;
+  }, 30_000);
+
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('syncs normalized legacy assets to v-model before saving', async () => {
+    const events: Array<{ type: 'save' | 'update'; value?: unknown }> = [];
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(DiyEditor, {
+      modelValue: JSON.stringify({
+        components: [],
+        navigationBar: { alwaysShow: true },
+        page: { backgroundImage: legacyBannerUrl },
+      }),
+      showNavigationBar: false,
+      onSave: () => events.push({ type: 'save' }),
+      'onUpdate:modelValue': (value: unknown) =>
+        events.push({ type: 'update', value }),
+    });
+    app.mount(host);
+    await nextTick();
+    const buttons = host.querySelectorAll('button');
+    const saveButton = buttons.item(buttons.length - 1);
+
+    saveButton.click();
+    await nextTick();
+
+    expect(events.map((event) => event.type)).toEqual(['update', 'save']);
+    expect(events[0]?.value).toContain(`${ossBaseUrl}/mall/diy/banner-01.jpg`);
+    app.unmount();
+    host.remove();
+  });
+
+  it('adds readable menu defaults to legacy product group data', async () => {
+    const updates: unknown[] = [];
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(DiyEditor, {
+      modelValue: {
+        components: [
+          {
+            id: 'ProductGroup',
+            property: {
+              groupIds: [1],
+              layoutType: 'threeCol',
+              pageSize: 10,
+              showAll: false,
+              sortType: 'default',
+              sticky: false,
+            },
+          },
+        ],
+        navigationBar: {},
+        page: {},
+      },
+      showNavigationBar: false,
+      'onUpdate:modelValue': (value: unknown) => updates.push(value),
+    });
+
+    app.mount(host);
+    await nextTick();
+    const buttons = host.querySelectorAll('button');
+    buttons.item(buttons.length - 1).click();
+    await nextTick();
+
+    const latest = updates.at(-1) as {
+      components: Array<{ property: { menu?: unknown } }>;
+    };
+    expect(latest.components[0]?.property.menu).toEqual({
+      activeBackgroundColor: '#e6f4ff',
+      activeColor: '#0958d9',
+      backgroundColor: '#ffffff',
+      color: '#595959',
+      layout: 'horizontal',
+    });
+
+    app.unmount();
+    host.remove();
+  });
+
+  it('shows a preview skeleton and hides the iframe when loading fails', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(DiyEditor, {
+      modelValue: { components: [], navigationBar: {}, page: {} },
+      previewUrl: '/mall-h5?templateId=1',
+      showNavigationBar: false,
+    });
+    app.mount(host);
+    await nextTick();
+
+    const iframe = host.querySelector('iframe');
+    expect(iframe).toBeTruthy();
+    expect(host.querySelector('canvas')).toBeTruthy();
+    iframe?.dispatchEvent(new Event('error'));
+    await nextTick();
+
+    expect(host.querySelector('iframe')).toBeNull();
+    expect(host.querySelector('canvas')).toBeNull();
+    expect(host.textContent).toContain('当前预览地址不可用');
+
+    app.unmount();
+    host.remove();
+  });
+
+  it('does not create an iframe when the preview url is empty', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(DiyEditor, {
+      modelValue: { components: [], navigationBar: {}, page: {} },
+      showNavigationBar: false,
+    });
+    app.mount(host);
+    await nextTick();
+
+    expect(host.querySelector('iframe')).toBeNull();
+    expect(host.textContent).toContain('当前预览地址不可用');
+
+    app.unmount();
+    host.remove();
+  });
+
+  it('keeps cross-origin preview pages in the skeleton state', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const app = createApp(DiyEditor, {
+      modelValue: { components: [], navigationBar: {}, page: {} },
+      previewUrl: 'https://preview.example.com?templateId=1',
+      showNavigationBar: false,
+    });
+    app.mount(host);
+    await nextTick();
+
+    expect(host.querySelector('iframe')).toBeNull();
+    expect(host.textContent).toContain('当前预览地址不可用');
+
+    app.unmount();
+    host.remove();
+  });
+});

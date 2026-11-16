@@ -34,10 +34,7 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -122,21 +119,23 @@ export function useFormSchema(
       component: 'Select',
       dependencies: {
         triggerFields: ['warehouseId'],
-        disabled: (values) => !values.warehouseId,
-        async componentProps(values) {
-          const list = values.warehouseId
-            ? await getWarehouseLocationSimpleList(values.warehouseId)
-            : [];
-          return {
-            allowClear: true,
-            onChange: async () => {
-              await formApi?.setFieldValue('areaId', undefined);
-            },
-            fieldNames: { label: 'name', value: 'id' },
-            options: list,
-            placeholder: '请选择库区',
-          };
-        },
+        resolve: async ({ values }) => ({
+          componentProps: await (async (values) => {
+            const list = values.warehouseId
+              ? await getWarehouseLocationSimpleList(values.warehouseId)
+              : [];
+            return {
+              allowClear: true,
+              onChange: async () => {
+                await formApi?.setFieldValue('areaId', undefined);
+              },
+              fieldNames: { label: 'name', value: 'id' },
+              options: list,
+              placeholder: '请选择库区',
+            };
+          })(values),
+          disabled: !values.warehouseId,
+        }),
       },
     },
     {
@@ -145,18 +144,20 @@ export function useFormSchema(
       component: 'Select',
       dependencies: {
         triggerFields: ['locationId'],
-        disabled: (values) => !values.locationId,
-        async componentProps(values) {
-          const list = values.locationId
-            ? await getWarehouseAreaSimpleList(values.locationId)
-            : [];
-          return {
-            allowClear: true,
-            fieldNames: { label: 'name', value: 'id' },
-            options: list,
-            placeholder: '请选择库位',
-          };
-        },
+        resolve: async ({ values }) => ({
+          componentProps: await (async (values) => {
+            const list = values.locationId
+              ? await getWarehouseAreaSimpleList(values.locationId)
+              : [];
+            return {
+              allowClear: true,
+              fieldNames: { label: 'name', value: 'id' },
+              options: list,
+              placeholder: '请选择库位',
+            };
+          })(values),
+          disabled: !values.locationId,
+        }),
       },
     },
     {

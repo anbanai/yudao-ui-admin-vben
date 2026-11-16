@@ -305,7 +305,7 @@ onMounted(async () => {
       </FormItem>
 
       <div
-        class="mb-1 mt-2 flex items-center justify-between border-t border-gray-200 pt-2"
+        class="mb-1 mt-2 flex items-center justify-between border-t border-border pt-2"
       >
         <span class="flex items-center text-sm font-medium"> 输入参数 </span>
         <Button
@@ -342,7 +342,7 @@ onMounted(async () => {
       </InVariableGrid>
 
       <div
-        class="mb-1 mt-2 flex items-center justify-between border-t border-gray-200 pt-2"
+        class="mb-1 mt-2 flex items-center justify-between border-t border-border pt-2"
       >
         <span class="flex items-center text-sm font-medium"> 输出参数 </span>
         <Button

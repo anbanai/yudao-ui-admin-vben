@@ -13,10 +13,7 @@ export function useTransferFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'newOwnerUserId',
@@ -45,6 +42,18 @@ export function useTransferFormSchema(): VbenFormSchema[] {
           },
         ],
       },
+      dependencies: {
+        triggerFields: ['oldOwnerHandler'],
+        resolve: ({ values, actions }) => ({
+          componentProps: {
+            onChange: (keepOwner = values.oldOwnerHandler) => {
+              if (!keepOwner) {
+                actions.setFieldValue('oldOwnerPermissionLevel', undefined);
+              }
+            },
+          },
+        }),
+      },
       rules: 'required',
     },
     {
@@ -59,12 +68,7 @@ export function useTransferFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['oldOwnerHandler'],
-        show: (values) => values.oldOwnerHandler,
-        trigger(values) {
-          if (!values.oldOwnerHandler) {
-            values.oldOwnerPermissionLevel = undefined;
-          }
-        },
+        resolve: ({ values }) => ({ show: values.oldOwnerHandler }),
       },
       rules: 'required',
     },
@@ -98,18 +102,12 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'bizId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'ids',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'userId',
@@ -122,9 +120,9 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['ids'],
-        show: (values) => {
-          return values.ids === undefined;
-        },
+        resolve: ({ values }) => ({
+          show: values.ids === undefined,
+        }),
       },
     },
     {
@@ -159,10 +157,7 @@ export function useFormSchema(): VbenFormSchema[] {
           },
         ],
       },
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'toBizTypes',
@@ -186,12 +181,11 @@ export function useFormSchema(): VbenFormSchema[] {
       },
       dependencies: {
         triggerFields: ['ids', 'bizType'],
-        show: (values) => {
-          return (
+        resolve: ({ values }) => ({
+          show:
             values.ids === undefined &&
-            values.bizType === BizTypeEnum.CRM_CUSTOMER
-          );
-        },
+            values.bizType === BizTypeEnum.CRM_CUSTOMER,
+        }),
       },
     },
   ];

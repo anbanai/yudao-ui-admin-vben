@@ -13,6 +13,7 @@ import { useVbenForm } from '#/adapter/form';
 import { createChannel, getChannel, updateChannel } from '#/api/pay/channel';
 
 import { useChannelFormSchema } from '../data';
+import { createYeepayChannelDefaults } from '../yeepay-config';
 
 const emit = defineEmits(['success']);
 const formData = ref<any>();
@@ -100,6 +101,8 @@ const [Modal, modalApi] = useVbenModal({
           name: 'wallet-conf',
         },
       };
+    } else if (code === 'yeepay_wx_lite') {
+      formData.value.config = createYeepayChannelDefaults();
     } else if (code.includes('wx')) {
       formData.value.config = {
         appId: undefined,

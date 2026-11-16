@@ -1,4 +1,4 @@
-import type { VbenFormSchema } from '#/adapter/form';
+import type { VbenFormApi, VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 
 import { DICT_TYPE } from '@vben/constants';
@@ -14,16 +14,31 @@ import {
 import { getSimpleUserList } from '#/api/system/user';
 
 /** 新增/修改的表单 */
-export function useFormSchema(): VbenFormSchema[] {
+export interface ReceivableFormSchemaOptions {
+  onCustomerChange?: () => Promise<void>;
+}
+
+export async function resetReceivableCustomerValues(
+  formApi: Pick<VbenFormApi, 'setValues'>,
+) {
+  await formApi.setValues({
+    contractId: undefined,
+    planId: undefined,
+    price: undefined,
+    returnTime: undefined,
+    returnType: undefined,
+  });
+}
+
+export function useFormSchema({
+  onCustomerChange,
+}: ReceivableFormSchemaOptions = {}): VbenFormSchema[] {
   const userStore = useUserStore();
   return [
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'no',
@@ -41,7 +56,9 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve: ({ values }) => ({
+          disabled: values.id,
+        }),
       },
       componentProps: {
         api: getSimpleUserList,
@@ -57,22 +74,20 @@ export function useFormSchema(): VbenFormSchema[] {
       label: '客户名称',
       component: 'ApiSelect',
       rules: 'required',
-      componentProps: (_values, form) => ({
+      componentProps: {
         api: getCustomerSimpleList,
         labelField: 'name',
         valueField: 'id',
         placeholder: '请选择客户',
-        onChange: () => {
-          form.setFieldValue('contractId', undefined);
-          form.setFieldValue('planId', undefined);
-          form.setFieldValue('price', undefined);
-          form.setFieldValue('returnTime', undefined);
-          form.setFieldValue('returnType', undefined);
-        },
-      }),
+        onChange: onCustomerChange,
+      },
       dependencies: {
         triggerFields: ['id'],
-        disabled: (values) => values.id,
+        resolve({ values }) {
+          return {
+            disabled: !!values.id,
+          };
+        },
       },
     },
     {
@@ -81,35 +96,37 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Select',
       rules: 'required',
       dependencies: {
-        triggerFields: ['customerId'],
-        disabled: (values) => !values.customerId || values.id,
-        async componentProps(values, form) {
+        triggerFields: ['customerId', 'id'],
+        resolve: async ({ values, actions }) => {
           if (!values.customerId) {
             return {
-              options: [],
-              placeholder: '请选择客户',
+              componentProps: { options: [], placeholder: '请选择客户' },
+              disabled: !values.customerId || !!values.id,
             };
           }
           const contracts = await getContractSimpleList(values.customerId);
           return {
-            options: contracts.map((item) => ({
-              label: item.name,
-              value: item.id,
-            })),
-            placeholder: '请选择合同',
-            onChange: (value: number) => {
-              form.setFieldValue('planId', undefined);
-              form.setFieldValue('returnTime', undefined);
-              form.setFieldValue('returnType', undefined);
-              const contract = contracts.find((item) => item.id === value);
-              form.setFieldValue(
-                'price',
-                contract
-                  ? contract.totalPrice - contract.totalReceivablePrice
-                  : undefined,
-              );
+            componentProps: {
+              options: contracts.map((item) => ({
+                label: item.name,
+                value: item.id,
+              })),
+              placeholder: '请选择合同',
+              onChange: (value: number) => {
+                actions.setFieldValue('planId', undefined);
+                actions.setFieldValue('returnTime', undefined);
+                actions.setFieldValue('returnType', undefined);
+                const contract = contracts.find((item) => item.id === value);
+                actions.setFieldValue(
+                  'price',
+                  contract
+                    ? contract.totalPrice - contract.totalReceivablePrice
+                    : undefined,
+                );
+              },
             },
-          } as any;
+            disabled: !values.customerId || !!values.id,
+          };
         },
       },
     },
@@ -119,13 +136,12 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Select',
       rules: 'required',
       dependencies: {
-        triggerFields: ['contractId'],
-        disabled: (values) => !values.contractId || values.id,
-        async componentProps(values, form) {
+        triggerFields: ['customerId', 'contractId', 'id'],
+        resolve: async ({ values, actions }) => {
           if (!values.contractId) {
             return {
-              options: [],
-              placeholder: '请选择合同',
+              componentProps: { options: [], placeholder: '请选择合同' },
+              disabled: !values.contractId || !!values.id,
             };
           }
           const plans = await getReceivablePlanSimpleList(
@@ -133,25 +149,28 @@ export function useFormSchema(): VbenFormSchema[] {
             values.contractId,
           );
           return {
-            options: plans.map((item) => ({
-              disabled: !!item.receivableId,
-              label: `第 ${item.period} 期`,
-              value: item.id,
-            })),
-            placeholder: '请选择回款期数',
-            onChange: async (value: any) => {
-              if (!value) {
-                form.setFieldValue('returnTime', undefined);
-                form.setFieldValue('price', undefined);
-                form.setFieldValue('returnType', undefined);
-                return;
-              }
-              const plan = await getReceivablePlan(value);
-              form.setFieldValue('returnTime', plan?.returnTime);
-              form.setFieldValue('price', plan?.price);
-              form.setFieldValue('returnType', plan?.returnType);
+            componentProps: {
+              options: plans.map((item) => ({
+                disabled: !!item.receivableId,
+                label: `第 ${item.period} 期`,
+                value: item.id,
+              })),
+              placeholder: '请选择回款期数',
+              onChange: async (value?: number) => {
+                if (!value) {
+                  actions.setFieldValue('returnTime', undefined);
+                  actions.setFieldValue('price', undefined);
+                  actions.setFieldValue('returnType', undefined);
+                  return;
+                }
+                const plan = await getReceivablePlan(value);
+                actions.setFieldValue('returnTime', plan?.returnTime);
+                actions.setFieldValue('price', plan?.price);
+                actions.setFieldValue('returnType', plan?.returnType);
+              },
             },
-          } as any;
+            disabled: !values.contractId || !!values.id,
+          };
         },
       },
     },

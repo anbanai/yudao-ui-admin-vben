@@ -4,7 +4,6 @@ import type { CrmBusinessApi } from '#/api/crm/business';
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import { erpPriceMultiply } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
 
@@ -18,7 +17,7 @@ import { BizTypeEnum } from '#/api/crm/permission';
 import { $t } from '#/locales';
 import { ProductEditTable } from '#/views/crm/product/components';
 
-import { useFormSchema } from '../data';
+import { applyProductUpdate, useFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
 const formData = ref<CrmBusinessApi.Business>();
@@ -28,24 +27,10 @@ const getTitle = computed(() => {
     : $t('ui.actionTitle.create', ['商机']);
 });
 
-function handleUpdateProducts(products: any) {
+async function handleUpdateProducts(products: any) {
   formData.value = modalApi.getData() as CrmBusinessApi.Business;
-  formData.value!.products = products;
   if (formData.value) {
-    const totalProductPrice =
-      formData.value.products?.reduce(
-        (prev, curr) => prev + curr.totalPrice,
-        0,
-      ) ?? 0;
-    const discountPercent = formData.value.discountPercent;
-    const discountPrice =
-      discountPercent === null
-        ? 0
-        : erpPriceMultiply(totalProductPrice, discountPercent / 100);
-    const totalPrice = totalProductPrice - (discountPrice ?? 0);
-    formData.value!.totalProductPrice = totalProductPrice;
-    formData.value!.totalPrice = totalPrice;
-    formApi.setValues(formData.value!);
+    await applyProductUpdate(formApi, formData.value, products);
   }
 }
 

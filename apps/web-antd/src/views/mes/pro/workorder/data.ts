@@ -43,18 +43,12 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'parentId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
@@ -64,10 +58,7 @@ export function useFormSchema(
         disabled: true,
         options: getDictOptions(DICT_TYPE.MES_PRO_WORK_ORDER_STATUS, 'number'),
       },
-      dependencies: {
-        triggerFields: [''],
-        show: () => formType !== 'create',
-      },
+      hide: !(formType !== 'create'),
     },
     {
       fieldName: 'code',
@@ -139,8 +130,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['orderSourceType'],
-        show: (values) =>
-          values.orderSourceType === MesProWorkOrderSourceTypeEnum.ORDER,
+        resolve: ({ values }) => ({
+          show: values.orderSourceType === MesProWorkOrderSourceTypeEnum.ORDER,
+        }),
       },
     },
     {
@@ -196,8 +188,9 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['orderSourceType'],
-        show: (values) =>
-          values.orderSourceType === MesProWorkOrderSourceTypeEnum.ORDER,
+        resolve: ({ values }) => ({
+          show: values.orderSourceType === MesProWorkOrderSourceTypeEnum.ORDER,
+        }),
       },
     },
     {
@@ -210,9 +203,11 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['type'],
-        show: (values) =>
-          values.type === MesProWorkOrderTypeEnum.OUTSOURCE ||
-          values.type === MesProWorkOrderTypeEnum.PURCHASE,
+        resolve: ({ values }) => ({
+          show:
+            values.type === MesProWorkOrderTypeEnum.OUTSOURCE ||
+            values.type === MesProWorkOrderTypeEnum.PURCHASE,
+        }),
       },
     },
     {
@@ -506,10 +501,7 @@ export function useBomFormSchema(
         },
       },
       rules: 'selectRequired',
-      dependencies: {
-        triggerFields: [''],
-        show: () => isCreate,
-      },
+      hide: !isCreate,
     },
     {
       fieldName: 'itemName',
@@ -518,10 +510,7 @@ export function useBomFormSchema(
       componentProps: {
         disabled: true,
       },
-      dependencies: {
-        triggerFields: [''],
-        show: () => !isCreate,
-      },
+      hide: !!isCreate,
     },
     {
       fieldName: 'unitMeasureName',
@@ -530,10 +519,7 @@ export function useBomFormSchema(
       componentProps: {
         disabled: true,
       },
-      dependencies: {
-        triggerFields: [''],
-        show: () => !isCreate,
-      },
+      hide: !!isCreate,
     },
     {
       fieldName: 'quantity',

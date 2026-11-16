@@ -4,6 +4,11 @@ import type { HotZoneItemProperty } from '../../config';
 
 export const HOT_ZONE_MIN_SIZE = 100; // 热区的最小宽高
 
+export interface HotZoneContainerSize {
+  width: number;
+  height: number;
+}
+
 /** 控制的类型 */
 export enum CONTROL_TYPE_ENUM {
   LEFT,
@@ -104,10 +109,10 @@ export function zoomOut(list?: HotZoneItemProperty[]) {
   return (
     list?.map((hotZone) => ({
       ...hotZone,
-      left: (hotZone.left /= HOT_ZONE_SCALE_RATE),
-      top: (hotZone.top /= HOT_ZONE_SCALE_RATE),
-      width: (hotZone.width /= HOT_ZONE_SCALE_RATE),
-      height: (hotZone.height /= HOT_ZONE_SCALE_RATE),
+      left: hotZone.left / HOT_ZONE_SCALE_RATE,
+      top: hotZone.top / HOT_ZONE_SCALE_RATE,
+      width: hotZone.width / HOT_ZONE_SCALE_RATE,
+      height: hotZone.height / HOT_ZONE_SCALE_RATE,
     })) || []
   );
 }
@@ -117,12 +122,57 @@ export function zoomIn(list?: HotZoneItemProperty[]) {
   return (
     list?.map((hotZone) => ({
       ...hotZone,
-      left: (hotZone.left *= HOT_ZONE_SCALE_RATE),
-      top: (hotZone.top *= HOT_ZONE_SCALE_RATE),
-      width: (hotZone.width *= HOT_ZONE_SCALE_RATE),
-      height: (hotZone.height *= HOT_ZONE_SCALE_RATE),
+      left: hotZone.left * HOT_ZONE_SCALE_RATE,
+      top: hotZone.top * HOT_ZONE_SCALE_RATE,
+      width: hotZone.width * HOT_ZONE_SCALE_RATE,
+      height: hotZone.height * HOT_ZONE_SCALE_RATE,
     })) || []
   );
+}
+
+/** 修正历史数据，确保热区不会落到编辑图片之外。 */
+export function normalizeHotZones(
+  list: HotZoneItemProperty[] = [],
+  container: HotZoneContainerSize,
+) {
+  return list.map((hotZone) => {
+    const width = normalizeDimension(hotZone.width, container.width);
+    const height = normalizeDimension(hotZone.height, container.height);
+    const left = normalizePosition(hotZone.left, container.width, width);
+    const top = normalizePosition(hotZone.top, container.height, height);
+
+    return { ...hotZone, left, top, width, height };
+  });
+}
+
+function normalizeDimension(value: number, containerSize: number) {
+  const numericValue = toFiniteNumber(value, HOT_ZONE_MIN_SIZE);
+  if (containerSize <= 0) {
+    return Math.max(HOT_ZONE_MIN_SIZE, numericValue);
+  }
+  return clamp(
+    numericValue,
+    HOT_ZONE_MIN_SIZE,
+    Math.max(HOT_ZONE_MIN_SIZE, containerSize),
+  );
+}
+
+function normalizePosition(value: number, containerSize: number, size: number) {
+  const numericValue = toFiniteNumber(value, 0);
+  if (containerSize <= 0) {
+    return numericValue;
+  }
+  return clamp(numericValue, 0, Math.max(0, containerSize - size));
+}
+
+function toFiniteNumber(value: number, fallback: number) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : fallback;
+}
+
+/** 将数值限制在 [min, max] 范围内。 */
+export function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), Math.max(min, max));
 }
 
 // endregion
@@ -147,8 +197,9 @@ export const useDraggable = (
     moveHeight: number,
   ) => void,
 ) => {
-  // 阻止事件冒泡
+  // 阻止事件冒泡、默认行为（避免拖拽时选中文本）
   downEvent.stopPropagation();
+  downEvent.preventDefault();
 
   // 移动前的鼠标坐标
   const { clientX: startX, clientY: startY } = downEvent;

@@ -128,6 +128,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
           ]"
         />
       </template>
+      <template #pointMultiplier="{ row }">
+        {{ ((row.pointTradeGiveMultiplier ?? 1000) / 1000).toFixed(1) }} 倍
+      </template>
     </Grid>
   </Page>
 </template>

@@ -7,10 +7,8 @@ import { useVModel } from '@vueuse/core';
 import { Form, FormItem, Slider } from 'ant-design-vue';
 
 import UploadImg from '#/components/upload/image-upload.vue';
-import {
-  AppLinkInput,
-  MagicCubeEditor,
-} from '#/views/mall/promotion/components';
+import AppLinkInput from '#/views/mall/promotion/components/app-link-input/index.vue';
+import MagicCubeEditor from '#/views/mall/promotion/components/magic-cube-editor/index.vue';
 
 import ComponentContainerProperty from '../../component-container-property.vue';
 
@@ -40,7 +38,7 @@ const handleHotAreaSelected = (_: any, index: number) => {
     >
       <p class="text-base font-bold">魔方设置：</p>
       <div class="flex flex-col gap-2 rounded-md p-4 shadow-lg">
-        <p class="text-xs text-gray-500">每格尺寸 187 * 187</p>
+        <p class="text-xs text-muted-foreground">每格尺寸 187 * 187</p>
         <MagicCubeEditor
           v-model="formData.list"
           :rows="4"

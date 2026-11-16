@@ -35,18 +35,12 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'status',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
       defaultValue: MesDvRepairStatusEnum.PREPARE,
     },
     {
@@ -58,8 +52,10 @@ export function useFormSchema(
       },
       dependencies: {
         triggerFields: ['id'],
-        componentProps: (values) => ({
-          disabled: headerReadonly || !!values.id,
+        resolve: ({ values }) => ({
+          componentProps: {
+            disabled: headerReadonly || !!values.id,
+          },
         }),
       },
       rules: 'required',
@@ -128,9 +124,11 @@ export function useFormSchema(
       // 维修人为待验收(≥APPROVING)态自动产生的只读回显字段
       dependencies: {
         triggerFields: ['status'],
-        if: (values) =>
-          values.status !== null &&
-          values.status >= MesDvRepairStatusEnum.APPROVING,
+        resolve: ({ values }) => ({
+          if:
+            values.status !== null &&
+            values.status >= MesDvRepairStatusEnum.APPROVING,
+        }),
       },
     },
     {
@@ -146,11 +144,13 @@ export function useFormSchema(
       // 维修中(≥CONFIRMED)态展示；仅"完成维修"弹窗可编辑并必填，其余态只读回显
       dependencies: {
         triggerFields: ['status'],
-        if: (values) =>
-          values.status !== null &&
-          values.status >= MesDvRepairStatusEnum.CONFIRMED,
-        disabled: formType !== 'confirm',
-        rules: () => (formType === 'confirm' ? 'required' : null),
+        resolve: ({ values }) => ({
+          if:
+            values.status !== null &&
+            values.status >= MesDvRepairStatusEnum.CONFIRMED,
+          rules: formType === 'confirm' ? 'required' : null,
+          disabled: formType !== 'confirm',
+        }),
       },
     },
     {
@@ -168,9 +168,11 @@ export function useFormSchema(
       // 验收信息为已确认(≥FINISHED)态自动产生的只读回显字段
       dependencies: {
         triggerFields: ['status'],
-        if: (values) =>
-          values.status !== null &&
-          values.status >= MesDvRepairStatusEnum.FINISHED,
+        resolve: ({ values }) => ({
+          if:
+            values.status !== null &&
+            values.status >= MesDvRepairStatusEnum.FINISHED,
+        }),
       },
     },
     {
@@ -187,9 +189,11 @@ export function useFormSchema(
       // 验收信息为已确认(≥FINISHED)态自动产生的只读回显字段
       dependencies: {
         triggerFields: ['status'],
-        if: (values) =>
-          values.status !== null &&
-          values.status >= MesDvRepairStatusEnum.FINISHED,
+        resolve: ({ values }) => ({
+          if:
+            values.status !== null &&
+            values.status >= MesDvRepairStatusEnum.FINISHED,
+        }),
       },
     },
     {
@@ -205,9 +209,11 @@ export function useFormSchema(
       // 验收信息为已确认(≥FINISHED)态自动产生的只读回显字段
       dependencies: {
         triggerFields: ['status'],
-        if: (values) =>
-          values.status !== null &&
-          values.status >= MesDvRepairStatusEnum.FINISHED,
+        resolve: ({ values }) => ({
+          if:
+            values.status !== null &&
+            values.status >= MesDvRepairStatusEnum.FINISHED,
+        }),
       },
     },
     {

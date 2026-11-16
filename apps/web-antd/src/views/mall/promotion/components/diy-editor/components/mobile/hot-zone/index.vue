@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { HotZoneProperty } from './config';
 
-import { Image } from 'ant-design-vue';
-
 /** 热区 */
 defineOptions({ name: 'HotZone' });
 
@@ -11,10 +9,11 @@ const props = defineProps<{ property: HotZoneProperty }>();
 
 <template>
   <div class="min-h-30px relative h-full w-full">
-    <Image
+    <img
       :src="props.property.imgUrl"
-      class="pointer-events-none h-full w-full select-none"
-      :preview="false"
+      alt=""
+      class="pointer-events-none block h-auto w-full select-none"
+      draggable="false"
     />
     <div
       v-for="(item, index) in props.property.list"

@@ -25,7 +25,9 @@ export const schema: VbenFormSchema[] = [
     }),
     dependencies: {
       triggerFields: ['enabled'],
-      show: (value) => value.enabled,
+      resolve: ({ values }) => ({
+        show: values.enabled,
+      }),
     },
   },
   {
@@ -42,7 +44,9 @@ export const schema: VbenFormSchema[] = [
     },
     dependencies: {
       triggerFields: ['enabled'],
-      show: (value) => value.enabled,
+      resolve: ({ values }) => ({
+        show: values.enabled,
+      }),
     },
   },
   {
@@ -57,7 +61,9 @@ export const schema: VbenFormSchema[] = [
     },
     dependencies: {
       triggerFields: ['enabled'],
-      show: (value) => value.enabled,
+      resolve: ({ values }) => ({
+        show: values.enabled,
+      }),
     },
     defaultValue: false,
   },
@@ -74,8 +80,10 @@ export const schema: VbenFormSchema[] = [
       addonAfter: () => '天提醒',
     }),
     dependencies: {
-      triggerFields: ['notifyEnabled'],
-      show: (value) => value.enabled && value.notifyEnabled,
+      triggerFields: ['enabled', 'notifyEnabled'],
+      resolve: ({ values }) => ({
+        show: values.enabled && values.notifyEnabled,
+      }),
     },
   },
 ];

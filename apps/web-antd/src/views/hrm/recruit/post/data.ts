@@ -1,4 +1,4 @@
-import type { VbenFormApi, VbenFormSchema } from '#/adapter/form';
+import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { HrmRecruitPostApi } from '#/api/hrm/recruit/post';
 import type { DescriptionItemSchema } from '#/components/description';
@@ -210,15 +210,12 @@ export function useGridColumns(): VxeTableGridOptions<HrmRecruitPostApi.RecruitP
 }
 
 /** 新增/修改表单 */
-export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
+export function useFormSchema(): VbenFormSchema[] {
   return [
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'postName',
@@ -316,27 +313,40 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       component: markRaw(SalaryRangeField),
       formItemClass: 'items-start',
       description: '最低薪资不能大于最高薪资；勾选“面议”后无需填写范围。',
-      componentProps: ({ rootValues }) => ({
-        values: rootValues,
-        formApi,
-      }),
+      dependencies: {
+        triggerFields: [
+          'minSalary',
+          'maxSalary',
+          'salaryUnit',
+          'salaryNegotiable',
+        ],
+        resolve({ values, actions }) {
+          const { maxSalary, minSalary, salaryNegotiable, salaryUnit } = values;
+          return {
+            componentProps: {
+              values: { maxSalary, minSalary, salaryNegotiable, salaryUnit },
+              formApi: actions,
+            },
+          };
+        },
+      },
     },
     {
       fieldName: 'maxSalary',
       component: 'InputNumber',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'salaryUnit',
       component: 'Select',
       defaultValue: HrmRecruitSalaryUnit.MONTH,
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'salaryNegotiable',
       component: 'Checkbox',
       defaultValue: false,
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'latestEntryTime',
@@ -358,21 +368,29 @@ export function useFormSchema(formApi?: VbenFormApi): VbenFormSchema[] {
       component: markRaw(AgeRangeField),
       formItemClass: 'items-start',
       description: '最小年龄不能大于最大年龄；勾选“不限”后无需填写范围。',
-      componentProps: ({ rootValues }) => ({
-        values: rootValues,
-        formApi,
-      }),
+      dependencies: {
+        triggerFields: ['minAge', 'maxAge', 'ageUnlimited'],
+        resolve({ values, actions }) {
+          const { ageUnlimited, maxAge, minAge } = values;
+          return {
+            componentProps: {
+              values: { ageUnlimited, maxAge, minAge },
+              formApi: actions,
+            },
+          };
+        },
+      },
     },
     {
       fieldName: 'maxAge',
       component: 'InputNumber',
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'ageUnlimited',
       component: 'Checkbox',
       defaultValue: false,
-      dependencies: { triggerFields: [''], show: () => false },
+      hide: true,
     },
     {
       fieldName: 'emergencyLevel',

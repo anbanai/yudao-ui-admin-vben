@@ -1,9 +1,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 
-import { ColorPicker } from '#/components/color-picker';
-
-/** 甘特图颜色选择器：复用通用取色器并在右侧展示 hex 文本。 */
+/** 甘特图颜色选择器（ant-design-vue 4.x 暂未提供 ColorPicker，封装原生 input[type=color]） */
 defineOptions({ name: 'RouteColorPicker' });
 
 const props = withDefaults(
@@ -22,30 +20,47 @@ const emit = defineEmits<{
   'update:modelValue': [value: string];
 }>();
 
-const color = computed({
-  get: () => props.modelValue ?? '',
-  set: (value: string) => {
-    emit('update:modelValue', value);
-    emit('change', value);
-  },
-});
+/** 用于 input[type=color] 的展示值，必须是合法 hex；非法时回退到 #000000 但不修改 modelValue */
+const swatchValue = computed(() =>
+  /^#[0-9a-f]{6}$/i.test(props.modelValue ?? '')
+    ? (props.modelValue as string)
+    : '#000000',
+);
+
+/** 颜色变化时同步 modelValue */
+function handleColorChange(event: Event) {
+  const value = (event.target as HTMLInputElement).value;
+  emit('update:modelValue', value);
+  emit('change', value);
+}
 </script>
 
 <template>
   <div class="flex items-center gap-2">
-    <ColorPicker
-      v-model="color"
+    <input
       class="route-color-picker__swatch"
       :disabled="disabled"
+      type="color"
+      :value="swatchValue"
+      @change="handleColorChange"
+      @input="handleColorChange"
     />
-    <span v-if="color">{{ color }}</span>
+    <span v-if="modelValue">{{ modelValue }}</span>
   </div>
 </template>
 
 <style scoped>
-:deep(.route-color-picker__swatch) {
+.route-color-picker__swatch {
   inline-size: 36px;
   block-size: 28px;
-  border-color: var(--ant-color-border, #d9d9d9);
+  padding: 2px;
+  cursor: pointer;
+  border: 1px solid var(--ant-color-border, hsl(var(--border)));
+  border-radius: 4px;
+}
+
+.route-color-picker__swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 </style>

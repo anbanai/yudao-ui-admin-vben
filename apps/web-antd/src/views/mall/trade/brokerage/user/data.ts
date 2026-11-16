@@ -154,7 +154,7 @@ export function useGridColumns(
 }
 
 /** 创建分销员表单配置 */
-export function useCreateFormSchema(): VbenFormSchema[] {
+export function useCreateFormSchema(): VbenFormSchema<MallBrokerageUserApi.BrokerageUserCreateReqVO>[] {
   return [
     {
       fieldName: 'userId',
@@ -178,7 +178,7 @@ export function useCreateFormSchema(): VbenFormSchema[] {
 }
 
 /** 修改分销用户表单配置 */
-export function useUpdateFormSchema(): VbenFormSchema[] {
+export function useUpdateFormSchema(): VbenFormSchema<MallBrokerageUserApi.BrokerageUserUpdateReqVO>[] {
   return [
     {
       fieldName: 'bindUserId',

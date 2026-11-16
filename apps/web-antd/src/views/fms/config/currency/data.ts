@@ -54,26 +54,17 @@ export function useFormSchema(
     {
       fieldName: 'id',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'accountSetId',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'standard',
       component: 'Input',
-      dependencies: {
-        triggerFields: [''],
-        show: () => false,
-      },
+      hide: true,
     },
     {
       fieldName: 'code',
@@ -87,7 +78,9 @@ export function useFormSchema(
         }),
       dependencies: {
         triggerFields: ['standard'],
-        disabled: (values) => !!values.standard,
+        resolve: ({ values }) => ({
+          disabled: !!values.standard,
+        }),
       },
       componentProps: {
         placeholder: '请输入币别编码，如 USD',
@@ -123,7 +116,9 @@ export function useFormSchema(
           : '按 1 单位外币折算本位币填写',
       dependencies: {
         triggerFields: ['standard'],
-        disabled: (values) => !!values.standard,
+        resolve: ({ values }) => ({
+          disabled: !!values.standard,
+        }),
       },
       componentProps: {
         min: 0.000001,

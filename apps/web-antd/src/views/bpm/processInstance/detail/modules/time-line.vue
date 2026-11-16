@@ -267,23 +267,23 @@ defineExpose({ setCustomApproveUsers, batchSetCustomApproveUsers });
         <template #dot>
           <div class="relative">
             <div
-              class="position-absolute left--2.5 top--1.5 flex h-8 w-8 items-center justify-center rounded-full border border-solid border-gray-200 bg-blue-500 p-1.5"
+              class="position-absolute left--2.5 top--1.5 flex h-8 w-8 items-center justify-center rounded-full border border-solid border-border bg-blue-500 p-1.5"
             >
               <IconifyIcon
                 :icon="getApprovalNodeTypeIcon(activity.nodeType)"
-                class="size-6 text-white"
+                class="size-6 text-primary-foreground"
               />
             </div>
             <div
               v-if="showStatusIcon"
-              class="absolute left-4 top-4 flex size-4 items-center rounded-full border-2 border-solid border-white p-0.5"
+              class="absolute left-4 top-4 flex size-4 items-center rounded-full border-2 border-solid border-border p-0.5"
               :style="{
                 backgroundColor: getApprovalNodeColor(activity.status),
               }"
             >
               <IconifyIcon
                 :icon="getApprovalNodeIcon(activity.status, activity.nodeType)"
-                class="text-white"
+                class="text-primary-foreground"
                 :class="[statusIconMap[activity.status]?.animation]"
               />
             </div>
@@ -302,7 +302,7 @@ defineExpose({ setCustomApproveUsers, batchSetCustomApproveUsers });
             <!-- 信息：时间 -->
             <div
               v-if="activity.status !== BpmTaskStatusEnum.NOT_START"
-              class="ml-auto mt-1 text-sm text-gray-500"
+              class="ml-auto mt-1 text-sm text-muted-foreground"
             >
               {{ getApprovalNodeTime(activity) }}
             </div>
@@ -348,7 +348,7 @@ defineExpose({ setCustomApproveUsers, batchSetCustomApproveUsers });
             <div
               v-for="(user, userIndex) in customApproveUsers[activity.id]"
               :key="user.id || userIndex"
-              class="relative flex h-9 items-center gap-2 rounded-3xl bg-gray-100 pr-2 dark:bg-gray-600"
+              class="relative flex h-9 items-center gap-2 rounded-3xl bg-muted pr-2 dark:bg-muted"
             >
               <Avatar
                 class="!m-1"
@@ -415,14 +415,14 @@ defineExpose({ setCustomApproveUsers, batchSetCustomApproveUsers });
                     v-if="
                       showStatusIcon && onlyStatusIconShow.includes(task.status)
                     "
-                    class="absolute left-5 top-5 flex items-center rounded-full border-2 border-solid border-white p-1"
+                    class="absolute left-5 top-5 flex items-center rounded-full border-2 border-solid border-border p-1"
                     :style="{
                       backgroundColor: statusIconMap[task.status]?.color,
                     }"
                   >
                     <IconifyIcon
                       :icon="statusIconMap[task.status]?.icon || 'lucide:clock'"
-                      class="size-1.5 text-white"
+                      class="size-1.5 text-primary-foreground"
                       :class="[statusIconMap[task.status]?.animation]"
                     />
                   </div>
@@ -463,11 +463,11 @@ defineExpose({ setCustomApproveUsers, batchSetCustomApproveUsers });
               <!-- 候选任务状态图标 -->
               <div
                 v-if="showStatusIcon"
-                class="absolute left-6 top-5 flex items-center rounded-full border-2 border-solid border-white p-1"
+                class="absolute left-6 top-5 flex items-center rounded-full border-2 border-solid border-border p-1"
                 :style="{ backgroundColor: statusIconMap['-1']?.color }"
               >
                 <IconifyIcon
-                  class="text-xs text-white"
+                  class="text-xs text-primary-foreground"
                   :icon="statusIconMap['-1']?.icon || 'lucide:clock'"
                 />
               </div>

@@ -113,7 +113,7 @@ function emitActivityChange() {
     <div
       v-for="(activity, index) in activityList"
       :key="activity.id"
-      class="relative h-[60px] w-[60px] overflow-hidden rounded-lg border border-dashed border-gray-300"
+      class="relative h-[60px] w-[60px] overflow-hidden rounded-lg border border-dashed border-border"
     >
       <Tooltip :title="activity.name">
         <div class="relative h-full w-full">
@@ -137,10 +137,10 @@ function emitActivityChange() {
     <!-- 添加活动按钮 -->
     <Tooltip v-if="canAdd" title="选择活动">
       <div
-        class="flex h-[60px] w-[60px] cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 hover:border-blue-400"
+        class="flex h-[60px] w-[60px] cursor-pointer items-center justify-center rounded-lg border border-dashed border-border hover:border-blue-400"
         @click="handleOpenActivitySelect"
       >
-        <IconifyIcon icon="lucide:plus" class="text-xl text-gray-400" />
+        <IconifyIcon icon="lucide:plus" class="text-xl text-muted-foreground" />
       </div>
     </Tooltip>
   </div>

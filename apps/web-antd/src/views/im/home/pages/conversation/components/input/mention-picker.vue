@@ -182,7 +182,7 @@ defineExpose({
         @click.stop="handleSelect(allItem)"
       >
         <div
-          class="flex items-center justify-center w-[30px] h-[30px] rounded text-white bg-[var(--ant-color-primary)] flex-shrink-0"
+          class="flex items-center justify-center w-[30px] h-[30px] rounded text-primary-foreground bg-[var(--ant-color-primary)] flex-shrink-0"
         >
           <Icon icon="ep:user-filled" :size="18" />
         </div>
