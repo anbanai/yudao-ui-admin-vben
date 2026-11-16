@@ -207,7 +207,7 @@ defineExpose({
           <Input v-model:value="row.barCode" class="w-full" />
         </template>
       </VxeColumn>
-      <VxeColumn align="center" title="销售价" width="168">
+      <VxeColumn align="center" title="销售价(元)" width="168">
         <template #default="{ row }">
           <InputNumber
             v-model:value="row.price"
@@ -218,7 +218,7 @@ defineExpose({
           />
         </template>
       </VxeColumn>
-      <VxeColumn align="center" title="市场价" width="168">
+      <VxeColumn align="center" title="市场价(元)" width="168">
         <template #default="{ row }">
           <InputNumber
             v-model:value="row.marketPrice"
@@ -229,7 +229,7 @@ defineExpose({
           />
         </template>
       </VxeColumn>
-      <VxeColumn align="center" title="成本价" width="168">
+      <VxeColumn align="center" title="成本价(元)" width="168">
         <template #default="{ row }">
           <InputNumber
             v-model:value="row.costPrice"

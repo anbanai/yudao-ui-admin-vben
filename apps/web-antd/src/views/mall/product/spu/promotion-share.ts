@@ -1,4 +1,5 @@
 import type { MallSpuApi } from '#/api/mall/product/spu';
+import type { MallPointActivityApi } from '#/api/mall/promotion/point';
 import type { MemberUserApi } from '#/api/member/user';
 
 export type PromotionAssetType = 'card' | 'h5' | 'poster';
@@ -16,10 +17,19 @@ export interface PromotionContext {
   marketPriceText?: string;
   miniProgramPath: 'pages/index/index';
   miniProgramScene: string;
+  pointCountText?: string;
+  pointStockText?: string;
+  pointText?: string;
   picUrl: string;
   priceText: string;
   productId: number;
   productName: string;
+}
+
+export interface PromotionPointOffer {
+  count: number;
+  point: number;
+  stock: number;
 }
 
 const CHANNELS = {
@@ -76,10 +86,12 @@ export function buildH5PromotionUrl(
 export function buildPromotionContext({
   h5Domain,
   identity,
+  pointOffer,
   product,
 }: {
   h5Domain?: string;
   identity: PromotionIdentity;
+  pointOffer?: PromotionPointOffer;
   product: MallSpuApi.Spu;
 }): PromotionContext {
   const productId = requireProductId(product);
@@ -103,11 +115,49 @@ export function buildPromotionContext({
       : {}),
     miniProgramPath: 'pages/index/index',
     miniProgramScene: buildSpm(identity.shareId, productId, 'miniProgram'),
+    ...(pointOffer
+      ? {
+          pointCountText: `每次最多兑换 ${pointOffer.count} 件`,
+          pointStockText: `活动剩余 ${pointOffer.stock} 件`,
+          pointText: `兑换 ${pointOffer.point} 积分`,
+        }
+      : {}),
     picUrl,
     priceText: formatFen(price),
     productId,
     productName,
   };
+}
+
+export function findPointOffer(
+  spuId: number,
+  activities: Array<
+    Pick<
+      MallPointActivityApi.PointActivity,
+      'products' | 'spuId' | 'status' | 'stock'
+    >
+  >,
+): PromotionPointOffer | undefined {
+  const offers = activities
+    .filter((activity) => activity.spuId === spuId && activity.status === 0)
+    .flatMap((activity) =>
+      activity.products
+        .filter(
+          (product) =>
+            product.spuId === spuId &&
+            product.activityStatus === 0 &&
+            Number.isFinite(product.point) &&
+            product.point >= 0 &&
+            Number.isInteger(product.count) &&
+            product.count > 0,
+        )
+        .map((product) => ({
+          count: product.count,
+          point: product.point,
+          stock: activity.stock,
+        })),
+    );
+  return offers.sort((a, b) => a.point - b.point)[0];
 }
 
 export function buildPromotionCacheKey(
@@ -118,6 +168,7 @@ export function buildPromotionCacheKey(
     h5Domain?: string;
     h5Url?: string;
     identity?: PromotionIdentity;
+    pointOffer?: PromotionPointOffer;
   } = {},
 ): string {
   const identity = options.identity;
@@ -137,6 +188,7 @@ export function buildPromotionCacheKey(
     name: product.name,
     picUrl: product.picUrl,
     price: product.price,
+    pointOffer: options.pointOffer,
     shareId,
     type,
   });

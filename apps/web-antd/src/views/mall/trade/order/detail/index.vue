@@ -31,8 +31,10 @@ import { DictTag } from '#/components/dict-tag';
 import { TableAction } from '#/components/table-action';
 
 import AddressForm from '../modules/address-form.vue';
+import CancelForm from '../modules/cancel-form.vue';
 import DeliveryForm from '../modules/delivery-form.vue';
 import PriceForm from '../modules/price-form.vue';
+import RefundForm from '../modules/refund-form.vue';
 import RemarkForm from '../modules/remark-form.vue';
 import SfDeliveryForm from '../modules/sf-delivery-form.vue';
 import {
@@ -170,6 +172,16 @@ const [PriceFormModal, priceFormModalApi] = useVbenModal({
   destroyOnClose: true,
 });
 
+const [CancelFormModal, cancelFormModalApi] = useVbenModal({
+  connectedComponent: CancelForm,
+  destroyOnClose: true,
+});
+
+const [RefundFormModal, refundFormModalApi] = useVbenModal({
+  connectedComponent: RefundForm,
+  destroyOnClose: true,
+});
+
 /** 获得详情 */
 async function getDetail() {
   loading.value = true;
@@ -225,6 +237,14 @@ const handleUpdatePrice = () => {
   priceFormModalApi.setData(order.value).open();
 };
 
+const handleCancel = () => {
+  cancelFormModalApi.setData(order.value).open();
+};
+
+const handleRefund = () => {
+  refundFormModalApi.setData(order.value).open();
+};
+
 /** 核销 */
 const handlePickUp = async () => {
   await confirm('确认核销订单吗？');
@@ -270,6 +290,24 @@ onMounted(async () => {
             type: 'primary',
             onClick: handleUpdatePrice,
             ifShow: order.status === TradeOrderStatusEnum.UNPAID.status,
+          },
+          {
+            label: '运营取消',
+            type: 'default',
+            auth: ['trade:order:update'],
+            onClick: handleCancel,
+            ifShow:
+              order.status === TradeOrderStatusEnum.UNPAID.status ||
+              order.status === TradeOrderStatusEnum.UNDELIVERED.status,
+          },
+          {
+            label: '部分退款',
+            type: 'default',
+            auth: ['trade:order:refund'],
+            onClick: handleRefund,
+            ifShow:
+              Boolean(order.payStatus) &&
+              (order.payPrice || 0) > (order.refundPrice || 0),
           },
           {
             label: '备注',
@@ -320,6 +358,8 @@ onMounted(async () => {
     <RemarkFormModal @success="getDetail" />
     <AddressFormModal @success="getDetail" />
     <PriceFormModal @success="getDetail" />
+    <CancelFormModal @success="getDetail" />
+    <RefundFormModal @success="getDetail" />
 
     <!-- 订单信息 -->
     <div class="mb-4">

@@ -15,6 +15,13 @@ describe('sku 表格状态边界', () => {
     expect(source).toMatch(/v-if="isBatch && formData\?\.specType"/);
   });
 
+  it('编辑价格列标明元单位并保留规格列宽度', () => {
+    expect(source).toContain('title="销售价(元)" width="168"');
+    expect(source).toContain('title="市场价(元)" width="168"');
+    expect(source).toContain('title="成本价(元)" width="168"');
+    expect(source).toContain('min-width="80"');
+  });
+
   it('多规格未配置属性时阻止保存校验通过', () => {
     expect(source).toMatch(
       /formData\.value\.specType\s+&&\s+props\.propertyList\.length === 0/,

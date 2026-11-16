@@ -26,6 +26,12 @@ export namespace MallSpuApi {
     buyLimit?: number; // 限购数量，0 表示不限购
     buyLimitLevel?: 'ALL' | 'L0' | 'L1' | 'L2' | 'L3'; // 等级限购
     pointDiscountRate?: number; // 积分抵扣比例，范围 0-1
+    marketingConfig?: {
+      memberLevels?: number[];
+      userGroups?: number[];
+      userGroupPurchaseLimits?: Record<string, number>;
+      [key: string]: unknown;
+    }; // 会员等级与客户标签限购规则
     skus?: Sku[]; // sku数组
     description?: string; // 商品详情
     sort?: number; // 商品排序
@@ -87,9 +93,7 @@ export namespace MallSpuApi {
 export function getSpuPage(params: PageParam) {
   const query = resolveSpuGroupQuery(params);
   return requestClient.get<PageResult<MallSpuApi.Spu>>(
-    query.hasGroupFilter
-      ? '/product/group/spu-filter-page'
-      : '/product/spu/page',
+    query.hasGroupFilter ? '/product/group/spu-filter-page' : '/product/spu/page',
     { params: query.params },
   );
 }
@@ -98,9 +102,7 @@ export function getSpuPage(params: PageParam) {
 export function getTabsCount(params?: Record<string, any>) {
   const query = resolveSpuGroupQuery(params);
   return requestClient.get<Record<string, number>>(
-    query.hasGroupFilter
-      ? '/product/group/spu-filter-count'
-      : '/product/spu/get-count',
+    query.hasGroupFilter ? '/product/group/spu-filter-count' : '/product/spu/get-count',
     { params: query.params },
   );
 }
@@ -152,9 +154,7 @@ export function deleteSpu(id: number) {
 export function exportSpu(params: PageParam) {
   const query = resolveSpuGroupQuery(params);
   return requestClient.download(
-    query.hasGroupFilter
-      ? '/product/group/spu-filter-export'
-      : '/product/spu/export-excel',
+    query.hasGroupFilter ? '/product/group/spu-filter-export' : '/product/spu/export-excel',
     { params: query.params },
   );
 }
