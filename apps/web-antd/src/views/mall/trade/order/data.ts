@@ -23,7 +23,7 @@ getSimpleDeliveryPickUpStoreList().then((data) => {
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
-      fieldName: 'productName',
+      fieldName: 'spuName',
       label: '商品名称',
       component: 'Input',
       componentProps: {

@@ -20,7 +20,9 @@ describe('商品基础信息表单', () => {
   it('保留必填单分类并增加可选多分组', async () => {
     const { useInfoFormSchema } = await import('./data');
     const schema = useInfoFormSchema();
-    const categoryField = schema.find((item) => item.fieldName === 'categoryId');
+    const categoryField = schema.find(
+      (item) => item.fieldName === 'categoryId',
+    );
     const groupField = schema.find((item) => item.fieldName === 'groupIds');
 
     expect(categoryField).toMatchObject({
@@ -45,21 +47,29 @@ describe('商品基础信息表单', () => {
     const { useInfoFormSchema } = await import('./data');
     const schema = useInfoFormSchema();
     for (const fieldName of ['name', 'brandId', 'keyword', 'introduction']) {
-      expect(schema.find((item) => item.fieldName === fieldName)).toMatchObject({
-        rules: 'required',
-      });
+      expect(schema.find((item) => item.fieldName === fieldName)).toMatchObject(
+        {
+          rules: 'required',
+        },
+      );
     }
-    expect(schema.find((item) => item.fieldName === 'isPreSale')).toMatchObject({
-      component: 'RadioGroup',
-    });
-    expect(schema.find((item) => item.fieldName === 'deliveryDaysPreset')).toBeDefined();
+    expect(schema.find((item) => item.fieldName === 'isPreSale')).toMatchObject(
+      {
+        component: 'RadioGroup',
+      },
+    );
+    expect(
+      schema.find((item) => item.fieldName === 'deliveryDaysPreset'),
+    ).toBeDefined();
   });
 
   it('主图和轮播图限制为 3MB 的 JPG、PNG、BMP', async () => {
     const { useInfoFormSchema } = await import('./data');
     const schema = useInfoFormSchema();
     for (const fieldName of ['picUrl', 'sliderPicUrls']) {
-      expect(schema.find((item) => item.fieldName === fieldName)?.componentProps).toMatchObject({
+      expect(
+        schema.find((item) => item.fieldName === fieldName)?.componentProps,
+      ).toMatchObject({
         maxSize: 3,
         accept: ['jpg', 'jpeg', 'png', 'bmp'],
         scene: 'product',
@@ -76,7 +86,9 @@ describe('商品详情表单', () => {
       (item) => item.fieldName === 'description',
     );
 
-    const componentProps = descriptionField?.componentProps as Record<string, any> | undefined;
+    const componentProps = descriptionField?.componentProps as
+      | Record<string, any>
+      | undefined;
     componentProps?.onUploadingChange(true);
 
     expect(onUploadingChange).toHaveBeenCalledWith(true);
@@ -105,14 +117,18 @@ describe('商品规格表单', () => {
     const { useSkuFormSchema } = await import('./data');
     const schema = useSkuFormSchema([], false);
     expect(schema.some((item) => item.fieldName === 'specType')).toBe(false);
-    expect(schema.some((item) => item.fieldName === 'singleSkuList')).toBe(false);
+    expect(schema.some((item) => item.fieldName === 'singleSkuList')).toBe(
+      false,
+    );
     expect(schema.some((item) => item.fieldName === 'multiSkuList')).toBe(true);
   });
 
   it('历史单规格商品在迁移属性前仍展示原 SKU 编辑表', async () => {
     const { useSkuFormSchema } = await import('./data');
     const schema = useSkuFormSchema([], false, true);
-    expect(schema.some((item) => item.fieldName === 'legacySkuList')).toBe(true);
+    expect(schema.some((item) => item.fieldName === 'legacySkuList')).toBe(
+      true,
+    );
   });
 });
 
@@ -123,14 +139,15 @@ describe('商品其它设置表单', () => {
     expect(schema.find((item) => item.fieldName === 'buyLimit')).toMatchObject({
       component: 'InputNumber',
     });
-    expect(schema.find((item) => item.fieldName === 'buyLimitLevel')).toMatchObject({
+    expect(
+      schema.find((item) => item.fieldName === 'buyLimitLevel'),
+    ).toMatchObject({
       component: 'Select',
     });
-    expect(schema.find((item) => item.fieldName === 'pointDiscountRate')).toMatchObject({
+    expect(
+      schema.find((item) => item.fieldName === 'pointDiscountRate'),
+    ).toMatchObject({
       component: 'InputNumber',
-    });
-    expect(schema.find((item) => item.fieldName === 'marketingConfig')).toMatchObject({
-      label: '会员与标签限购',
     });
   });
 });

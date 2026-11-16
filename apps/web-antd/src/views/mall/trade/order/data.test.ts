@@ -22,7 +22,7 @@ vi.mock('#/api/mall/trade/delivery/pickUpStore', () => ({
 describe('trade order search form', () => {
   it('supports filtering by product name', () => {
     const productNameField = useGridFormSchema().find(
-      (field) => field.fieldName === 'productName',
+      (field) => field.fieldName === 'spuName',
     );
 
     expect(productNameField).toMatchObject({

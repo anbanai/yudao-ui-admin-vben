@@ -2,17 +2,6 @@ import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
-    path: '/infra/share-cover',
-    component: () => import('#/views/infra/share-cover/index.vue'),
-    name: 'InfraShareCover',
-    meta: {
-      title: '小程序分享封面',
-      icon: 'lucide:image',
-      activePath: '/infra/share-cover',
-      keepAlive: true,
-    },
-  },
-  {
     path: '/infra/job/log',
     component: () => import('#/views/infra/job/logger/index.vue'),
     name: 'InfraJobLog',

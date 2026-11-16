@@ -1,6 +1,9 @@
 <script lang="ts" setup>
 import type { MallSpuApi } from '#/api/mall/product/spu';
-import type { PropertyAndValues, RuleConfig } from '#/views/mall/product/spu/components';
+import type {
+  PropertyAndValues,
+  RuleConfig,
+} from '#/views/mall/product/spu/components';
 
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -16,7 +19,10 @@ import { createSpu, getSpu, updateSpu } from '#/api/mall/product/spu';
 import { withOperationFeedback } from '#/utils/operation-feedback';
 import { getPropertyList, SkuList } from '#/views/mall/product/spu/components';
 
-import { isSkuPropertiesSubset, reconcileSkus } from '../components/sku-reconcile';
+import {
+  isSkuPropertiesSubset,
+  reconcileSkus,
+} from '../components/sku-reconcile';
 import {
   useDeliveryFormSchema,
   useDescriptionFormSchema,
@@ -30,6 +36,7 @@ import ProductPropertyAddForm from './modules/product-property-add-form.vue';
 const spuId = ref<number>();
 const { params, name } = useRoute();
 const { closeCurrentTab } = useTabs();
+const activeTabName = ref('info');
 const formLoading = ref(Boolean(params.id)); // 表单详情的加载中
 const submitLoading = ref(false); // 表单提交的加载中
 const descriptionUploading = ref(false); // 商品详情图片上传中
@@ -126,7 +133,11 @@ const [SkuForm, skuFormApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: useSkuFormSchema(propertyList.value, isDetail.value, legacySingleSpec.value),
+  schema: useSkuFormSchema(
+    propertyList.value,
+    isDetail.value,
+    legacySingleSpec.value,
+  ),
   showDefaultActions: false,
   handleValuesChange: (values, fieldsChanged) => {
     if (initializingForm.value) {
@@ -190,6 +201,11 @@ const [OtherForm, otherFormApi] = useVbenForm({
   handleValuesChange: markUnsavedChanges,
 });
 
+/** tab 切换 */
+function handleTabChange(key: string) {
+  activeTabName.value = key;
+}
+
 /** 标记表单存在待保存的修改 */
 function markUnsavedChanges() {
   if (initializingForm.value) {
@@ -214,7 +230,6 @@ function prepareSubmissionValues(values: ProductFormValues): MallSpuApi.Spu {
   const { customDeliveryDays, deliveryDaysPreset, ...formValues } = values;
   const preparedValues = {
     ...formValues,
-    marketingConfig: formValues.marketingConfig,
     specType: formData.value.specType ?? true,
     deliveryDays: formValues.isPreSale
       ? deliveryDaysPreset === 'custom'
@@ -321,7 +336,6 @@ async function getDetail() {
     legacySingleSpec.value = res.specType === false;
     const normalizedRes: MallSpuApi.Spu = {
       ...res,
-      marketingConfig: res.marketingConfig,
       buyLimit: res.buyLimit ?? 0,
       buyLimitLevel: res.buyLimitLevel ?? 'ALL',
       isPreSale: res.isPreSale ?? false,
@@ -340,7 +354,8 @@ async function getDetail() {
       infoFormApi.setValues({
         ...normalizedRes,
         deliveryDaysPreset:
-          normalizedRes.deliveryDays && [3, 5, 7, 15].includes(normalizedRes.deliveryDays)
+          normalizedRes.deliveryDays &&
+          [3, 5, 7, 15].includes(normalizedRes.deliveryDays)
             ? normalizedRes.deliveryDays
             : normalizedRes.deliveryDays
               ? 'custom'
@@ -360,7 +375,9 @@ async function getDetail() {
       .merge(descriptionFormApi)
       .merge(otherFormApi)
       .getValues()) as MallSpuApi.Spu;
-    savedPayloadSnapshot.value = JSON.stringify(prepareSubmissionValues(initialValues));
+    savedPayloadSnapshot.value = JSON.stringify(
+      prepareSubmissionValues(initialValues),
+    );
     hasUnsavedChanges.value = false;
   } catch {
     detailLoadFailed.value = true;
@@ -404,7 +421,10 @@ function hasSkuData(sku: MallSpuApi.Sku): boolean {
 function hasCompleteProperties(list: PropertyAndValues[]): boolean {
   return (
     list.length > 0 &&
-    list.every((property) => Array.isArray(property.values) && property.values.length > 0)
+    list.every(
+      (property) =>
+        Array.isArray(property.values) && property.values.length > 0,
+    )
   );
 }
 
@@ -440,8 +460,9 @@ async function handlePropertyChange(nextList: PropertyAndValues[]) {
     ? []
     : currentSkus.filter(
         (sku) =>
-          !nextSkus.some((nextSku) => isSkuPropertiesSubset(sku.properties, nextSku.properties)) &&
-          hasSkuData(sku),
+          !nextSkus.some((nextSku) =>
+            isSkuPropertiesSubset(sku.properties, nextSku.properties),
+          ) && hasSkuData(sku),
       );
 
   if (discardedRows.length > 0) {
@@ -483,7 +504,11 @@ watch(
   [propertyList, legacySingleSpec],
   () => {
     skuFormApi.updateSchema(
-      useSkuFormSchema(propertyList.value, isDetail.value, legacySingleSpec.value),
+      useSkuFormSchema(
+        propertyList.value,
+        isDetail.value,
+        legacySingleSpec.value,
+      ),
     );
   },
   { deep: true },
@@ -521,10 +546,40 @@ onMounted(async () => {
 
 <template>
   <div>
-    <ProductPropertyAddFormModal :property-list="propertyList" @success="handlePropertyChange" />
+    <ProductPropertyAddFormModal
+      :property-list="propertyList"
+      @success="handlePropertyChange"
+    />
 
     <Page auto-content-height>
-      <Card class="h-full w-full" :loading="formLoading">
+      <Card
+        class="h-full w-full"
+        :loading="formLoading"
+        :tab-list="[
+          {
+            key: 'info',
+            tab: '基础设置',
+          },
+          {
+            key: 'sku',
+            tab: '价格库存',
+          },
+          {
+            key: 'delivery',
+            tab: '物流设置',
+          },
+          {
+            key: 'description',
+            tab: '商品详情',
+          },
+          {
+            key: 'other',
+            tab: '其它设置',
+          },
+        ]"
+        :active-key="activeTabName"
+        @tab-change="handleTabChange"
+      >
         <Alert
           v-if="detailLoadFailed"
           class="mb-4"
@@ -537,7 +592,7 @@ onMounted(async () => {
             <Button size="small" @click="getDetail">重试</Button>
           </template>
         </Alert>
-        <template #extra>
+        <template #tabBarExtraContent>
           <Button
             type="primary"
             v-if="!isDetail"
@@ -553,87 +608,71 @@ onMounted(async () => {
           >
             保存
           </Button>
-          <Button type="default" v-else @click="() => closeCurrentTab()"> 返回列表 </Button>
+          <Button type="default" v-else @click="() => closeCurrentTab()">
+            返回列表
+          </Button>
         </template>
 
-        <nav
-          aria-label="商品设置分区"
-          class="sticky top-0 z-10 mb-5 flex flex-wrap gap-x-5 gap-y-2 border-b bg-white py-3"
-        >
-          <a href="#product-section-info">基础设置</a>
-          <a href="#product-section-sku">价格库存</a>
-          <a href="#product-section-delivery">物流设置</a>
-          <a href="#product-section-description">商品详情</a>
-          <a href="#product-section-other">其它设置</a>
-        </nav>
-
-        <section id="product-section-info" class="scroll-mt-16 space-y-4 border-b pb-8">
-          <h2 class="text-base font-semibold">基础设置</h2>
-          <InfoForm class="w-full max-w-4xl" />
-        </section>
-
-        <section id="product-section-sku" class="scroll-mt-16 space-y-4 border-b py-8">
-          <h2 class="text-base font-semibold">价格库存</h2>
-          <SkuForm class="w-full">
-            <template #legacySkuList>
-              <SkuList
-                ref="skuListRef"
-                class="w-full"
+        <InfoForm class="w-3/5" v-show="activeTabName === 'info'" />
+        <SkuForm class="w-full" v-show="activeTabName === 'sku'">
+          <template #legacySkuList>
+            <SkuList
+              ref="skuListRef"
+              class="w-full"
+              :is-detail="isDetail"
+              :prop-form-data="formData"
+              :property-list="propertyList"
+              :rule-config="ruleConfig"
+            />
+          </template>
+          <template #productAttributes>
+            <div>
+              <Button
+                v-if="!isDetail"
+                class="mb-10px mr-15px"
+                @click="openPropertyAddForm"
+              >
+                添加属性
+              </Button>
+              <ProductAttributes
+                :change-version="specVersion"
                 :is-detail="isDetail"
-                :prop-form-data="formData"
                 :property-list="propertyList"
-                :rule-config="ruleConfig"
+                @change="handlePropertyChange"
               />
-            </template>
-            <template #productAttributes>
-              <div>
-                <Button v-if="!isDetail" class="mb-10px mr-15px" @click="openPropertyAddForm">
-                  添加属性
-                </Button>
-                <ProductAttributes
-                  :change-version="specVersion"
-                  :is-detail="isDetail"
-                  :property-list="propertyList"
-                  @change="handlePropertyChange"
-                />
-              </div>
-            </template>
-            <template #batchSkuList>
-              <SkuList
-                :batch-reset-key="skuDraftVersion"
-                :is-batch="true"
-                :is-detail="isDetail"
-                :prop-form-data="formData"
-                :property-list="propertyList"
-              />
-            </template>
-            <template #multiSkuList>
-              <SkuList
-                ref="skuListRef"
-                :is-detail="isDetail"
-                :prop-form-data="formData"
-                :property-list="propertyList"
-                :rule-config="ruleConfig"
-              />
-            </template>
-          </SkuForm>
-        </section>
-
-        <section id="product-section-delivery" class="scroll-mt-16 space-y-4 border-b py-8">
-          <h2 class="text-base font-semibold">物流设置</h2>
-          <DeliveryForm class="w-full max-w-4xl" />
-        </section>
-
-        <section id="product-section-description" class="scroll-mt-16 space-y-4 border-b py-8">
-          <h2 class="text-base font-semibold">商品详情</h2>
-          <DescriptionForm class="w-full max-w-4xl" />
-        </section>
-
-        <section id="product-section-other" class="scroll-mt-16 space-y-4 pt-8">
-          <h2 class="text-base font-semibold">其它设置</h2>
-          <OtherForm class="w-full max-w-4xl" />
-        </section>
+            </div>
+          </template>
+          <template #batchSkuList>
+            <SkuList
+              :batch-reset-key="skuDraftVersion"
+              :is-batch="true"
+              :is-detail="isDetail"
+              :prop-form-data="formData"
+              :property-list="propertyList"
+            />
+          </template>
+          <template #multiSkuList>
+            <SkuList
+              ref="skuListRef"
+              :is-detail="isDetail"
+              :prop-form-data="formData"
+              :property-list="propertyList"
+              :rule-config="ruleConfig"
+            />
+          </template>
+        </SkuForm>
+        <DeliveryForm class="w-3/5" v-show="activeTabName === 'delivery'" />
+        <DescriptionForm
+          class="w-3/5"
+          v-show="activeTabName === 'description'"
+        />
+        <OtherForm class="w-3/5" v-show="activeTabName === 'other'" />
       </Card>
     </Page>
   </div>
 </template>
+<style lang="scss" scoped>
+:deep(.ant-tabs-tab-btn) {
+  font-size: 14px !important;
+}
+</style>
