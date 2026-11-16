@@ -33,6 +33,22 @@ export namespace MallSpuApi {
     createTime?: Date; // 商品创建时间
     status?: number; // 商品状态
     browseCount?: number; // 浏览量
+    /** 商品编辑扩展配置，供推广入口和移动端消费 */
+    marketingConfig?: MarketingConfig;
+  }
+
+  export interface MarketingConfig {
+    groups?: string[];
+    preSaleDays?: number;
+    purchaseLimit?: number;
+    memberLevels?: string[];
+    pointRules?: string[];
+    userGroups?: string[];
+    priceSymbol?: string;
+    skuColumnWidth?: number;
+    hideSingleSku?: boolean;
+    pointProduct?: boolean;
+    pointQuantity?: number;
   }
 
   /** 商品 SKU */

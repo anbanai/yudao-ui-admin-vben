@@ -22,6 +22,10 @@ import {
 import { $t } from '#/locales';
 
 import { useGridColumns, useGridFormSchema } from './data';
+import PromotionPanel from './components/promotion-panel.vue';
+
+const promotionOpen = ref(false);
+const promotionSpuId = ref<number>();
 
 const { push } = useRouter();
 const route = useRoute();
@@ -149,6 +153,11 @@ function handleDetail(row: MallSpuApi.Spu) {
   push({ name: 'ProductSpuDetail', params: { id: row.id } });
 }
 
+function handlePromote(row: MallSpuApi.Spu) {
+  promotionSpuId.value = row.id;
+  promotionOpen.value = true;
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
@@ -255,6 +264,13 @@ onMounted(async () => {
               onClick: handleDetail.bind(null, row),
             },
             {
+              label: '推广',
+              type: 'link',
+              icon: ACTION_ICON.COPY,
+              auth: ['product:spu:query'],
+              onClick: handlePromote.bind(null, row),
+            },
+            {
               label: $t('common.delete'),
               type: 'link',
               danger: true,
@@ -292,5 +308,6 @@ onMounted(async () => {
         />
       </template>
     </Grid>
+    <PromotionPanel v-model="promotionOpen" :spu-id="promotionSpuId" />
   </Page>
 </template>

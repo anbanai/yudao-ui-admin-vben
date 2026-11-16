@@ -12,7 +12,8 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { useTabs } from '@vben/hooks';
 import { convertToInteger, formatToFraction } from '@vben/utils';
 
-import { Button, Card, message } from 'ant-design-vue';
+import { Button, Card, message, Select } from 'ant-design-vue';
+import draggable from 'vuedraggable';
 
 import { useVbenForm } from '#/adapter/form';
 import { createSpu, getSpu, updateSpu } from '#/api/mall/product/spu';
@@ -27,6 +28,7 @@ import {
 } from './data';
 import ProductAttributes from './modules/product-attributes.vue';
 import ProductPropertyAddForm from './modules/product-property-add-form.vue';
+import PromotionPanel from '../components/promotion-panel.vue';
 
 const spuId = ref<number>();
 const { params, name } = useRoute();
@@ -36,6 +38,7 @@ const formLoading = ref(false); // 表单的加载中：1）修改时的数据�
 const isDetail = ref(name === 'ProductSpuDetail'); // 是否查看详情
 const initializingForm = ref(false); // 详情回填时不触发 SKU 重置逻辑
 const skuListRef = ref(); // 商品属性列表 Ref
+const promotionOpen = ref(false);
 
 const formData = ref<MallSpuApi.Spu>({
   name: '',
@@ -68,6 +71,17 @@ const formData = ref<MallSpuApi.Spu>({
   sort: 0,
   giveIntegral: 0,
   virtualSalesCount: 0,
+  marketingConfig: {
+    groups: [],
+    memberLevels: [],
+    pointRules: [],
+    userGroups: [],
+    priceSymbol: '¥',
+    skuColumnWidth: 168,
+    hideSingleSku: false,
+    pointProduct: false,
+    pointQuantity: 0,
+  },
 }); // spu 表单数据
 const propertyList = ref<PropertyAndValues[]>([]); // 商品属性列表
 const ruleConfig: RuleConfig[] = [
@@ -222,6 +236,10 @@ async function handleSubmit() {
       : newSliderPicUrls.push(item);
   });
   values.sliderPicUrls = newSliderPicUrls;
+  values.marketingConfig = {
+    ...formData.value.marketingConfig,
+    ...values.marketingConfig,
+  };
 
   // 提交数据
   await (spuId.value ? updateSpu(values) : createSpu(values));
@@ -242,6 +260,18 @@ async function getDetail() {
   formLoading.value = true;
   try {
     const res = await getSpu(spuId.value!);
+    res.marketingConfig = {
+      groups: [],
+      memberLevels: [],
+      pointRules: [],
+      userGroups: [],
+      priceSymbol: '¥',
+      skuColumnWidth: 168,
+      hideSingleSku: false,
+      pointProduct: false,
+      pointQuantity: 0,
+      ...res.marketingConfig,
+    };
     // 金额转换：分转元
     res.skus = res.skus?.map((item) => ({
       ...item,
@@ -370,12 +400,26 @@ onMounted(async () => {
           <Button type="primary" v-if="!isDetail" @click="handleSubmit">
             保存
           </Button>
+          <Button v-if="spuId" @click="promotionOpen = true">推广</Button>
           <Button type="default" v-else @click="() => closeCurrentTab()">
             返回列表
           </Button>
         </template>
 
-        <InfoForm class="w-3/5" v-show="activeTabName === 'info'" />
+        <div v-show="activeTabName === 'info'" class="w-3/5">
+          <InfoForm />
+          <div class="mt-4 rounded border p-4">
+            <div class="mb-2 font-medium">轮播图排序</div>
+            <draggable v-model="formData.sliderPicUrls" :item-key="(item: any) => typeof item === 'string' ? item : item.url" class="flex flex-wrap gap-2" :disabled="isDetail">
+              <template #item="{ element, index }">
+                <div class="relative h-20 w-20 overflow-hidden rounded border" :title="`第 ${index + 1} 张`">
+                  <img :src="typeof element === 'string' ? element : element.url" class="h-full w-full object-cover" />
+                  <span class="absolute bottom-0 left-0 bg-black/60 px-1 text-xs text-white">{{ index + 1 }}</span>
+                </div>
+              </template>
+            </draggable>
+          </div>
+        </div>
         <SkuForm class="w-full" v-show="activeTabName === 'sku'">
           <template #singleSkuList>
             <SkuList
@@ -422,9 +466,28 @@ onMounted(async () => {
           class="w-3/5"
           v-show="activeTabName === 'description'"
         />
-        <OtherForm class="w-3/5" v-show="activeTabName === 'other'" />
+        <div v-show="activeTabName === 'other'" class="w-3/5">
+          <OtherForm />
+          <div class="mt-4 rounded border p-4">
+            <div class="mb-3 font-medium">营销与展示</div>
+            <div class="grid grid-cols-2 gap-3">
+              <label>商品分组<Select v-model:value="formData.marketingConfig!.groups" mode="tags" class="w-full" /></label>
+              <label>预售周期（天）<input v-model.number="formData.marketingConfig!.preSaleDays" type="number" min="0" class="form-input" /></label>
+              <label>限购数量<input v-model.number="formData.marketingConfig!.purchaseLimit" type="number" min="0" class="form-input" /></label>
+              <label>价格符号<input v-model="formData.marketingConfig!.priceSymbol" class="form-input" maxlength="3" /></label>
+              <label>规格展示宽度<input v-model.number="formData.marketingConfig!.skuColumnWidth" type="number" min="80" max="360" class="form-input" /></label>
+              <label class="flex items-center gap-2"><input v-model="formData.marketingConfig!.hideSingleSku" type="checkbox" />隐藏单规格</label>
+              <label class="flex items-center gap-2"><input v-model="formData.marketingConfig!.pointProduct" type="checkbox" />积分商品</label>
+              <label>兑换积分<input v-model.number="formData.marketingConfig!.pointQuantity" type="number" min="0" class="form-input" /></label>
+              <label>会员等级<Select v-model:value="formData.marketingConfig!.memberLevels" mode="tags" class="w-full" /></label>
+              <label>积分规则<Select v-model:value="formData.marketingConfig!.pointRules" mode="tags" class="w-full" /></label>
+              <label>人群项<Select v-model:value="formData.marketingConfig!.userGroups" mode="tags" class="w-full" /></label>
+            </div>
+          </div>
+        </div>
       </Card>
     </Page>
+    <PromotionPanel v-model="promotionOpen" :spu-id="spuId" />
   </div>
 </template>
 <style lang="scss" scoped>
