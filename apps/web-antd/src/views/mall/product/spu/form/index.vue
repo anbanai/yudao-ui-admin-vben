@@ -1,9 +1,6 @@
 <script lang="ts" setup>
 import type { MallSpuApi } from '#/api/mall/product/spu';
-import type {
-  PropertyAndValues,
-  RuleConfig,
-} from '#/views/mall/product/spu/components';
+import type { PropertyAndValues, RuleConfig } from '#/views/mall/product/spu/components';
 
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -19,10 +16,7 @@ import { createSpu, getSpu, updateSpu } from '#/api/mall/product/spu';
 import { withOperationFeedback } from '#/utils/operation-feedback';
 import { getPropertyList, SkuList } from '#/views/mall/product/spu/components';
 
-import {
-  isSkuPropertiesSubset,
-  reconcileSkus,
-} from '../components/sku-reconcile';
+import { isSkuPropertiesSubset, reconcileSkus } from '../components/sku-reconcile';
 import {
   useDeliveryFormSchema,
   useDescriptionFormSchema,
@@ -132,11 +126,7 @@ const [SkuForm, skuFormApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: useSkuFormSchema(
-    propertyList.value,
-    isDetail.value,
-    legacySingleSpec.value,
-  ),
+  schema: useSkuFormSchema(propertyList.value, isDetail.value, legacySingleSpec.value),
   showDefaultActions: false,
   handleValuesChange: (values, fieldsChanged) => {
     if (initializingForm.value) {
@@ -224,6 +214,7 @@ function prepareSubmissionValues(values: ProductFormValues): MallSpuApi.Spu {
   const { customDeliveryDays, deliveryDaysPreset, ...formValues } = values;
   const preparedValues = {
     ...formValues,
+    marketingConfig: formValues.marketingConfig,
     specType: formData.value.specType ?? true,
     deliveryDays: formValues.isPreSale
       ? deliveryDaysPreset === 'custom'
@@ -330,6 +321,7 @@ async function getDetail() {
     legacySingleSpec.value = res.specType === false;
     const normalizedRes: MallSpuApi.Spu = {
       ...res,
+      marketingConfig: res.marketingConfig,
       buyLimit: res.buyLimit ?? 0,
       buyLimitLevel: res.buyLimitLevel ?? 'ALL',
       isPreSale: res.isPreSale ?? false,
@@ -348,8 +340,7 @@ async function getDetail() {
       infoFormApi.setValues({
         ...normalizedRes,
         deliveryDaysPreset:
-          normalizedRes.deliveryDays &&
-          [3, 5, 7, 15].includes(normalizedRes.deliveryDays)
+          normalizedRes.deliveryDays && [3, 5, 7, 15].includes(normalizedRes.deliveryDays)
             ? normalizedRes.deliveryDays
             : normalizedRes.deliveryDays
               ? 'custom'
@@ -369,9 +360,7 @@ async function getDetail() {
       .merge(descriptionFormApi)
       .merge(otherFormApi)
       .getValues()) as MallSpuApi.Spu;
-    savedPayloadSnapshot.value = JSON.stringify(
-      prepareSubmissionValues(initialValues),
-    );
+    savedPayloadSnapshot.value = JSON.stringify(prepareSubmissionValues(initialValues));
     hasUnsavedChanges.value = false;
   } catch {
     detailLoadFailed.value = true;
@@ -415,10 +404,7 @@ function hasSkuData(sku: MallSpuApi.Sku): boolean {
 function hasCompleteProperties(list: PropertyAndValues[]): boolean {
   return (
     list.length > 0 &&
-    list.every(
-      (property) =>
-        Array.isArray(property.values) && property.values.length > 0,
-    )
+    list.every((property) => Array.isArray(property.values) && property.values.length > 0)
   );
 }
 
@@ -454,9 +440,8 @@ async function handlePropertyChange(nextList: PropertyAndValues[]) {
     ? []
     : currentSkus.filter(
         (sku) =>
-          !nextSkus.some((nextSku) =>
-            isSkuPropertiesSubset(sku.properties, nextSku.properties),
-          ) && hasSkuData(sku),
+          !nextSkus.some((nextSku) => isSkuPropertiesSubset(sku.properties, nextSku.properties)) &&
+          hasSkuData(sku),
       );
 
   if (discardedRows.length > 0) {
@@ -498,11 +483,7 @@ watch(
   [propertyList, legacySingleSpec],
   () => {
     skuFormApi.updateSchema(
-      useSkuFormSchema(
-        propertyList.value,
-        isDetail.value,
-        legacySingleSpec.value,
-      ),
+      useSkuFormSchema(propertyList.value, isDetail.value, legacySingleSpec.value),
     );
   },
   { deep: true },
@@ -540,10 +521,7 @@ onMounted(async () => {
 
 <template>
   <div>
-    <ProductPropertyAddFormModal
-      :property-list="propertyList"
-      @success="handlePropertyChange"
-    />
+    <ProductPropertyAddFormModal :property-list="propertyList" @success="handlePropertyChange" />
 
     <Page auto-content-height>
       <Card class="h-full w-full" :loading="formLoading">
@@ -575,9 +553,7 @@ onMounted(async () => {
           >
             保存
           </Button>
-          <Button type="default" v-else @click="() => closeCurrentTab()">
-            返回列表
-          </Button>
+          <Button type="default" v-else @click="() => closeCurrentTab()"> 返回列表 </Button>
         </template>
 
         <nav
@@ -591,18 +567,12 @@ onMounted(async () => {
           <a href="#product-section-other">其它设置</a>
         </nav>
 
-        <section
-          id="product-section-info"
-          class="scroll-mt-16 space-y-4 border-b pb-8"
-        >
+        <section id="product-section-info" class="scroll-mt-16 space-y-4 border-b pb-8">
           <h2 class="text-base font-semibold">基础设置</h2>
           <InfoForm class="w-full max-w-4xl" />
         </section>
 
-        <section
-          id="product-section-sku"
-          class="scroll-mt-16 space-y-4 border-b py-8"
-        >
+        <section id="product-section-sku" class="scroll-mt-16 space-y-4 border-b py-8">
           <h2 class="text-base font-semibold">价格库存</h2>
           <SkuForm class="w-full">
             <template #legacySkuList>
@@ -617,11 +587,7 @@ onMounted(async () => {
             </template>
             <template #productAttributes>
               <div>
-                <Button
-                  v-if="!isDetail"
-                  class="mb-10px mr-15px"
-                  @click="openPropertyAddForm"
-                >
+                <Button v-if="!isDetail" class="mb-10px mr-15px" @click="openPropertyAddForm">
                   添加属性
                 </Button>
                 <ProductAttributes
@@ -653,18 +619,12 @@ onMounted(async () => {
           </SkuForm>
         </section>
 
-        <section
-          id="product-section-delivery"
-          class="scroll-mt-16 space-y-4 border-b py-8"
-        >
+        <section id="product-section-delivery" class="scroll-mt-16 space-y-4 border-b py-8">
           <h2 class="text-base font-semibold">物流设置</h2>
           <DeliveryForm class="w-full max-w-4xl" />
         </section>
 
-        <section
-          id="product-section-description"
-          class="scroll-mt-16 space-y-4 border-b py-8"
-        >
+        <section id="product-section-description" class="scroll-mt-16 space-y-4 border-b py-8">
           <h2 class="text-base font-semibold">商品详情</h2>
           <DescriptionForm class="w-full max-w-4xl" />
         </section>

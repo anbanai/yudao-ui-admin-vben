@@ -10,6 +10,8 @@ import { getSelectableGroupList } from '#/api/mall/product/group';
 import { getSimpleMerchantList } from '#/api/mall/product/merchant';
 import { getSimpleTemplateList } from '#/api/mall/trade/delivery/expressTemplate';
 
+import MarketingConfigForm from './modules/marketing-config-form.vue';
+
 /** 基础设置的表单 */
 export function useInfoFormSchema(): VbenFormSchema[] {
   return [
@@ -190,9 +192,7 @@ export function useInfoFormSchema(): VbenFormSchema[] {
         triggerFields: ['isPreSale', 'deliveryDaysPreset'],
         resolve({ values }) {
           return {
-            show:
-              values.isPreSale === true &&
-              values.deliveryDaysPreset === 'custom',
+            show: values.isPreSale === true && values.deliveryDaysPreset === 'custom',
           };
         },
       },
@@ -209,10 +209,7 @@ export function useSkuFormSchema(
 ): VbenFormSchema[] {
   const hasCompleteProperties =
     propertyList.length > 0 &&
-    propertyList.every(
-      (property) =>
-        Array.isArray(property.values) && property.values.length > 0,
-    );
+    propertyList.every((property) => Array.isArray(property.values) && property.values.length > 0);
 
   return [
     {
@@ -412,6 +409,11 @@ export function useOtherFormSchema(): VbenFormSchema[] {
         step: 0.1,
       },
       rules: 'required',
+    },
+    {
+      fieldName: 'marketingConfig',
+      label: '会员与标签限购',
+      component: MarketingConfigForm,
     },
   ];
 }
