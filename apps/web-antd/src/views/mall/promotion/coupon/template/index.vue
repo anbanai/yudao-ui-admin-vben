@@ -17,8 +17,14 @@ import {
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+import Promotion from './modules/promotion.vue';
 
 defineOptions({ name: 'PromotionCouponTemplate' });
+
+const [PromotionModal, promotionModalApi] = useVbenModal({
+  connectedComponent: Promotion,
+  destroyOnClose: true,
+});
 
 const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
@@ -114,6 +120,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       />
     </template>
 
+    <PromotionModal />
     <FormModal @success="handleRefresh" />
     <Grid table-title="优惠券列表">
       <template #toolbar-tools>
@@ -138,6 +145,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
               icon: ACTION_ICON.EDIT,
               auth: ['promotion:coupon-template:update'],
               onClick: handleEdit.bind(null, row),
+            },
+            {
+              label: '推广',
+              type: 'link',
+              auth: ['promotion:coupon-template:query'],
+              ifShow: row.status === 0 && row.takeType === 1,
+              onClick: () => promotionModalApi.setData(row).open(),
             },
             {
               label: $t('common.delete'),

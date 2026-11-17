@@ -1,6 +1,56 @@
 import type { VbenFormSchema } from '#/adapter/form';
 
+import { z } from '#/adapter/form';
+
+const clock = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, '请输入HH:mm')
+  .nullish();
+
 export const schema: VbenFormSchema[] = [
+  {
+    fieldName: 'pointValidityDays',
+    label: '积分有效天数',
+    component: 'InputNumber',
+    defaultValue: 365,
+    rules: z.number().int().min(1),
+    help: '逐笔固定到期，修改只影响之后发放的积分，消费按先到期先扣。',
+    componentProps: { min: 1, precision: 0, class: '!w-full' },
+  },
+  {
+    fieldName: 'pointDoubleStartTime',
+    label: '双倍开始时间',
+    component: 'TimePicker',
+    rules: clock,
+    componentProps: { format: 'HH:mm', valueFormat: 'HH:mm', allowClear: true },
+    help: '开始和结束需同时配置或同时清空。命中固定2倍；支持跨午夜；起止相同表示全天。',
+  },
+  {
+    fieldName: 'pointDoubleEndTime',
+    label: '双倍结束时间',
+    component: 'TimePicker',
+    rules: clock,
+    componentProps: { format: 'HH:mm', valueFormat: 'HH:mm', allowClear: true },
+  },
+  {
+    fieldName: 'pointDoubleTimezone',
+    label: '双倍时区',
+    component: 'Input',
+    defaultValue: 'Asia/Shanghai',
+    rules: 'required',
+    componentProps: { placeholder: '如 Asia/Shanghai' },
+  },
+  {
+    fieldName: 'pointDoubleWeekdays',
+    label: '双倍起始星期',
+    component: 'Input',
+    rules: z
+      .string()
+      .regex(/^$|^[1-7](,[1-7])*$/, '请输入1至7，英文逗号分隔')
+      .nullish(),
+    help: '1为周一，7为周日；留空每天。跨午夜时凌晨归前一天；最终积分向下取整。',
+    componentProps: { placeholder: '例如 1,3,5' },
+  },
   {
     component: 'Input',
     fieldName: 'id',

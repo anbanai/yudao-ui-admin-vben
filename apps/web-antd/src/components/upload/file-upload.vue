@@ -10,7 +10,13 @@ import { computed, ref, toRefs, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
-import { checkFileType, isFunction, isObject, isString } from '@vben/utils';
+import {
+  checkFileType,
+  getFileNameFromUrl,
+  isFunction,
+  isObject,
+  isString,
+} from '@vben/utils';
 
 import { Button, message, Upload } from 'ant-design-vue';
 
@@ -47,6 +53,7 @@ const emit = defineEmits([
   'delete',
   'returnText',
   'preview',
+  'update:fileSize',
 ]);
 const { accept, helpText, maxNumber, maxSize } = toRefs(props);
 const isInnerOperate = ref<boolean>(false);
@@ -93,7 +100,7 @@ watch(
           if (item && isString(item)) {
             return {
               uid: `${-i}`,
-              name: item.slice(Math.max(0, item.lastIndexOf('/') + 1)),
+              name: getFileNameFromUrl(item),
               status: UploadResultStatus.DONE,
               url: item,
             };
@@ -255,6 +262,8 @@ function handleUploadSuccess(res: any, file: File) {
     emit('update:value', value);
     emit('update:modelValue', value);
     emit('change', value);
+    // 通知调用方最新上传文件的大小（用于保存文件元数据）
+    emit('update:fileSize', file.size);
   }
 }
 

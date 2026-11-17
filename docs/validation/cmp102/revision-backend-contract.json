@@ -1,0 +1,29 @@
+{
+  "source": "Current backend working copy; changes not assumed deployed or committed",
+  "status": {
+    "PENDING": 0,
+    "SUCCEEDED": 1,
+    "FAILED": 2,
+    "CANCELED": 3
+  },
+  "cancel": {
+    "method": "POST",
+    "path": "/promotion/coupon/send-cancel",
+    "query": "batchId",
+    "permission": "promotion:coupon:send"
+  },
+  "sources": [
+    {
+      "file": "yudao-module-mall/yudao-module-promotion-api/src/main/java/cn/iocoder/yudao/module/promotion/enums/coupon/CouponSendBatchStatusEnum.java",
+      "sha256": "ad5ddf1fc9f65c91fd86eb2d564f04b99776c8c8c4ab091c10ded5ead5f508ff"
+    },
+    {
+      "file": "yudao-module-mall/yudao-module-promotion-server/src/main/java/cn/iocoder/yudao/module/promotion/service/coupon/CouponBatchService.java",
+      "sha256": "be59e436f64db9a4c6495edad4497750065661a4936c5ef4c3ca32e96aa3880b"
+    },
+    {
+      "file": "yudao-module-mall/yudao-module-promotion-server/src/main/java/cn/iocoder/yudao/module/promotion/controller/admin/coupon/CouponController.java",
+      "sha256": "2544a1cd10b45357369e312142ac71d2959c12f8832e1d2f93e20af11fcb1ce4"
+    }
+  ]
+}

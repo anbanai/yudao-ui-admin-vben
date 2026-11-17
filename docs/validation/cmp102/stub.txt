@@ -1,0 +1,81 @@
+.                                        | [WARN] Unsupported engine: wanted: {"node":"^22.18.0 || ^24.12.0"} (current: {"node":"v26.13.0","pnpm":"11.16.0"})
+Scope: 43 of 44 workspace projects
+internal/node-utils stub$ node ./scripts/build.mjs
+internal/lint-configs/oxfmt-config stub$ pnpm exec tsdown
+internal/lint-configs/oxlint-config stub$ pnpm exec tsdown
+packages/@core/base/shared stub$ pnpm run build
+packages/@core/base/shared stub: $ pnpm exec tsdown
+packages/@core/base/shared stub: ℹ tsdown v0.22.14 powered by rolldown v1.2.6
+internal/lint-configs/oxlint-config stub: ℹ tsdown v0.22.14 powered by rolldown v1.2.6
+internal/lint-configs/oxfmt-config stub: ℹ tsdown v0.22.14 powered by rolldown v1.2.6
+internal/node-utils stub: ℹ tsdown v0.22.14 powered by rolldown v1.2.6
+internal/node-utils stub: ℹ config file: /Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376/internal/node-utils/tsdown.config.ts 
+packages/@core/base/shared stub: ℹ config file: /Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376/packages/@core/base/shared/tsdown.config.ts 
+internal/lint-configs/oxfmt-config stub: ℹ config file: /Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376/internal/lint-configs/oxfmt-config/tsdown.config.ts 
+internal/lint-configs/oxlint-config stub: ℹ config file: /Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376/internal/lint-configs/oxlint-config/tsdown.config.ts 
+internal/node-utils stub: ℹ entry: src/index.ts
+internal/node-utils stub: ℹ tsconfig: tsconfig.json
+internal/node-utils stub: ℹ Build start
+internal/node-utils stub:  WARN  `deps.skipNodeModulesBundle` is deprecated. Use `deps.neverBundle: true` instead.
+packages/@core/base/shared stub: ℹ entry: src/cache/index.ts, src/color/index.ts, src/constants/index.ts, src/global-state.ts, src/store.ts, src/utils/index.ts
+packages/@core/base/shared stub: ℹ tsconfig: tsconfig.json
+packages/@core/base/shared stub: ℹ Build start
+internal/lint-configs/oxlint-config stub: ℹ entry: src/index.ts
+internal/lint-configs/oxlint-config stub: ℹ tsconfig: tsconfig.json
+internal/lint-configs/oxlint-config stub: ℹ Build start
+internal/lint-configs/oxfmt-config stub: ℹ entry: src/index.ts
+internal/lint-configs/oxfmt-config stub: ℹ tsconfig: tsconfig.json
+internal/lint-configs/oxfmt-config stub: ℹ Build start
+internal/node-utils stub: ℹ dist/index.mjs  6.82 kB │ gzip: 2.50 kB
+internal/node-utils stub: ℹ 1 files, total: 6.82 kB
+internal/node-utils stub: ✔ Build complete in 13ms
+internal/lint-configs/oxfmt-config stub: ℹ dist/index.mjs   2.79 kB │ gzip: 1.45 kB
+internal/lint-configs/oxfmt-config stub: ℹ dist/index.d.ts  0.31 kB │ gzip: 0.18 kB
+internal/lint-configs/oxfmt-config stub: ℹ 2 files, total: 3.10 kB
+internal/lint-configs/oxfmt-config stub: ✔ Build complete in 519ms
+internal/lint-configs/oxfmt-config stub: Done
+internal/lint-configs/oxlint-config stub: ℹ dist/index.mjs   18.22 kB │ gzip: 4.69 kB
+internal/lint-configs/oxlint-config stub: ℹ dist/index.d.ts   1.82 kB │ gzip: 0.41 kB
+internal/lint-configs/oxlint-config stub: ℹ 2 files, total: 20.04 kB
+internal/lint-configs/oxlint-config stub: ✔ Build complete in 647ms
+internal/lint-configs/oxlint-config stub: Done
+packages/@core/base/shared stub: ℹ dist/utils/index.mjs       59.61 kB │ gzip: 17.85 kB
+packages/@core/base/shared stub: ℹ dist/cache/index.mjs        8.07 kB │ gzip:  2.36 kB
+packages/@core/base/shared stub: ℹ dist/color/index.mjs        2.90 kB │ gzip:  1.20 kB
+packages/@core/base/shared stub: ℹ dist/constants/index.mjs    1.50 kB │ gzip:  0.57 kB
+packages/@core/base/shared stub: ℹ dist/global-state.mjs       0.49 kB │ gzip:  0.30 kB
+packages/@core/base/shared stub: ℹ dist/store.mjs              0.05 kB │ gzip:  0.06 kB
+packages/@core/base/shared stub: ℹ dist/globals-C9zDxY6C.mjs   1.15 kB │ gzip:  0.50 kB
+packages/@core/base/shared stub: ℹ dist/utils/index.d.ts      14.55 kB │ gzip:  3.67 kB
+packages/@core/base/shared stub: ℹ dist/cache/index.d.ts       2.60 kB │ gzip:  0.60 kB
+packages/@core/base/shared stub: ℹ dist/constants/index.d.ts   1.71 kB │ gzip:  0.53 kB
+packages/@core/base/shared stub: ℹ dist/color/index.d.ts       0.81 kB │ gzip:  0.30 kB
+packages/@core/base/shared stub: ℹ dist/global-state.d.ts      0.61 kB │ gzip:  0.28 kB
+packages/@core/base/shared stub: ℹ dist/store.d.ts             0.04 kB │ gzip:  0.06 kB
+packages/@core/base/shared stub: ℹ 13 files, total: 94.08 kB
+packages/@core/base/shared stub: ✔ Build complete in 793ms
+packages/@core/base/shared stub: Done
+internal/node-utils stub: src/date.ts(1,19): error TS2307: Cannot find module 'dayjs' or its corresponding type declarations.
+internal/node-utils stub: src/date.ts(2,22): error TS2307: Cannot find module 'dayjs/plugin/timezone.js' or its corresponding type declarations.
+internal/node-utils stub: src/date.ts(3,17): error TS2307: Cannot find module 'dayjs/plugin/utc.js' or its corresponding type declarations.
+internal/node-utils stub: src/formatter.ts(3,23): error TS2307: Cannot find module 'execa' or its corresponding type declarations.
+internal/node-utils stub: src/git.ts(3,23): error TS2307: Cannot find module 'execa' or its corresponding type declarations.
+internal/node-utils stub: src/git.ts(5,15): error TS2307: Cannot find module '@changesets/git' or its corresponding type declarations.
+internal/node-utils stub: src/git.ts(30,36): error TS7006: Parameter 'item' implicitly has an 'any' type.
+internal/node-utils stub: src/git.ts(33,5): error TS2322: Type 'unknown[]' is not assignable to type 'string[]'.
+internal/node-utils stub:   Type 'unknown' is not assignable to type 'string'.
+internal/node-utils stub: src/index.ts(6,26): error TS2305: Module '"./git"' has no exported member 'add'.
+internal/node-utils stub: src/index.ts(11,30): error TS2307: Cannot find module '@manypkg/get-packages' or its corresponding type declarations.
+internal/node-utils stub: src/index.ts(12,35): error TS2307: Cannot find module 'chalk' or its corresponding type declarations.
+internal/node-utils stub: src/index.ts(13,25): error TS2307: Cannot find module 'consola' or its corresponding type declarations.
+internal/node-utils stub: src/index.ts(14,15): error TS2307: Cannot find module 'execa' or its corresponding type declarations.
+internal/node-utils stub: src/index.ts(18,51): error TS2307: Cannot find module 'pkg-types' or its corresponding type declarations.
+internal/node-utils stub: src/monorepo.ts(1,30): error TS2307: Cannot find module '@manypkg/get-packages' or its corresponding type declarations.
+internal/node-utils stub: src/monorepo.ts(6,26): error TS2307: Cannot find module '@manypkg/get-packages' or its corresponding type declarations.
+internal/node-utils stub: src/spinner.ts(1,26): error TS2307: Cannot find module 'ora' or its corresponding type declarations.
+internal/node-utils stub: src/spinner.ts(3,17): error TS2307: Cannot find module 'ora' or its corresponding type declarations.
+internal/node-utils stub: Failed
+/Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376/internal/node-utils:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @vben/node-utils@5.7.0 stub: `node ./scripts/build.mjs`
+Exit status 2
+[WARN]  Local package.json exists, but node_modules missing, did you mean to install?

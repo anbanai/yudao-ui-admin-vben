@@ -5,7 +5,7 @@ import { onMounted, ref } from 'vue';
 
 import { useAccess } from '@vben/access';
 
-import { Button, Card, Modal } from 'antdv-next';
+import { Button, Card, Modal, Spin } from 'antdv-next';
 
 import {
   getEmployeeFileList,
@@ -63,7 +63,7 @@ async function saveFiles() {
 onMounted(getFileListData);
 </script>
 <template>
-  <div v-loading="loading">
+  <Spin :spinning="loading">
     <Card
       v-for="group in HrmEmployeeFileGroups"
       :key="group.label"
@@ -102,5 +102,5 @@ onMounted(getFileListData);
         </Button>
       </template>
     </Modal>
-  </div>
+  </Spin>
 </template>

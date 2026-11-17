@@ -176,6 +176,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
           ]"
           :drop-down-actions="[
             {
+              label: '发送优惠券',
+              type: 'link',
+              auth: ['promotion:coupon:send'],
+              onClick: () =>
+                couponSendFormModalApi.setData({ userIds: [row.id] }).open(),
+            },
+            {
               label: $t('common.edit'),
               type: 'link',
               auth: ['member:user:update'],

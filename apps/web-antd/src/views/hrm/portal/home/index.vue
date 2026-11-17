@@ -6,7 +6,7 @@ import type { HrmPortalSalarySlipApi } from '#/api/hrm/portal/salary/slip';
 import { onActivated, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { Page } from '@vben/common-ui';
+import { DocAlert, Page } from '@vben/common-ui';
 
 import { Col, Row, Spin } from 'ant-design-vue';
 
@@ -17,7 +17,7 @@ import HrmHomeCalendar from '#/views/hrm/home/components/calendar.vue';
 import { HrmHomeCalendarItemType } from '#/views/hrm/utils/constants';
 import { checkHrmPortalAccess } from '#/views/hrm/utils/employee';
 
-import EmployeeSurvey from './components/employee-survey.vue';
+import EmployeeSurvey from './modules/employee-survey.vue';
 
 defineOptions({ name: 'HrmPortalHome' });
 
@@ -61,6 +61,7 @@ onActivated(async () => {
 
 <template>
   <Page v-if="accessible">
+    <DocAlert title="【员工】员工管理" url="https://doc.iocoder.cn/hrm/employee/" />
     <Spin :spinning="loading">
       <Row :gutter="[16, 16]" align="top">
         <Col :span="16">

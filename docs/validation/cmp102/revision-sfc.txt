@@ -1,0 +1,3 @@
+Vue SFC parse + script/template compilation: 2 changed components passed.
+apps/web-antd/src/views/mall/promotion/coupon/components/send-form.vue
+apps/web-antd/src/views/mall/promotion/coupon/components/send-confirmation.vue

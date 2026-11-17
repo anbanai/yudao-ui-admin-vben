@@ -8,7 +8,7 @@ import { CouponTemplateTakeTypeEnum } from '@vben/constants';
 import { message } from 'ant-design-vue';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { sendCoupon } from '#/api/mall/promotion/coupon/coupon';
+import { submitCouponSend, previewCouponSend } from '#/api/mall/promotion/coupon/coupon';
 import { getCouponTemplatePage } from '#/api/mall/promotion/coupon/couponTemplate';
 
 import { useFormSchema, useGridColumns } from './send-form-data';
@@ -21,10 +21,12 @@ async function handleSendCoupon(row: MallCouponTemplateApi.CouponTemplate) {
     if (!data) {
       return;
     }
-    await sendCoupon({
+    const batch = await previewCouponSend({
       templateId: row.id,
       userIds: data.userIds,
+      idempotencyKey: `admin-${row.id}-${Date.now()}`,
     });
+    await submitCouponSend(batch.id);
     message.success('发送成功');
     await modalApi.close();
   } finally {
