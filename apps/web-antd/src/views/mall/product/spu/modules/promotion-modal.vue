@@ -14,6 +14,7 @@ import { IconifyIcon } from '@vben/icons';
 import { Button, message, Segmented, Spin, Tabs } from 'ant-design-vue';
 
 import { getSpu } from '#/api/mall/product/spu';
+import { getPointActivityPage } from '#/api/mall/promotion/point';
 import { getWxaQrcode } from '#/api/member/social';
 
 import { renderPromotionAsset } from '../promotion-renderer';
@@ -23,6 +24,8 @@ import {
   buildPromotionFilename,
   createMemberIdentity,
   createShopIdentity,
+  findPointOffer,
+  type PromotionPointOffer,
 } from '../promotion-share';
 import PromotionMemberSelect from './promotion-member-select.vue';
 
@@ -43,6 +46,7 @@ const H5_CONFIG_MESSAGE = '请配置 VITE_MALL_H5_DOMAIN';
 const { hasAccessByCodes } = useAccess();
 const canSelectMember = hasAccessByCodes(['member:user:query']);
 const product = ref<MallSpuApi.Spu>();
+const pointOffer = ref<PromotionPointOffer>();
 const loadError = ref('');
 const activeTab = ref<ActiveTab>('poster');
 const identityMode = ref<IdentityMode>('shop');
@@ -79,6 +83,7 @@ const promotionContext = computed<PromotionContext | undefined>(() => {
     return buildPromotionContext({
       h5Domain: import.meta.env.VITE_MALL_H5_DOMAIN,
       identity,
+      pointOffer: pointOffer.value,
       product: product.value,
     });
   } catch {
@@ -131,6 +136,7 @@ function resetSession() {
   lifecycleRequestId += 1;
   invalidatePreviews();
   product.value = undefined;
+  pointOffer.value = undefined;
   loadError.value = '';
   activeTab.value = 'poster';
   identityMode.value = 'shop';
@@ -186,6 +192,7 @@ async function ensureAsset(type: PromotionAssetType) {
       h5Domain: import.meta.env.VITE_MALL_H5_DOMAIN,
       h5Url: context.h5Url,
       identity: context.identity,
+      pointOffer: pointOffer.value,
     },
   );
   const state = previewStates[type];
@@ -324,9 +331,16 @@ async function loadProduct(requestId: number) {
   lockModal(requestId);
   let shouldGeneratePreview = false;
   try {
-    const latestProduct = await getSpu(row.id);
+    const [latestProduct, pointActivityPage] = await Promise.all([
+      getSpu(row.id),
+      getPointActivityPage({ pageNo: 1, pageSize: 1, spuId: row.id, status: 0 })
+        .catch(() => undefined),
+    ]);
     if (requestId !== lifecycleRequestId) return;
     product.value = latestProduct;
+    pointOffer.value = pointActivityPage
+      ? findPointOffer(row.id, pointActivityPage.list)
+      : undefined;
     loadError.value = '';
     if (latestProduct.status !== ProductSpuStatusEnum.ENABLE.status) {
       loadError.value = '仅支持推广已上架商品';
