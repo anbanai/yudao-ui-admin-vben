@@ -26,7 +26,23 @@ export namespace MallCouponApi {
   /** 发送优惠券 */
   export interface CouponSendReqVO {
     templateId: number; // 优惠券编号
-    userIds: number[]; // 用户编号数组
+    userIds?: number[]; // 用户编号数组
+    mobiles?: string[];
+    tagIds?: number[];
+    idempotencyKey: string;
+  }
+  export interface SendBatch {
+    id: number;
+    templateId: number;
+    operatorId?: number;
+    status: number; // 0 PENDING / 1 SUCCEEDED / 2 FAILED / 3 CANCELED
+    totalCount: number;
+    successCount: number;
+    failureCount: number;
+    mobileSnapshot: string;
+    userSnapshot: string;
+    templateSnapshot: string;
+    failureDetails: string;
   }
 }
 
@@ -43,7 +59,28 @@ export function getCouponPage(params: PageParam) {
   );
 }
 
-/** 发送优惠券 */
-export function sendCoupon(data: MallCouponApi.CouponSendReqVO) {
-  return requestClient.post('/promotion/coupon/send', data);
+/** 预检不发券，确认后只提交已冻结的批次。 */
+export function previewCouponSend(data: MallCouponApi.CouponSendReqVO) {
+  return requestClient.post<MallCouponApi.SendBatch>(
+    '/promotion/coupon/send-preview',
+    data,
+  );
+}
+export function submitCouponSend(batchId: number) {
+  return requestClient.post<MallCouponApi.SendBatch>(
+    `/promotion/coupon/send-submit?batchId=${batchId}`,
+  );
+}
+export function getCouponSendBatch(id: number) {
+  return requestClient.get<MallCouponApi.SendBatch>(
+    '/promotion/coupon/send-batch',
+    { params: { id } },
+  );
+}
+
+/** 持锁作废待提交批次；如果原提交已完成，需查询其真实终态。 */
+export function cancelCouponSendBatch(batchId: number) {
+  return requestClient.post<MallCouponApi.SendBatch>(
+    `/promotion/coupon/send-cancel?batchId=${batchId}`,
+  );
 }

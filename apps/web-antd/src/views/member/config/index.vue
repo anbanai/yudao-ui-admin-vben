@@ -33,6 +33,20 @@ async function handleSubmit() {
   }
   // 提交表单
   const data = (await formApi.getValues()) as MemberConfigApi.Config;
+  data.pointDoubleStartTime ||= null;
+  data.pointDoubleEndTime ||= null;
+  if (Boolean(data.pointDoubleStartTime) !== Boolean(data.pointDoubleEndTime)) {
+    message.error('双倍开始和结束时间必须成对配置');
+    return;
+  }
+  try {
+    new Intl.DateTimeFormat('zh-CN', {
+      timeZone: data.pointDoubleTimezone,
+    }).format();
+  } catch {
+    message.error('请输入有效时区，例如 Asia/Shanghai');
+    return;
+  }
   // 转换金额单位
   data.pointTradeDeductUnitPrice = yuanToFen(data.pointTradeDeductUnitPrice);
   await saveConfig(data);
@@ -61,7 +75,7 @@ onMounted(() => {
 <template>
   <Page auto-content-height>
     <Card title="积分设置">
-      <Form class="w-1/4" />
+      <Form class="max-w-2xl" />
     </Card>
   </Page>
 </template>

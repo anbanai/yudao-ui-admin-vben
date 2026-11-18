@@ -42,6 +42,11 @@ export namespace MallSpuApi {
     status?: number; // 商品状态
     browseCount?: number; // 浏览量
     groupSort?: number; // 组内排序（仅分组成员分页返回）
+    marketingConfig?: {
+      pointProduct?: boolean;
+      pointQuantity?: number;
+      priceSymbol?: string;
+    };
   }
 
   /** 商品 SKU */

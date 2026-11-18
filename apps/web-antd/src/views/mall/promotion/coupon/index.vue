@@ -4,7 +4,7 @@ import type { MallCouponApi } from '#/api/mall/promotion/coupon/coupon';
 
 import { ref } from 'vue';
 
-import { DocAlert, Page } from '@vben/common-ui';
+import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
@@ -16,9 +16,15 @@ import {
   getCouponPage,
 } from '#/api/mall/promotion/coupon/coupon';
 
+import CouponSendForm from './components/send-form.vue';
 import { useGridColumns, useGridFormSchema } from './data';
 
 defineOptions({ name: 'PromotionCoupon' });
+
+const [SendModal, sendModalApi] = useVbenModal({
+  connectedComponent: CouponSendForm,
+  destroyOnClose: true,
+});
 
 const activeTab = ref('all');
 const statusTabs = ref(getStatusTabs());
@@ -111,7 +117,20 @@ const [Grid, gridApi] = useVbenVxeGrid({
       />
     </template>
 
+    <SendModal />
     <Grid>
+      <template #toolbar-tools>
+        <TableAction
+          :actions="[
+            {
+              label: '名单 / 标签发券',
+              type: 'primary',
+              auth: ['promotion:coupon:send'],
+              onClick: () => sendModalApi.setData({ userIds: [] }).open(),
+            },
+          ]"
+        />
+      </template>
       <template #toolbar-actions>
         <Tabs class="w-full" @change="handleTabChange">
           <TabPane

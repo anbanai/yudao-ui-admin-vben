@@ -1,0 +1,1 @@
+Vue SFC parse + script/template compilation: 11 changed components passed.

@@ -1,0 +1,107 @@
+
+ RUN  v4.1.11 /Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376
+
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts (20 tests | 5 failed) 8ms
+     × releases recovered terminal status 2 for closing and a fresh preview 2ms
+     × releases recovered terminal status 3 for closing and a fresh preview 0ms
+     × resolves a timed-out submission when the query returns terminal status 2 0ms
+     × resolves a timed-out submission when the query returns terminal status 3 0ms
+     × does not release an ambiguous submission on a nonterminal submit response 0ms
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-confirmation.test.ts (5 tests | 2 failed) 34ms
+     × can close restored terminal status 2 and preview again 16ms
+     × can close restored terminal status 3 and preview again 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-confirmation.test.ts > confirmation UI > can close restored terminal status 2 and preview again
+AssertionError: expected '确认发放优惠券提交结果待确认，请查询或按同一批次重试。不要新建批次。批次号…' to contain '批次发放失败'
+
+Expected: "批次发放失败"
+Received: "确认发放优惠券提交结果待确认，请查询或按同一批次重试。不要新建批次。批次号：21；操作人：模板：测试模板（4） 目标账号 1 人；已成功 0；预检失败项 0 领取后第 0 天至第 7 天有效  每人限领 1 张；发行总量 100 优惠面额：5.00 元  适用范围：指定商品SPU 71，72 使用门槛 10.00 元；优惠券；不可叠加优惠券；不可与其他营销和积分抵扣同用查看实际目标账号快照（1）19手机号快照13800000000模板已变更，请重新预检确认取消确认查询批次结果"
+
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-confirmation.test.ts:81:33
+     79|   ] as const)('can close restored terminal status %s and preview again…
+     80|     const ui = await mountBatch({ ...batch, status, failureDetails }, …
+     81|     expect(ui.host.textContent).toContain(label);
+       |                                 ^
+     82|     expect(ui.host.textContent).toContain(failureDetails);
+     83|     expect(ui.host.querySelector('[data-testid="confirm"]')).toBeNull(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-confirmation.test.ts > confirmation UI > can close restored terminal status 3 and preview again
+AssertionError: expected '确认发放优惠券提交结果待确认，请查询或按同一批次重试。不要新建批次。批次号…' to contain '批次已作废'
+
+Expected: "批次已作废"
+Received: "确认发放优惠券提交结果待确认，请查询或按同一批次重试。不要新建批次。批次号：21；操作人：模板：测试模板（4） 目标账号 1 人；已成功 0；预检失败项 0 领取后第 0 天至第 7 天有效  每人限领 1 张；发行总量 100 优惠面额：5.00 元  适用范围：指定商品SPU 71，72 使用门槛 10.00 元；优惠券；不可叠加优惠券；不可与其他营销和积分抵扣同用查看实际目标账号快照（1）19手机号快照13800000000CANCELED_BY_OPERATOR取消确认查询批次结果"
+
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-confirmation.test.ts:81:33
+     79|   ] as const)('can close restored terminal status %s and preview again…
+     80|     const ui = await mountBatch({ ...batch, status, failureDetails }, …
+     81|     expect(ui.host.textContent).toContain(label);
+       |                                 ^
+     82|     expect(ui.host.textContent).toContain(failureDetails);
+     83|     expect(ui.host.querySelector('[data-testid="confirm"]')).toBeNull(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > coupon issuance session > releases recovered terminal status 2 for closing and a fresh preview
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > coupon issuance session > releases recovered terminal status 3 for closing and a fresh preview
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts:57:37
+     55|     await session.restore();
+     56|     expect(session.state.batch?.status).toBe(status);
+     57|     expect(session.state.uncertain).toBe(false);
+       |                                     ^
+     58|     expect(values.has('marketing-coupon-pending-batch')).toBe(false);
+     59|     await session.confirm();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > coupon issuance session > resolves a timed-out submission when the query returns terminal status 2
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > coupon issuance session > resolves a timed-out submission when the query returns terminal status 3
+Error: timeout
+ ❯ Object.submit apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts:78:35
+     76|   it.each([2, 3])('resolves a timed-out submission when the query retu…
+     77|     const { session } = setup({
+     78|       submit: async () => { throw new Error('timeout'); },
+       |                                   ^
+     79|       read: async () => ({ ...batch, status }),
+     80|     });
+ ❯ Object.confirm apps/web-antd/src/views/mall/promotion/coupon/components/send-session.ts:145:35
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts:82:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts > coupon issuance session > does not release an ambiguous submission on a nonterminal submit response
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ apps/web-antd/src/views/mall/promotion/coupon/components/__tests__/send-session.test.ts:92:37
+     90|     await session.preview({ templateId: 1, userIds: [3, 5] });
+     91|     await session.confirm().catch(() => {});
+     92|     expect(session.state.uncertain).toBe(true);
+       |                                     ^
+     93|     session.cancel();
+     94|     expect(session.state.batch?.id).toBe(17);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 18 passed (25)
+   Start at  21:34:53
+   Duration  1.09s (transform 166ms, setup 0ms, import 849ms, tests 42ms, environment 284ms)
+

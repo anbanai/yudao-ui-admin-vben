@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/Shared/teaworthshare/.paperclip-repositories/yudao-ui-admin-vben-78f7068c5376
+
+
+ Test Files  2 passed (2)
+      Tests  33 passed (33)
+   Start at  21:42:27
+   Duration  1.07s (transform 164ms, setup 0ms, import 825ms, tests 49ms, environment 273ms)
+
