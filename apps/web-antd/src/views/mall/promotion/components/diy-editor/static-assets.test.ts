@@ -8,7 +8,7 @@ const diyEditorRoot = resolve(
   appRoot,
   'src/views/mall/promotion/components/diy-editor',
 );
-const ossBaseUrl = 'https://static.teaworthshare.com';
+const ossBaseUrl = 'https://static.teagravity.com';
 const diyAssetBaseUrl = `${ossBaseUrl}/mall/diy`;
 
 const expectedAssets = {

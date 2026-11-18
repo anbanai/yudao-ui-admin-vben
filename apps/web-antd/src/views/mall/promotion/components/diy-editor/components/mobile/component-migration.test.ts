@@ -6,7 +6,7 @@ describe('diy component migration', () => {
   it('registers category and group as separate product components', async () => {
     vi.stubEnv(
       'VITE_OSS_BASE_URL',
-      'https://static.teaworthshare.com',
+      'https://static.teagravity.com',
     );
     const [{ PAGE_LIBS }, { componentConfigs }] = await Promise.all([
       import('../../util'),
