@@ -82,8 +82,8 @@ const [Modal, modalApi] = useVbenModal({
     if (
       !values.summary?.trim() &&
       !values.plan?.trim() &&
-      !items.length &&
-      !plans.length
+      items.length === 0 &&
+      plans.length === 0
     ) {
       ElMessage.warning('请填写工作总结、计划说明或工作明细');
       return;
