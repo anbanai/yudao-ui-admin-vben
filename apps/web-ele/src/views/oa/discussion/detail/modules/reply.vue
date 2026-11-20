@@ -201,7 +201,7 @@ async function handleDeleteReply(id: number) {
     replyTarget.value = undefined;
     await getReplyList();
     // 删除最后一层后返回上一页
-    if (!replyList.value.length && replyQueryParams.pageNo > 1) {
+    if (replyList.value.length === 0 && replyQueryParams.pageNo > 1) {
       replyQueryParams.pageNo--;
       await getReplyList();
     }
@@ -221,8 +221,12 @@ onMounted(() => {
 <template>
   <ContentWrap class="mt-4">
     <!-- 回复标题和筛选 -->
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-3 px-3 py-2">
-      <h3 class="m-0 text-base font-semibold">回复 {{ detail.replyCount || 0 }}</h3>
+    <div
+      class="mb-3 flex flex-wrap items-center justify-between gap-3 px-3 py-2"
+    >
+      <h3 class="m-0 text-base font-semibold">
+        回复 {{ detail.replyCount || 0 }}
+      </h3>
       <div class="flex gap-2">
         <ElSelect
           v-model="replyScope"
@@ -299,7 +303,11 @@ onMounted(() => {
         <!-- 楼层操作与楼层编号 -->
         <div class="flex items-center justify-between gap-2">
           <div class="flex flex-wrap items-center gap-2 [&>.el-button]:!ml-0">
-            <ElButton link type="primary" @click="handleReply(reply, reply.id!)">
+            <ElButton
+              link
+              type="primary"
+              @click="handleReply(reply, reply.id!)"
+            >
               <IconifyIcon icon="lucide:message-circle" class="mr-1" />
               回复
             </ElButton>
@@ -308,7 +316,9 @@ onMounted(() => {
                 :icon="reply.liked ? 'mdi:thumb-up' : 'mdi:thumb-up-outline'"
                 class="mr-1"
               />
-              {{ reply.liked ? '取消点赞' : '点赞' }}（{{ reply.likeCount || 0 }}）
+              {{ reply.liked ? '取消点赞' : '点赞' }}（{{
+                reply.likeCount || 0
+              }}）
             </ElButton>
             <ElButton
               v-if="getChildReplies(reply).length"
@@ -324,7 +334,9 @@ onMounted(() => {
                 "
                 class="mr-1"
               />
-              <span>{{ expandedReplies[reply.id!] ? '收起评论' : '展开评论' }}</span>
+              <span>{{
+                expandedReplies[reply.id!] ? '收起评论' : '展开评论'
+              }}</span>
               <span>（{{ getChildReplies(reply).length }}）</span>
             </ElButton>
             <ElButton
@@ -337,7 +349,12 @@ onMounted(() => {
             </ElButton>
           </div>
           <span class="text-muted-foreground shrink-0 text-xs">
-            {{ (replyQueryParams.pageNo - 1) * replyQueryParams.pageSize + index + 1 }} 楼
+            {{
+              (replyQueryParams.pageNo - 1) * replyQueryParams.pageSize +
+              index +
+              1
+            }}
+            楼
           </span>
         </div>
         <!-- 点赞摘要，完整名单按需查看 -->
@@ -371,7 +388,10 @@ onMounted(() => {
               </ElAvatar>
               <div class="min-w-0 break-words text-[13px] leading-6">
                 <span class="text-primary">{{ child.userName }}：</span>
-                <span v-if="child.replyUserName" class="text-muted-foreground mr-1">
+                <span
+                  v-if="child.replyUserName"
+                  class="text-muted-foreground mr-1"
+                >
                   @{{ child.replyUserName }}
                 </span>
                 <span class="whitespace-pre-wrap">{{ child.content }}</span>
@@ -381,7 +401,11 @@ onMounted(() => {
               class="text-muted-foreground flex flex-wrap items-center gap-2 text-xs [&>.el-button]:!ml-0"
             >
               <span>{{ formatDate(child.createTime) }}</span>
-              <ElButton link type="primary" @click="handleReply(child, reply.id!)">
+              <ElButton
+                link
+                type="primary"
+                @click="handleReply(child, reply.id!)"
+              >
                 <IconifyIcon icon="lucide:message-circle" class="mr-1" />
                 回复
               </ElButton>

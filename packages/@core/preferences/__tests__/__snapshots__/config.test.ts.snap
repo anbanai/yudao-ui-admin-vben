@@ -45,8 +45,8 @@ exports[`defaultPreferences immutability test > should not modify the config obj
     "styleType": "normal",
   },
   "copyright": {
-    "companyName": "峨眉山不忍独享茶业有限公司",
-    "companySiteLink": "https://teaworthshare.com",
+    "companyName": "四川茶引力电子商务有限公司",
+    "companySiteLink": "https://teagravity.com",
     "date": "2026",
     "enable": true,
     "icp": "蜀ICP备2025128192号-2",

@@ -53,11 +53,10 @@ async function handleTest(row: OaMailAccountApi.MailAccount) {
   testingId.value = row.id;
   try {
     const result = await testMailAccountConnection(row.id!);
-    const text =
-      'IMAP：' +
-      (result.imap ? '连接成功' : '连接失败') +
-      '；SMTP：' +
-      (result.smtp ? '连接成功' : '连接失败');
+    const text = [
+      `IMAP：${result.imap ? '连接成功' : '连接失败'}`,
+      `；SMTP：${result.smtp ? '连接成功' : '连接失败'}`,
+    ].join('');
     await alert(text);
   } finally {
     testingId.value = undefined;
@@ -168,7 +167,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
               label: '测试连接',
               type: 'link',
               loading: testingId === row.id,
-              disabled: row.status !== CommonStatusEnum.ENABLE || testingId !== undefined,
+              disabled:
+                row.status !== CommonStatusEnum.ENABLE ||
+                testingId !== undefined,
               onClick: handleTest.bind(null, row),
             },
             {

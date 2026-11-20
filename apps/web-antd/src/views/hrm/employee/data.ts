@@ -37,6 +37,68 @@ import {
   HrmEmployeeType,
 } from '#/views/hrm/utils/constants';
 
+/** 从后台用户批量建档字段 */
+export function useCreateFromUserGridColumns(): VxeTableGridOptions<any>['columns'] {
+  return [
+    {
+      field: 'nickname',
+      title: '后台用户',
+      minWidth: 170,
+      fixed: 'left',
+      slots: { default: 'user' },
+    },
+    {
+      field: 'mobile',
+      title: '手机号',
+      width: 170,
+      slots: { default: 'mobile' },
+    },
+    {
+      field: 'deptId',
+      title: '部门',
+      width: 180,
+      slots: { default: 'deptId' },
+    },
+    {
+      field: 'jobNumber',
+      title: '工号',
+      width: 150,
+      slots: { default: 'jobNumber' },
+    },
+    {
+      field: 'leaderEmployeeId',
+      title: '直属上级',
+      width: 190,
+      slots: { default: 'leaderEmployeeId' },
+    },
+    {
+      field: 'postName',
+      title: '岗位',
+      width: 170,
+      slots: { default: 'postName' },
+    },
+    {
+      field: 'entryTime',
+      title: '入职时间',
+      width: 190,
+      slots: { default: 'entryTime' },
+    },
+    {
+      field: 'type',
+      title: '聘用形式',
+      width: 130,
+      slots: { default: 'type' },
+    },
+    {
+      field: 'status',
+      title: '试用期/状态',
+      width: 150,
+      slots: { default: 'statusProbation' },
+    },
+    { title: '操作', width: 90, fixed: 'right', slots: { default: 'actions' } },
+  ];
+}
+
 /** DatePicker valueFormat=x 的可选时间戳 */
 const optionalTimestampSchema = z.union([
   z.number(),
