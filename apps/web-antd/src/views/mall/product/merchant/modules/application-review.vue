@@ -35,11 +35,15 @@ import {
   getMerchantApplicationPage,
   getMerchantApplicationReviewRecords,
   getMerchantBusinessTypePage,
+  MerchantStatus,
   rejectMerchantApplication,
   unfreezeMerchant,
 } from '#/api/mall/product/merchant';
-import { MerchantStatus } from '#/api/mall/product/merchant';
 import { compareMerchantApplications } from '#/api/mall/product/merchant/application-contract';
+import {
+  getMerchantSfConfig,
+  saveMerchantSfConfig,
+} from '#/api/mall/trade/logistics/sf';
 
 const statusMap: Record<number, { color: string; label: string }> = {
   [MerchantStatus.DRAFT]: { color: 'default', label: '草稿' },
@@ -78,6 +82,9 @@ const reviewRecords = ref<MallMerchantApi.ReviewRecord[]>([]);
 const businessTypeLabels = ref<Record<string, string>>({});
 const rejectReason = ref('');
 const legacyAccountId = ref<number>();
+const merchantSfCard = ref('');
+const merchantSfCardMasked = ref('');
+const merchantSfCardSaving = ref(false);
 let detailRequest = 0;
 const canReview = computed(
   () =>
@@ -156,12 +163,21 @@ async function selectVersion(id: number, request = ++detailRequest) {
     const selected = await getMerchantApplication(id);
     const previous = versions.value
       .filter((item) => (item.versionNo ?? 0) < (selected.versionNo ?? 0))
-      .sort((a, b) => (b.versionNo ?? 0) - (a.versionNo ?? 0))[0];
+      .toSorted((a, b) => (b.versionNo ?? 0) - (a.versionNo ?? 0))[0];
     const previousApplication = previous?.id
       ? await getMerchantApplication(previous.id)
       : undefined;
     if (request !== detailRequest || !detailOpen.value) return;
     detail.value = selected;
+    if (selected.merchantId) {
+      const config = await getMerchantSfConfig(selected.merchantId);
+      if (request !== detailRequest || !detailOpen.value) return;
+      merchantSfCard.value = '';
+      merchantSfCardMasked.value = config.monthlyCardMasked || '';
+    } else {
+      merchantSfCard.value = '';
+      merchantSfCardMasked.value = '';
+    }
     previousDetail.value = previousApplication;
     legacyAccountId.value = selected.currentOwnerAccountId;
   } catch {
@@ -169,6 +185,26 @@ async function selectVersion(id: number, request = ++detailRequest) {
       message.error('申请详情加载失败，请重新打开');
   } finally {
     if (request === detailRequest) detailLoading.value = false;
+  }
+}
+
+async function saveMerchantSfCard() {
+  if (!detail.value?.merchantId || !merchantSfCard.value.trim()) {
+    message.warning('请输入商家顺丰月结卡号');
+    return;
+  }
+  merchantSfCardSaving.value = true;
+  try {
+    await saveMerchantSfConfig({
+      merchantId: detail.value.merchantId,
+      monthlyCard: merchantSfCard.value.trim(),
+    });
+    const config = await getMerchantSfConfig(detail.value.merchantId);
+    merchantSfCard.value = '';
+    merchantSfCardMasked.value = config.monthlyCardMasked || '';
+    message.success('商家顺丰月结卡已保存');
+  } finally {
+    merchantSfCardSaving.value = false;
   }
 }
 
@@ -268,11 +304,9 @@ function updateMerchantOperatingStatus(action: 'freeze' | 'unfreeze') {
     onOk: async () => {
       reviewing.value = true;
       try {
-        if (isFreeze) {
-          await freezeMerchant(merchantId);
-        } else {
-          await unfreezeMerchant(merchantId);
-        }
+        await (isFreeze
+          ? freezeMerchant(merchantId)
+          : unfreezeMerchant(merchantId));
         message.success(isFreeze ? '商家已冻结' : '商家已解冻');
         if (detailOpen.value && detail.value?.id === applicationId) {
           await selectVersion(applicationId);
@@ -461,6 +495,23 @@ onMounted(load);
           </ADescriptionsItem>
         </ADescriptions>
 
+        <div class="panel-heading">顺丰月结卡</div>
+        <div class="merchant-sf-card-config">
+          <span class="text-gray-500">当前卡号：{{ merchantSfCardMasked || '未配置' }}</span>
+          <AInput.Password
+            v-model:value="merchantSfCard"
+            class="merchant-sf-card-input"
+            placeholder="输入商家专属顺丰月结卡号"
+          />
+          <AButton
+            type="primary"
+            :loading="merchantSfCardSaving"
+            @click="saveMerchantSfCard"
+          >
+            保存
+          </AButton>
+        </div>
+
         <div class="panel-heading">资质材料</div>
         <ATable
           :columns="[
@@ -608,6 +659,17 @@ onMounted(load);
   margin: 22px 0 12px;
   font-size: 14px;
   font-weight: 600;
+}
+
+.merchant-sf-card-config {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.merchant-sf-card-input {
+  max-width: 280px;
 }
 
 .review-record-heading {

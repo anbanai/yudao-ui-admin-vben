@@ -7,8 +7,6 @@ export namespace MallSfLogisticsApi {
     partnerId?: string;
     partnerIdMasked?: string;
     checkWord?: string;
-    monthlyCard?: string;
-    monthlyCardMasked?: string;
     serviceCode: string;
     senderName: string;
     senderPhone: string;
@@ -41,6 +39,10 @@ export namespace MallSfLogisticsApi {
   export interface Waybill {
     id: number;
     orderId: number;
+    subOrderId?: number;
+    merchantId?: number;
+    merchantName?: string;
+    merchantMonthlyCardMasked?: string;
     orderNo: string;
     providerOrderNo: string;
     waybillNo?: string;
@@ -102,6 +104,17 @@ export const getSfAccounts = () =>
   requestClient.get<MallSfLogisticsApi.Account[]>(`${baseUrl}/accounts`);
 export const saveSfAccount = (data: MallSfLogisticsApi.Account) =>
   requestClient.post<number>(`${baseUrl}/accounts`, data);
+export interface MerchantSfConfig {
+  merchantId?: number;
+  monthlyCard?: string;
+  monthlyCardMasked?: string;
+}
+export const getMerchantSfConfig = (merchantId: number) =>
+  requestClient.get<MerchantSfConfig>(
+    `${baseUrl}/merchant-config/get?merchantId=${merchantId}`,
+  );
+export const saveMerchantSfConfig = (data: MerchantSfConfig) =>
+  requestClient.post<number>(`${baseUrl}/merchant-config/save`, data);
 export const getPrintDevices = () =>
   requestClient.get<MallSfLogisticsApi.Device[]>(`${baseUrl}/devices`);
 export const savePrintDevice = (data: MallSfLogisticsApi.Device) =>
@@ -116,6 +129,7 @@ export const createSfWaybill = (data: {
   accountId?: number;
   deviceId?: number;
   orderId: number;
+  subOrderId: number;
 }) =>
   requestClient.post<MallSfLogisticsApi.Waybill>(
     `${baseUrl}/waybills/create`,

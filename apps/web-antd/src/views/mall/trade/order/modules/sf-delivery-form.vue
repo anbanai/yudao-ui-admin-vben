@@ -18,6 +18,7 @@ import {
 
 import {
   createSfWaybill,
+  getMerchantSfConfig,
   getPrintDevices,
   getSfAccounts,
 } from '#/api/mall/trade/logistics/sf';
@@ -33,6 +34,8 @@ import {
 
 const emit = defineEmits(['success']);
 const order = ref<MallOrderApi.Order>();
+const subOrderId = ref<number>();
+const merchantMonthlyCardMasked = ref('');
 const accounts = ref<MallSfLogisticsApi.Account[]>([]);
 const devices = ref<MallSfLogisticsApi.Device[]>([]);
 const accountId = ref<number>();
@@ -55,11 +58,37 @@ const selectedPaperSpec = computed(() => {
     ? `${account.paperWidthMm}×${account.paperHeightMm} mm`
     : '账号配置的标签尺寸';
 });
+const subOrderOptions = computed(() =>
+  (order.value?.subOrders ?? [])
+    .filter((item) => item.id !== undefined)
+    .map((item) => ({
+      label: `${item.merchantName || `商家 #${item.merchantId}`} · ${item.no || item.id}`,
+      value: item.id,
+    })),
+);
+
+async function loadMerchantCard(subOrderIdValue?: number) {
+  const merchantId = order.value?.subOrders?.find(
+    (item) => item.id === subOrderIdValue,
+  )?.merchantId;
+  if (!merchantId) {
+    merchantMonthlyCardMasked.value = '';
+    return;
+  }
+  const config = await getMerchantSfConfig(merchantId);
+  merchantMonthlyCardMasked.value = config.monthlyCardMasked || '';
+}
+
+function handleSubOrderChange(value: unknown) {
+  if (typeof value === 'number' || typeof value === 'string') {
+    void loadMerchantCard(Number(value));
+  }
+}
 
 const [Modal, modalApi] = useVbenModal({
   confirmText: '创建顺丰运单',
   async onConfirm() {
-    if (!order.value?.id) return;
+    if (!order.value?.id || !subOrderId.value) return;
     if (!accountId.value || !deviceId.value) {
       message.warning('请选择顺丰账号和打印设备');
       return;
@@ -70,6 +99,7 @@ const [Modal, modalApi] = useVbenModal({
         accountId: accountId.value,
         deviceId: deviceId.value,
         orderId: order.value.id,
+        subOrderId: subOrderId.value,
       });
       if (isPrintTaskQueued(result.value.printStatus)) {
         message.success('顺丰运单和打印任务已创建，等待 PrintBridge 拉取');
@@ -83,10 +113,13 @@ const [Modal, modalApi] = useVbenModal({
   async onOpenChange(open) {
     if (!open) {
       order.value = undefined;
+      subOrderId.value = undefined;
+      merchantMonthlyCardMasked.value = '';
       result.value = undefined;
       return;
     }
     order.value = modalApi.getData() as MallOrderApi.Order;
+    subOrderId.value = order.value.subOrders?.[0]?.id;
     [accounts.value, devices.value] = await Promise.all([
       getSfAccounts(),
       getPrintDevices(),
@@ -96,6 +129,7 @@ const [Modal, modalApi] = useVbenModal({
       enabledAccounts.find((item) => item.defaultFlag)?.id ??
       enabledAccounts[0]?.id;
     deviceId.value = selectReadyPrintDeviceId(devices.value);
+    await loadMerchantCard(subOrderId.value);
   },
 });
 </script>
@@ -113,12 +147,22 @@ const [Modal, modalApi] = useVbenModal({
     </Descriptions>
     <Form class="mt-4" layout="vertical">
       <div class="grid grid-cols-2 gap-4">
+        <Form.Item label="商家履约单" required>
+          <Select
+            v-model:value="subOrderId"
+            :options="subOrderOptions"
+            @change="handleSubOrderChange"
+          />
+        </Form.Item>
         <Form.Item label="顺丰账号" required>
           <Select v-model:value="accountId" :options="accountOptions" />
         </Form.Item>
         <Form.Item label="打印设备" required>
           <Select v-model:value="deviceId" :options="deviceOptions" />
         </Form.Item>
+      </div>
+      <div class="text-sm text-gray-500">
+        商家月结卡：{{ merchantMonthlyCardMasked || '未配置' }}
       </div>
     </Form>
     <Alert

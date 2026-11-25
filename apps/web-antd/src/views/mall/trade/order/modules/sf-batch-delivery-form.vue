@@ -89,6 +89,12 @@ const displayResults = computed(() =>
 );
 const resultColumns = [
   { title: '订单号', dataIndex: 'orderNo', key: 'orderNo' },
+  { title: '商家', dataIndex: 'merchantName', key: 'merchantName' },
+  {
+    title: '月结卡',
+    dataIndex: 'merchantMonthlyCardMasked',
+    key: 'merchantMonthlyCardMasked',
+  },
   { title: '结果', key: 'result' },
   { title: '运单号', dataIndex: 'waybillNo', key: 'waybillNo' },
   { title: '说明', key: 'message' },
@@ -216,7 +222,9 @@ const [Modal, modalApi] = useVbenModal({
         :columns="resultColumns"
         :data-source="displayResults"
         :pagination="false"
-        row-key="orderId"
+        :row-key="
+          (record) => `${record.orderId}-${record.subOrderId ?? 'none'}`
+        "
         size="small"
       >
         <template #bodyCell="{ column, record }">

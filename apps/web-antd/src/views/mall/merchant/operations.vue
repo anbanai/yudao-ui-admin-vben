@@ -34,6 +34,7 @@ import {
   agreeMerchantAfterSale,
   createMerchantBrand,
   createMerchantProduct,
+  createMerchantSfWaybill,
   deliverMerchantOrder,
   disagreeMerchantAfterSale,
   getMerchantAfterSalePage,
@@ -60,6 +61,7 @@ const pageNo = ref(1);
 const pageSize = ref(10);
 const deliveryOpen = ref(false);
 const deliverySaving = ref(false);
+const sfDeliverySaving = ref(false);
 const deliveryRow = ref<MerchantWorkbenchApi.Order | null>(null);
 const deliveryForm = reactive({
   logisticsId: undefined as number | undefined,
@@ -150,14 +152,16 @@ async function load() {
   loading.value = true;
   try {
     const params = { pageNo: pageNo.value, pageSize: pageSize.value };
-    const result =
-      activeTab.value === 'products'
-        ? await getMerchantProductPage(params)
-        : activeTab.value === 'brands'
-          ? await getMerchantBrandPage(params)
-          : activeTab.value === 'orders'
-            ? await getMerchantOrderPage(params)
-            : await getMerchantAfterSalePage(params);
+    let result;
+    if (activeTab.value === 'products') {
+      result = await getMerchantProductPage(params);
+    } else if (activeTab.value === 'brands') {
+      result = await getMerchantBrandPage(params);
+    } else if (activeTab.value === 'orders') {
+      result = await getMerchantOrderPage(params);
+    } else {
+      result = await getMerchantAfterSalePage(params);
+    }
     if (request !== listRequest) return;
     rows.value = result.list;
     total.value = result.total;
@@ -399,6 +403,18 @@ async function submitDelivery() {
   }
 }
 
+async function submitSfDelivery(row: MerchantWorkbenchApi.Order) {
+  if (!row.id) return;
+  sfDeliverySaving.value = true;
+  try {
+    await createMerchantSfWaybill({ subOrderId: row.id });
+    message.success('顺丰运单已创建，等待打印设备处理');
+    await load();
+  } finally {
+    sfDeliverySaving.value = false;
+  }
+}
+
 async function approveAfterSale(row: MerchantWorkbenchApi.AfterSale) {
   if (!row.id) return;
   try {
@@ -427,17 +443,15 @@ async function submitAfterSaleReason() {
   }
   afterSaleSaving.value = true;
   try {
-    if (afterSaleAction.value === 'disagree') {
-      await disagreeMerchantAfterSale({
-        id: afterSaleRow.value.id,
-        auditReason: afterSaleReason.value.trim(),
-      });
-    } else {
-      await refuseMerchantAfterSale({
-        id: afterSaleRow.value.id,
-        refuseMemo: afterSaleReason.value.trim(),
-      });
-    }
+    await (afterSaleAction.value === 'disagree'
+      ? disagreeMerchantAfterSale({
+          id: afterSaleRow.value.id,
+          auditReason: afterSaleReason.value.trim(),
+        })
+      : refuseMerchantAfterSale({
+          id: afterSaleRow.value.id,
+          refuseMemo: afterSaleReason.value.trim(),
+        }));
     message.success('售后处理完成');
     afterSaleOpen.value = false;
     await load();
@@ -539,6 +553,15 @@ onMounted(() => {
               @click="openDelivery(record)"
             >
               发货
+            </AButton>
+            <AButton
+              v-if="record.status === 10"
+              type="link"
+              size="small"
+              :loading="sfDeliverySaving"
+              @click="submitSfDelivery(record)"
+            >
+              顺丰打单
             </AButton>
           </template>
           <template

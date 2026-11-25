@@ -63,7 +63,6 @@ const form = reactive<MallSfLogisticsApi.Account>(createDefaultForm());
 const columns = [
   { title: '配置名称', dataIndex: 'name' },
   { title: 'Partner ID', dataIndex: 'partnerIdMasked' },
-  { title: '月结卡', dataIndex: 'monthlyCardMasked' },
   { title: '寄件产品', key: 'serviceCode' },
   { title: '面单纸张', key: 'paperSpec' },
   { title: '状态', key: 'status' },
@@ -94,7 +93,6 @@ function editRecord(record: Record<string, any>) {
   Object.assign(form, record as MallSfLogisticsApi.Account, {
     partnerId: '',
     checkWord: '',
-    monthlyCard: '',
   });
 }
 
@@ -104,7 +102,6 @@ function reset() {
     defaultFlag: accounts.value.length === 0,
     partnerId: '',
     checkWord: '',
-    monthlyCard: '',
   });
   formRef.value?.clearValidate();
 }
@@ -156,18 +153,6 @@ onMounted(load);
           >
             <Input.Password
               v-model:value="form.checkWord"
-              :placeholder="form.id ? '已配置，留空则不修改' : ''"
-            />
-          </Form.Item>
-          <Form.Item
-            label="月结卡号"
-            name="monthlyCard"
-            :rules="[
-              { required: !form.id, message: '请输入已签约的顺丰月结卡号' },
-            ]"
-          >
-            <Input.Password
-              v-model:value="form.monthlyCard"
               :placeholder="form.id ? '已配置，留空则不修改' : ''"
             />
           </Form.Item>

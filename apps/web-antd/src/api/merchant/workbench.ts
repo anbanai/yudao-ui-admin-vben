@@ -63,6 +63,8 @@ export namespace MerchantWorkbenchApi {
     storeName: string;
     logoUrl?: string;
     description?: string;
+    monthlyCard?: string;
+    monthlyCardMasked?: string;
   }
 
   export interface DeliveryRequest {
@@ -233,4 +235,27 @@ export function updateMerchantShopProfile(
   data: MerchantWorkbenchApi.ShopProfile,
 ) {
   return merchantRequestClient.put('/product/merchant/profile/update', data);
+}
+
+export function getMerchantSfConfig() {
+  return merchantRequestClient.get<
+    MerchantWorkbenchApi.ShopProfile & {
+      monthlyCard?: string;
+      monthlyCardMasked?: string;
+    }
+  >('/trade/merchant/logistics/sf-config');
+}
+
+export function updateMerchantSfConfig(data: { monthlyCard: string }) {
+  return merchantRequestClient.put('/trade/merchant/logistics/sf-config', data);
+}
+
+export function createMerchantSfWaybill(data: {
+  deviceId?: number;
+  subOrderId: number;
+}) {
+  return merchantRequestClient.post(
+    '/trade/merchant/logistics/sf/waybill/create',
+    data,
+  );
 }
