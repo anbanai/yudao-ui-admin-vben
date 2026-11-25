@@ -13,6 +13,7 @@ export namespace MallBrandApi {
     status: number; // 开启状态
     merchantId?: number; // 默认归属商家
     merchantName?: string; // 商家名称
+    showOnDetail?: boolean;
   }
 }
 
