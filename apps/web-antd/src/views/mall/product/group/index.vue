@@ -14,7 +14,7 @@ import { $t } from '#/locales';
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
 import MemberModal from './modules/member-modal.vue';
-import { getPublicGroupLink } from './operations';
+import { getGroupStorefrontLink } from './operations';
 
 const { copy } = useClipboard({ legacy: true });
 
@@ -44,7 +44,7 @@ function handleMembers(row: MallProductGroupApi.Group, memberStatus?: number) {
 }
 
 async function copyLink(row: MallProductGroupApi.Group) {
-  const link = getPublicGroupLink(row);
+  const link = getGroupStorefrontLink(row);
   if (!link) return;
   await copy(link);
   message.success('分组店铺链接已复制');
@@ -111,7 +111,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             {
               label: '复制店铺链接',
               type: 'link',
-              ifShow: () => Boolean(getPublicGroupLink(row)),
+              ifShow: () => Boolean(getGroupStorefrontLink(row)),
               onClick: () => copyLink(row),
             },
             {

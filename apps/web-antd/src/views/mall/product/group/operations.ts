@@ -16,9 +16,9 @@ export function buildSpuGroupUpdate(
   return { spuIds: products, groupIds: groups, operation };
 }
 
-export function getPublicGroupLink(
-  group: Pick<MallProductGroupApi.Group, 'id' | 'status' | 'storefrontVisible'>,
+export function getGroupStorefrontLink(
+  group: Pick<MallProductGroupApi.Group, 'id' | 'status'>,
 ) {
-  if (!group.id || group.status !== 0 || !group.storefrontVisible) return;
+  if (!group.id || group.status !== 0) return;
   return `/pages/goods/group-list?groupIds=${group.id}`;
 }

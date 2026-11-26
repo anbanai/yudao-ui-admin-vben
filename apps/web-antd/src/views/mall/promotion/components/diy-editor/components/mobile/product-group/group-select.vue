@@ -10,7 +10,7 @@ import { getSimpleGroupList } from '#/api/mall/product/group';
 import {
   getGroupDisplayName,
   getUnavailableGroupIds,
-  isStorefrontGroup,
+  isEnabledGroup,
 } from './availability';
 import { PRODUCT_GROUP_LIMIT } from './utils';
 
@@ -30,7 +30,7 @@ const unavailableIds = computed(() =>
 );
 const options = computed(() => [
   ...groups.value
-    .filter((group) => isStorefrontGroup(group))
+    .filter((group) => isEnabledGroup(group))
     .map((group) => ({
       label: group.name,
       value: group.id,
@@ -71,7 +71,7 @@ function change(value: unknown) {
   if (ids.length > PRODUCT_GROUP_LIMIT) return;
   emit('update:modelValue', ids);
   const group = groups.value.find((item) => item.id === ids[0]);
-  if (props.single && group && isStorefrontGroup(group))
+  if (props.single && group && isEnabledGroup(group))
     emit('change', group.id!, group.name);
 }
 
@@ -96,15 +96,15 @@ onMounted(refresh);
     allow-clear
     show-search
     option-filter-prop="label"
-    placeholder="请选择公开且启用的商品分组"
+    placeholder="请选择已启用的商品分组"
     class="w-full"
     @change="change"
   />
   <div class="mt-1 text-xs text-muted-foreground">
     {{
       single
-        ? '仅展示公开且启用的分组'
-        : `最多选择 ${PRODUCT_GROUP_LIMIT} 个公开且启用的分组`
+        ? '仅展示已启用的分组'
+        : `最多选择 ${PRODUCT_GROUP_LIMIT} 个已启用的分组`
     }}
     <Button type="link" size="small" :loading="loading" @click="refresh">
       刷新

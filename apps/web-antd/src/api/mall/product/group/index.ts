@@ -12,7 +12,6 @@ export namespace MallProductGroupApi {
     name: string;
     sort: number;
     status: number;
-    storefrontVisible: boolean;
     spuCount?: number;
     saleSpuCount?: number;
     remark?: string;
@@ -79,13 +78,9 @@ export async function getSelectableGroupList() {
 }
 
 export function getGroupLabel(group: MallProductGroupApi.Group) {
-  const labels = [
-    ...(group.storefrontVisible === false ? ['内部'] : []),
-    ...(group.status === CommonStatusEnum.ENABLE ? [] : ['停用']),
-  ];
-  return labels.length > 0
-    ? `${group.name}（${labels.join('、')}）`
-    : group.name;
+  return group.status === CommonStatusEnum.ENABLE
+    ? group.name
+    : `${group.name}（停用）`;
 }
 
 /** 大页按接口上限分批补充分组，避免逐商品查询。 */

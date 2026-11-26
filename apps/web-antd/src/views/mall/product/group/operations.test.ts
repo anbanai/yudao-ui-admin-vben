@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSpuGroupUpdate, getPublicGroupLink } from './operations';
+import { buildSpuGroupUpdate, getGroupStorefrontLink } from './operations';
 
 describe('商品分组操作', () => {
   it('批量加组、移组只发送显式商品和分组 ID，去重但不扩展筛选范围', () => {
@@ -34,15 +34,11 @@ describe('商品分组操作', () => {
     ).toThrow('请选择1至15个分组');
   });
 
-  it('仅启用的公开分组提供店铺链接', () => {
-    expect(
-      getPublicGroupLink({ id: 4, status: 0, storefrontVisible: true }),
-    ).toBe('/pages/goods/group-list?groupIds=4');
-    expect(
-      getPublicGroupLink({ id: 4, status: 0, storefrontVisible: false }),
-    ).toBeUndefined();
-    expect(
-      getPublicGroupLink({ id: 4, status: 1, storefrontVisible: true }),
-    ).toBeUndefined();
+  it('启用的分组提供店铺链接', () => {
+    const legacyGroup = { id: 4, status: 0, storefrontVisible: false };
+    expect(getGroupStorefrontLink(legacyGroup)).toBe(
+      '/pages/goods/group-list?groupIds=4',
+    );
+    expect(getGroupStorefrontLink({ id: 4, status: 1 })).toBeUndefined();
   });
 });

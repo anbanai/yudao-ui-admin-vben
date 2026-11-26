@@ -45,7 +45,7 @@ describe('product list preview', () => {
   beforeEach(() => {
     api.groups.mockResolvedValue([
       { id: 1, name: '公开组', status: 0, storefrontVisible: true },
-      { id: 2, name: '内部组', status: 0, storefrontVisible: false },
+      { id: 2, name: '活动组', status: 1 },
     ]);
     api.groupProducts.mockResolvedValue({
       list: [{ id: 3, name: '分组商品' }],
@@ -101,7 +101,7 @@ describe('product list preview', () => {
     await settle();
     expect(api.groupProducts).not.toHaveBeenCalled();
     expect(property.groupIds).toEqual([2, 99]);
-    expect(host.textContent).toContain('内部组（仅内部使用）');
+    expect(host.textContent).toContain('活动组（已禁用）');
     expect(host.textContent).toContain('分组 99（已删除或不可访问）');
   });
 

@@ -15,7 +15,7 @@ import ProductList from '../product-list/index.vue';
 import {
   getGroupDisplayName,
   getUnavailableGroupIds,
-  isStorefrontGroup,
+  isEnabledGroup,
 } from './availability';
 import {
   buildProductGroupQuery,
@@ -138,7 +138,7 @@ async function refreshProducts() {
   try {
     const groups = await getSimpleGroupList();
     if (!groupRequestGuard.isCurrent(request)) return;
-    availableGroups.value = groups.filter((group) => isStorefrontGroup(group));
+    availableGroups.value = groups.filter((group) => isEnabledGroup(group));
     unavailableNames.value = getUnavailableGroupIds(
       normalizeGroupIds(props.property.groupIds),
       groups,
