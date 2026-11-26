@@ -1,6 +1,6 @@
-import type { StorefrontGroup } from '../diy-editor/components/mobile/product-group/availability';
+import type { ProductGroupOption } from '../diy-editor/components/mobile/product-group/availability';
 
-import { isStorefrontGroup } from '../diy-editor/components/mobile/product-group/availability';
+import { isEnabledGroup } from '../diy-editor/components/mobile/product-group/availability';
 import { APP_LINK_TYPE_ENUM } from './data';
 
 /** 商品分类页只支持定位一级分类；商品列表可筛选任意层级分类。 */
@@ -73,7 +73,7 @@ export function getGroupLinkIds(path: string): number[] {
 export async function validateGroupLink(
   type: APP_LINK_TYPE_ENUM | undefined,
   path: string,
-  getGroups: () => Promise<StorefrontGroup[]>,
+  getGroups: () => Promise<ProductGroupOption[]>,
 ) {
   if (type !== APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST) return true;
   const ids = getGroupLinkIds(path);
@@ -81,7 +81,7 @@ export async function validateGroupLink(
   try {
     const groups = await getGroups();
     return ids.every((id) =>
-      groups.some((group) => group.id === id && isStorefrontGroup(group)),
+      groups.some((group) => group.id === id && isEnabledGroup(group)),
     );
   } catch {
     return false;

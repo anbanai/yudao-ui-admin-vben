@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { AppLink } from './data';
 
-import { nextTick, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import { getUrlNumberValue } from '@vben/utils';
@@ -37,6 +37,9 @@ const emit = defineEmits<{
 const activeGroup = ref(APP_LINK_GROUP_LIST[0]?.name); // 选中的分组，默认选中第一个
 const activeAppLink = ref({} as AppLink); // 选中的 APP 链接
 const selectedGroupIds = ref<number[]>([]);
+const isGroupBrowseLink = computed(() =>
+  isSameLink('/pages/goods/group-index', activeAppLink.value.path),
+);
 
 const linkScrollbar = ref<HTMLDivElement>(); // 右侧滚动条
 const groupTitleRefs = ref<HTMLInputElement[]>([]); // 分组标题引用列表
@@ -60,7 +63,7 @@ const [Modal, modalApi] = useVbenModal({
       getSimpleGroupList,
     );
     if (!isValidGroupLink) {
-      message.warning('请选择公开且启用的商品分组；原链接已保留');
+      message.warning('请选择已启用的商品分组；原链接已保留');
       selectedGroupIds.value = getGroupLinkIds(activeAppLink.value.path);
       detailSelectDialog.value = {
         type: APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST,
@@ -89,8 +92,36 @@ const [Modal, modalApi] = useVbenModal({
 });
 
 const [DetailSelectModal, detailSelectModalApi] = useVbenModal({
-  onConfirm() {
-    detailSelectModalApi.close();
+  async onConfirm() {
+    if (!isGroupBrowseLink.value) {
+      detailSelectModalApi.close();
+      return;
+    }
+    const ids = [...selectedGroupIds.value];
+    const groupIds = ids.join(',');
+    const path = appendLinkParam(
+      activeAppLink.value.path,
+      'groupIds',
+      groupIds,
+    );
+    detailSelectModalApi.lock();
+    try {
+      const groups = await getSimpleGroupList().catch(() => []);
+      if (
+        !(await validateGroupLink(
+          APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST,
+          path,
+          async () => groups,
+        ))
+      ) {
+        message.warning('请选择已启用的商品分组');
+        return;
+      }
+      const names = ids.map((id) => getGroupDisplayName(id, groups));
+      handleDetailSelected(groupIds, names.join('、'));
+    } finally {
+      detailSelectModalApi.unlock();
+    }
   },
 });
 
@@ -236,7 +267,7 @@ function isSameLink(link1: string, link2: string) {
 }
 
 /** 处理详情选中，将记录编号拼接为链接参数 */
-function handleDetailSelected(id?: number, detailName?: string) {
+function handleDetailSelected(id?: number | string, detailName?: string) {
   if (!id || !activeAppLink.value.path) {
     return;
   }
@@ -337,7 +368,7 @@ function handleCategorySelected(category?: { id: number; name: string }) {
       >
         <GroupSelect
           v-model="selectedGroupIds"
-          single
+          :single="!isGroupBrowseLink"
           @change="handleDetailSelected"
         />
       </FormItem>

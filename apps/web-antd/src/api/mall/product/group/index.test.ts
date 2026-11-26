@@ -8,10 +8,10 @@ vi.mock('#/api/request', () => ({ requestClient: client }));
 describe('商品分组管理 API', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('编辑商品显示内部和停用标识，停用分组保留为不可新增的选项', async () => {
+  it('编辑商品显示停用标识，停用分组保留为不可新增的选项', async () => {
     client.get.mockResolvedValue([
-      { id: 1, name: '夏季', sort: 0, status: 0, storefrontVisible: true },
-      { id: 2, name: '清仓', sort: 0, status: 1, storefrontVisible: false },
+      { id: 1, name: '夏季', sort: 0, status: 0 },
+      { id: 2, name: '清仓', sort: 0, status: 1 },
     ]);
     expect(await groupApi.getSelectableGroupList()).toEqual([
       {
@@ -19,7 +19,6 @@ describe('商品分组管理 API', () => {
         name: '夏季',
         sort: 0,
         status: 0,
-        storefrontVisible: true,
         label: '夏季',
         disabled: false,
       },
@@ -28,8 +27,7 @@ describe('商品分组管理 API', () => {
         name: '清仓',
         sort: 0,
         status: 1,
-        storefrontVisible: false,
-        label: '清仓（内部、停用）',
+        label: '清仓（停用）',
         disabled: true,
       },
     ]);

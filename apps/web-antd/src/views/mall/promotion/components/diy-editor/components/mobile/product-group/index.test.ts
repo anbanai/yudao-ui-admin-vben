@@ -96,7 +96,7 @@ describe('product group', () => {
     app.unmount();
   });
 
-  it('preserves internal and deleted ids while excluding them from the all tab query', async () => {
+  it('includes enabled legacy groups and preserves deleted ids in the configuration', async () => {
     getSimpleGroupListMock.mockResolvedValueOnce([
       { id: 1, name: '公开组', sort: 1, status: 0 },
       { id: 2, name: '内部组', sort: 2, status: 0, storefrontVisible: false },
@@ -112,11 +112,11 @@ describe('product group', () => {
     app.mount(host);
     await settle();
     expect(getGroupSpuPageMock).toHaveBeenCalledWith({
-      groupIds: [1],
+      groupIds: [1, 2],
       pageNo: 1,
       pageSize: 10,
     });
-    expect(host.textContent).toContain('内部组（仅内部使用）');
+    expect(host.textContent).toContain('内部组');
     expect(host.textContent).toContain('分组 99（已删除或不可访问）');
     expect(property.groupIds).toEqual([1, 2, 99]);
     app.unmount();

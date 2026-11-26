@@ -78,6 +78,7 @@ export const APP_LINK_GROUP_LIST = [
       {
         name: '商品分组浏览',
         path: '/pages/goods/group-index',
+        type: APP_LINK_TYPE_ENUM.PRODUCT_GROUP_LIST,
       },
       {
         name: '分组商品列表',

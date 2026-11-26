@@ -39,18 +39,6 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: z.number().default(CommonStatusEnum.ENABLE),
     },
     {
-      fieldName: 'storefrontVisible',
-      label: '店铺可见',
-      component: 'RadioGroup',
-      componentProps: {
-        options: [
-          { label: '公开分组', value: true },
-          { label: '内部运营', value: false },
-        ],
-      },
-      rules: z.boolean().default(true),
-    },
-    {
       fieldName: 'remark',
       label: '备注',
       component: 'Textarea',
@@ -95,13 +83,6 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       },
     },
     { field: 'remark', title: '备注', minWidth: 180 },
-    {
-      field: 'storefrontVisible',
-      title: '店铺可见',
-      width: 120,
-      formatter: ({ cellValue }) =>
-        cellValue === false ? '内部运营' : '公开分组',
-    },
     {
       field: 'spuCount',
       title: '商品总数',

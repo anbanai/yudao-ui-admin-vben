@@ -29,7 +29,7 @@ describe('storefront group selector', () => {
     vi.clearAllMocks();
   });
 
-  it('offers only public enabled groups, retains named invalid selections and allows explicit removal', async () => {
+  it('offers every enabled group and retains invalid selections for removal', async () => {
     api.getGroups.mockResolvedValue([
       { id: 1, name: '公开', status: 0, storefrontVisible: true },
       { id: 2, name: '内部活动', status: 0, storefrontVisible: false },
@@ -50,6 +50,7 @@ describe('storefront group selector', () => {
     expect(options.map((option) => option.value)).toEqual([
       '1',
       '2',
+      '3',
       '4',
       '99',
     ]);
@@ -57,15 +58,14 @@ describe('storefront group selector', () => {
       options
         .filter((option) => !option.disabled)
         .map((option) => option.value),
-    ).toEqual(['1']);
-    expect(host.textContent).toContain('内部活动（仅内部使用）');
+    ).toEqual(['1', '2', '3']);
     expect(host.textContent).toContain('停用组（已禁用）');
     expect(host.textContent).toContain('分组 99（已删除或不可访问）');
     expect(update).not.toHaveBeenCalled();
     [...host.querySelectorAll('button')]
       .find((button) => button.textContent?.trim() === '移除')!
       .click();
-    expect(update).toHaveBeenCalledWith([4, 99]);
+    expect(update).toHaveBeenCalledWith([2, 99]);
   });
 
   it('keeps ids untouched when loading fails and lets an operator retry', async () => {

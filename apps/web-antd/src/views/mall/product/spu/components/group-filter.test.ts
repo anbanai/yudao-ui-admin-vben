@@ -6,10 +6,10 @@ const request = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('#/api/request', () => ({ requestClient: request }));
 
 describe('共用商品分组筛选', () => {
-  it('后台筛选仍能找到停用和内部分组，同时标注状态', async () => {
+  it('后台筛选仍能找到停用的分组，同时标注状态', async () => {
     request.get.mockResolvedValue([
-      { id: 1, name: '公开', sort: 0, status: 0, storefrontVisible: true },
-      { id: 2, name: '内部', sort: 0, status: 1, storefrontVisible: false },
+      { id: 1, name: '公开', sort: 0, status: 0 },
+      { id: 2, name: '内部', sort: 0, status: 1 },
     ]);
     const field = useSpuGroupFilterSchema()[0]!;
     const props = field.componentProps as { api: () => Promise<unknown[]> };
@@ -19,7 +19,6 @@ describe('共用商品分组筛选', () => {
         name: '公开',
         sort: 0,
         status: 0,
-        storefrontVisible: true,
         label: '公开',
       },
       {
@@ -27,8 +26,7 @@ describe('共用商品分组筛选', () => {
         name: '内部',
         sort: 0,
         status: 1,
-        storefrontVisible: false,
-        label: '内部（内部、停用）',
+        label: '内部（停用）',
       },
     ]);
   });

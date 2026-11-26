@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getGroupDisplayName,
   getUnavailableGroupIds,
-  isStorefrontGroup,
+  isEnabledGroup,
 } from '../product-group/availability';
 import {
   buildProductListGroupQuery,
@@ -61,19 +61,17 @@ describe('product list sources', () => {
     ]);
   });
 
-  it('keeps unavailable ids distinguishable and treats old groups as public', () => {
+  it('keeps unavailable ids distinguishable and accepts any enabled group', () => {
     const groups = [
       { id: 1, name: '旧分组', status: 0 },
       { id: 2, name: '已停用', status: 1, storefrontVisible: true },
       { id: 3, name: '内部活动', status: 0, storefrontVisible: false },
     ];
     expect(
-      groups
-        .filter((group) => isStorefrontGroup(group))
-        .map((group) => group.id),
-    ).toEqual([1]);
-    expect(getUnavailableGroupIds([1, 2, 3, 99], groups)).toEqual([2, 3, 99]);
-    expect(getGroupDisplayName(3, groups)).toBe('内部活动（仅内部使用）');
+      groups.filter((group) => isEnabledGroup(group)).map((group) => group.id),
+    ).toEqual([1, 3]);
+    expect(getUnavailableGroupIds([1, 2, 3, 99], groups)).toEqual([2, 99]);
+    expect(getGroupDisplayName(3, groups)).toBe('内部活动');
     expect(getGroupDisplayName(2, groups)).toBe('已停用（已禁用）');
     expect(getGroupDisplayName(99, groups)).toBe('分组 99（已删除或不可访问）');
   });
