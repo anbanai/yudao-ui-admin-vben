@@ -12,9 +12,10 @@ const { getSpuMock, productFormTestState, submitAllFormMock } = vi.hoisted(
       onDescriptionUploadingChange: undefined as
         | ((uploading: boolean) => void)
         | undefined,
-      route: { name: 'ProductSpuDetail', params: { id: '1' } } as {
+      route: { name: 'ProductSpuDetail', params: { id: '1' }, query: {} } as {
         name: string;
         params: Record<string, string>;
+        query?: Record<string, string>;
       },
     },
     submitAllFormMock: vi.fn(async () => ({})),
@@ -22,7 +23,7 @@ const { getSpuMock, productFormTestState, submitAllFormMock } = vi.hoisted(
 );
 
 vi.mock('vue-router', () => ({
-  useRoute: () => productFormTestState.route,
+  useRoute: () => ({ query: {}, ...productFormTestState.route }),
 }));
 
 vi.mock('@vben/common-ui', () => ({
@@ -60,7 +61,7 @@ vi.mock('#/adapter/form', () => ({
         return () =>
           h('section', { 'data-testid': 'product-form' }, [
             values.value.name,
-            slots.default?.(),
+            slots.default?.(), slots.multiSkuList?.(),
           ]);
       },
     });
@@ -88,12 +89,22 @@ vi.mock('#/api/mall/product/spu', () => ({
 }));
 
 vi.mock('#/utils/operation-feedback', () => ({
-  withOperationFeedback: vi.fn(),
+  withOperationFeedback: (operation: () => Promise<unknown>) => operation(),
 }));
+
+vi.mock('#/api/mall/product/youzan-import', () => ({ result: vi.fn(), supplement: vi.fn() }));
 
 vi.mock('#/views/mall/product/spu/components', () => ({
   getPropertyList: () => [],
-  SkuList: defineComponent(() => () => h('div')),
+  SkuList: defineComponent({
+    props: ['propFormData'],
+    setup(props, { expose }) {
+      expose({ validateSku: () => {} });
+      return () => h('input', { 'data-testid': 'price', onInput: (event: Event) => {
+        props.propFormData.skus[0].price = Number((event.target as HTMLInputElement).value);
+      } });
+    },
+  }),
 }));
 
 vi.mock('./data', () => ({
@@ -127,6 +138,7 @@ async function flushVueUpdates() {
 describe('商品 SPU 详情加载', () => {
   let app: ReturnType<typeof createApp> | undefined;
   let host: HTMLDivElement | undefined;
+  let formInstance: { handleSubmit: () => Promise<void>; markUnsavedChanges: () => void };
 
   afterEach(() => {
     app?.unmount();
@@ -139,6 +151,84 @@ describe('商品 SPU 详情加载', () => {
       params: { id: '1' },
     };
     vi.clearAllMocks();
+  });
+
+  async function openForm() {
+    app?.unmount();
+    host?.remove();
+    host = document.createElement('div');
+    document.body.append(host);
+    app = createApp((await import('./index.vue')).default);
+    const root = app.mount(host);
+    formInstance = (root.$ as unknown as { setupState: typeof formInstance }).setupState;
+    await flushVueUpdates();
+    return host;
+  }
+
+  function saveButton(page: HTMLElement) {
+    return [...page.querySelectorAll('button')].find(button => button.textContent?.replaceAll(/\s/g, '') === '保存');
+  }
+
+  function changePrice(page: HTMLElement, value: string) {
+    const input = page.querySelector<HTMLInputElement>('[data-testid="price"]')!;
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+  }
+
+  it('导入补资料慢响应及返回后都不能再次保存或切到普通写接口', async () => {
+    const { result, supplement } = await import('#/api/mall/product/youzan-import');
+    const { createSpu, updateSpu } = await import('#/api/mall/product/spu');
+    const snapshot = (bindingState: 'BOUND' | 'UNBOUND') => ({ batchId: 'batch', confirmed: true, unusedColumns: [], lines: [{
+      action: 'PENDING', bindingState, row: { number: 2, item: { key: { sku: 'S', product: 'P' }, hints: {}, name: '合成茶', specification: '', cents: 500, stock: 1 } },
+    }] });
+    productFormTestState.route = { name: 'ProductSpuAdd', params: {}, query: { yzProduct: 'P', yzBatch: 'batch', yzMerchant: '2' } };
+    vi.mocked(result).mockResolvedValueOnce(snapshot('UNBOUND')).mockResolvedValueOnce(snapshot('BOUND'));
+    let finish!: (id: number) => void;
+    vi.mocked(supplement).mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    submitAllFormMock.mockResolvedValue({ name: '合成茶' });
+    const page = await openForm();
+    const select = page.querySelector('select')!;
+    select.value = 'S'; select.dispatchEvent(new Event('change'));
+    await nextTick();
+    const save = saveButton(page)!;
+    save.click(); save.click();
+    await vi.waitFor(() => expect(supplement).toHaveBeenCalledTimes(1));
+    changePrice(page, '99');
+    await nextTick();
+    expect(save.disabled).toBe(true);
+    save.click();
+    finish(42);
+    await vi.waitFor(() => expect(page.textContent).toContain('来源商品已绑定'));
+    expect(saveButton(page)).toBeUndefined();
+    expect(page.querySelector('[data-testid="price"]')).toBeNull();
+    submitAllFormMock.mockResolvedValue({ name: '修改后的合成商品' });
+    formInstance.markUnsavedChanges();
+    const validations = submitAllFormMock.mock.calls.length;
+    await formInstance.handleSubmit();
+    expect(submitAllFormMock).toHaveBeenCalledTimes(validations);
+    const returned = await openForm();
+    await vi.waitFor(() => expect(returned.textContent).toContain('来源商品已绑定'));
+    expect(saveButton(returned)).toBeUndefined();
+    await formInstance.handleSubmit();
+    expect(result).toHaveBeenCalledTimes(2);
+    expect(supplement).toHaveBeenCalledTimes(1);
+    expect(createSpu).not.toHaveBeenCalled(); expect(updateSpu).not.toHaveBeenCalled();
+  });
+
+  it('普通编辑入口修改价格仍调用 updateSpu', async () => {
+    const { supplement } = await import('#/api/mall/product/youzan-import');
+    const { createSpu, updateSpu } = await import('#/api/mall/product/spu');
+    productFormTestState.route = { name: 'ProductSpuEdit', params: { id: '42' } };
+    getSpuMock.mockResolvedValue({ id: 42, name: '合成茶', skus: [{ price: 500, stock: 1 }], sliderPicUrls: [] });
+    submitAllFormMock.mockResolvedValue({ id: 42, name: '合成茶' });
+    const page = await openForm();
+    await vi.waitFor(() => expect(page.textContent).toContain('合成茶'));
+    await flushVueUpdates();
+    changePrice(page, '7');
+    await nextTick();
+    saveButton(page)!.click();
+    await vi.waitFor(() => expect(updateSpu).toHaveBeenCalledWith(expect.objectContaining({ id: 42, skus: [expect.objectContaining({ price: 700 })] })));
+    expect(createSpu).not.toHaveBeenCalled(); expect(supplement).not.toHaveBeenCalled();
   });
 
   it('详情骨架开启时仍能完成表单回填并显示内容', async () => {

@@ -16,6 +16,8 @@ import { Alert, Button, Card, message, Modal } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { createSpu, getSpu, updateSpu } from '#/api/mall/product/spu';
+import type { ImportItem } from '#/api/mall/product/youzan-import';
+import { result as importResult, supplement } from '#/api/mall/product/youzan-import';
 import { withOperationFeedback } from '#/utils/operation-feedback';
 import { getPropertyList, SkuList } from '#/views/mall/product/spu/components';
 
@@ -34,7 +36,26 @@ import ProductAttributes from './modules/product-attributes.vue';
 import ProductPropertyAddForm from './modules/product-property-add-form.vue';
 
 const spuId = ref<number>();
-const { params, name } = useRoute();
+const { params, name, query } = useRoute();
+const importBatch = String(query.yzBatch ?? '');
+const importMerchant = String(query.yzMerchant ?? '');
+const importProduct = String(query.yzProduct ?? '');
+const importMode = ['yzBatch', 'yzMerchant', 'yzProduct'].some((key) => key in query);
+const importFinished = ref(false);
+const importItems = ref<ImportItem[]>([]);
+const sources = ref<Record<string, string>>({});
+function signature(sku: MallSpuApi.Sku) {
+  return (sku.properties ?? []).map((p) => `${p.propertyId}:${p.valueId}`).sort().join(',');
+}
+function bindSource(sku: MallSpuApi.Sku, event: Event) {
+  const source = (event.target as HTMLSelectElement).value;
+  sources.value[signature(sku)] = source;
+  const item = importItems.value.find((entry) => entry.key.sku === source);
+  if (item) {
+    sku.price = item.cents == null ? undefined : item.cents / 100;
+    sku.stock = item.stock ?? undefined;
+  }
+}
 const { closeCurrentTab } = useTabs();
 const activeTabName = ref('info');
 const formLoading = ref(Boolean(params.id)); // 表单详情的加载中
@@ -263,6 +284,7 @@ async function handleSubmit() {
   ) {
     return;
   }
+  if (importMode && (importFinished.value || !importItems.value.length || initializingForm.value)) return;
   submitLoading.value = true;
   const submittedChangeVersion = changeVersion.value;
   try {
@@ -284,6 +306,12 @@ async function handleSubmit() {
       message.error('【库存价格】不完善，请填写相关信息');
       return;
     }
+    if (importBatch && formData.value.skus?.some((sku) =>
+      !sources.value[signature(sku)] || sku.price == null || String(sku.price).trim() === '' || sku.stock == null,
+    )) {
+      message.error('请为每个来源规格完成绑定，并补齐价格和库存');
+      return;
+    }
     const preparedValues = prepareSubmissionValues(values);
 
     if (savedPayloadSnapshot.value === JSON.stringify(preparedValues)) {
@@ -291,6 +319,12 @@ async function handleSubmit() {
       return;
     }
 
+    if (importMode) {
+      await withOperationFeedback(() => supplement(importMerchant, importBatch, importProduct, preparedValues, sources.value));
+      importFinished.value = true;
+      hasUnsavedChanges.value = false;
+      return;
+    }
     const savedSpuId = await withOperationFeedback(() =>
       spuId.value ? updateSpu(preparedValues) : createSpu(preparedValues),
     );
@@ -519,11 +553,27 @@ watch(formData, markUnsavedChanges, { deep: true });
 
 /** 初始化 */
 onMounted(async () => {
-  spuId.value = params.id as unknown as number;
+  spuId.value = importMode ? undefined : params.id as unknown as number;
   if (!spuId.value) {
     initializingForm.value = true;
     try {
       await nextTick();
+      if (importMode) {
+        detailLoadFailed.value = true;
+        if (!importBatch || !importProduct || !importMerchant || params.id) return;
+        const batch = await importResult(importMerchant, importBatch);
+        const productLines = batch.lines.filter(({ row }) => row.item?.key.product === importProduct);
+        if (batch.confirmed && productLines.some(({ bindingState }) => bindingState === 'BOUND')) {
+          importFinished.value = true;
+          return;
+        }
+        importItems.value = batch.lines.flatMap(({ bindingState, row }) =>
+          batch.confirmed && bindingState === 'UNBOUND' && row.item?.key.product === importProduct ? [row.item] : []);
+        if (!importItems.value[0]) return;
+        formData.value.name = importItems.value[0].name;
+        formData.value.merchantId = Number(importMerchant);
+        detailLoadFailed.value = false;
+      }
       await Promise.all([
         infoFormApi.setValues({
           ...formData.value,
@@ -552,7 +602,22 @@ onMounted(async () => {
     />
 
     <Page auto-content-height>
+      <Alert v-if="importFinished" type="success" message="来源商品已绑定。如需改价或调整库存，请从商品列表进入标准编辑页。" show-icon>
+        <template #action><Button @click="() => closeCurrentTab()">关闭补资料页</Button></template>
+      </Alert>
+      <Card v-if="importMode && !importFinished" title="有赞商品补资料（保存后下架）">
+        <p>请确认类目、图片、配送和预售配置，建立商城规格后逐项匹配来源规格。不会用链接或商城名称补全图片或品牌。</p>
+        <div v-for="item in importItems" :key="item.key.sku">{{ item.specification }} · {{ Object.entries(item.hints).map(([k, v]) => `${k}：${v}`).join('；') }}</div>
+        <label v-for="sku in formData.skus" :key="signature(sku)" class="block">
+          {{ sku.properties?.map((p) => p.valueName).join(' / ') || '商城规格' }}
+          <select :value="sources[signature(sku)] || ''" @change="bindSource(sku, $event)">
+            <option value="">请选择来源规格</option>
+            <option v-for="item in importItems" :key="item.key.sku" :value="item.key.sku">{{ item.key.sku }} · {{ item.specification }} · {{ item.cents == null ? '待补价格' : item.cents / 100 + ' 元' }} / {{ item.stock ?? '待补库存' }}</option>
+          </select>
+        </label>
+      </Card>
       <Card
+        v-if="!importFinished"
         class="h-full w-full"
         :loading="formLoading"
         :tab-list="[
@@ -589,7 +654,7 @@ onMounted(async () => {
           show-icon
         >
           <template #action>
-            <Button size="small" @click="getDetail">重试</Button>
+            <Button v-if="!importMode" size="small" @click="getDetail">重试</Button>
           </template>
         </Alert>
         <template #tabBarExtraContent>

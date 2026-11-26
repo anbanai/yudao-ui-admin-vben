@@ -58,6 +58,13 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: z.number().default(CommonStatusEnum.ENABLE),
     },
     {
+      fieldName: 'showInDetail',
+      label: '详情展示品牌',
+      component: 'Switch',
+      defaultValue: false,
+      help: '按真实品牌展示；关闭不影响品牌归属和商品销售',
+    },
+    {
       fieldName: 'description',
       label: '品牌描述',
       component: 'Textarea',
