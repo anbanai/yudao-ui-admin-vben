@@ -23,6 +23,7 @@ import {
 import { schema as poolConfigSchema } from '#/views/crm/customer/poolConfig/data';
 import { useTransferFormSchema } from '#/views/crm/permission/modules/data';
 import { useFormSchema as receivableSchema } from '#/views/crm/receivable/data';
+import { useFormSchema as fileConfigSchema } from '#/views/infra/fileConfig/data';
 import {
   useBalanceFormSchema,
   usePointFormSchema,
@@ -200,6 +201,22 @@ describe('Task 3 wave-one dependency migration', () => {
   it('uses static hide for permanently hidden transport fields', () => {
     expect(field(aiModelSchema(), 'id')).toMatchObject({ hide: true });
   });
+
+  it.each([
+    [20, 'oss-cn-hangzhou.aliyuncs.com', null],
+    [20, 's3.cn-east-1.qiniucs.com', 'required'],
+    [10, undefined, 'required'],
+  ])(
+    'applies the domain rule for storage %s and endpoint %s',
+    async (storage, endpoint, rules) => {
+      expect(
+        await resolve(fileConfigSchema(), 'config.domain', {
+          config: { endpoint },
+          storage,
+        }),
+      ).toMatchObject({ rules, show: true });
+    },
+  );
 
   it('subscribes every wave-one resolver to exactly the form values it reads', () => {
     const views = path.resolve(import.meta.dirname, '..');

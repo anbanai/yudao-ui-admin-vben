@@ -270,10 +270,14 @@ export function useFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请输入自定义域名',
       },
-      rules: 'required',
       dependencies: {
-        triggerFields: ['storage'],
+        triggerFields: ['storage', 'config'],
         resolve: ({ values }) => ({
+          rules:
+            values.storage !== 20 ||
+            values.config?.endpoint?.includes('qiniucs.com')
+              ? 'required'
+              : null,
           show: !!values.storage,
         }),
       },
