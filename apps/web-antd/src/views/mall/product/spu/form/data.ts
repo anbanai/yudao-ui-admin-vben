@@ -38,14 +38,12 @@ export function useInfoFormSchema(): VbenFormSchema[] {
           return handleTree(
             data.map((category) => ({
               ...category,
-              selectable:
-                (category.parentId ?? 0) > 0 &&
-                category.status === CommonStatusEnum.ENABLE,
+              selectable: category.status === CommonStatusEnum.ENABLE,
             })),
           );
         },
         fieldNames: { label: 'name', value: 'id', children: 'children' },
-        placeholder: '请选择二级商品分类',
+        placeholder: '请选择商品分类',
       },
       rules: 'required',
     },

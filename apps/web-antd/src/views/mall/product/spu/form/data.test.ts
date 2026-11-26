@@ -19,7 +19,7 @@ vi.mock('#/api/mall/trade/delivery/expressTemplate', () => ({
 }));
 
 describe('商品基础信息表单', () => {
-  it('显示历史一级分类和停用分类，仅允许选择已启用的子分类', async () => {
+  it('允许选择已启用的一级分类及既有子分类', async () => {
     vi.mocked(getCategoryList).mockResolvedValue([
       { id: 1, parentId: 0, name: '茶器', picUrl: '', sort: 0, status: 0 },
       { id: 2, parentId: 1, name: '盖碗', picUrl: '', sort: 0, status: 0 },
@@ -34,7 +34,7 @@ describe('商品基础信息表单', () => {
       {
         id: 1,
         name: '茶器',
-        selectable: false,
+        selectable: true,
         children: [
           { id: 2, selectable: true },
           { id: 3, selectable: false },
