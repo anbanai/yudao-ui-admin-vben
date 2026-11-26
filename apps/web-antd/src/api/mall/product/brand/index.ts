@@ -11,6 +11,7 @@ export namespace MallBrandApi {
     sort?: number; // 品牌排序
     description?: string; // 品牌描述
     status: number; // 开启状态
+    showInDetail?: boolean;
     merchantId?: number; // 默认归属商家
     merchantName?: string; // 商家名称
   }
