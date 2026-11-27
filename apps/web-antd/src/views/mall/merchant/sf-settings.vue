@@ -33,10 +33,18 @@ const form = ref<ReturnType<typeof createSettingsForm>>();
 const loading = ref(false);
 const saving = ref(false);
 const tab = ref('settings');
-const paperOptions = computed(() =>
-  SF_PAPER_SPEC_OPTIONS.filter((paper) =>
-    config.value?.supportedPaperSpecs.includes(paper.value),
-  ),
+const paperOptions = computed(() => {
+  const savedForm = config.value && createSettingsForm(config.value);
+  return SF_PAPER_SPEC_OPTIONS.flatMap((paper) => {
+    if (savedForm?.supportedPaperSpecs.includes(paper.value)) return [paper];
+    if (paper.value === savedForm?.paperSpec) {
+      return [{ ...paper, disabled: true, label: `${paper.label}（已停用）` }];
+    }
+    return [];
+  });
+});
+const shippingReady = computed(
+  () => config.value?.configured && !form.value?.hasUnavailableSavedPaper,
 );
 const products = [
   { value: '1', label: '顺丰特快' },
@@ -104,6 +112,14 @@ onMounted(load);
             class="max-w-4xl"
             @finish="save"
           >
+            <Alert
+              v-if="!shippingReady"
+              class="mb-4"
+              show-icon
+              type="warning"
+              message="顺丰发货设置尚未完成"
+              description="发货前请补齐本店月结卡、寄件产品、重量、可用面单纸张和发件地址。独立退货地址可以先保存。"
+            />
             <h3 class="mb-4 text-base font-medium">结算与寄件</h3>
             <div class="grid gap-x-5 md:grid-cols-2">
               <Form.Item
@@ -153,7 +169,9 @@ onMounted(load);
                 name="paperSpec"
                 :rules="[
                   {
-                    required: paperOptions.length > 0,
+                    required:
+                      config.supportedPaperSpecs.length > 0 &&
+                      !form.hasUnavailableSavedPaper,
                     message: '请选择面单纸张',
                   },
                 ]"
@@ -161,9 +179,18 @@ onMounted(load);
                 <Select
                   v-model:value="form.paperSpec"
                   :options="paperOptions"
-                  :disabled="!paperOptions.length"
+                  :disabled="!config.supportedPaperSpecs.length"
                   placeholder="请联系平台开通顺丰面单模板"
                 />
+                <div
+                  v-if="form.hasUnavailableSavedPaper"
+                  class="mt-1 text-sm text-gray-500"
+                >
+                  已保存的纸张 {{ config.paperWidthMm }}×{{
+                    config.paperHeightMm
+                  }}
+                  mm 暂不可用。可以另选纸张，或先保存其他设置。
+                </div>
               </Form.Item>
             </div>
             <Divider />

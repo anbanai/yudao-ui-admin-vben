@@ -33,4 +33,40 @@ describe('merchant SF settings', () => {
     expect(settingsPayload(form)).not.toHaveProperty('returnName');
     expect(settingsPayload(form).senderName).toBe('发件仓');
   });
+
+  it('retains unsupported saved paper while allowing a deliberate replacement', () => {
+    const form = createSettingsForm({
+      configured: true,
+      dpi: 203,
+      paperHeightMm: 150,
+      paperWidthMm: 100,
+      supportedPaperSpecs: ['76x130'],
+    });
+
+    expect(form.paperSpec).toBe('100x150');
+    expect(settingsPayload(form).paperWidthMm).toBeUndefined();
+    expect(settingsPayload(form).paperHeightMm).toBeUndefined();
+    expect(settingsPayload(form).dpi).toBeUndefined();
+
+    form.paperSpec = '76x130';
+    expect(settingsPayload(form)).toMatchObject({
+      dpi: 203,
+      paperHeightMm: 130,
+      paperWidthMm: 76,
+    });
+  });
+
+  it('preserves a known paper size when the platform has no templates', () => {
+    const form = createSettingsForm({
+      configured: true,
+      dpi: 203,
+      paperHeightMm: 150,
+      paperWidthMm: 100,
+      supportedPaperSpecs: [],
+    });
+
+    expect(form.paperSpec).toBe('100x150');
+    expect(form.hasUnavailableSavedPaper).toBe(true);
+    expect(settingsPayload(form).paperWidthMm).toBeUndefined();
+  });
 });

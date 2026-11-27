@@ -3,11 +3,12 @@ import type { FormInstance } from 'ant-design-vue';
 
 import type { MallSfLogisticsApi } from '#/api/mall/trade/logistics/sf';
 
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
 import {
+  Alert,
   Button,
   Divider,
   Form,
@@ -23,6 +24,10 @@ import { getSfAccounts, saveSfAccount } from '#/api/mall/trade/logistics/sf';
 const accounts = ref<MallSfLogisticsApi.Account[]>([]);
 const formRef = ref<FormInstance>();
 const saving = ref(false);
+const loaded = ref(false);
+const hasEnabledDefault = computed(() =>
+  accounts.value.some((account) => account.status === 0 && account.defaultFlag),
+);
 
 function createDefaultForm(): MallSfLogisticsApi.Account {
   return {
@@ -42,10 +47,15 @@ const columns = [
 
 async function load() {
   accounts.value = await getSfAccounts();
+  loaded.value = true;
 }
 
 function editRecord(record: Record<string, any>) {
-  Object.assign(form, record as MallSfLogisticsApi.Account, {
+  Object.assign(form, {
+    id: record.id,
+    name: record.name,
+    status: record.status,
+    defaultFlag: record.status === 0 && record.defaultFlag,
     partnerId: '',
     checkWord: '',
   });
@@ -54,7 +64,7 @@ function editRecord(record: Record<string, any>) {
 function reset() {
   Object.assign(form, createDefaultForm(), {
     id: undefined,
-    defaultFlag: accounts.value.length === 0,
+    defaultFlag: !hasEnabledDefault.value,
     partnerId: '',
     checkWord: '',
   });
@@ -66,10 +76,18 @@ async function save() {
   await formRef.value?.validate();
   saving.value = true;
   try {
-    await saveSfAccount(form);
+    await saveSfAccount({
+      id: form.id,
+      name: form.name.trim(),
+      partnerId: form.partnerId?.trim() || undefined,
+      checkWord: form.checkWord || undefined,
+      defaultFlag: form.status === 0 && form.defaultFlag,
+      status: form.status,
+    });
     message.success('顺丰开放平台接入已保存');
-    reset();
+    form.checkWord = '';
     await load();
+    reset();
   } finally {
     saving.value = false;
   }
@@ -80,6 +98,13 @@ onMounted(load);
 
 <template>
   <Page auto-content-height title="顺丰开放平台">
+    <Alert
+      v-if="loaded && !hasEnabledDefault"
+      class="mb-4"
+      message="请启用并设置一个默认账号，以使用顺丰发货和退货预约"
+      show-icon
+      type="warning"
+    />
     <Form ref="formRef" layout="vertical" :model="form" class="max-w-6xl">
       <section>
         <h3 class="mb-4 text-base font-medium">账号凭证</h3>
@@ -87,9 +112,11 @@ onMounted(load);
           <Form.Item
             label="配置名称"
             name="name"
-            :rules="[{ required: true, message: '请输入配置名称' }]"
+            :rules="[
+              { required: true, whitespace: true, message: '请输入配置名称' },
+            ]"
           >
-            <Input v-model:value="form.name" />
+            <Input v-model:value="form.name" :maxlength="64" />
           </Form.Item>
           <Form.Item
             label="Partner ID"
@@ -97,12 +124,14 @@ onMounted(load);
             :rules="[
               {
                 required: !form.id,
+                whitespace: true,
                 message: '请输入顺丰开放平台 Partner ID',
               },
             ]"
           >
             <Input
               v-model:value="form.partnerId"
+              :maxlength="64"
               :placeholder="form.id ? '已配置，留空则不修改' : ''"
             />
           </Form.Item>
@@ -110,11 +139,16 @@ onMounted(load);
             label="校验码"
             name="checkWord"
             :rules="[
-              { required: !form.id, message: '请输入顺丰开放平台校验码' },
+              {
+                required: !form.id,
+                whitespace: true,
+                message: '请输入顺丰开放平台校验码',
+              },
             ]"
           >
             <Input.Password
               v-model:value="form.checkWord"
+              :maxlength="128"
               :placeholder="form.id ? '已配置，留空则不修改' : ''"
             />
           </Form.Item>
@@ -124,6 +158,7 @@ onMounted(load);
       <div class="flex flex-wrap items-center gap-3 border-t pt-4">
         <Switch
           v-model:checked="form.defaultFlag"
+          :disabled="form.status !== 0"
           checked-children="默认账号"
           un-checked-children="普通账号"
         />
@@ -132,7 +167,10 @@ onMounted(load);
           checked-children="启用"
           un-checked-children="停用"
           @update:checked="
-            (checked) => (form.status = checked === true ? 0 : 1)
+            (checked) => {
+              form.status = checked === true ? 0 : 1;
+              if (form.status !== 0) form.defaultFlag = false;
+            }
           "
         />
         <Button type="primary" :loading="saving" @click="save">保存</Button>
@@ -153,6 +191,9 @@ onMounted(load);
         <template v-if="column.key === 'status'">
           <Tag :color="record.status === 0 ? 'green' : 'default'">
             {{ record.status === 0 ? '启用' : '停用' }}
+          </Tag>
+          <Tag v-if="record.status === 0 && record.defaultFlag" color="blue">
+            默认
           </Tag>
         </template>
         <template v-else-if="column.key === 'actions'">

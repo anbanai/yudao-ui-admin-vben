@@ -3,20 +3,26 @@ import type { MerchantWorkbenchApi } from '#/api/merchant/workbench';
 import { SF_PAPER_SPEC_OPTIONS } from '../trade/logistics/sf/paper-spec';
 
 export function createSettingsForm(config: MerchantWorkbenchApi.SfConfig) {
+  const savedPaper = SF_PAPER_SPEC_OPTIONS.find(
+    (spec) =>
+      spec.heightMm === config.paperHeightMm &&
+      spec.widthMm === config.paperWidthMm &&
+      spec.dpi === config.dpi,
+  );
+  const hasSavedPaper =
+    Number.isFinite(config.paperHeightMm) ||
+    Number.isFinite(config.paperWidthMm);
   const paperOptions = SF_PAPER_SPEC_OPTIONS.filter((spec) =>
     config.supportedPaperSpecs.includes(spec.value),
   );
-  const paper =
-    paperOptions.find(
-      (spec) =>
-        spec.heightMm === config.paperHeightMm &&
-        spec.widthMm === config.paperWidthMm,
-    ) ?? paperOptions[0];
   return {
+    supportedPaperSpecs: config.supportedPaperSpecs,
+    hasUnavailableSavedPaper:
+      hasSavedPaper && !paperOptions.some((spec) => spec === savedPaper),
     monthlyCard: '',
     serviceCode: config.serviceCode ?? '1',
     defaultWeightKg: config.defaultWeightKg ?? 1,
-    paperSpec: paper?.value,
+    paperSpec: hasSavedPaper ? savedPaper?.value : paperOptions[0]?.value,
     senderName: config.senderName ?? '',
     senderPhone: config.senderPhone ?? '',
     senderProvince: config.senderProvince ?? '',
@@ -38,6 +44,8 @@ export function settingsPayload(
 ): MerchantWorkbenchApi.SfConfigUpdate {
   const {
     paperSpec,
+    supportedPaperSpecs,
+    hasUnavailableSavedPaper: _hasUnavailableSavedPaper,
     monthlyCard,
     returnName,
     returnPhone,
@@ -47,7 +55,10 @@ export function settingsPayload(
     returnAddress,
     ...settings
   } = form;
-  const paper = SF_PAPER_SPEC_OPTIONS.find((spec) => spec.value === paperSpec);
+  const paper = SF_PAPER_SPEC_OPTIONS.find(
+    (spec) =>
+      spec.value === paperSpec && supportedPaperSpecs.includes(spec.value),
+  );
   return {
     ...settings,
     monthlyCard: monthlyCard.trim() || undefined,

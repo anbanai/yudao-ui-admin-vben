@@ -5,7 +5,7 @@ import type { SfPaperSpecValue } from '../../trade/logistics/sf/paper-spec';
 
 import type { MallSfLogisticsApi } from '#/api/mall/trade/logistics/sf';
 
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -13,6 +13,7 @@ import {
   Alert,
   AutoComplete,
   Button,
+  Checkbox,
   Descriptions,
   Divider,
   message,
@@ -47,6 +48,7 @@ const detecting = ref(false);
 const localPrinters = ref<LocalPrinter[]>([]);
 const selectedPrinter = ref<string>();
 const selectedDeviceId = ref<number>();
+const onSelectedWorkstation = ref(false);
 const diagnosticPaperSpec = ref<SfPaperSpecValue | undefined>(
   SF_PAPER_SPEC_OPTIONS.find((spec) =>
     props.supportedPaperSpecs.includes(spec.value),
@@ -57,6 +59,7 @@ const bindingPrinter = ref(false);
 const testing = ref(false);
 let client: PrintBridgeClientType | undefined;
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
+let workstationVersion = 0;
 
 const managedDevices = computed(() =>
   devices.value.filter(
@@ -80,6 +83,11 @@ const boundDevices = computed(() =>
 const selectedDevice = computed(() =>
   boundDevices.value.find((device) => device.id === selectedDeviceId.value),
 );
+const canDetectLocal = computed(
+  () =>
+    selectedDevice.value &&
+    (boundDevices.value.length === 1 || onSelectedWorkstation.value),
+);
 
 function isOnline(device?: MallSfLogisticsApi.Device) {
   if (!device?.lastPollTime) return false;
@@ -96,14 +104,19 @@ function selectCurrentDevice() {
   selectedDeviceId.value =
     boundDevices.value.find((device) => device.defaultFlag)?.id ??
     boundDevices.value[0]?.id;
-  selectedPrinter.value = selectedDevice.value?.printerName;
 }
 
-function selectWorkstation() {
-  selectedPrinter.value = selectedDevice.value?.printerName;
-  localPrinters.value = [];
-  diagnosticStatus.value = '';
-}
+watch(
+  selectedDeviceId,
+  () => {
+    workstationVersion++;
+    onSelectedWorkstation.value = false;
+    selectedPrinter.value = selectedDevice.value?.printerName;
+    localPrinters.value = [];
+    diagnosticStatus.value = '';
+  },
+  { flush: 'sync' },
+);
 
 async function load(silent = false) {
   if (!silent) loading.value = true;
@@ -185,12 +198,14 @@ async function setDefaultDevice() {
 }
 
 async function detectLocal() {
-  if (detecting.value) return;
+  if (detecting.value || !canDetectLocal.value) return;
+  const version = workstationVersion;
+  const printerBeforeDetection = selectedPrinter.value;
   detecting.value = true;
   diagnosticStatus.value = '';
-  client?.disconnect();
   try {
     const { PrintBridgeClient } = await import('print-bridge-sdk');
+    if (version !== workstationVersion || !canDetectLocal.value) return;
     client = new PrintBridgeClient({
       ip: '127.0.0.1',
       port: 17_890,
@@ -199,22 +214,27 @@ async function detectLocal() {
     });
     await client.connect();
     await client.ping();
-    localPrinters.value = await client.getPrintersList();
-    if (localPrinters.value.length === 0) {
-      selectedPrinter.value = undefined;
+    const printers = await client.getPrintersList();
+    if (version !== workstationVersion || !canDetectLocal.value) return;
+    localPrinters.value = printers;
+    if (printers.length === 0) {
       message.error('本机未检测到打印机');
       return;
     }
+    if (selectedPrinter.value !== printerBeforeDetection) return;
     const savedPrinter = selectedDevice.value?.printerName;
     selectedPrinter.value =
-      localPrinters.value.find((item) => item.name === savedPrinter)?.name ??
-      localPrinters.value.find((item) => item.isDefault)?.name ??
-      localPrinters.value[0]?.name;
+      printers.find((item) => item.name === savedPrinter)?.name ??
+      printers.find((item) => item.isDefault)?.name ??
+      printers[0]?.name;
   } catch {
-    localPrinters.value = [];
-    selectedPrinter.value = undefined;
-    message.error('未连接到 PrintBridge，请确认软件已启动');
+    if (version === workstationVersion && canDetectLocal.value) {
+      localPrinters.value = [];
+      message.error('未连接到 PrintBridge，请确认软件已启动');
+    }
   } finally {
+    client?.disconnect();
+    client = undefined;
     detecting.value = false;
   }
 }
@@ -260,6 +280,7 @@ onMounted(() => {
   );
 });
 onBeforeUnmount(() => {
+  workstationVersion++;
   client?.disconnect();
   if (refreshTimer) clearInterval(refreshTimer);
 });
@@ -305,6 +326,7 @@ onBeforeUnmount(() => {
         v-if="boundDevices.length > 0"
         type="primary"
         :loading="detecting"
+        :disabled="!canDetectLocal"
         @click="detectLocal"
       >
         <template #icon>
@@ -337,9 +359,16 @@ onBeforeUnmount(() => {
                 value: device.id,
               }))
             "
-            @change="selectWorkstation"
           />
         </div>
+
+        <Checkbox
+          v-if="boundDevices.length > 1"
+          v-model:checked="onSelectedWorkstation"
+          class="mb-4"
+        >
+          当前浏览器正在 {{ selectedDevice.deviceName }} 上运行
+        </Checkbox>
 
         <Descriptions bordered size="small" :column="{ xs: 1, sm: 2 }">
           <Descriptions.Item label="本店默认设备">
