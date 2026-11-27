@@ -85,8 +85,19 @@ vi.mock(
 );
 
 vi.mock('#/views/mall/product/category/components/', async () => {
-  const { defineComponent } = await import('vue');
-  return { ProductCategorySelect: defineComponent(() => () => null) };
+  const { defineComponent, h } = await import('vue');
+  return {
+    ProductCategorySelect: defineComponent({
+      emits: ['category-selected'],
+      setup(_, { emit }) {
+        return () =>
+          h('button', {
+            'data-test': 'pick-category',
+            onClick: () => emit('category-selected', { id: 12, name: '绿茶' }),
+          });
+      },
+    }),
+  };
 });
 
 vi.mock('./link-detail-select.vue', async () => {
@@ -307,14 +318,7 @@ describe('app link helpers', () => {
     expect(dialogMocks.modalApis[1]?.open).toHaveBeenCalledOnce();
   });
 
-  async function openGroupDialog(
-    status: number,
-    path = '/pages/goods/group-list?groupIds=12&campaign=spring%20tea',
-  ) {
-    dialogMocks.getGroups.mockResolvedValue([
-      { id: 12, name: '春茶 & 新品', status, storefrontVisible: false },
-      { id: 13, name: '清仓', status: 0 },
-    ]);
+  async function openLinkDialog(path: string) {
     const change = vi.fn();
     const appLinkChange = vi.fn();
     const dialogRef = ref<{ open: (link: string) => Promise<void> }>();
@@ -335,8 +339,64 @@ describe('app link helpers', () => {
     app.mount(dialogHost);
     await dialogRef.value?.open(path);
     await nextTick();
-    await dialogMocks.modalConfigs[0]?.onConfirm();
     return { change, appLinkChange, path };
+  }
+
+  function clickOption(label: string) {
+    const option = [...dialogHost!.querySelectorAll('div')].find(
+      (el) => el.childElementCount === 0 && el.textContent?.trim() === label,
+    );
+    expect(option).toBeDefined();
+    option!.click();
+  }
+
+  it.each([
+    ['/pages/index/page?id=38', '/pages/index/category'],
+    ['/pages/index/category?id=12', '/pages/index/category'],
+    ['/pages/index/category?id=12&from=nav', '/pages/index/category?from=nav'],
+  ])('selects the category homepage from %s', async (saved, expected) => {
+    const { change, appLinkChange } = await openLinkDialog(saved);
+    clickOption('商品分类');
+    await nextTick();
+    clickOption('分类首页');
+    await dialogMocks.modalConfigs[0]!.onConfirm();
+    expect(change).toHaveBeenCalledExactlyOnceWith(expected);
+    expect(appLinkChange).toHaveBeenCalledWith(
+      expect.objectContaining({ name: '商品分类', path: expected }),
+    );
+    expect(dialogMocks.getCategory).not.toHaveBeenCalled();
+  });
+
+  it('selects a specific category from the category homepage', async () => {
+    dialogMocks.getCategory.mockResolvedValue({ parentId: 0 });
+    const { change, appLinkChange } = await openLinkDialog(
+      '/pages/index/category',
+    );
+    clickOption('商品分类');
+    await nextTick();
+    dialogHost!
+      .querySelector<HTMLButtonElement>('[data-test="pick-category"]')!
+      .click();
+    await dialogMocks.modalConfigs[0]!.onConfirm();
+    expect(change).toHaveBeenCalledExactlyOnceWith(
+      '/pages/index/category?id=12',
+    );
+    expect(appLinkChange).toHaveBeenCalledWith(
+      expect.objectContaining({ name: '商品分类：绿茶' }),
+    );
+  });
+
+  async function openGroupDialog(
+    status: number,
+    path = '/pages/goods/group-list?groupIds=12&campaign=spring%20tea',
+  ) {
+    dialogMocks.getGroups.mockResolvedValue([
+      { id: 12, name: '春茶 & 新品', status, storefrontVisible: false },
+      { id: 13, name: '清仓', status: 0 },
+    ]);
+    const dialog = await openLinkDialog(path);
+    await dialogMocks.modalConfigs[0]?.onConfirm();
+    return dialog;
   }
 
   it('roundtrips enabled group labels and the saved link', async () => {

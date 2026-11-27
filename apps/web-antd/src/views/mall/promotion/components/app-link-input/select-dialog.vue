@@ -286,6 +286,18 @@ function handleDetailSelected(id?: number | string, detailName?: string) {
   detailSelectDialog.value.id = undefined;
 }
 
+function selectCategoryHome() {
+  const url = new URL(activeAppLink.value.path, 'http://127.0.0.1');
+  url.searchParams.delete('id');
+  activeAppLink.value = {
+    ...activeAppLink.value,
+    name: '商品分类',
+    path: url.pathname + url.search + url.hash,
+  };
+  detailSelectDialog.value.id = undefined;
+  detailSelectModalApi.close();
+}
+
 function handleCategorySelected(category?: { id: number; name: string }) {
   handleDetailSelected(category?.id, category?.name);
 }
@@ -371,6 +383,14 @@ function handleCategorySelected(category?: { id: number; name: string }) {
           :single="!isGroupBrowseLink"
           @change="handleDetailSelected"
         />
+      </FormItem>
+      <FormItem
+        v-if="
+          detailSelectDialog.type === APP_LINK_TYPE_ENUM.PRODUCT_CATEGORY_LIST
+        "
+        label="默认入口"
+      >
+        <Button @click="selectCategoryHome">分类首页</Button>
       </FormItem>
       <FormItem
         label="选择分类"
