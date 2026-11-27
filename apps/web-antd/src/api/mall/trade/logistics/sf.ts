@@ -7,23 +7,13 @@ export namespace MallSfLogisticsApi {
     partnerId?: string;
     partnerIdMasked?: string;
     checkWord?: string;
-    serviceCode: string;
-    senderName: string;
-    senderPhone: string;
-    senderProvince: string;
-    senderCity: string;
-    senderDistrict?: string;
-    senderAddress: string;
-    defaultWeightKg: number;
-    paperWidthMm: number;
-    paperHeightMm: number;
-    dpi: number;
     defaultFlag: boolean;
     status: number;
   }
 
   export interface Device {
     id?: number;
+    merchantId?: number;
     deviceCode: string;
     deviceName: string;
     printerName?: string;
@@ -106,28 +96,16 @@ export const saveSfAccount = (data: MallSfLogisticsApi.Account) =>
   requestClient.post<number>(`${baseUrl}/accounts`, data);
 export interface MerchantSfConfig {
   merchantId?: number;
-  monthlyCard?: string;
+  configured: boolean;
   monthlyCardMasked?: string;
 }
 export const getMerchantSfConfig = (merchantId: number) =>
   requestClient.get<MerchantSfConfig>(
     `${baseUrl}/merchant-config/get?merchantId=${merchantId}`,
   );
-export const saveMerchantSfConfig = (data: MerchantSfConfig) =>
-  requestClient.post<number>(`${baseUrl}/merchant-config/save`, data);
 export const getPrintDevices = () =>
   requestClient.get<MallSfLogisticsApi.Device[]>(`${baseUrl}/devices`);
-export const savePrintDevice = (data: MallSfLogisticsApi.Device) =>
-  requestClient.post<MallSfLogisticsApi.Device>(`${baseUrl}/devices`, data);
-export const enrollPrintDevice = () =>
-  requestClient.post<MallSfLogisticsApi.Device>(`${baseUrl}/devices/enroll`);
-export const createDiagnosticPayload = (data: {
-  paperHeightMm: number;
-  paperWidthMm: number;
-}) => requestClient.post<string>(`${baseUrl}/diagnostics/test-payload`, data);
 export const createSfWaybill = (data: {
-  accountId?: number;
-  deviceId?: number;
   orderId: number;
   subOrderId: number;
 }) =>
@@ -135,11 +113,7 @@ export const createSfWaybill = (data: {
     `${baseUrl}/waybills/create`,
     data,
   );
-export const batchCreateSfWaybills = (data: {
-  accountId?: number;
-  deviceId?: number;
-  orderIds: number[];
-}) =>
+export const batchCreateSfWaybills = (data: { orderIds: number[] }) =>
   requestClient.post<MallSfLogisticsApi.Waybill[]>(
     `${baseUrl}/waybills/batch-create`,
     data,

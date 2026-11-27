@@ -7,6 +7,7 @@ import type { MerchantWorkbenchApi } from '#/api/merchant/workbench';
 import { onMounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { fenToYuan } from '@vben/utils';
 
 import {
   Button as AButton,
@@ -35,7 +36,6 @@ import {
   createMerchantBrand,
   createMerchantProduct,
   createMerchantSfWaybill,
-  deliverMerchantOrder,
   disagreeMerchantAfterSale,
   getMerchantAfterSalePage,
   getMerchantBrandPage,
@@ -51,22 +51,20 @@ import {
   uploadMerchantProductImage,
 } from '#/api/merchant/workbench';
 
+import { isPrintTaskQueued } from '../trade/logistics/sf/delivery-status';
+import MerchantOrderDetail from './modules/order-detail.vue';
+
 type WorkbenchTab = 'after-sales' | 'brands' | 'orders' | 'products';
 
-const activeTab = ref<WorkbenchTab>('products');
+const props = defineProps<{ ordersOnly?: boolean }>();
+const activeTab = ref<WorkbenchTab>(props.ordersOnly ? 'orders' : 'products');
 const loading = ref(false);
 const rows = ref<Record<string, any>[]>([]);
 const total = ref(0);
 const pageNo = ref(1);
 const pageSize = ref(10);
-const deliveryOpen = ref(false);
-const deliverySaving = ref(false);
-const sfDeliverySaving = ref(false);
-const deliveryRow = ref<MerchantWorkbenchApi.Order | null>(null);
-const deliveryForm = reactive({
-  logisticsId: undefined as number | undefined,
-  logisticsNo: '',
-});
+const detailOrderId = ref<number>();
+const printingOrderId = ref<number>();
 const afterSaleOpen = ref(false);
 const afterSaleSaving = ref(false);
 const afterSaleAction = ref<'disagree' | 'refuse'>('disagree');
@@ -371,47 +369,28 @@ async function toggleProductStatus(row: MerchantWorkbenchApi.Product) {
   }
 }
 
-function openDelivery(row: MerchantWorkbenchApi.Order) {
-  deliveryRow.value = row;
-  deliveryForm.logisticsId = undefined;
-  deliveryForm.logisticsNo = '';
-  deliveryOpen.value = true;
-}
-
-async function submitDelivery() {
-  if (
-    !deliveryRow.value?.id ||
-    !deliveryRow.value.orderId ||
-    !deliveryForm.logisticsId
-  ) {
-    message.warning('请填写物流公司编号');
-    return;
-  }
-  deliverySaving.value = true;
-  try {
-    await deliverMerchantOrder({
-      id: deliveryRow.value.orderId,
-      subOrderId: deliveryRow.value.id,
-      logisticsId: deliveryForm.logisticsId,
-      logisticsNo: deliveryForm.logisticsNo || undefined,
-    });
-    message.success('已提交发货');
-    deliveryOpen.value = false;
-    await load();
-  } finally {
-    deliverySaving.value = false;
-  }
-}
-
 async function submitSfDelivery(row: MerchantWorkbenchApi.Order) {
-  if (!row.id) return;
-  sfDeliverySaving.value = true;
+  if (!row.id || printingOrderId.value !== undefined) return;
+  printingOrderId.value = row.id;
   try {
-    await createMerchantSfWaybill({ subOrderId: row.id });
-    message.success('顺丰运单已创建，等待打印设备处理');
-    await load();
+    const result = await createMerchantSfWaybill({ subOrderId: row.id });
+    if (result.printStatus === 'SUCCESS') {
+      message.success('顺丰面单已打印');
+    } else if (isPrintTaskQueued(result.printStatus)) {
+      message.success('顺丰运单已创建，等待本店打印设备处理');
+    } else {
+      message.error(
+        result.errorMessage ||
+          (result.printStatus === 'UNKNOWN'
+            ? '打印结果未知，请联系平台核对后再处理'
+            : '顺丰打单未完成，请联系平台核对运单状态'),
+      );
+    }
+  } catch {
+    // The merchant request client displays the server or network failure.
   } finally {
-    sfDeliverySaving.value = false;
+    printingOrderId.value = undefined;
+    await load();
   }
 }
 
@@ -473,6 +452,7 @@ async function receiveAfterSale(row: MerchantWorkbenchApi.AfterSale) {
 
 onMounted(() => {
   void load();
+  if (props.ordersOnly) return;
   void loadProductOptions().catch(() =>
     message.error('商品分类或品牌加载失败'),
   );
@@ -482,10 +462,10 @@ onMounted(() => {
 <template>
   <Page auto-content-height>
     <div class="merchant-operations">
-      <ATabs :active-key="activeTab" @change="switchTab">
+      <ATabs v-if="!ordersOnly" :active-key="activeTab" @change="switchTab">
         <ATabPane v-for="tab in tabs" :key="tab.key" :tab="tab.label" />
       </ATabs>
-      <div class="table-toolbar">
+      <div v-if="!ordersOnly" class="table-toolbar">
         <AButton
           v-if="activeTab === 'products'"
           type="primary"
@@ -521,6 +501,18 @@ onMounted(() => {
         "
       >
         <template #bodyCell="{ column, record }">
+          <template v-if="activeTab === 'orders' && column.key === 'no'">
+            <AButton
+              type="link"
+              size="small"
+              @click="detailOrderId = record.id"
+            >
+              {{ record.no || record.id }}
+            </AButton>
+          </template>
+          <template v-if="activeTab === 'orders' && column.key === 'payPrice'">
+            ¥{{ fenToYuan(record.payPrice ?? 0) }}
+          </template>
           <template v-if="column.key === 'price' && activeTab === 'products'">
             ¥{{ ((record.price || 0) / 100).toFixed(2) }}
           </template>
@@ -550,15 +542,10 @@ onMounted(() => {
               v-if="record.status === 10"
               type="link"
               size="small"
-              @click="openDelivery(record)"
-            >
-              发货
-            </AButton>
-            <AButton
-              v-if="record.status === 10"
-              type="link"
-              size="small"
-              :loading="sfDeliverySaving"
+              :loading="printingOrderId === record.id"
+              :disabled="
+                printingOrderId !== undefined && printingOrderId !== record.id
+              "
               @click="submitSfDelivery(record)"
             >
               顺丰打单
@@ -773,25 +760,12 @@ onMounted(() => {
         </AFormItem>
       </AForm>
     </AModal>
-    <AModal
-      v-model:open="deliveryOpen"
-      title="商家订单发货"
-      :confirm-loading="deliverySaving"
-      @ok="submitDelivery"
-    >
-      <AForm layout="vertical">
-        <AFormItem label="物流公司编号" required>
-          <AInputNumber
-            v-model:value="deliveryForm.logisticsId"
-            class="w-full"
-            :min="1"
-          />
-        </AFormItem>
-        <AFormItem label="物流单号">
-          <AInput v-model:value="deliveryForm.logisticsNo" allow-clear />
-        </AFormItem>
-      </AForm>
-    </AModal>
+    <MerchantOrderDetail
+      v-if="detailOrderId !== undefined"
+      :key="detailOrderId"
+      :sub-order-id="detailOrderId"
+      @close="detailOrderId = undefined"
+    />
     <AModal
       v-model:open="afterSaleOpen"
       :title="afterSaleAction === 'disagree' ? '拒绝售后' : '拒绝收货'"

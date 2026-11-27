@@ -5,7 +5,7 @@ export function isMerchantPathAllowed(path: string) {
 }
 
 export function isMerchantOperatingPath(path: string) {
-  return /^\/merchant\/(?:products|brands|orders|after-sales)(?:\/|$)/.test(
+  return /^\/merchant\/(?:products|brands|orders|after-sales|sf-settings)(?:\/|$)/.test(
     path,
   );
 }

@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import type { FormInstance } from 'ant-design-vue';
 
-import type { SfPaperSpecValue } from '../paper-spec';
-
 import type { MallSfLogisticsApi } from '#/api/mall/trade/logistics/sf';
 
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -14,9 +12,7 @@ import {
   Divider,
   Form,
   Input,
-  InputNumber,
   message,
-  Select,
   Switch,
   Table,
   Tag,
@@ -24,36 +20,13 @@ import {
 
 import { getSfAccounts, saveSfAccount } from '#/api/mall/trade/logistics/sf';
 
-import {
-  DEFAULT_SF_PAPER_SPEC,
-  getSfPaperSpec,
-  SF_PAPER_SPEC_OPTIONS,
-  toSfPaperSpecValue,
-} from '../paper-spec';
-
-const PRODUCT_OPTIONS = [
-  { label: '顺丰特快', value: '1' },
-  { label: '顺丰标快', value: '2' },
-];
-
 const accounts = ref<MallSfLogisticsApi.Account[]>([]);
 const formRef = ref<FormInstance>();
 const saving = ref(false);
 
 function createDefaultForm(): MallSfLogisticsApi.Account {
   return {
-    name: '顺丰月结账号',
-    serviceCode: '1',
-    senderName: '',
-    senderPhone: '',
-    senderProvince: '',
-    senderCity: '',
-    senderDistrict: '',
-    senderAddress: '',
-    defaultWeightKg: 1,
-    paperWidthMm: DEFAULT_SF_PAPER_SPEC.widthMm,
-    paperHeightMm: DEFAULT_SF_PAPER_SPEC.heightMm,
-    dpi: 203,
+    name: '顺丰开放平台',
     defaultFlag: true,
     status: 0,
   };
@@ -63,27 +36,9 @@ const form = reactive<MallSfLogisticsApi.Account>(createDefaultForm());
 const columns = [
   { title: '配置名称', dataIndex: 'name' },
   { title: 'Partner ID', dataIndex: 'partnerIdMasked' },
-  { title: '寄件产品', key: 'serviceCode' },
-  { title: '面单纸张', key: 'paperSpec' },
   { title: '状态', key: 'status' },
   { title: '操作', key: 'actions', width: 88 },
 ];
-
-const paperSpecValue = computed<SfPaperSpecValue>({
-  get: () =>
-    toSfPaperSpecValue(form.paperWidthMm, form.paperHeightMm) ??
-    DEFAULT_SF_PAPER_SPEC.value,
-  set: (value) => {
-    const spec = getSfPaperSpec(value);
-    form.paperWidthMm = spec.widthMm;
-    form.paperHeightMm = spec.heightMm;
-    form.dpi = spec.dpi;
-  },
-});
-
-function productLabel(code: string) {
-  return PRODUCT_OPTIONS.find((item) => item.value === code)?.label ?? code;
-}
 
 async function load() {
   accounts.value = await getSfAccounts();
@@ -112,7 +67,7 @@ async function save() {
   saving.value = true;
   try {
     await saveSfAccount(form);
-    message.success('顺丰账号已保存');
+    message.success('顺丰开放平台接入已保存');
     reset();
     await load();
   } finally {
@@ -124,11 +79,18 @@ onMounted(load);
 </script>
 
 <template>
-  <Page auto-content-height title="顺丰账号">
+  <Page auto-content-height title="顺丰开放平台">
     <Form ref="formRef" layout="vertical" :model="form" class="max-w-6xl">
       <section>
         <h3 class="mb-4 text-base font-medium">账号凭证</h3>
         <div class="grid gap-x-5 md:grid-cols-3">
+          <Form.Item
+            label="配置名称"
+            name="name"
+            :rules="[{ required: true, message: '请输入配置名称' }]"
+          >
+            <Input v-model:value="form.name" />
+          </Form.Item>
           <Form.Item
             label="Partner ID"
             name="partnerId"
@@ -155,84 +117,6 @@ onMounted(load);
               v-model:value="form.checkWord"
               :placeholder="form.id ? '已配置，留空则不修改' : ''"
             />
-          </Form.Item>
-        </div>
-      </section>
-
-      <Divider />
-
-      <section>
-        <h3 class="mb-4 text-base font-medium">寄件设置</h3>
-        <div class="grid gap-x-5 md:grid-cols-3">
-          <Form.Item label="寄件产品" name="serviceCode" required>
-            <Select
-              v-model:value="form.serviceCode"
-              :options="PRODUCT_OPTIONS"
-            />
-          </Form.Item>
-          <Form.Item label="面单纸张" required>
-            <Select
-              v-model:value="paperSpecValue"
-              :options="SF_PAPER_SPEC_OPTIONS"
-            />
-          </Form.Item>
-          <Form.Item
-            label="默认包裹重量（kg）"
-            name="defaultWeightKg"
-            :rules="[{ required: true, message: '请输入默认包裹重量' }]"
-          >
-            <InputNumber
-              v-model:value="form.defaultWeightKg"
-              :min="0.001"
-              :precision="3"
-              class="w-full"
-            />
-          </Form.Item>
-        </div>
-      </section>
-
-      <Divider />
-
-      <section>
-        <h3 class="mb-4 text-base font-medium">发件信息</h3>
-        <div class="grid gap-x-5 md:grid-cols-3">
-          <Form.Item
-            label="发件人"
-            name="senderName"
-            :rules="[{ required: true, message: '请输入发件人' }]"
-          >
-            <Input v-model:value="form.senderName" />
-          </Form.Item>
-          <Form.Item
-            label="手机号"
-            name="senderPhone"
-            :rules="[{ required: true, message: '请输入手机号' }]"
-          >
-            <Input v-model:value="form.senderPhone" />
-          </Form.Item>
-          <Form.Item
-            label="省"
-            name="senderProvince"
-            :rules="[{ required: true, message: '请输入省份' }]"
-          >
-            <Input v-model:value="form.senderProvince" />
-          </Form.Item>
-          <Form.Item
-            label="市"
-            name="senderCity"
-            :rules="[{ required: true, message: '请输入城市' }]"
-          >
-            <Input v-model:value="form.senderCity" />
-          </Form.Item>
-          <Form.Item label="区县">
-            <Input v-model:value="form.senderDistrict" />
-          </Form.Item>
-          <Form.Item
-            label="详细地址"
-            name="senderAddress"
-            :rules="[{ required: true, message: '请输入详细地址' }]"
-          >
-            <Input v-model:value="form.senderAddress" />
           </Form.Item>
         </div>
       </section>
@@ -266,16 +150,10 @@ onMounted(load);
       :scroll="{ x: 760 }"
     >
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'serviceCode'">
-          {{ productLabel(record.serviceCode) }}
-        </template>
-        <template v-else-if="column.key === 'status'">
+        <template v-if="column.key === 'status'">
           <Tag :color="record.status === 0 ? 'green' : 'default'">
             {{ record.status === 0 ? '启用' : '停用' }}
           </Tag>
-        </template>
-        <template v-else-if="column.key === 'paperSpec'">
-          {{ record.paperWidthMm }}×{{ record.paperHeightMm }} mm
         </template>
         <template v-else-if="column.key === 'actions'">
           <Button type="link" @click="editRecord(record)">编辑</Button>

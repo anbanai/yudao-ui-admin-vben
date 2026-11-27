@@ -40,7 +40,7 @@ export function getDeviceSetupState(devices: SetupDevice[]): DeviceSetupState {
     enabled.some((device) => !device.pending && !device.printerName?.trim())
   ) {
     return {
-      description: '检测本机后选择得力打印机，系统会自动完成绑定。',
+      description: '填写工作站上的打印机名称，或在该工作站检测打印机后绑定。',
       key: 'printer-required',
       title: '设备已连接，尚未选择打印机',
       type: 'warning',

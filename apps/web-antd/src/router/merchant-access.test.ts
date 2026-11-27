@@ -45,6 +45,7 @@ describe('merchant operating access', () => {
 
   it('matches only the operating routes under the merchant namespace', () => {
     expect(isMerchantOperatingPath('/merchant/products')).toBe(true);
+    expect(isMerchantOperatingPath('/merchant/sf-settings')).toBe(true);
     expect(isMerchantOperatingPath('/merchant/after-sales')).toBe(true);
     expect(isMerchantOperatingPath('/merchant/workbench')).toBe(false);
     expect(isMerchantOperatingPath('/mall/product/spu')).toBe(false);

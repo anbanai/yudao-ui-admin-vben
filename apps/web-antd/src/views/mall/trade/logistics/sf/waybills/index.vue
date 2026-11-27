@@ -67,7 +67,7 @@ async function cancel(record: MallSfLogisticsApi.Waybill) {
   await load();
 }
 async function reprint(record: MallSfLogisticsApi.Waybill) {
-  await reprintSfWaybill(record.id, record.deviceId);
+  await reprintSfWaybill(record.id);
   message.success('已生成新的人工重打任务');
   await load();
 }

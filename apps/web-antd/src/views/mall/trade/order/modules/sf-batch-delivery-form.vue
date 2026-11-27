@@ -8,75 +8,27 @@ import { useRouter } from 'vue-router';
 import { useVbenModal } from '@vben/common-ui';
 
 import {
-  Alert,
   Button,
   Descriptions,
-  Form,
   message,
   Result,
-  Select,
   Table,
   Tag,
 } from 'ant-design-vue';
 
-import {
-  batchCreateSfWaybills,
-  getPrintDevices,
-  getSfAccounts,
-} from '#/api/mall/trade/logistics/sf';
+import { batchCreateSfWaybills } from '#/api/mall/trade/logistics/sf';
 
 import {
   getPrintTaskErrorMessage,
   isPrintTaskQueued,
 } from '../../logistics/sf/delivery-status';
-import {
-  isReadyPrintDevice,
-  selectReadyPrintDeviceId,
-} from '../../logistics/sf/devices/setup-state';
-import {
-  getDeviceConnectionState,
-  isBatchSizeValid,
-  summarizeBatchResults,
-} from '../batch-shipping';
+import { isBatchSizeValid, summarizeBatchResults } from '../batch-shipping';
 
 const emit = defineEmits(['success']);
 const { push } = useRouter();
 const orders = ref<MallOrderApi.Order[]>([]);
-const accounts = ref<MallSfLogisticsApi.Account[]>([]);
-const devices = ref<MallSfLogisticsApi.Device[]>([]);
-const accountId = ref<number>();
-const deviceId = ref<number>();
 const results = ref<MallSfLogisticsApi.Waybill[]>([]);
 
-const accountOptions = computed(() =>
-  accounts.value
-    .filter((item) => item.status === 0 && item.id !== undefined)
-    .map((item) => ({ label: item.name, value: item.id })),
-);
-const deviceOptions = computed(() =>
-  devices.value
-    .filter((item) => isReadyPrintDevice(item) && item.id !== undefined)
-    .map((item) => ({ label: item.deviceName, value: item.id })),
-);
-const selectedDevice = computed(() =>
-  devices.value.find((item) => item.id === deviceId.value),
-);
-const deviceState = computed(() =>
-  getDeviceConnectionState(selectedDevice.value ?? {}),
-);
-const deviceStateLabel = computed(() => {
-  switch (deviceState.value) {
-    case 'offline': {
-      return '离线';
-    }
-    case 'online': {
-      return '在线';
-    }
-    default: {
-      return '未连接';
-    }
-  }
-});
 const summary = computed(() => summarizeBatchResults(results.value));
 const displayResults = computed(() =>
   results.value.map((result) => ({
@@ -114,15 +66,9 @@ const [Modal, modalApi] = useVbenModal({
       message.warning('请选择 1 至 100 个待发货快递订单');
       return;
     }
-    if (!accountId.value || !deviceId.value) {
-      message.warning('请选择顺丰账号和打印设备');
-      return;
-    }
     modalApi.lock();
     try {
       results.value = await batchCreateSfWaybills({
-        accountId: accountId.value,
-        deviceId: deviceId.value,
         orderIds,
       });
       emit('success');
@@ -145,14 +91,6 @@ const [Modal, modalApi] = useVbenModal({
     }
     const data = modalApi.getData() as { orders?: MallOrderApi.Order[] };
     orders.value = data?.orders ?? [];
-    [accounts.value, devices.value] = await Promise.all([
-      getSfAccounts(),
-      getPrintDevices(),
-    ]);
-    accountId.value =
-      accounts.value.find((item) => item.status === 0 && item.defaultFlag)
-        ?.id ?? accounts.value.find((item) => item.status === 0)?.id;
-    deviceId.value = selectReadyPrintDeviceId(devices.value);
   },
 });
 </script>
@@ -168,42 +106,11 @@ const [Modal, modalApi] = useVbenModal({
       </Descriptions.Item>
     </Descriptions>
 
-    <Form class="mt-4" layout="vertical">
-      <div class="grid grid-cols-2 gap-4">
-        <Form.Item label="顺丰账号" required>
-          <Select v-model:value="accountId" :options="accountOptions" />
-        </Form.Item>
-        <Form.Item label="打印设备" required>
-          <Select v-model:value="deviceId" :options="deviceOptions" />
-        </Form.Item>
-      </div>
-    </Form>
-
-    <Alert
-      v-if="deviceState === 'offline'"
-      class="mb-3"
-      type="warning"
-      show-icon
-      message="打印设备当前离线，任务仍会进入队列，待设备上线后拉取。"
-    />
-    <Alert
-      v-else-if="deviceState === 'unconnected'"
-      class="mb-3"
-      type="info"
-      show-icon
-      message="打印设备尚未上报心跳，任务仍会进入队列。"
-    />
-    <div class="mb-3 flex items-center gap-2 text-sm text-gray-500">
-      设备状态：<Tag :color="deviceState === 'online' ? 'green' : 'orange'">
-        {{ deviceStateLabel }}
-      </Tag>
-    </div>
-
     <Result
       v-if="results.length === 0"
       status="info"
       title="确认后将为所有选中订单自动取号并加入打印队列"
-      sub-title="订单会在 PrintBridge 打印成功回执后才更新为已发货。"
+      sub-title="每个履约子单使用所属商家的寄件设置和默认打印设备，打印成功后自动确认发货。"
     />
     <template v-else>
       <div class="mb-3 flex flex-wrap items-center gap-2">

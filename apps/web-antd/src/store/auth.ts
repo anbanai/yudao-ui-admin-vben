@@ -256,6 +256,24 @@ export const useAuthStore = defineStore('auth', () => {
                 keepAlive: true,
                 sort: 10,
               },
+              {
+                id: -105,
+                name: '订单发货',
+                path: 'orders',
+                component: 'mall/merchant/orders',
+                parentId: -100,
+                visible: true,
+                sort: 15,
+              },
+              {
+                id: -104,
+                name: '顺丰发货设置',
+                path: 'sf-settings',
+                component: 'mall/merchant/sf-settings',
+                parentId: -100,
+                visible: true,
+                sort: 30,
+              },
             ]
           : []),
         ...(merchantApplication

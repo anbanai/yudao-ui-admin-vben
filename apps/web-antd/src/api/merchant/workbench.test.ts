@@ -4,13 +4,19 @@ import {
   agreeMerchantAfterSale,
   createMerchantProduct,
   deliverMerchantOrder,
+  enrollMerchantPrintDevice,
   getMerchantAfterSalePage,
   getMerchantBrandPage,
   getMerchantOrderPage,
+  getMerchantPrintDevices,
   getMerchantProductCategories,
   getMerchantProductDetail,
   getMerchantProductPage,
+  getMerchantSfConfig,
   getMerchantShopProfile,
+  saveMerchantPrintDevice,
+  testMerchantPrintDevice,
+  updateMerchantSfConfig,
   updateMerchantShopProfile,
   uploadMerchantProductImage,
 } from './workbench';
@@ -124,4 +130,42 @@ describe('merchant workbench API', () => {
       { file },
     );
   });
+});
+
+it('uses the merchant session for SF settings and printer setup', async () => {
+  await getMerchantSfConfig();
+  await updateMerchantSfConfig({ monthlyCard: '1234' });
+  await getMerchantPrintDevices();
+  await enrollMerchantPrintDevice();
+  const device = {
+    id: 8,
+    deviceName: '仓库',
+    printerName: '标签机',
+    defaultFlag: true,
+    status: 0,
+  };
+  await saveMerchantPrintDevice(device);
+  const diagnostic = { paperWidthMm: 76, paperHeightMm: 130 };
+  await testMerchantPrintDevice(8, diagnostic);
+  expect(client.get).toHaveBeenCalledWith(
+    '/trade/merchant/logistics/sf-config',
+  );
+  expect(client.put).toHaveBeenCalledWith(
+    '/trade/merchant/logistics/sf-config',
+    { monthlyCard: '1234' },
+  );
+  expect(client.get).toHaveBeenCalledWith(
+    '/trade/merchant/logistics/sf/devices',
+  );
+  expect(client.post).toHaveBeenCalledWith(
+    '/trade/merchant/logistics/sf/devices/enroll',
+  );
+  expect(client.post).toHaveBeenCalledWith(
+    '/trade/merchant/logistics/sf/devices',
+    device,
+  );
+  expect(client.post).toHaveBeenCalledWith(
+    '/trade/merchant/logistics/sf/devices/8/test-print',
+    diagnostic,
+  );
 });

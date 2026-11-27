@@ -3,6 +3,9 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useAuthStore } from './auth';
+import { useMerchantSessionStore } from './merchant-session';
+
 const mocks = vi.hoisted(() => ({
   access: {
     accessMenus: [] as any[],
@@ -64,9 +67,6 @@ vi.mock('#/locales', () => ({ $t: (key: string) => key }));
 vi.mock('#/router/access', () => ({ generateAccess: mocks.generate }));
 vi.mock('#/router/routes', () => ({ accessRoutes: [] }));
 
-import { useAuthStore } from './auth';
-import { useMerchantSessionStore } from './merchant-session';
-
 describe('merchant authentication lifecycle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -111,6 +111,25 @@ describe('merchant authentication lifecycle', () => {
       accessibleMenus: [],
       accessibleRoutes: [],
     });
+  });
+
+  it('shows fulfillment menus to operating merchants and hides them after freezing', async () => {
+    const auth = useAuthStore();
+    await auth.fetchUserInfo();
+    expect(mocks.access.accessMenus[0].children).toContainEqual(
+      expect.objectContaining({ path: 'sf-settings' }),
+    );
+    expect(mocks.access.accessMenus[0].children).toContainEqual(
+      expect.objectContaining({ path: 'orders' }),
+    );
+    mocks.application.mockResolvedValue({ merchantStatus: 40 });
+    await auth.fetchUserInfo();
+    expect(mocks.access.accessMenus[0].children).not.toContainEqual(
+      expect.objectContaining({ path: 'sf-settings' }),
+    );
+    expect(mocks.access.accessMenus[0].children).not.toContainEqual(
+      expect.objectContaining({ path: 'orders' }),
+    );
   });
 
   it('keeps the current menu and routes when approval status is unchanged', async () => {

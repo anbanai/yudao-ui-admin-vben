@@ -19,45 +19,18 @@ import {
 import {
   createSfWaybill,
   getMerchantSfConfig,
-  getPrintDevices,
-  getSfAccounts,
 } from '#/api/mall/trade/logistics/sf';
 
 import {
   getPrintTaskErrorMessage,
   isPrintTaskQueued,
 } from '../../logistics/sf/delivery-status';
-import {
-  isReadyPrintDevice,
-  selectReadyPrintDeviceId,
-} from '../../logistics/sf/devices/setup-state';
-
 const emit = defineEmits(['success']);
 const order = ref<MallOrderApi.Order>();
 const subOrderId = ref<number>();
 const merchantMonthlyCardMasked = ref('');
-const accounts = ref<MallSfLogisticsApi.Account[]>([]);
-const devices = ref<MallSfLogisticsApi.Device[]>([]);
-const accountId = ref<number>();
-const deviceId = ref<number>();
 const result = ref<MallSfLogisticsApi.Waybill>();
 
-const accountOptions = computed(() =>
-  accounts.value
-    .filter((item) => item.status === 0)
-    .map((item) => ({ label: item.name, value: item.id })),
-);
-const deviceOptions = computed(() =>
-  devices.value
-    .filter(isReadyPrintDevice)
-    .map((item) => ({ label: item.deviceName, value: item.id })),
-);
-const selectedPaperSpec = computed(() => {
-  const account = accounts.value.find((item) => item.id === accountId.value);
-  return account
-    ? `${account.paperWidthMm}×${account.paperHeightMm} mm`
-    : '账号配置的标签尺寸';
-});
 const subOrderOptions = computed(() =>
   (order.value?.subOrders ?? [])
     .filter((item) => item.id !== undefined)
@@ -68,18 +41,18 @@ const subOrderOptions = computed(() =>
 );
 
 async function loadMerchantCard(subOrderIdValue?: number) {
+  merchantMonthlyCardMasked.value = '';
   const merchantId = order.value?.subOrders?.find(
     (item) => item.id === subOrderIdValue,
   )?.merchantId;
-  if (!merchantId) {
-    merchantMonthlyCardMasked.value = '';
-    return;
-  }
+  if (!merchantId) return;
   const config = await getMerchantSfConfig(merchantId);
-  merchantMonthlyCardMasked.value = config.monthlyCardMasked || '';
+  if (subOrderId.value === subOrderIdValue)
+    merchantMonthlyCardMasked.value = config.monthlyCardMasked || '';
 }
 
 function handleSubOrderChange(value: unknown) {
+  result.value = undefined;
   if (typeof value === 'number' || typeof value === 'string') {
     void loadMerchantCard(Number(value));
   }
@@ -89,15 +62,9 @@ const [Modal, modalApi] = useVbenModal({
   confirmText: '创建顺丰运单',
   async onConfirm() {
     if (!order.value?.id || !subOrderId.value) return;
-    if (!accountId.value || !deviceId.value) {
-      message.warning('请选择顺丰账号和打印设备');
-      return;
-    }
     modalApi.lock();
     try {
       result.value = await createSfWaybill({
-        accountId: accountId.value,
-        deviceId: deviceId.value,
         orderId: order.value.id,
         subOrderId: subOrderId.value,
       });
@@ -120,15 +87,6 @@ const [Modal, modalApi] = useVbenModal({
     }
     order.value = modalApi.getData() as MallOrderApi.Order;
     subOrderId.value = order.value.subOrders?.[0]?.id;
-    [accounts.value, devices.value] = await Promise.all([
-      getSfAccounts(),
-      getPrintDevices(),
-    ]);
-    const enabledAccounts = accounts.value.filter((item) => item.status === 0);
-    accountId.value =
-      enabledAccounts.find((item) => item.defaultFlag)?.id ??
-      enabledAccounts[0]?.id;
-    deviceId.value = selectReadyPrintDeviceId(devices.value);
     await loadMerchantCard(subOrderId.value);
   },
 });
@@ -154,12 +112,6 @@ const [Modal, modalApi] = useVbenModal({
             @change="handleSubOrderChange"
           />
         </Form.Item>
-        <Form.Item label="顺丰账号" required>
-          <Select v-model:value="accountId" :options="accountOptions" />
-        </Form.Item>
-        <Form.Item label="打印设备" required>
-          <Select v-model:value="deviceId" :options="deviceOptions" />
-        </Form.Item>
       </div>
       <div class="text-sm text-gray-500">
         商家月结卡：{{ merchantMonthlyCardMasked || '未配置' }}
@@ -169,7 +121,7 @@ const [Modal, modalApi] = useVbenModal({
       v-if="!result"
       type="info"
       show-icon
-      :message="`创建成功后，PrintBridge 将自动拉取 ${selectedPaperSpec} 面单；只有打印回执 success 才会自动发货。`"
+      message="使用履约商家的寄件设置和默认打印设备。设备回报打印成功后，系统会自动确认发货。"
     />
     <Result
       v-else-if="isPrintTaskQueued(result.printStatus)"

@@ -1,5 +1,7 @@
 import type { PageParam, PageResult } from '@vben/request';
 
+import type { MallSfLogisticsApi } from '#/api/mall/trade/logistics/sf';
+
 import { merchantRequestClient } from '#/api/request';
 
 export namespace MerchantWorkbenchApi {
@@ -46,6 +48,14 @@ export namespace MerchantWorkbenchApi {
     deliveryTime?: string;
   }
 
+  export interface OrderDetail {
+    subOrder: Order;
+    orderNo?: string;
+    buyerRemark?: string;
+    receiver?: { detailAddress?: string; mobile?: string; name?: string };
+    items: Array<{ count?: number; id: number; spuName?: string }>;
+  }
+
   export interface AfterSale {
     id?: number;
     no?: string;
@@ -63,8 +73,34 @@ export namespace MerchantWorkbenchApi {
     storeName: string;
     logoUrl?: string;
     description?: string;
+  }
+
+  export interface SfConfigUpdate {
     monthlyCard?: string;
+    serviceCode?: string;
+    defaultWeightKg?: number;
+    paperWidthMm?: number;
+    paperHeightMm?: number;
+    dpi?: number;
+    senderName?: string;
+    senderPhone?: string;
+    senderProvince?: string;
+    senderCity?: string;
+    senderDistrict?: string;
+    senderAddress?: string;
+    returnSameAsSender?: boolean;
+    returnName?: string;
+    returnPhone?: string;
+    returnProvince?: string;
+    returnCity?: string;
+    returnDistrict?: string;
+    returnAddress?: string;
+  }
+
+  export interface SfConfig extends Omit<SfConfigUpdate, 'monthlyCard'> {
     monthlyCardMasked?: string;
+    configured: boolean;
+    supportedPaperSpecs: string[];
   }
 
   export interface DeliveryRequest {
@@ -167,7 +203,7 @@ export function getMerchantOrderPage(params: PageParam & Record<string, any>) {
 }
 
 export function getMerchantOrderDetail(subOrderId: number) {
-  return merchantRequestClient.get(
+  return merchantRequestClient.get<MerchantWorkbenchApi.OrderDetail>(
     `/trade/merchant/order/get-detail?subOrderId=${subOrderId}`,
   );
 }
@@ -237,25 +273,57 @@ export function updateMerchantShopProfile(
   return merchantRequestClient.put('/product/merchant/profile/update', data);
 }
 
+const sfBase = '/trade/merchant/logistics/sf';
+
 export function getMerchantSfConfig() {
-  return merchantRequestClient.get<
-    MerchantWorkbenchApi.ShopProfile & {
-      monthlyCard?: string;
-      monthlyCardMasked?: string;
-    }
-  >('/trade/merchant/logistics/sf-config');
+  return merchantRequestClient.get<MerchantWorkbenchApi.SfConfig>(
+    `${sfBase}-config`,
+  );
 }
 
-export function updateMerchantSfConfig(data: { monthlyCard: string }) {
-  return merchantRequestClient.put('/trade/merchant/logistics/sf-config', data);
+export function updateMerchantSfConfig(
+  data: MerchantWorkbenchApi.SfConfigUpdate,
+) {
+  return merchantRequestClient.put(`${sfBase}-config`, data);
 }
 
-export function createMerchantSfWaybill(data: {
-  deviceId?: number;
-  subOrderId: number;
-}) {
-  return merchantRequestClient.post(
-    '/trade/merchant/logistics/sf/waybill/create',
+export function getMerchantPrintDevices() {
+  return merchantRequestClient.get<MallSfLogisticsApi.Device[]>(
+    `${sfBase}/devices`,
+  );
+}
+
+export function enrollMerchantPrintDevice() {
+  return merchantRequestClient.post<MallSfLogisticsApi.Device>(
+    `${sfBase}/devices/enroll`,
+  );
+}
+
+export function saveMerchantPrintDevice(
+  data: Pick<
+    MallSfLogisticsApi.Device,
+    'defaultFlag' | 'id' | 'printerName' | 'status'
+  >,
+) {
+  return merchantRequestClient.post<MallSfLogisticsApi.Device>(
+    `${sfBase}/devices`,
+    data,
+  );
+}
+
+export function testMerchantPrintDevice(
+  deviceId: number,
+  paper: { paperHeightMm: number; paperWidthMm: number },
+) {
+  return merchantRequestClient.post<MallSfLogisticsApi.PrintTask>(
+    `${sfBase}/devices/${deviceId}/test-print`,
+    paper,
+  );
+}
+
+export function createMerchantSfWaybill(data: { subOrderId: number }) {
+  return merchantRequestClient.post<MallSfLogisticsApi.Waybill>(
+    `${sfBase}/waybill/create`,
     data,
   );
 }
