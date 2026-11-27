@@ -39,7 +39,7 @@ async function choose(rows: MallCouponTemplateApi.CouponTemplate[]) {
     <Form layout="vertical">
       <Alert
         type="info"
-        message="游客可见，登录领取；L0、无历史订单等资格由后台判断。已领取券的有效期不受升级影响。"
+        message="仅向已确认无下单记录的会员展示。微信回访用户可静默识别，领取时校验登录和会员等级。"
         class="mb-3"
       />
       <FormItem label="新人券模板">
