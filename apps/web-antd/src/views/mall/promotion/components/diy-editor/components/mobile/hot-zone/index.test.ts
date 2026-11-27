@@ -42,6 +42,17 @@ describe('hot zone', () => {
     expect(image?.getAttribute('draggable')).toBe('false');
   });
 
+  it('shows a selectable placeholder for an unconfigured hot zone', () => {
+    let selections = 0;
+    const host = mountHotZone(component.property, () => selections++);
+
+    expect(host.querySelector('img')).toBeNull();
+    const placeholder = host.querySelector('[role="status"]');
+    expect(placeholder?.textContent).toContain('热区未设置底图');
+    placeholder?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(selections).toBe(1);
+  });
+
   it('shows a selectable placeholder after a broken image and retries a replacement', async () => {
     const property = reactive({
       imgUrl: '/missing-hot-zone.png',

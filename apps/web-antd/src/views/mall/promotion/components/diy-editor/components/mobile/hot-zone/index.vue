@@ -20,11 +20,13 @@ watch(
 <template>
   <div class="min-h-30px relative h-full w-full">
     <div
-      v-if="imageFailed"
+      v-if="!props.property.imgUrl || imageFailed"
       class="flex min-h-16 items-center justify-center border border-dashed px-3 text-center text-sm"
       role="status"
     >
-      热区底图加载失败，点击此处可选中组件
+      {{
+        props.property.imgUrl ? '热区底图加载失败' : '热区未设置底图'
+      }}，点击此处可选中组件
     </div>
     <template v-else>
       <img
