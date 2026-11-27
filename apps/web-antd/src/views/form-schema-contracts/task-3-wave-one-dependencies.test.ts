@@ -4,10 +4,13 @@ import type { VbenFormSchema } from '#/adapter/form';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { createApp, h, nextTick } from 'vue';
+
 import { createPinia, setActivePinia } from 'pinia';
 import ts from 'typescript';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { initSetupVbenForm, useVbenForm } from '#/adapter/form';
 import { useFormSchema as aiModelSchema } from '#/views/ai/model/model/data';
 import { useFormSchema as listenerSchema } from '#/views/bpm/processListener/data';
 import {
@@ -23,6 +26,7 @@ import {
 import { schema as poolConfigSchema } from '#/views/crm/customer/poolConfig/data';
 import { useTransferFormSchema } from '#/views/crm/permission/modules/data';
 import { useFormSchema as receivableSchema } from '#/views/crm/receivable/data';
+import { useFormSchema as fileConfigSchema } from '#/views/infra/fileConfig/data';
 import {
   useBalanceFormSchema,
   usePointFormSchema,
@@ -199,6 +203,61 @@ describe('Task 3 wave-one dependency migration', () => {
 
   it('uses static hide for permanently hidden transport fields', () => {
     expect(field(aiModelSchema(), 'id')).toMatchObject({ hide: true });
+  });
+
+  it('updates domain validation when the storage type or S3 endpoint changes', async () => {
+    await initSetupVbenForm();
+    const schema = fileConfigSchema().filter(({ fieldName }) =>
+      ['config.domain', 'config.endpoint', 'storage'].includes(fieldName),
+    );
+    const [Form, formApi] = useVbenForm({
+      schema: schema.map((item) => ({ ...item, component: 'VbenInput' })),
+      showDefaultActions: false,
+    });
+    const host = document.createElement('div');
+    const app = createApp({ render: () => h(Form) });
+    app.mount(host);
+    const domainError = () => host.querySelector('[data-slot="form-message"]');
+    try {
+      await formApi.setFieldValue('storage', 20);
+      await formApi.setFieldValue(
+        'config.endpoint',
+        'oss-cn-hangzhou.aliyuncs.com',
+      );
+      await nextTick();
+      expect(await formApi.validateField('config.domain')).toMatchObject({
+        valid: true,
+      });
+
+      await formApi.setFieldValue(
+        'config.endpoint',
+        's3.cn-east-1.qiniucs.com',
+      );
+      await nextTick();
+      expect(domainError()).toBeNull();
+      expect(await formApi.validateField('config.domain')).toMatchObject({
+        valid: false,
+      });
+      await nextTick();
+      expect(domainError()).not.toBeNull();
+
+      await formApi.setFieldValue(
+        'config.endpoint',
+        'oss-cn-hangzhou.aliyuncs.com',
+      );
+      await vi.waitFor(() => expect(domainError()).toBeNull());
+      expect(await formApi.validateField('config.domain')).toMatchObject({
+        valid: true,
+      });
+
+      await formApi.setFieldValue('storage', 10);
+      await nextTick();
+      expect(await formApi.validateField('config.domain')).toMatchObject({
+        valid: false,
+      });
+    } finally {
+      app.unmount();
+    }
   });
 
   it('subscribes every wave-one resolver to exactly the form values it reads', () => {
