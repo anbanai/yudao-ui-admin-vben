@@ -122,7 +122,8 @@ async function drawPoster(
   await drawCoverImage(context, promotion.picUrl, dependencies, 0, 0, 600, 600);
   drawTitle(context, promotion.productName, 32, 660, 536, 32);
   drawPrice(context, promotion, 32, 748);
-  await drawIdentity(context, promotion, dependencies, 32, 825);
+  drawPointOffer(context, promotion, 32, 795);
+  await drawIdentity(context, promotion, dependencies, 32, 870);
   await drawQrImage(
     context,
     input.miniProgramQrCode!,
@@ -132,6 +133,29 @@ async function drawPoster(
     140,
   );
   drawScanPrompt(context, SCAN_PROMPT, 410, 925, 160);
+}
+
+function drawPointOffer(
+  context: CanvasRenderingContext2D,
+  promotion: PromotionContext,
+  x: number,
+  y: number,
+) {
+  if (!promotion.pointText) return;
+  context.fillStyle = '#b45309';
+  context.font = '600 20px sans-serif';
+  context.textBaseline = 'top';
+  context.fillText(promotion.pointText, x, y);
+  if (promotion.pointCountText) {
+    context.fillStyle = '#4b5563';
+    context.font = '18px sans-serif';
+    context.fillText(promotion.pointCountText, x, y + 28);
+  }
+  if (promotion.pointStockText) {
+    context.fillStyle = '#6b7280';
+    context.font = '16px sans-serif';
+    context.fillText(promotion.pointStockText, x, y + 54);
+  }
 }
 
 async function drawCard(

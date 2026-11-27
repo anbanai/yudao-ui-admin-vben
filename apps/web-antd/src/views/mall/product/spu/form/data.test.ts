@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { getCategoryList } from '#/api/mall/product/category';
+
 vi.mock('#/api/mall/product/brand', () => ({
   getSimpleBrandList: vi.fn(),
 }));
@@ -17,6 +19,30 @@ vi.mock('#/api/mall/trade/delivery/expressTemplate', () => ({
 }));
 
 describe('商品基础信息表单', () => {
+  it('允许选择已启用的一级分类及既有子分类', async () => {
+    vi.mocked(getCategoryList).mockResolvedValue([
+      { id: 1, parentId: 0, name: '茶器', picUrl: '', sort: 0, status: 0 },
+      { id: 2, parentId: 1, name: '盖碗', picUrl: '', sort: 0, status: 0 },
+      { id: 3, parentId: 1, name: '茶杯', picUrl: '', sort: 1, status: 1 },
+    ]);
+    const { useInfoFormSchema } = await import('./data');
+    const categoryProps = useInfoFormSchema().find(
+      (item) => item.fieldName === 'categoryId',
+    )?.componentProps as { api: () => Promise<unknown> };
+
+    expect(await categoryProps.api()).toMatchObject([
+      {
+        id: 1,
+        name: '茶器',
+        selectable: true,
+        children: [
+          { id: 2, selectable: true },
+          { id: 3, selectable: false },
+        ],
+      },
+    ]);
+  });
+
   it('保留必填单分类并增加可选多分组', async () => {
     const { useInfoFormSchema } = await import('./data');
     const schema = useInfoFormSchema();

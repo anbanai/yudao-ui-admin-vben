@@ -163,6 +163,19 @@ export namespace MallOrderApi {
     receiverAreaId: number; // 收件人地区编号
     receiverDetailAddress: string; // 收件人详细地址
   }
+
+  /** 运营取消订单请求 */
+  export interface OrderCancelReqVO {
+    id: number;
+    reason?: string;
+  }
+
+  /** 订单部分退款请求，金额单位为分 */
+  export interface OrderRefundReqVO {
+    id: number;
+    refundPrice: number;
+    reason?: string;
+  }
 }
 
 /** 查询交易订单列表 */
@@ -220,6 +233,16 @@ export function updateOrderPrice(data: MallOrderApi.OrderUpdatePriceReqVO) {
 /** 修改订单地址 */
 export function updateOrderAddress(data: MallOrderApi.OrderUpdateAddressReqVO) {
   return requestClient.put('/trade/order/update-address', data);
+}
+
+/** 运营取消订单 */
+export function cancelOrder(data: MallOrderApi.OrderCancelReqVO) {
+  return requestClient.put('/trade/order/cancel', data);
+}
+
+/** 订单级部分退款 */
+export function refundOrder(data: MallOrderApi.OrderRefundReqVO) {
+  return requestClient.post('/trade/order/refund', data);
 }
 
 /** 订单核销 */

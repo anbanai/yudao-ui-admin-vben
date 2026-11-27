@@ -1,6 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 
-import { DeliveryTypeEnum, DICT_TYPE } from '@vben/constants';
+import { CommonStatusEnum, DeliveryTypeEnum, DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 import { handleTree } from '@vben/utils';
 
@@ -35,7 +35,12 @@ export function useInfoFormSchema(): VbenFormSchema[] {
       componentProps: {
         api: async () => {
           const data = await getCategoryList({});
-          return handleTree(data);
+          return handleTree(
+            data.map((category) => ({
+              ...category,
+              selectable: category.status === CommonStatusEnum.ENABLE,
+            })),
+          );
         },
         fieldNames: { label: 'name', value: 'id', children: 'children' },
         placeholder: '请选择商品分类',
