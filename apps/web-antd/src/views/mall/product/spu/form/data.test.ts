@@ -19,6 +19,23 @@ vi.mock('#/api/mall/trade/delivery/expressTemplate', () => ({
 }));
 
 describe('商品基础信息表单', () => {
+  it('所属商家支持按编号和店铺名搜索', async () => {
+    const { useInfoFormSchema } = await import('./data');
+    const props = useInfoFormSchema().find(
+      (item) => item.fieldName === 'merchantId',
+    )?.componentProps as {
+      filterOption: (
+        input: string,
+        option: { label: string; value: number },
+      ) => boolean;
+    };
+    const merchant = { label: '平台自营', value: 1 };
+
+    expect(props.filterOption('1', merchant)).toBe(true);
+    expect(props.filterOption('自营', merchant)).toBe(true);
+    expect(props.filterOption('其他', merchant)).toBe(false);
+  });
+
   it('允许选择已启用的一级分类及既有子分类', async () => {
     vi.mocked(getCategoryList).mockResolvedValue([
       { id: 1, parentId: 0, name: '茶器', picUrl: '', sort: 0, status: 0 },

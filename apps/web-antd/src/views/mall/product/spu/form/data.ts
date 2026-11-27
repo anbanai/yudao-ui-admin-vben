@@ -56,7 +56,16 @@ export function useInfoFormSchema(): VbenFormSchema[] {
         labelField: 'storeName',
         valueField: 'id',
         showSearch: true,
-        optionFilterProp: 'label',
+        filterOption: (
+          input: string,
+          option?: { label?: string; value?: number | string },
+        ) => {
+          const search = input.trim().toLowerCase();
+          return (
+            String(option?.value) === search ||
+            (option?.label ?? '').toLowerCase().includes(search)
+          );
+        },
         placeholder: '请选择已审核商家',
       },
       rules: 'required',

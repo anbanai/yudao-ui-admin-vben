@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getSimpleMerchantList } from './index';
+
 const mocks = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('#/api/request', () => ({
   requestClient: { get: mocks.get },
   merchantRequestClient: {},
 }));
-
-import { getSimpleMerchantList, MerchantStatus } from './index';
 
 describe('approved merchant options', () => {
   beforeEach(() => vi.resetAllMocks());
@@ -25,9 +25,12 @@ describe('approved merchant options', () => {
     expect(result).toHaveLength(201);
     expect(result[0]?.storeName).toBe('商家 1');
     expect(result.at(-1)?.storeName).toBe('第 201 家店铺');
-    expect(mocks.get).toHaveBeenLastCalledWith('/product/merchant/page', {
-      params: { pageNo: 2, pageSize: 200, status: MerchantStatus.APPROVED },
-    });
+    expect(mocks.get).toHaveBeenLastCalledWith(
+      '/product/merchant/selectable-page',
+      {
+        params: { pageNo: 2, pageSize: 200 },
+      },
+    );
   });
 
   it('returns an empty list without requesting further pages', async () => {

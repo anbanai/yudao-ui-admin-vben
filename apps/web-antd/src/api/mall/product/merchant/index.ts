@@ -21,6 +21,12 @@ export namespace MallMerchantApi {
     createTime?: Date;
   }
 
+  export interface MerchantOption {
+    id: number;
+    name: string;
+    storeName?: string;
+  }
+
   export interface Qualification {
     id?: number;
     merchantId: number;
@@ -163,13 +169,13 @@ export function unfreezeMerchant(id: number) {
 
 /** 查询已审核商家的下拉选项 */
 export async function getSimpleMerchantList() {
-  const merchants: MallMerchantApi.Merchant[] = [];
+  const merchants: MallMerchantApi.MerchantOption[] = [];
   let pageNo = 1;
   while (true) {
-    const result = await getMerchantPage({
-      pageNo,
-      pageSize: 200,
-      status: MerchantStatus.APPROVED,
+    const result = await requestClient.get<
+      PageResult<MallMerchantApi.MerchantOption>
+    >('/product/merchant/selectable-page', {
+      params: { pageNo, pageSize: 200 },
     });
     merchants.push(...result.list);
     if (result.list.length === 0 || merchants.length >= result.total) break;
