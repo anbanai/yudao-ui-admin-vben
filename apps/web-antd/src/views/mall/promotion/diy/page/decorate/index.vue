@@ -11,6 +11,7 @@ import {
   updateDiyPageProperty,
 } from '#/api/mall/promotion/diy/page';
 import { DiyEditor, PAGE_LIBS } from '#/views/mall/promotion/components';
+import { prepareDiyCarouselRatios } from '#/views/mall/promotion/components/diy-editor/components/mobile/carousel/ratio';
 
 /** 装修页面表单 */
 defineOptions({ name: 'DiyPageDecorate' });
@@ -34,17 +35,26 @@ async function getPageDetail(id: any) {
 
 /** 提交表单 */
 async function submitForm() {
+  const data = unref(formData);
+  if (!data || saving) return;
+  saving = true;
   const hideLoading = message.loading({
     content: '保存中...',
     duration: 0,
   });
   try {
-    await updateDiyPageProperty(unref(formData)!);
+    await updateDiyPageProperty({
+      ...data,
+      property: await prepareDiyCarouselRatios(data.property),
+    });
     message.success('保存成功');
   } finally {
+    saving = false;
     hideLoading();
   }
 }
+
+let saving = false;
 
 /** 初始化 */
 onMounted(() => {

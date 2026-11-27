@@ -56,7 +56,19 @@ const formData = useVModel(props, 'modelValue', emit);
             </Tooltip>
           </RadioGroup>
         </FormItem>
-        <FormItem label="高度">
+        <FormItem label="高度模式">
+          <RadioGroup
+            :value="formData.heightMode ?? 'fixed'"
+            @update:value="formData.heightMode = $event"
+          >
+            <Radio value="adaptive">按素材比例</Radio>
+            <Radio value="fixed">固定高度</Radio>
+          </RadioGroup>
+          <p v-if="formData.heightMode === 'adaptive'" class="text-info">
+            按首张可读图片或视频封面确定比例，建议素材使用相同宽高比。
+          </p>
+        </FormItem>
+        <FormItem label="高度" v-if="formData.heightMode !== 'adaptive'">
           <InputNumber
             v-model:value="formData.height"
             class="mr-[10px] !w-1/2"

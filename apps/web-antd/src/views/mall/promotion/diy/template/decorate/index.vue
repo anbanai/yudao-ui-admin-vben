@@ -19,6 +19,7 @@ import {
   updateDiyTemplateProperty,
 } from '#/api/mall/promotion/diy/template';
 import { DiyEditor, PAGE_LIBS } from '#/views/mall/promotion/components';
+import { prepareDiyCarouselRatios } from '#/views/mall/promotion/components/diy-editor/components/mobile/carousel/ratio';
 
 /** 装修模板表单 */
 defineOptions({ name: 'DiyTemplateDecorate' });
@@ -107,36 +108,42 @@ function handleTemplateItemChange(valObj: any) {
 
 /** 提交表单 */
 async function submitForm() {
+  if (saving) return;
+  saving = true;
+  const activeIndex = selectedTemplateItem.value;
+  const dataByTab = templateItems.value.map(({ name }, index) => {
+    const data =
+      index === activeIndex
+        ? currentFormData.value
+        : currentFormDataMap.value.get(name);
+    return data && { ...data };
+  });
   const hideLoading = message.loading({
     content: '保存中...',
     duration: 0,
   });
   try {
-    // 对所有的 templateItems 都进行保存，有缓存则保存缓存，解决都有修改时只保存了当前所编辑的 templateItem，导致装修效果存在差异
-    for (const [i, templateItem] of templateItems.value.entries()) {
-      const data = currentFormDataMap.value.get(templateItem.name) as any;
-      // 情况一：基础设置
-      if (i === 0) {
-        // 提交模板属性
-        await updateDiyTemplateProperty(isEmpty(data) ? formData.value! : data);
-        continue;
-      }
-      // 提交页面属性
-      // 情况二：提交当前正在编辑的页面
-      if (currentFormData.value?.name.includes(templateItem.name)) {
-        await updateDiyPageProperty(currentFormData.value!);
-        continue;
-      }
-      // 情况三：提交页面编辑缓存
-      if (!isEmpty(data)) {
-        await updateDiyPageProperty(data!);
-      }
+    // 当前页和其他标签页的编辑缓存一并保存。
+    await updateDiyTemplateProperty(
+      (dataByTab[0] as MallDiyTemplateApi.DiyTemplateProperty | undefined) ??
+        formData.value!,
+    );
+    for (const data of dataByTab.slice(1)) {
+      if (!data?.id) continue;
+      const page = data as MallDiyPageApi.DiyPage;
+      await updateDiyPageProperty({
+        ...page,
+        property: await prepareDiyCarouselRatios(page.property),
+      });
     }
     message.success('保存成功');
   } finally {
+    saving = false;
     hideLoading();
   }
 }
+
+let saving = false;
 
 /** 刷新当前 Tab */
 function handleEditorReset() {

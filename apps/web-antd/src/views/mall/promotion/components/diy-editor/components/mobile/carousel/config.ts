@@ -4,6 +4,9 @@ import { MALL_DIY_ASSETS } from '../../../static-assets';
 
 /** 轮播图属性 */
 export interface CarouselProperty {
+  aspectRatio?: number; // 自适应宽高比
+  aspectRatioSource?: string; // 用于确定宽高比的图片或视频封面
+  heightMode?: 'adaptive' | 'fixed';
   type: 'card' | 'default'; // 类型：默认 | 卡片
   indicator: 'dot' | 'number'; // 指示器样式：点 | 数字
   autoplay: boolean; // 是否自动播放
@@ -32,6 +35,7 @@ export const component = {
     autoplay: false,
     interval: 3,
     height: 174,
+    heightMode: 'adaptive',
     items: [
       {
         type: 'img',
