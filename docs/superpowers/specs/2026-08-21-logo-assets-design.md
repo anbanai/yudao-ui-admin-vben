@@ -8,9 +8,9 @@
 
 | 场景 | 资源 | 接入方式 |
 | --- | --- | --- |
-| 侧栏展开、侧栏收起、登录页左上角、移动端 | 品牌图标 | 复制为两套已配置后台的 `public/branding/logo-mark.png`，通过 `preferences.logo.source` 使用 |
-| 登录页的大尺寸品牌展示区域 | 完整品牌图 | 复制为两套已配置后台的 `public/branding/logo-full.png`，通过 `AuthPageLayout` 的 `sloganImage` 使用 |
-| 管理后台浏览器标签页 | 品牌图标 | 替换两套已配置后台的 `public/favicon.ico` |
+| 侧栏展开、侧栏收起、登录页左上角、移动端 | 品牌图标 | 复制为五套管理后台的 `public/branding/logo-mark.png`，通过 `preferences.logo.source` 使用 |
+| 登录页的大尺寸品牌展示区域 | 完整品牌图 | 复制为五套管理后台的 `public/branding/logo-full.png`，通过 `AuthPageLayout` 的 `sloganImage` 使用 |
+| 管理后台浏览器标签页 | 品牌图标 | 替换五套管理后台的 `public/favicon.ico` |
 | 商品推广弹窗和海报 | 品牌图标 | 共用 `apps/web-antd/public/branding/logo-mark.png` |
 | 当前常规导航 | `水印-07.png`、`水印-09.png` | 不接入；竖排文字在窄槽位中可读性和留白不足 |
 
@@ -27,8 +27,9 @@
 
 - `pnpm --filter @vben/web-antd build` 成功完成。
 - 已配置后台的开发登录页均显示品牌图标和完整品牌图。
+- 五套后台的标题、favicon 和导航 Logo 均通过对应 app 配置生效。
 - 构建产物中包含 `branding/logo-mark.png` 和 `branding/logo-full.png`，且没有对远程 Vben logo 的运行时引用。
 - 代码检查确认偏好配置、登录布局和共享认证组件类型通过。
 - 手工检查登录页：左上角图形标与标题可读，品牌展示图不变形；后台侧栏展开和收起状态均显示 08 图形标。
 
-共享的 AntDV Next 应用存在未随本品牌改动引入的缺失财务组件，完整构建仍需单独修复该模块。
+AntDV Next 应用现有一个缺失的财务组件，阻止该应用完整构建。
