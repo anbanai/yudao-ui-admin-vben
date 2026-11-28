@@ -11,20 +11,23 @@ import { downloadFileFromBlobPart } from '@vben/utils';
 import { Button, Card, Input, Modal, Space, Table } from 'ant-design-vue';
 
 import {
+  assignProductBatch,
   confirmBatch,
   getAuthorizedYouzanProductMerchants,
+  listPendingProductBatches,
   preview,
   result,
   template,
 } from '#/api/mall/product/youzan-import';
+import BatchAssignment from '#/components/youzan-import/batch-assignment.vue';
 import ImportUploadCard from '#/components/youzan-import/import-upload-card.vue';
+import PendingBatches from '#/components/youzan-import/pending-batches.vue';
 
 const router = useRouter();
 const { hasAccessByCodes } = useAccess();
 const canCreateProduct = computed(() =>
   hasAccessByCodes(['product:spu:create']),
 );
-const merchant = ref('');
 const batchId = ref('');
 const file = ref<File>();
 const batch = ref<Batch>();
@@ -48,6 +51,9 @@ const rows = computed(() =>
       bindingState === 'BOUND'
         ? '已绑定'
         : (row.error ??
+          (action === 'PENDING' && !batch.value?.merchantId
+            ? '待分配商家'
+            : undefined) ??
           (action === 'PENDING' && !row.item?.name
             ? '待补资料（缺商品名称）'
             : labels[action])),
@@ -66,14 +72,18 @@ const draftCount = computed(
   () =>
     batch.value?.lines.filter(({ action }) => action === 'PENDING').length ?? 0,
 );
+const batchSummary = computed(() => {
+  if (!batch.value) return '';
+  const { confirmed, merchantId } = batch.value;
+  if (!merchantId) return confirmed ? '已导入，待分配商家' : '确认后可分配商家';
+  return `商家 #${merchantId} · ${confirmed ? '已生成' : '可生成'} ${draftCount.value} 条规格草稿`;
+});
 const validBatchId = computed(() =>
   /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(batchId.value.trim()),
 );
 
-watch([merchant, file], () => {
+watch(file, () => {
   batch.value = undefined;
-});
-watch(merchant, () => {
   batchId.value = '';
 });
 
@@ -86,20 +96,35 @@ async function loadMerchants() {
 }
 
 async function run(action: 'confirm' | 'preview' | 'refresh' | 'result') {
-  if (busy.value || !merchant.value) return;
+  if (busy.value) return;
   busy.value = true;
   try {
     if (action === 'preview' && file.value) {
-      batch.value = await preview(merchant.value, file.value);
+      batch.value = await preview(file.value);
     } else if (action === 'confirm' && batch.value && !batch.value.confirmed) {
-      batch.value = await confirmBatch(merchant.value, batch.value.batchId);
+      batch.value = await confirmBatch(batch.value.batchId);
     } else if (action === 'result' && validBatchId.value) {
-      batch.value = await result(merchant.value, batchId.value.trim());
+      batch.value = await result(undefined, batchId.value.trim());
       historyOpen.value = false;
     } else if (action === 'refresh' && batch.value) {
-      batch.value = await result(merchant.value, batch.value.batchId);
+      batch.value = await result(undefined, batch.value.batchId);
     }
     if (batch.value) batchId.value = batch.value.batchId;
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function openPending(id: string) {
+  batchId.value = id;
+  await run('result');
+}
+
+async function assign(merchantId: string) {
+  if (busy.value || !batch.value?.confirmed || batch.value.merchantId) return;
+  busy.value = true;
+  try {
+    batch.value = await assignProductBatch(batch.value.batchId, merchantId);
   } finally {
     busy.value = false;
   }
@@ -120,23 +145,24 @@ onActivated(() => {
 <template>
   <Page
     title="有赞商品导入"
-    description="导入有赞商品草稿，补齐资料和规格后可手动上架。"
+    description="先导入有赞商品，再分配商家并补齐商品资料。"
   >
     <template #extra>
       <Space wrap>
+        <PendingBatches
+          :busy="busy"
+          :load-page="listPendingProductBatches"
+          @select="openPending"
+        />
         <Button @click="download">下载模板</Button>
-        <Button :disabled="!merchant || busy" @click="historyOpen = true">
-          查询批次
-        </Button>
+        <Button :disabled="busy" @click="historyOpen = true"> 查询批次 </Button>
       </Space>
     </template>
 
     <div class="flex flex-col gap-4">
       <ImportUploadCard
-        v-model:merchant="merchant"
         :busy="busy"
         :file="file"
-        :load-options="loadMerchants"
         @file="file = $event"
         @preview="run('preview')"
       />
@@ -148,7 +174,7 @@ onActivated(() => {
             :loading="busy"
             @click="run('confirm')"
           >
-            {{ draftCount ? '确认生成草稿' : '确认批次' }}
+            {{ batch.merchantId && draftCount ? '确认生成草稿' : '确认导入' }}
           </Button>
           <Button v-else :loading="busy" @click="run('refresh')">
             刷新结果
@@ -156,9 +182,16 @@ onActivated(() => {
         </template>
         <p class="mb-3">
           批次 {{ batch.batchId }} · {{ rows.length }} 个来源行 ·
-          {{ batch.confirmed ? '已生成' : '可生成' }}
-          {{ draftCount }} 条规格草稿
+          {{ batchSummary }}
         </p>
+        <BatchAssignment
+          v-if="batch.confirmed && !batch.merchantId"
+          :key="batch.batchId"
+          scope-label="商品商家"
+          :load-options="loadMerchants"
+          :busy="busy"
+          @assign="assign"
+        />
         <Table
           :data-source="rows"
           row-key="number"
@@ -172,7 +205,10 @@ onActivated(() => {
           <Table.Column title="当前价 / 库存" data-index="current" />
           <Table.Column title="映射参考" data-index="hints" />
           <Table.Column title="处理结果" data-index="reason" />
-          <Table.Column v-if="canCreateProduct" title="操作">
+          <Table.Column
+            v-if="canCreateProduct && batch.merchantId"
+            title="操作"
+          >
             <template #default="{ record }">
               <Button
                 v-if="batch.confirmed && record.bindingState === 'UNBOUND'"
@@ -182,7 +218,7 @@ onActivated(() => {
                     query: {
                       yzBatch: batch.batchId,
                       yzProduct: record.key.product,
-                      yzMerchant: merchant,
+                      yzMerchant: batch.merchantId,
                     },
                   })
                 "

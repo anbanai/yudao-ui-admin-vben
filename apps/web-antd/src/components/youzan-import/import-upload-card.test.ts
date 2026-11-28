@@ -12,10 +12,9 @@ afterEach(() => {
   host?.remove();
 });
 
-async function render(options: { label: string; value: string }[]) {
-  const merchant = ref('');
+async function render() {
   const file = ref<File>();
-  const preview = vi.fn(() => ({ merchant: merchant.value, file: file.value }));
+  const preview = vi.fn(() => file.value);
   host = document.createElement('div');
   document.body.append(host);
   app = createApp({
@@ -23,21 +22,13 @@ async function render(options: { label: string; value: string }[]) {
       h(ImportUploadCard, {
         busy: false,
         file: file.value,
-        loadOptions: async () => options,
-        merchant: merchant.value,
         onFile: (selected) => {
           file.value = selected;
         },
         onPreview: preview,
-        'onUpdate:merchant': (selected) => {
-          merchant.value = selected;
-        },
       }),
   });
   app.mount(host);
-  await vi.waitFor(() =>
-    expect(host?.querySelector('.ant-select-loading')).toBeNull(),
-  );
   const submit = [...host.querySelectorAll('button')].find(
     (button) => button.textContent?.trim() === '上传并预览',
   )!;
@@ -50,39 +41,23 @@ async function render(options: { label: string; value: string }[]) {
     input.dispatchEvent(new Event('change', { bubbles: true }));
     await nextTick();
   }
-  return { chooseFile, merchant, preview, submit };
+  return { chooseFile, preview, submit };
 }
 
 describe('youzan import upload form', () => {
-  it('automatically selects the only authorized merchant and enables preview after choosing Excel', async () => {
-    const { chooseFile, merchant, preview, submit } = await render([
-      { label: '一号店', value: '9007199254740993' },
-    ]);
-    expect(merchant.value).toBe('9007199254740993');
+  it('previews a file without a merchant or a grant lookup', async () => {
+    const { chooseFile, preview, submit } = await render();
+    expect(host?.querySelector('.ant-select')).toBeNull();
     expect(submit.disabled).toBe(true);
-    const selected = new File(['synthetic'], '客户测试名单.xlsx');
+    const selected = new File(['synthetic'], '客户.xlsx');
     await chooseFile(selected);
     await vi.waitFor(() => expect(submit.disabled).toBe(false));
     submit.click();
-    await vi.waitFor(() =>
-      expect(preview).toHaveReturnedWith({
-        merchant: '9007199254740993',
-        file: selected,
-      }),
-    );
-  });
-
-  it('explains missing grants and leaves preview disabled with a valid Excel file', async () => {
-    const { chooseFile, submit } = await render([]);
-    await chooseFile(new File(['synthetic'], '商品.xlsx'));
-    expect(host?.textContent).toContain('当前账号没有可导入的商家');
-    expect(submit.disabled).toBe(true);
+    expect(preview).toHaveReturnedWith(selected);
   });
 
   it('clears the previous Excel selection when a replacement is invalid', async () => {
-    const { chooseFile, submit } = await render([
-      { label: '一号店', value: '9' },
-    ]);
+    const { chooseFile, submit } = await render();
     await chooseFile(new File(['synthetic'], '商品.xlsx'));
     await vi.waitFor(() => expect(submit.disabled).toBe(false));
     await chooseFile(new File(['synthetic'], '商品.csv'));
