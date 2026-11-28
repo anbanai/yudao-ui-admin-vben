@@ -19,8 +19,8 @@ import {
   updateDiyTemplateProperty,
 } from '#/api/mall/promotion/diy/template';
 import { DiyEditor, PAGE_LIBS } from '#/views/mall/promotion/components';
-import { normalizeMallDiyAssetUrls } from '#/views/mall/promotion/components/diy-editor/static-assets';
 import { prepareDiyCarouselRatios } from '#/views/mall/promotion/components/diy-editor/components/mobile/carousel/ratio';
+import { normalizeMallDiyAssetUrls } from '#/views/mall/promotion/components/diy-editor/static-assets';
 
 /** 装修模板表单 */
 defineOptions({ name: 'DiyTemplateDecorate' });

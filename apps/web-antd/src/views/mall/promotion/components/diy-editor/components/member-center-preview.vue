@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { IconifyIcon } from '@vben/icons';
 
-import { mallStaticAsset, MALL_DIY_ASSETS } from '../static-assets';
+import { MALL_DIY_ASSETS, mallStaticAsset } from '../static-assets';
 
 const shortcuts = [
   ['waiting-payment', '待付款'],
@@ -68,7 +68,7 @@ const shortcuts = [
         >
           <img
             alt=""
-            :src="mallStaticAsset('member-center/icons/' + icon + '.png')"
+            :src="mallStaticAsset(`member-center/icons/${ icon }.png`)"
           />
           {{ title }}
         </div>
@@ -90,34 +90,38 @@ const shortcuts = [
 <style scoped>
 .member-preview {
   container-type: inline-size;
-  color: #171513;
   line-height: 1.4;
+  color: #171513;
 }
+
 .profile {
   position: absolute;
   top: 6.4cqw;
   left: 2.93cqw;
   display: flex;
-  align-items: center;
   gap: 2.93cqw;
+  align-items: center;
   font-size: 5.33cqw;
 }
+
 .avatar {
   width: 14.4cqw;
   height: 14.4cqw;
   border-radius: 50%;
 }
+
 .register {
   position: absolute;
   top: 43%;
   right: 9.87cqw;
   display: flex;
-  align-items: center;
   gap: 1.33cqw;
-  color: #765035;
+  align-items: center;
   font-size: 3.2cqw;
+  color: #765035;
   transform: translateY(-50%);
 }
+
 .register b {
   width: 3.33cqw;
   line-height: 3.33cqw;
@@ -126,14 +130,16 @@ const shortcuts = [
   background: #765035;
   border-radius: 50%;
 }
+
 .orders {
-  margin: 0 2.67cqw;
   padding: 2.67cqw 3.73cqw 3.2cqw;
+  margin: 0 2.67cqw;
   font-size: 3.73cqw;
   background: white;
   border-radius: 3.73cqw;
   box-shadow: 0 2px 6px rgb(63 48 29 / 9%);
 }
+
 .shortcuts {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -142,25 +148,29 @@ const shortcuts = [
   font-size: 3.2cqw;
   white-space: nowrap;
 }
+
 .shortcuts img {
   width: 9.87cqw;
   height: 9.87cqw;
   object-fit: contain;
 }
+
 .member-level {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 2.67cqw 2.67cqw 0;
   padding: 4cqw;
+  margin: 2.67cqw 2.67cqw 0;
+  font-size: 3.2cqw;
   background: white;
   border-radius: 3.73cqw;
   box-shadow: 0 2px 6px rgb(63 48 29 / 9%);
-  font-size: 3.2cqw;
 }
+
 .member-level strong {
   font-size: 4.8cqw;
 }
+
 .member-points {
   text-align: right;
 }

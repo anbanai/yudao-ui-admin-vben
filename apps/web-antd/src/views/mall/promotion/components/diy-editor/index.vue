@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { NavigationBarProperty } from './components/mobile/navigation-bar/config';
+import type { TabBarProperty } from './components/mobile/tab-bar/config';
 import type {
   DiyComponent,
   DiyComponentLibrary,
@@ -28,8 +29,6 @@ import draggable from 'vuedraggable';
 import ComponentContainer from './components/component-container.vue';
 import ComponentLibrary from './components/component-library.vue';
 import MemberCenterPreview from './components/member-center-preview.vue';
-import type { TabBarProperty } from './components/mobile/tab-bar/config';
-import TabBar from './components/mobile/tab-bar/index.vue';
 import { componentConfigs, components } from './components/mobile';
 import { migrateLegacyProductGroupComponent } from './components/mobile/component-migration';
 import {
@@ -52,6 +51,7 @@ import {
 } from './components/mobile/product-group/utils';
 import { getProductListValidationError } from './components/mobile/product-list/utils';
 import { component as TAB_BAR_COMPONENT } from './components/mobile/tab-bar/config';
+import TabBar from './components/mobile/tab-bar/index.vue';
 import { MALL_DIY_ASSETS, normalizeMallDiyAssetUrls } from './static-assets';
 import { getPageBackgroundStyle } from './util';
 
@@ -96,10 +96,10 @@ const pageComponents = ref<DiyComponent<any>[]>([]); // 组件列表
 
 // 小程序个人中心以固定会员区替代这四类历史组件。
 const hiddenMemberBlocks = new Set([
-  'UserCard',
-  'UserWallet',
-  'UserOrder',
   'Divider',
+  'UserCard',
+  'UserOrder',
+  'UserWallet',
 ]);
 const availableLibs = computed(() =>
   props.memberCenter
@@ -779,6 +779,7 @@ onMounted(() => {
 .member-preview-block {
   cursor: default;
 }
+
 .member-preview-block :deep(.component-wrap) {
   display: none;
 }
