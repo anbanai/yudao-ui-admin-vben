@@ -33,11 +33,11 @@ import {
   getMerchantApplicationMine,
   getMerchantApplicationTerms,
   getMerchantBusinessTypeList,
+  MerchantStatus,
   saveMerchantApplicationDraft,
   submitMerchantApplication,
   uploadMerchantQualification,
 } from '#/api/mall/product/merchant';
-import { MerchantStatus } from '#/api/mall/product/merchant';
 import {
   buildMerchantApplicationDraft,
   buildMerchantApplicationSubmission,
@@ -58,7 +58,11 @@ const statusMap: Record<number, { color: string; label: string }> = {
   [MerchantStatus.CHANGE_REJECTED]: { color: 'error', label: '资料变更被退回' },
 };
 
-const loading = ref(false);
+const authStore = useAuthStore();
+const platforms = computed(() => authStore.onboardingPlatforms);
+const selectedPlatformId = ref<number>();
+const choosingPlatform = ref(false);
+const loading = ref(true);
 const saving = ref(false);
 const currentStep = ref(0);
 const confirmed = ref(false);
@@ -131,6 +135,13 @@ watch(
 async function load() {
   loading.value = true;
   try {
+    if (platforms.value !== null) {
+      const options = platforms.value;
+      selectedPlatformId.value =
+        options.find((option) => option.recommended)?.id ??
+        (options.length === 1 ? options[0]?.id : undefined);
+      return;
+    }
     const [mineResult, typesResult, recordsResult, termsResult] =
       await Promise.allSettled([
         getMerchantApplicationMine(),
@@ -138,16 +149,13 @@ async function load() {
         getMerchantApplicationHistory(),
         getMerchantApplicationTerms(),
       ]);
+    applicationLoadFailed.value =
+      mineResult.status === 'rejected' || typesResult.status === 'rejected';
     if (typesResult.status === 'fulfilled') {
       businessTypes.value = typesResult.value;
-    } else {
-      message.error('经营类型加载失败，请稍后重试');
     }
     if (mineResult.status === 'fulfilled' && mineResult.value) {
       Object.assign(application, mineResult.value);
-      applicationLoadFailed.value = false;
-    } else {
-      applicationLoadFailed.value = mineResult.status === 'rejected';
     }
     history.value =
       recordsResult.status === 'fulfilled' ? recordsResult.value : [];
@@ -157,10 +165,21 @@ async function load() {
         : { available: false };
     changeMode.value = false;
     if (mineResult.status === 'fulfilled') {
-      await useAuthStore().refreshMerchantAccess();
+      await authStore.refreshMerchantAccess();
     }
   } finally {
     loading.value = false;
+  }
+}
+
+async function confirmPlatform() {
+  if (!selectedPlatformId.value || choosingPlatform.value) return;
+  choosingPlatform.value = true;
+  try {
+    await authStore.confirmMerchantPlatform(selectedPlatformId.value);
+    await load();
+  } finally {
+    choosingPlatform.value = false;
   }
 }
 
@@ -359,14 +378,23 @@ onMounted(load);
       <section class="status-row">
         <div>
           <h1>商家入驻申请</h1>
+          <p v-if="loading" class="status-note">正在加载入驻资料…</p>
+          <p v-else-if="platforms != null" class="status-note">
+            {{
+              platforms.length
+                ? '请选择受理本次入驻申请的平台。'
+                : '暂无可选平台，请联系平台运营人员核对账号归属。'
+            }}
+          </p>
+          <p v-else-if="applicationLoadFailed" class="review-message">
+            入驻资料加载失败，请重新加载后再填写申请。
+            <AButton type="link" @click="load">重新加载</AButton>
+          </p>
           <p
-            v-if="application.status === MerchantStatus.REJECTED"
+            v-else-if="application.status === MerchantStatus.REJECTED"
             class="review-message"
           >
             {{ application.rejectReason || '请按审核意见补充材料后重新提交。' }}
-          </p>
-          <p v-else-if="applicationLoadFailed" class="review-message">
-            尚无可读取的申请记录；填写资料并保存草稿即可开始申请。
           </p>
           <p v-else class="status-note">
             {{
@@ -376,10 +404,42 @@ onMounted(load);
             }}
           </p>
         </div>
-        <ATag :color="status.color">{{ status.label }}</ATag>
+        <ATag
+          v-if="platforms === null && !loading && !applicationLoadFailed"
+          :color="status.color"
+        >
+          {{ status.label }}
+        </ATag>
       </section>
 
-      <section v-if="editable" class="application-section">
+      <section v-if="platforms !== null" class="application-section">
+        <template v-if="platforms.length">
+          <AFormItem label="入驻平台" required>
+            <ASelect
+              v-model:value="selectedPlatformId"
+              :options="
+                platforms.map(({ id, name }) => ({ label: name, value: id }))
+              "
+              placeholder="选择入驻平台"
+              :disabled="choosingPlatform"
+            />
+          </AFormItem>
+          <AButton
+            type="primary"
+            :disabled="!selectedPlatformId"
+            :loading="choosingPlatform"
+            @click="confirmPlatform"
+          >
+            确认平台并填写申请
+          </AButton>
+        </template>
+      </section>
+      <section
+        v-else-if="
+          platforms === null && !loading && !applicationLoadFailed && editable
+        "
+        class="application-section"
+      >
         <div v-if="changeMode" class="change-notice">
           变更申请审核通过前，商品、品牌、履约和售后页面会受限。
         </div>
@@ -595,7 +655,10 @@ onMounted(load);
         </div>
       </section>
 
-      <section v-else class="application-section locked-section">
+      <section
+        v-else-if="platforms === null && !loading && !applicationLoadFailed"
+        class="application-section locked-section"
+      >
         <AResult
           :status="
             effectiveStatus === MerchantStatus.APPROVED
@@ -628,7 +691,10 @@ onMounted(load);
         </AButton>
       </section>
 
-      <section class="history-section">
+      <section
+        v-if="platforms === null && !loading && !applicationLoadFailed"
+        class="history-section"
+      >
         <div class="section-title">申请进度</div>
         <ATimeline v-if="history.length" class="timeline">
           <ATimelineItem

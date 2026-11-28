@@ -33,6 +33,7 @@ const mocks = vi.hoisted(() => ({
   login: vi.fn(),
   logout: vi.fn(),
   profile: vi.fn(),
+  selectPlatform: vi.fn(),
   reset: vi.fn(),
   router: null as any,
   setDictCacheByApi: vi.fn(),
@@ -77,6 +78,7 @@ vi.mock('#/api/merchant/auth', () => ({
   loginMerchant: mocks.login,
   logoutMerchant: mocks.logout,
   registerMerchant: vi.fn(),
+  selectMerchantPlatform: mocks.selectPlatform,
 }));
 vi.mock('#/locales', () => ({ $t: (key: string) => key }));
 vi.mock('#/router/access', () => ({ generateAccess: mocks.generate }));
@@ -148,6 +150,33 @@ describe('authentication lifecycle', () => {
       accessibleMenus: [],
       accessibleRoutes: [],
     });
+  });
+
+  it('replaces the unscoped merchant tokens after platform selection', async () => {
+    const merchant = useMerchantSessionStore();
+    merchant.setAccessToken('unscoped');
+    merchant.setRefreshToken('unscoped-refresh');
+    mocks.selectPlatform.mockResolvedValue({
+      accessToken: 'platform-access',
+      refreshToken: 'platform-refresh',
+    });
+    const auth = useAuthStore();
+
+    await auth.confirmMerchantPlatform(7);
+
+    expect(merchant.accessToken).toBe('platform-access');
+    expect(merchant.refreshToken).toBe('platform-refresh');
+  });
+
+  it('skips tenant-scoped application requests until the merchant chooses a platform', async () => {
+    mocks.profile.mockResolvedValueOnce({
+      id: 1,
+      onboardingPlatforms: [{ id: 7, name: '好茶引力', recommended: true }],
+    });
+    const auth = useAuthStore();
+    await auth.fetchUserInfo();
+    expect(mocks.application).not.toHaveBeenCalled();
+    expect(auth.onboardingPlatforms?.[0]?.id).toBe(7);
   });
 
   it('returns a saved merchant session with a forbidden profile to login on startup', async () => {

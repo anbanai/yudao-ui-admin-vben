@@ -1,6 +1,7 @@
 import type { AuthPermissionInfo, Recordable, UserInfo } from '@vben/types';
 
 import type { AuthApi } from '#/api';
+import type { MerchantAuthApi } from '#/api/merchant/auth';
 
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -27,6 +28,7 @@ import {
   loginMerchant,
   logoutMerchant,
   registerMerchant,
+  selectMerchantPlatform,
 } from '#/api/merchant/auth';
 import { $t } from '#/locales';
 import { generateAccess } from '#/router/access';
@@ -54,6 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const loginLoading = ref(false);
   const authMode = ref<AuthMode>(readAuthMode());
+  const onboardingPlatforms = ref<MerchantAuthApi.Platform[] | null>(null);
   const sessionVersion = ref(0);
   let merchantMenuSignature = '';
 
@@ -248,13 +251,19 @@ export const useAuthStore = defineStore('auth', () => {
         status?: number;
         type?: string;
       } = null;
-      try {
-        merchantApplication = await getMerchantApplicationMine();
-      } catch {
-        // New merchant accounts do not have an application record yet.
+      if (
+        profile.onboardingPlatforms === null ||
+        profile.onboardingPlatforms === undefined
+      ) {
+        try {
+          merchantApplication = await getMerchantApplicationMine();
+        } catch {
+          // Keep the application entry available when the product service is unavailable.
+        }
       }
       const profileUser = (profile as any)?.user ?? profile;
       requireCurrentSession(version);
+      onboardingPlatforms.value = profile.onboardingPlatforms ?? null;
       merchantMenuSignature = `${Boolean(merchantApplication)}:${canAccessMerchantOperations(merchantApplication)}`;
       const displayName =
         profileUser.nickname ??
@@ -359,6 +368,16 @@ export const useAuthStore = defineStore('auth', () => {
     return authPermissionInfo;
   }
 
+  async function confirmMerchantPlatform(tenantId: number) {
+    const version = sessionVersion.value;
+    const tokens = await selectMerchantPlatform(tenantId);
+    requireCurrentSession(version);
+    sessionVersion.value++;
+    merchantSessionStore.setAccessToken(tokens.accessToken);
+    merchantSessionStore.setRefreshToken(tokens.refreshToken);
+    onboardingPlatforms.value = null;
+  }
+
   async function refreshMerchantAccess() {
     if (authMode.value !== 'merchant') return;
     const previousSignature = merchantMenuSignature;
@@ -385,6 +404,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function $reset() {
     sessionVersion.value++;
+    onboardingPlatforms.value = null;
     loginLoading.value = false;
     merchantMenuSignature = '';
   }
@@ -400,10 +420,12 @@ export const useAuthStore = defineStore('auth', () => {
     authMode,
     authLogin,
     clearForbiddenSession,
+    confirmMerchantPlatform,
     fetchUserInfo,
     getActiveAccessToken,
     loginLoading,
     logout,
+    onboardingPlatforms,
     registerMerchantAccount,
     refreshMerchantAccess,
     sessionVersion,

@@ -23,7 +23,14 @@ export namespace MerchantAuthApi {
     userType: number | string;
   }
 
+  export interface Platform {
+    id: number;
+    name: string;
+    recommended: boolean;
+  }
+
   export interface Profile {
+    onboardingPlatforms?: null | Platform[];
     account?: string;
     avatar?: string;
     email?: string;
@@ -56,6 +63,15 @@ export function loginMerchant(data: MerchantAuthApi.LoginParams) {
 export function getMerchantProfile() {
   return merchantRequestClient.get<MerchantAuthApi.Profile>(
     '/system/auth/profile',
+    { params: { website: window.location.hostname } },
+  );
+}
+
+export function selectMerchantPlatform(tenantId: number) {
+  return merchantRequestClient.post<MerchantAuthApi.LoginResult>(
+    '/system/auth/select-platform',
+    undefined,
+    { params: { tenantId } },
   );
 }
 
