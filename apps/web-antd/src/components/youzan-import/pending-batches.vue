@@ -3,10 +3,14 @@ import { ref } from 'vue';
 
 import { Alert, Button, Empty, Modal, Spin } from 'ant-design-vue';
 
-const props = defineProps<{
-  busy: boolean;
-  loadPage: (before?: string) => Promise<string[]>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    busy: boolean;
+    loadPage: (before?: string) => Promise<string[]>;
+    title?: string;
+  }>(),
+  { title: '待分配批次' },
+);
 const emit = defineEmits<{ select: [batchId: string] }>();
 
 const open = ref(false);
@@ -52,8 +56,8 @@ function select(batchId: string) {
 </script>
 
 <template>
-  <Button :disabled="busy" @click="show">待分配批次</Button>
-  <Modal :open="open" title="待分配批次" :footer="null" @cancel="close">
+  <Button :disabled="busy" @click="show">{{ title }}</Button>
+  <Modal :open="open" :title="title" :footer="null" @cancel="close">
     <ul
       v-if="batches.length"
       class="my-3 max-h-80 list-none overflow-y-auto p-0"
@@ -64,8 +68,8 @@ function select(batchId: string) {
         </Button>
       </li>
     </ul>
-    <Empty v-else-if="!loading && !failed" description="暂无待分配批次" />
-    <Alert v-if="failed" type="error" message="待分配批次加载失败" show-icon>
+    <Empty v-else-if="!loading && !failed" :description="`暂无${title}`" />
+    <Alert v-if="failed" type="error" :message="`${title}加载失败`" show-icon>
       <template #action>
         <Button size="small" @click="load">重试</Button>
       </template>

@@ -22,17 +22,12 @@ import {
 } from 'ant-design-vue';
 
 import {
-  assignMemberBatch,
   confirmYouzanCustomerImport,
   downloadYouzanCustomerImportTemplate,
-  getAuthorizedYouzanMemberMerchants,
   getYouzanCustomerImportResult,
-  listPendingMemberBatches,
   previewYouzanCustomerImport,
 } from '#/api/member/youzan-import';
-import BatchAssignment from '#/components/youzan-import/batch-assignment.vue';
 import ImportUploadCard from '#/components/youzan-import/import-upload-card.vue';
-import PendingBatches from '#/components/youzan-import/pending-batches.vue';
 
 const { hasAccessByCodes } = useAccess();
 const canImport = hasAccessByCodes(['member:youzan-import:import']);
@@ -44,11 +39,12 @@ const loading = ref(false);
 const historyOpen = ref(false);
 const batchNumber = ref('');
 const resultTitle = computed(() => {
-  if (result.value?.status === 3) return '已导入，待分配会员来源';
+  if (result.value?.status === 4) return '历史批次处理失败';
+  if (result.value?.status === 3) return '历史批次等待系统处理';
   if (result.value?.status === 2) return '预览已过期';
   if (result.value?.status !== 1) return '批次尚未确认';
   return result.value.importedRows
-    ? '会员资产已导入，等待领取'
+    ? '会员积分和等级已导入，可凭手机号领取'
     : '批次已确认，无新增会员资产';
 });
 
@@ -74,14 +70,6 @@ watch(file, () => {
   preview.value = undefined;
   result.value = undefined;
 });
-
-async function loadMerchants() {
-  const merchantIds = await getAuthorizedYouzanMemberMerchants();
-  return merchantIds.map((id) => ({
-    label: `来源 #${id}`,
-    value: id,
-  }));
-}
 
 async function download() {
   downloadFileFromBlobPart({
@@ -116,11 +104,11 @@ async function handlePreview() {
   }
 }
 
-async function assign(sourceId: string) {
-  if (loading.value || result.value?.status !== 3) return;
+async function retryMigration() {
+  if (!canImport || loading.value || result.value?.status !== 4) return;
   loading.value = true;
   try {
-    result.value = await assignMemberBatch(result.value.batchId, sourceId);
+    result.value = await confirmYouzanCustomerImport(result.value.batchId);
   } finally {
     loading.value = false;
   }
@@ -131,8 +119,7 @@ function handleConfirm() {
   const batchId = preview.value.batchId;
   Modal.confirm({
     title: '确认会员导入批次？',
-    content:
-      '本批次将保存到「待分配批次」。分配会员来源后，会员即可按领取规则领取资产。',
+    content: '确认后，会员可在小程序验证导入时的手机号，领取对应的积分和等级。',
     okText: '确认导入',
     cancelText: '返回预览',
     onOk: async () => {
@@ -152,15 +139,10 @@ function handleConfirm() {
 <template>
   <Page
     title="有赞客户积分导入"
-    description="上传 Excel 核对积分和等级，确认后可随时分配会员来源。"
+    description="上传 Excel 核对积分和等级。确认后，会员可在小程序验证手机号领取。"
   >
     <template #extra>
       <Space v-if="canQuery || canImport" wrap>
-        <PendingBatches
-          :busy="loading"
-          :load-page="listPendingMemberBatches"
-          @select="lookup"
-        />
         <Button v-if="canQuery" @click="download">下载模板</Button>
         <Button :disabled="loading" @click="historyOpen = true">
           查询批次
@@ -205,22 +187,25 @@ function handleConfirm() {
       </Card>
 
       <Card v-if="result" title="批次结果">
+        <template v-if="result.status === 4 && canImport" #extra>
+          <Button :loading="loading" @click="retryMigration">重试处理</Button>
+        </template>
         <Result
-          :status="result.status === 1 ? 'success' : 'info'"
+          :status="
+            result.status === 4
+              ? 'error'
+              : result.status === 1
+                ? 'success'
+                : 'info'
+          "
           :title="resultTitle"
           :sub-title="
-            result.status === 3
-              ? `批次 ${result.batchId} · 通过校验 ${result.validRows} 行`
-              : `批次 ${result.batchId} · 新增 ${result.importedRows ?? 0} · 跳过 ${result.skippedRows ?? 0} · 来源数据变化 ${result.changedRows ?? 0}`
+            result.status === 4
+              ? `批次 ${result.batchId} · 原始数据已保留，请管理员检查导入密钥及数据库后重试。`
+              : result.status === 3
+                ? `批次 ${result.batchId} · 通过校验 ${result.validRows} 行`
+                : `批次 ${result.batchId} · 新增 ${result.importedRows ?? 0} · 跳过 ${result.skippedRows ?? 0} · 来源数据变化 ${result.changedRows ?? 0}`
           "
-        />
-        <BatchAssignment
-          v-if="canImport && result.status === 3"
-          :key="result.batchId"
-          scope-label="会员来源"
-          :load-options="loadMerchants"
-          :busy="loading"
-          @assign="assign"
         />
         <Table
           :columns="columns"

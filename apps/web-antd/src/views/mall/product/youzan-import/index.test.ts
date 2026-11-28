@@ -10,16 +10,19 @@ import * as api from '#/api/mall/product/youzan-import';
 
 import ProductImport from './index.vue';
 
-vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock('vue-router', () => ({ useRouter: () => ({ push }) }));
 vi.mock('@vben/access', () => ({
-  useAccess: () => ({ hasAccessByCodes: () => true }),
+  useAccess: () => ({
+    hasAccessByCodes: (codes: string[]) =>
+      codes.includes('product:youzan:import'),
+  }),
 }));
 vi.mock('@vben/common-ui', () => ({
   Page: (_: unknown, { slots }: { slots: Slots }) =>
     h('main', [slots.extra?.(), slots.default?.()]),
 }));
 vi.mock('#/api/mall/product/youzan-import', () => ({
-  assignProductBatch: vi.fn(),
   confirmBatch: vi.fn(),
   preview: vi.fn(),
   result: vi.fn(),
@@ -27,7 +30,7 @@ vi.mock('#/api/mall/product/youzan-import', () => ({
   listPendingProductBatches: vi.fn(),
 }));
 
-it('saves a product batch without a merchant and reopens it for explicit assignment', async () => {
+it('saves a product batch without a merchant and reopens it directly as an editable product draft', async () => {
   const batch: Batch = {
     batchId: '12345678-aaaa-aaaa-aaaa-123456789abc',
     confirmed: false,
@@ -49,7 +52,11 @@ it('saves a product batch without a merchant and reopens it for explicit assignm
       },
     ],
   };
-  const pending = { ...batch, confirmed: true };
+  const pending: Batch = {
+    ...batch,
+    confirmed: true,
+    lines: batch.lines.map((line) => ({ ...line, bindingState: 'UNBOUND' })),
+  };
   vi.mocked(api.preview).mockResolvedValue(batch);
   vi.mocked(api.confirmBatch).mockResolvedValue(pending);
   vi.mocked(api.listPendingProductBatches).mockResolvedValue([batch.batchId]);
@@ -57,12 +64,6 @@ it('saves a product batch without a merchant and reopens it for explicit assignm
   vi.mocked(api.getAuthorizedYouzanProductMerchants).mockResolvedValue([
     { id: '1', name: '平台自营' },
   ]);
-  vi.mocked(api.assignProductBatch).mockResolvedValue({
-    ...pending,
-    merchantId: '1',
-    lines: pending.lines.map((line) => ({ ...line, bindingState: 'UNBOUND' })),
-  });
-
   const host = document.createElement('div');
   document.body.append(host);
   let app = createApp(ProductImport);
@@ -83,33 +84,36 @@ it('saves a product batch without a merchant and reopens it for explicit assignm
     expect(api.getAuthorizedYouzanProductMerchants).not.toHaveBeenCalled();
     button('确认导入').click();
     await vi.waitFor(() =>
-      expect(host.textContent).toContain('已导入，待分配商家'),
+      expect(host.textContent).toContain('已导入，可编辑商品草稿'),
     );
     expect(api.confirmBatch).toHaveBeenCalledWith(batch.batchId);
-    expect(button('确认分配').disabled).toBe(true);
+    expect(button('编辑草稿')).toBeDefined();
 
     app.unmount();
     app = createApp(ProductImport);
     app.mount(host);
-    button('待分配批次').click();
+    button('商品草稿批次').click();
     await vi.waitFor(() =>
       expect(button(`批次 ${batch.batchId}`)).toBeDefined(),
     );
     button(`批次 ${batch.batchId}`).click();
-    await vi.waitFor(() => expect(button('确认分配')).toBeDefined());
+    await vi.waitFor(() => expect(button('编辑草稿')).toBeDefined());
     expect(api.result).toHaveBeenCalledWith(undefined, batch.batchId);
-    expect(button('确认分配').disabled).toBe(true);
-    host
-      .querySelector('.ant-select-selector')!
-      .dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    button('编辑草稿').click();
+    expect(push).toHaveBeenCalledWith({
+      name: 'ProductSpuAdd',
+      query: { yzBatch: batch.batchId, yzProduct: 'P1' },
+    });
+    expect(api.getAuthorizedYouzanProductMerchants).not.toHaveBeenCalled();
+    vi.mocked(api.result).mockResolvedValueOnce({
+      ...pending,
+      lines: pending.lines.map((line) => ({ ...line, bindingState: 'BOUND' })),
+    });
+    button('刷新结果').click();
     await vi.waitFor(() =>
-      expect(document.querySelector('.ant-select-item-option')).toBeTruthy(),
+      expect(host.textContent).toContain('商品草稿已全部发布'),
     );
-    document.querySelector<HTMLElement>('.ant-select-item-option')!.click();
-    await vi.waitFor(() => expect(button('确认分配').disabled).toBe(false));
-    button('确认分配').click();
-    await vi.waitFor(() => expect(button('补资料')).toBeDefined());
-    expect(api.assignProductBatch).toHaveBeenCalledWith(batch.batchId, '1');
+    expect(button('编辑草稿')).toBeUndefined();
   } finally {
     app.unmount();
     host.remove();

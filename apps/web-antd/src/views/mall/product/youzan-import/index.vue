@@ -11,20 +11,18 @@ import { downloadFileFromBlobPart } from '@vben/utils';
 import { Button, Card, Input, Modal, Space, Table } from 'ant-design-vue';
 
 import {
-  assignProductBatch,
   confirmBatch,
-  getAuthorizedYouzanProductMerchants,
   listPendingProductBatches,
   preview,
   result,
   template,
 } from '#/api/mall/product/youzan-import';
-import BatchAssignment from '#/components/youzan-import/batch-assignment.vue';
 import ImportUploadCard from '#/components/youzan-import/import-upload-card.vue';
 import PendingBatches from '#/components/youzan-import/pending-batches.vue';
 
 const router = useRouter();
 const { hasAccessByCodes } = useAccess();
+const canImport = computed(() => hasAccessByCodes(['product:youzan:import']));
 const canCreateProduct = computed(() =>
   hasAccessByCodes(['product:spu:create']),
 );
@@ -40,6 +38,9 @@ const labels: Record<string, string> = {
   DUPLICATE: '重复，跳过',
   DIFFERENCE: '有差异，保留商城数据',
 };
+const boundLabel = computed(() =>
+  batch.value?.merchantId ? '已绑定' : '已上架',
+);
 const rows = computed(() =>
   (batch.value?.lines ?? []).map(({ action, row, before, bindingState }) => ({
     number: row.number,
@@ -49,11 +50,8 @@ const rows = computed(() =>
     bindingState,
     reason:
       bindingState === 'BOUND'
-        ? '已绑定'
+        ? boundLabel.value
         : (row.error ??
-          (action === 'PENDING' && !batch.value?.merchantId
-            ? '待分配商家'
-            : undefined) ??
           (action === 'PENDING' && !row.item?.name
             ? '待补资料（缺商品名称）'
             : labels[action])),
@@ -75,7 +73,15 @@ const draftCount = computed(
 const batchSummary = computed(() => {
   if (!batch.value) return '';
   const { confirmed, merchantId } = batch.value;
-  if (!merchantId) return confirmed ? '已导入，待分配商家' : '确认后可分配商家';
+  if (!merchantId) {
+    if (!draftCount.value) return '没有可导入的商品草稿';
+    if (!confirmed) return '确认后生成商品草稿';
+    return batch.value.lines.some(
+      ({ bindingState }) => bindingState === 'UNBOUND',
+    )
+      ? '已导入，可编辑商品草稿'
+      : '商品草稿已全部发布';
+  }
   return `商家 #${merchantId} · ${confirmed ? '已生成' : '可生成'} ${draftCount.value} 条规格草稿`;
 });
 const validBatchId = computed(() =>
@@ -86,14 +92,6 @@ watch(file, () => {
   batch.value = undefined;
   batchId.value = '';
 });
-
-async function loadMerchants() {
-  const merchants = await getAuthorizedYouzanProductMerchants();
-  return merchants.map(({ id, name }) => ({
-    label: `${name}（#${id}）`,
-    value: id,
-  }));
-}
 
 async function run(action: 'confirm' | 'preview' | 'refresh' | 'result') {
   if (busy.value) return;
@@ -120,16 +118,6 @@ async function openPending(id: string) {
   await run('result');
 }
 
-async function assign(merchantId: string) {
-  if (busy.value || !batch.value?.confirmed || batch.value.merchantId) return;
-  busy.value = true;
-  try {
-    batch.value = await assignProductBatch(batch.value.batchId, merchantId);
-  } finally {
-    busy.value = false;
-  }
-}
-
 async function download() {
   downloadFileFromBlobPart({
     fileName: '有赞商品模板.xlsx',
@@ -145,11 +133,12 @@ onActivated(() => {
 <template>
   <Page
     title="有赞商品导入"
-    description="先导入有赞商品，再分配商家并补齐商品资料。"
+    description="导入后可编辑商品草稿，发布时选择商家。"
   >
     <template #extra>
       <Space wrap>
         <PendingBatches
+          title="商品草稿批次"
           :busy="busy"
           :load-page="listPendingProductBatches"
           @select="openPending"
@@ -174,7 +163,7 @@ onActivated(() => {
             :loading="busy"
             @click="run('confirm')"
           >
-            {{ batch.merchantId && draftCount ? '确认生成草稿' : '确认导入' }}
+            确认导入
           </Button>
           <Button v-else :loading="busy" @click="run('refresh')">
             刷新结果
@@ -184,14 +173,6 @@ onActivated(() => {
           批次 {{ batch.batchId }} · {{ rows.length }} 个来源行 ·
           {{ batchSummary }}
         </p>
-        <BatchAssignment
-          v-if="batch.confirmed && !batch.merchantId"
-          :key="batch.batchId"
-          scope-label="商品商家"
-          :load-options="loadMerchants"
-          :busy="busy"
-          @assign="assign"
-        />
         <Table
           :data-source="rows"
           row-key="number"
@@ -206,24 +187,30 @@ onActivated(() => {
           <Table.Column title="映射参考" data-index="hints" />
           <Table.Column title="处理结果" data-index="reason" />
           <Table.Column
-            v-if="canCreateProduct && batch.merchantId"
+            v-if="
+              batch.confirmed &&
+              canImport &&
+              (!batch.merchantId || canCreateProduct)
+            "
             title="操作"
           >
             <template #default="{ record }">
               <Button
-                v-if="batch.confirmed && record.bindingState === 'UNBOUND'"
+                v-if="record.bindingState === 'UNBOUND' && record.key"
                 @click="
                   router.push({
                     name: 'ProductSpuAdd',
                     query: {
                       yzBatch: batch.batchId,
                       yzProduct: record.key.product,
-                      yzMerchant: batch.merchantId,
+                      ...(batch.merchantId
+                        ? { yzMerchant: batch.merchantId }
+                        : {}),
                     },
                   })
                 "
               >
-                补资料
+                {{ batch.merchantId ? '补资料' : '编辑草稿' }}
               </Button>
             </template>
           </Table.Column>

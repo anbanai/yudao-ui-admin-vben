@@ -48,7 +48,7 @@ export function getBrandPage(params: PageParam) {
 }
 
 /** 获得商品品牌精简信息列表 */
-export function getSimpleBrandList(params?: { merchantId?: number }) {
+export function getSimpleBrandList(params?: { merchantId?: number | string }) {
   return requestClient.get<MallBrandApi.Brand[]>(
     '/product/brand/list-all-simple',
     { params },

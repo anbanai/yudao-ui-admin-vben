@@ -40,10 +40,33 @@ export const result = (merchantId: string | undefined, batchId: string) =>
   });
 export const listPendingProductBatches = (before?: string) =>
   requestClient.get<string[]>(`${root}/pending`, { params: { before } });
-export const assignProductBatch = (batchId: string, merchantId: string) =>
-  requestClient.post<Batch>(`${root}/assign`, undefined, {
-    params: { batchId, merchantId },
+export interface DraftInput {
+  batchId: string;
+  product: string;
+  form: MallSpuApi.Spu;
+  sourceByProperties: Record<string, string>;
+}
+
+export interface ProductDraft {
+  form: MallSpuApi.Spu | null;
+  sourceByProperties: Record<string, string>;
+  merchantId: null | string;
+  spuId: null | string;
+}
+
+export const getProductDraft = (batchId: string, product: string) =>
+  requestClient.get<ProductDraft>(`${root}/draft`, {
+    params: { batchId, product },
   });
+
+export const saveProductDraft = (draft: DraftInput) =>
+  requestClient.post<ProductDraft>(`${root}/draft`, draft);
+
+export const publishProductDraft = (merchantId: string, draft: DraftInput) =>
+  requestClient.post<string>(`${root}/publish`, draft, {
+    params: { merchantId },
+  });
+
 export const supplement = (
   merchantId: string,
   batchId: string,
