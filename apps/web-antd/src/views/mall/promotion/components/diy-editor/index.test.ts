@@ -117,6 +117,61 @@ describe('diy editor', () => {
     host.remove();
   });
 
+  it('shows the fixed member header above an editable product block and preserves legacy settings on save', async () => {
+    const { component: productList } =
+      await import('./components/mobile/product-list/config');
+    const components = [
+      { id: 'UserCard', property: { style: { marginTop: 2 } } },
+      { id: 'UserWallet', property: {} },
+      { id: 'Divider', property: {} },
+      { id: 'UserOrder', property: {} },
+      {
+        id: 'ProductList',
+        property: {
+          ...productList.property,
+          sourceType: 'group',
+          groupIds: [12],
+          pageSize: 10,
+        },
+      },
+    ];
+    const host = document.createElement('div');
+    document.body.append(host);
+    const updates: string[] = [];
+    const app = createApp(DiyEditor, {
+      modelValue: JSON.stringify({
+        components,
+        page: {},
+        navigationBar: { alwaysShow: true },
+      }),
+      memberCenter: true,
+      'onUpdate:modelValue': (value: string) => updates.push(value),
+    });
+    try {
+      app.mount(host);
+      await nextTick();
+      const canvas = host.querySelector('.editor-center')!;
+      expect(
+        canvas.querySelector('[aria-label="会员中心游客预览"]'),
+      ).toBeTruthy();
+      expect(canvas.textContent).toContain('个人信息');
+      expect(canvas.textContent).toContain('好茶引力');
+      expect(canvas.textContent).not.toMatch(/绑定手机号|我的钱包|芋道源码/);
+      const product = canvas.querySelector<HTMLElement>('.component-name')!;
+      expect(product.textContent?.trim()).toBe('商品栏');
+      product.click();
+      await nextTick();
+      host
+        .querySelectorAll<HTMLButtonElement>('.ant-btn-group button')[2]!
+        .click();
+      await nextTick();
+      expect(JSON.parse(updates.at(-1)!).components).toEqual(components);
+    } finally {
+      app.unmount();
+      host.remove();
+    }
+  });
+
   it('shows a preview skeleton and hides the iframe when loading fails', async () => {
     const host = document.createElement('div');
     document.body.append(host);

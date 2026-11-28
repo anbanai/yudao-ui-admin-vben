@@ -8,7 +8,13 @@ import { Image } from 'ant-design-vue';
 /** 页面底部导航栏 */
 defineOptions({ name: 'TabBar' });
 
-defineProps<{ property: TabBarProperty }>();
+const props = defineProps<{ activePath?: string; property: TabBarProperty }>();
+
+function isActive(url: string, index: number) {
+  return props.activePath
+    ? url?.split('?')[0] === props.activePath
+    : index === 0;
+}
 </script>
 <template>
   <div class="z-[2] w-full">
@@ -29,7 +35,7 @@ defineProps<{ property: TabBarProperty }>();
         class="flex w-full flex-col items-center justify-center text-xs"
       >
         <Image
-          :src="index === 0 ? item.activeIconUrl : item.iconUrl"
+          :src="isActive(item.url, index) ? item.activeIconUrl : item.iconUrl"
           class="!h-[26px] w-[26px] rounded"
           :preview="false"
         >
@@ -44,8 +50,9 @@ defineProps<{ property: TabBarProperty }>();
         </Image>
         <span
           :style="{
-            color:
-              index === 0 ? property.style.activeColor : property.style.color,
+            color: isActive(item.url, index)
+              ? property.style.activeColor
+              : property.style.color,
           }"
         >
           {{ item.text }}

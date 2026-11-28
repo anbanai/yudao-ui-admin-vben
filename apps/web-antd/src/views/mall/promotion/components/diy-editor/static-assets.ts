@@ -4,6 +4,8 @@ if (!ossBaseUrl) {
   throw new Error('VITE_OSS_BASE_URL is required');
 }
 
+export const mallStaticAsset = (path: string) => `${ossBaseUrl}/static/${path}`;
+
 const mallDiyAssetUrl = (filename: string) =>
   `${ossBaseUrl}/mall/diy/${filename}`;
 

@@ -3,7 +3,7 @@ import type { MallDiyPageApi } from '#/api/mall/promotion/diy/page';
 import type { MallDiyTemplateApi } from '#/api/mall/promotion/diy/template';
 import type { DiyComponentLibrary } from '#/views/mall/promotion/components'; // 商城的 DIY 组件，在 DiyEditor 目录下
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { useTabs } from '@vben/hooks';
@@ -19,6 +19,7 @@ import {
   updateDiyTemplateProperty,
 } from '#/api/mall/promotion/diy/template';
 import { DiyEditor, PAGE_LIBS } from '#/views/mall/promotion/components';
+import { normalizeMallDiyAssetUrls } from '#/views/mall/promotion/components/diy-editor/static-assets';
 import { prepareDiyCarouselRatios } from '#/views/mall/promotion/components/diy-editor/components/mobile/carousel/ratio';
 
 /** 装修模板表单 */
@@ -47,6 +48,16 @@ const currentFormDataMap = ref<
   Map<string, MallDiyPageApi.DiyPage | MallDiyTemplateApi.DiyTemplateProperty>
 >(new Map()); // templateItem 对应的缓存
 
+const memberTabBar = computed(() => {
+  if (selectedTemplateItem.value !== 2) return undefined;
+  const property =
+    currentFormDataMap.value.get('基础设置')?.property ??
+    formData.value?.property;
+  if (!property) return undefined;
+  const config = typeof property === 'string' ? JSON.parse(property) : property;
+  return normalizeMallDiyAssetUrls(config?.tabBar);
+});
+
 const previewUrl = ref(''); // 商城 H5 预览地址
 const templateLibs = [] as DiyComponentLibrary[]; // 模板组件库
 const libs = ref<DiyComponentLibrary[]>(templateLibs); // 当前组件库
@@ -70,8 +81,7 @@ async function getPageDetail(id: any) {
 }
 
 /** 模板选项切换 */
-function handleTemplateItemChange(valObj: any) {
-  const val = valObj.target.value;
+function handleTemplateItemChange(val: number) {
   // 缓存模版编辑数据
   currentFormDataMap.value.set(
     templateItems.value[selectedTemplateItem.value]?.name || '',
@@ -189,6 +199,9 @@ onMounted(async () => {
   <DiyEditor
     v-if="formData?.id"
     v-model="currentFormData!.property"
+    :key="selectedTemplateItem"
+    :member-center="selectedTemplateItem === 2"
+    :member-tab-bar="memberTabBar"
     :libs="libs"
     :preview-url="previewUrl"
     :show-navigation-bar="selectedTemplateItem !== 0"
@@ -203,7 +216,7 @@ onMounted(async () => {
         :value="selectedTemplateItem"
         class="flex items-center"
         size="large"
-        @change="handleTemplateItemChange"
+        @change="handleTemplateItemChange($event.target.value)"
       >
         <template v-for="item in templateItems" :key="item.key">
           <Radio.Button :value="item.key">

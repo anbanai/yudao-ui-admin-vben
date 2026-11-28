@@ -71,6 +71,7 @@ onMounted(() => {
     v-if="formData?.id"
     v-model="formData!.property"
     :title="formData!.name"
+    :member-center="!!formData.templateId && formData.name === '我的'"
     :libs="PAGE_LIBS"
     @save="submitForm"
   />

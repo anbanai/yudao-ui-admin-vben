@@ -1,8 +1,13 @@
 <script lang="ts" setup>
 import type { NavigationBarProperty } from './components/mobile/navigation-bar/config';
-import type { DiyComponent, DiyComponentLibrary, PageConfig } from './util';
+import type {
+  DiyComponent,
+  DiyComponentLibrary,
+  PageComponent,
+  PageConfig,
+} from './util';
 
-import { onBeforeUnmount, onMounted, ref, unref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, unref, watch } from 'vue';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
@@ -22,6 +27,9 @@ import draggable from 'vuedraggable';
 
 import ComponentContainer from './components/component-container.vue';
 import ComponentLibrary from './components/component-library.vue';
+import MemberCenterPreview from './components/member-center-preview.vue';
+import type { TabBarProperty } from './components/mobile/tab-bar/config';
+import TabBar from './components/mobile/tab-bar/index.vue';
 import { componentConfigs, components } from './components/mobile';
 import { migrateLegacyProductGroupComponent } from './components/mobile/component-migration';
 import {
@@ -55,6 +63,8 @@ defineOptions({
 
 /** 定义属性 */
 const props = defineProps({
+  memberCenter: Boolean,
+  memberTabBar: { type: Object as () => TabBarProperty, default: undefined },
   modelValue: { type: [String, Object], required: true }, // 页面配置，支持 Json 字符串
   title: { type: String, default: '' }, // 标题
   libs: { type: Array<DiyComponentLibrary>, default: () => [] }, // 组件库
@@ -84,6 +94,26 @@ const selectedComponent = ref<DiyComponent<any>>(); // 选中的组件，默认�
 const selectedComponentIndex = ref<number>(-1); // 选中的组件索引
 const pageComponents = ref<DiyComponent<any>[]>([]); // 组件列表
 
+// 小程序个人中心以固定会员区替代这四类历史组件。
+const hiddenMemberBlocks = new Set([
+  'UserCard',
+  'UserWallet',
+  'UserOrder',
+  'Divider',
+]);
+const availableLibs = computed(() =>
+  props.memberCenter
+    ? props.libs.map((group) => ({
+        ...group,
+        components: group.components.filter(
+          (id) => !hiddenMemberBlocks.has(id),
+        ),
+      }))
+    : props.libs,
+);
+let legacyBlocks: Array<{ index: number; item: PageComponent }> = [];
+let lastEmitted: unknown;
+
 // 兼容历史装修数据：旧版只有 alwaysShow，新增 showType 后统一转成枚举并继续输出 alwaysShow。
 function normalizeNavigationBarProperty(property: NavigationBarProperty) {
   const navigationBarProperty = cloneDeep(property);
@@ -106,6 +136,7 @@ function normalizeNavigationBarProperty(property: NavigationBarProperty) {
 watch(
   () => props.modelValue,
   () => {
+    if (props.modelValue === lastEmitted) return;
     const parsedModelValue =
       isString(props.modelValue) && !isEmpty(props.modelValue)
         ? (JSON.parse(props.modelValue) as PageConfig)
@@ -126,20 +157,29 @@ watch(
       TAB_BAR_COMPONENT.property;
     // 查找对应的页面组件
     // noinspection SuspiciousTypeOfGuard
+    legacyBlocks = [];
     pageComponents.value = (
       (typeof modelValue !== 'string' && modelValue?.components) ||
       []
-    ).map((item: any) => {
-      const migratedItem = migrateLegacyProductGroupComponent(item);
-      const component = componentConfigs[migratedItem.id];
-      let property = migratedItem.property;
-      if (migratedItem.id === 'ProductGroup') {
-        property = normalizeProductGroupProperty(migratedItem.property);
-      } else if (migratedItem.id === 'ProductCategory') {
-        property = normalizeProductCategoryProperty(migratedItem.property);
-      }
-      return { ...component, property };
-    });
+    )
+      .filter((item: PageComponent, index: number) => {
+        if (props.memberCenter && hiddenMemberBlocks.has(item.id)) {
+          legacyBlocks.push({ index, item });
+          return false;
+        }
+        return true;
+      })
+      .map((item: PageComponent) => {
+        const migratedItem = migrateLegacyProductGroupComponent(item);
+        const component = componentConfigs[migratedItem.id];
+        let property = migratedItem.property;
+        if (migratedItem.id === 'ProductGroup') {
+          property = normalizeProductGroupProperty(migratedItem.property);
+        } else if (migratedItem.id === 'ProductCategory') {
+          property = normalizeProductCategoryProperty(migratedItem.property);
+        }
+        return { ...component, property };
+      });
   },
   {
     immediate: true,
@@ -219,6 +259,9 @@ function pageConfigChange() {
       return { id: component.id, property: component.property };
     }),
   } as PageConfig;
+  for (const { index, item } of legacyBlocks) {
+    pageConfig.components.splice(index, 0, item);
+  }
   if (!props.showTabBar) {
     delete pageConfig.tabBar;
   }
@@ -226,6 +269,7 @@ function pageConfigChange() {
   const modelValue = isString(props.modelValue)
     ? JSON.stringify(pageConfig)
     : pageConfig;
+  lastEmitted = modelValue;
   emits('update:modelValue', modelValue);
 }
 
@@ -417,7 +461,7 @@ function handlePreviewError() {
 
 /** 预览 */
 function handlePreview() {
-  startPreviewLoading();
+  if (!props.memberCenter) startPreviewLoading();
   previewModalApi.open();
 }
 
@@ -479,7 +523,7 @@ onMounted(() => {
               <IconifyIcon class="size-5" icon="lucide:refresh-cw" />
             </Button>
           </Tooltip>
-          <Tooltip v-if="previewUrl" title="预览">
+          <Tooltip v-if="memberCenter || previewUrl" title="预览">
             <Button @click="handlePreview">
               <IconifyIcon class="size-5" icon="lucide:eye" />
             </Button>
@@ -496,7 +540,10 @@ onMounted(() => {
     <Row class="mt-4 h-[calc(80vh)]">
       <!-- 左侧：组件库（ComponentLibrary） -->
       <Col :span="6">
-        <ComponentLibrary v-if="libs && libs.length > 0" :list="libs" />
+        <ComponentLibrary
+          v-if="libs && libs.length > 0"
+          :list="availableLibs"
+        />
       </Col>
       <!-- 中心：设计区域（ComponentContainer） -->
       <Col :span="12">
@@ -510,7 +557,7 @@ onMounted(() => {
             <img alt="" class="h-6 bg-card" :src="MALL_DIY_ASSETS.statusBar" />
             <!-- 手机顶部导航栏 -->
             <ComponentContainer
-              v-if="showNavigationBar"
+              v-if="showNavigationBar && !memberCenter"
               :active="selectedComponent?.id === navigationBarComponent.id"
               :component="navigationBarComponent"
               :show-toolbar="false"
@@ -541,6 +588,7 @@ onMounted(() => {
             <div
               class="relative my-0 min-h-full w-full items-center justify-center bg-auto bg-no-repeat"
             >
+              <MemberCenterPreview v-if="memberCenter" />
               <draggable
                 v-model="pageComponents"
                 :animation="200"
@@ -570,6 +618,12 @@ onMounted(() => {
                 </template>
               </draggable>
             </div>
+          </div>
+          <div
+            v-if="memberCenter && memberTabBar"
+            class="sticky bottom-0 z-10 mx-auto w-96"
+          >
+            <TabBar :property="memberTabBar" active-path="/pages/index/user" />
           </div>
           <!-- 手机底部导航 -->
           <div
@@ -649,8 +703,32 @@ onMounted(() => {
     </Row>
 
     <!-- 预览弹框 -->
-    <PreviewModal title="商城 H5 预览" class="w-[700px]">
-      <div class="flex flex-wrap justify-around gap-8">
+    <PreviewModal
+      :title="memberCenter ? '个人中心预览' : '商城 H5 预览'"
+      class="w-[700px]"
+    >
+      <div v-if="memberCenter" class="mx-auto flex h-[667px] w-96 flex-col">
+        <div
+          class="flex-1 overflow-auto"
+          :style="getPageBackgroundStyle(pageConfigComponent.property)"
+        >
+          <MemberCenterPreview />
+          <template v-for="(block, index) in pageComponents" :key="index">
+            <ComponentContainer
+              v-if="!block.position || block.position === 'center'"
+              :component="block"
+              :show-toolbar="false"
+              class="member-preview-block"
+            />
+          </template>
+        </div>
+        <TabBar
+          v-if="memberTabBar"
+          :property="memberTabBar"
+          active-path="/pages/index/user"
+        />
+      </div>
+      <div v-else class="flex flex-wrap justify-around gap-8">
         <div
           class="relative h-[667px] w-96 overflow-hidden rounded-lg border-4 border-solid bg-background p-0.5"
         >
@@ -696,3 +774,12 @@ onMounted(() => {
     </PreviewModal>
   </Page>
 </template>
+
+<style scoped>
+.member-preview-block {
+  cursor: default;
+}
+.member-preview-block :deep(.component-wrap) {
+  display: none;
+}
+</style>

@@ -10,6 +10,7 @@ const diyEditorRoot = resolve(
 );
 const ossBaseUrl = 'https://static.teagravity.com';
 const diyAssetBaseUrl = `${ossBaseUrl}/mall/diy`;
+const mallStaticAssetBaseUrl = `${ossBaseUrl}/static`;
 
 const expectedAssets = {
   appNavBarMp: `${diyAssetBaseUrl}/app-nav-bar-mp.png`,
@@ -55,6 +56,7 @@ const legacyAssets = {
 
 const consumerPaths = [
   'index.vue',
+  'components/member-center-preview.vue',
   'components/mobile/carousel/config.ts',
   'components/mobile/navigation-bar/components/cell-property.vue',
   'components/mobile/navigation-bar/index.vue',
@@ -78,6 +80,17 @@ describe('mall DIY static assets', () => {
       .find((line) => line.startsWith('VITE_OSS_BASE_URL='));
 
     expect(ossEnvLine).toBe(`VITE_OSS_BASE_URL=${ossBaseUrl}`);
+  });
+
+  it('maps the fixed member preview to the uploaded OSS images', async () => {
+    vi.stubEnv('VITE_OSS_BASE_URL', ossBaseUrl);
+    const { mallStaticAsset } = await import('./static-assets');
+    expect(mallStaticAsset('member-center/profile-header.jpg')).toBe(
+      `${mallStaticAssetBaseUrl}/member-center/profile-header.jpg`,
+    );
+    expect(mallStaticAsset('member-center/icons/waiting-payment.png')).toBe(
+      `${mallStaticAssetBaseUrl}/member-center/icons/waiting-payment.png`,
+    );
   });
 
   it('generates all uploaded asset URLs from the OSS base domain', async () => {
