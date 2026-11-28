@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { generateAccess } from './access';
 import infraRoutes from './routes/modules/infra';
+import mallRoutes from './routes/modules/mall';
 import memberRoutes from './routes/modules/member';
 
 const mocks = vi.hoisted(() => ({
@@ -96,6 +97,102 @@ it('keeps share cover and member import inside their server menu directories', a
   expect(router.currentRoute.value.matched.at(-1)?.components?.default).toEqual(
     expect.objectContaining({ name: 'ShareCoverTestView' }),
   );
+});
+
+describe('youzan import routes', () => {
+  it('only registers import pages granted by the server menu', async () => {
+    mocks.preferences.app.accessMode = 'backend';
+    mocks.access.accessMenus = [];
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ name: 'Root', path: '/', component: {}, children: [] }],
+    });
+
+    await generateAccess({
+      roles: [],
+      router,
+      routes: [...mallRoutes, ...memberRoutes],
+    });
+
+    expect(router.hasRoute('MemberYouzanImport')).toBe(false);
+    expect(router.hasRoute('ProductYouzanImport')).toBe(false);
+  });
+
+  it('places granted import pages inside the server menu directories', async () => {
+    mocks.preferences.app.accessMode = 'backend';
+    mocks.access.accessMenus = [
+      {
+        id: 1,
+        name: '会员中心',
+        path: '/member',
+        parentId: 0,
+        visible: true,
+        children: [
+          {
+            id: 2,
+            name: '有赞客户积分导入',
+            path: 'youzan-import',
+            parentId: 1,
+            component: 'member/youzan-import/index',
+            componentName: 'MemberYouzanImport',
+            visible: true,
+          },
+        ],
+      },
+      {
+        id: 3,
+        name: '商城系统',
+        path: '/mall',
+        parentId: 0,
+        visible: true,
+        children: [
+          {
+            id: 4,
+            name: '商品中心',
+            path: 'product',
+            parentId: 3,
+            visible: true,
+            children: [
+              {
+                id: 5,
+                name: '有赞商品导入',
+                path: 'youzan-import',
+                parentId: 4,
+                component: 'mall/product/youzan-import/index',
+                componentName: 'ProductYouzanImport',
+                visible: true,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ name: 'Root', path: '/', component: {}, children: [] }],
+    });
+
+    const { accessibleMenus } = await generateAccess({
+      roles: [],
+      router,
+      routes: [...mallRoutes, ...memberRoutes],
+    });
+
+    expect(
+      accessibleMenus.find((item) => item.path === '/member')?.children?.[0]
+        ?.path,
+    ).toBe('/member/youzan-import');
+    expect(
+      accessibleMenus.find((item) => item.path === '/mall')?.children?.[0]
+        ?.children?.[0]?.path,
+    ).toBe('/mall/product/youzan-import');
+    expect(router.resolve('/member/youzan-import').name).toBe(
+      'MemberYouzanImport',
+    );
+    expect(router.resolve('/mall/product/youzan-import').name).toBe(
+      'ProductYouzanImport',
+    );
+  });
 });
 
 describe('merchant route generation', () => {
