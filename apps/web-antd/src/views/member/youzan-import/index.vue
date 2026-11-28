@@ -4,79 +4,117 @@ import type {
   YouzanCustomerImportResult,
 } from '#/api/member/youzan-import';
 
+import { computed, ref, watch } from 'vue';
+
+import { useAccess } from '@vben/access';
 import { Page } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { message, Modal } from 'ant-design-vue';
-import { ref, watch } from 'vue';
+
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Result,
+  Space,
+  Table,
+} from 'ant-design-vue';
 
 import {
   confirmYouzanCustomerImport,
   downloadYouzanCustomerImportTemplate,
+  getAuthorizedYouzanMemberMerchants,
   getYouzanCustomerImportResult,
   previewYouzanCustomerImport,
 } from '#/api/member/youzan-import';
+import ImportUploadCard from '#/components/youzan-import/import-upload-card.vue';
 
-const selectedFile = ref<File>();
+const { hasAccessByCodes } = useAccess();
+const canImport = hasAccessByCodes(['member:youzan-import:import']);
+const canQuery = hasAccessByCodes(['member:youzan-import:query']);
+const merchant = ref('');
+const file = ref<File>();
 const preview = ref<YouzanCustomerImportPreview>();
 const result = ref<YouzanCustomerImportResult>();
 const loading = ref(false);
-const merchant = ref('');
-const lookupBatchId = ref('');
-watch(merchant, () => { preview.value = undefined; result.value = undefined; lookupBatchId.value = ''; });
+const historyOpen = ref(false);
+const batchNumber = ref('');
+const resultTitle = computed(() => {
+  if (result.value?.status !== 1) return '批次尚未确认';
+  return result.value.importedRows
+    ? '会员资产已导入，等待领取'
+    : '批次已确认，无新增会员资产';
+});
+
+const columns = [
+  { title: '源行号', dataIndex: 'rowNumber', width: 100 },
+  { title: '手机号（脱敏）', dataIndex: 'maskedMobile', width: 160 },
+  { title: '处理结果', dataIndex: 'outcome' },
+];
+
+watch([merchant, file], () => {
+  preview.value = undefined;
+  result.value = undefined;
+});
+
+async function loadMerchants() {
+  const merchantIds = await getAuthorizedYouzanMemberMerchants();
+  return merchantIds.map((id) => ({
+    label: `商家 #${id}`,
+    value: id,
+  }));
+}
 
 async function download() {
-  downloadFileFromBlobPart({ fileName: '客户测试名单.xlsx', source: await downloadYouzanCustomerImportTemplate() });
+  downloadFileFromBlobPart({
+    fileName: '有赞客户积分模板.xlsx',
+    source: await downloadYouzanCustomerImportTemplate(),
+  });
 }
 
 async function lookup() {
-  if (!/^\d+$/.test(lookupBatchId.value)) return;
+  const id = batchNumber.value.trim();
+  if (loading.value || !/^\d{1,19}$/.test(id)) return;
   loading.value = true;
   try {
+    result.value = await getYouzanCustomerImportResult(id);
     preview.value = undefined;
-    result.value = undefined;
-    result.value = await getYouzanCustomerImportResult(Number(lookupBatchId.value));
-  } finally { loading.value = false; }
-}
-
-function onFileChange(event: Event) {
-  const input = event.target as HTMLInputElement;
-  selectedFile.value = input.files?.[0];
-  preview.value = undefined;
-  result.value = undefined;
+    historyOpen.value = false;
+  } finally {
+    loading.value = false;
+  }
 }
 
 async function handlePreview() {
-  if (!selectedFile.value) {
-    message.warning('请先选择有赞客户模板');
-    return;
-  }
+  if (loading.value || !merchant.value || !file.value) return;
   loading.value = true;
   try {
-    preview.value = undefined;
+    preview.value = await previewYouzanCustomerImport(
+      file.value,
+      merchant.value,
+    );
     result.value = undefined;
-    preview.value = await previewYouzanCustomerImport(selectedFile.value, merchant.value);
-    lookupBatchId.value = String(preview.value.batchId);
+    batchNumber.value = String(preview.value.batchId);
   } finally {
     loading.value = false;
   }
 }
 
 function handleConfirm() {
-  if (!preview.value) return;
+  if (!preview.value || loading.value) return;
   const batchId = preview.value.batchId;
   Modal.confirm({
-    title: '确认导入客户积分快照？',
-    content: '本操作只保存有赞来源待恢复快照，不会修改会员余额。',
+    title: '确认会员导入批次？',
+    content: '新导入的会员资产可在微信小程序授权手机号后领取。',
     okText: '确认导入',
-    cancelText: '返回检查',
+    cancelText: '返回预览',
     onOk: async () => {
+      if (loading.value || preview.value?.batchId !== batchId) return;
       loading.value = true;
       try {
-        if (preview.value?.batchId !== batchId) return;
         result.value = await confirmYouzanCustomerImport(batchId);
-        result.value = await getYouzanCustomerImportResult(result.value.batchId);
         preview.value = undefined;
-        message.success('导入批次已完成');
       } finally {
         loading.value = false;
       }
@@ -86,53 +124,89 @@ function handleConfirm() {
 </script>
 
 <template>
-  <Page auto-content-height>
-    <a-card title="有赞客户积分导入">
-      <a-alert
-        class="mb-4"
-        type="warning"
-        show-icon
-        message="导入仅建立待恢复的来源快照，不会直接增加会员积分；用户授权恢复流程保持独立。"
+  <Page
+    title="有赞客户积分导入"
+    description="导入旧积分和等级，会员可在微信小程序授权手机号后领取。"
+  >
+    <template #extra>
+      <Space v-if="canQuery" wrap>
+        <Button @click="download">下载模板</Button>
+        <Button :disabled="loading" @click="historyOpen = true">
+          查询批次
+        </Button>
+      </Space>
+    </template>
+
+    <div class="flex flex-col gap-4">
+      <ImportUploadCard
+        v-if="canImport"
+        v-model:merchant="merchant"
+        :busy="loading"
+        :file="file"
+        :load-options="loadMerchants"
+        @file="file = $event"
+        @preview="handlePreview"
       />
-      <div class="mb-4 flex items-center gap-3">
-        <a-input v-model:value="merchant" placeholder="已授权的商家编号" :disabled="loading" />
-        <a-button @click="download">下载空模板</a-button>
-        <input type="file" accept=".xlsx" :disabled="loading" @change="onFileChange" />
-        <a-button type="primary" :disabled="!merchant || !selectedFile" :loading="loading" @click="handlePreview">
-          上传并预览
-        </a-button>
-      </div>
-      <div class="mb-4 flex items-center gap-3">
-        <a-input v-model:value="lookupBatchId" placeholder="批次编号" :disabled="loading" />
-        <a-button :disabled="!lookupBatchId || loading" @click="lookup">查询批次结果</a-button>
-      </div>
-      <template v-if="preview">
-        <a-alert
-          class="mb-4"
-          type="info"
-          show-icon
-          :message="`有效 ${preview.validCount} 行，需跳过 ${preview.invalidCount} 行；预览批次 ${preview.batchId} 于 ${preview.expiresAt} 过期。`"
-        />
-        <a-table
+      <Alert
+        v-else
+        type="info"
+        message="当前账号缺少会员导入权限。"
+        show-icon
+      />
+
+      <Card v-if="preview" title="预览结果">
+        <template #extra>
+          <Button type="primary" :loading="loading" @click="handleConfirm">
+            确认导入
+          </Button>
+        </template>
+        <p class="mb-3">
+          通过校验 {{ preview.validCount }} 行 · 跳过
+          {{ preview.invalidCount }} 行 · 批次 {{ preview.batchId }} ·
+          {{ preview.expiresAt }} 到期
+        </p>
+        <Table
+          :columns="columns"
           :data-source="preview.rows"
           :pagination="{ pageSize: 20 }"
-          :row-key="'rowNumber'"
-          :columns="[
-            { title: '源行号', dataIndex: 'rowNumber', key: 'rowNumber' },
-            { title: '手机号（脱敏）', dataIndex: 'maskedMobile', key: 'maskedMobile' },
-            { title: '校验结果', dataIndex: 'outcome', key: 'outcome' },
-          ]"
+          row-key="rowNumber"
+          size="small"
         />
-        <a-button type="primary" :loading="loading" @click="handleConfirm">
-          确认导入待恢复快照
-        </a-button>
-      </template>
-      <a-result
-        v-if="result"
-        :status="result.status === 1 ? 'success' : 'info'"
-        :title="result.status === 1 ? '客户积分快照已导入' : '批次尚未导入'"
-        :sub-title="`批次 ${result.batchId}：新增 ${result.importedRows ?? 0}，重复或已存在 ${result.skippedRows ?? 0}，来源快照变化 ${result.changedRows ?? 0}。余额未被修改。`"
+      </Card>
+
+      <Card v-if="result" title="批次结果">
+        <Result
+          :status="result.status === 1 ? 'success' : 'info'"
+          :title="resultTitle"
+          :sub-title="`批次 ${result.batchId} · 新增 ${result.importedRows ?? 0} · 跳过 ${result.skippedRows ?? 0} · 来源数据变化 ${result.changedRows ?? 0}`"
+        />
+        <Table
+          :columns="columns"
+          :data-source="result.rows"
+          :pagination="{ pageSize: 20 }"
+          row-key="rowNumber"
+          size="small"
+        />
+      </Card>
+    </div>
+
+    <Modal
+      v-if="canQuery"
+      v-model:open="historyOpen"
+      title="查询导入批次"
+      ok-text="查询"
+      cancel-text="取消"
+      :confirm-loading="loading"
+      :ok-button-props="{ disabled: !/^\d{1,19}$/.test(batchNumber.trim()) }"
+      @ok="lookup"
+    >
+      <label for="member-youzan-batch">批次编号</label>
+      <Input
+        id="member-youzan-batch"
+        v-model:value="batchNumber"
+        class="mt-2"
+        @press-enter="lookup"
       />
-    </a-card>
+    </Modal>
   </Page>
 </template>

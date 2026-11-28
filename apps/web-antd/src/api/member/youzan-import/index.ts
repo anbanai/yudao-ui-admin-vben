@@ -6,9 +6,9 @@ export interface YouzanCustomerImportPreview {
   validCount: number;
   invalidCount: number;
   rows: Array<{
-    rowNumber: number;
     maskedMobile: string;
     outcome: string;
+    rowNumber: number;
   }>;
 }
 
@@ -22,6 +22,7 @@ export interface YouzanCustomerImportResult {
   skippedRows?: number;
   changedRows?: number;
   expiresAt: string;
+  rows: YouzanCustomerImportPreview['rows'];
 }
 
 export function previewYouzanCustomerImport(file: File, merchantId: string) {
@@ -35,13 +36,17 @@ export function previewYouzanCustomerImport(file: File, merchantId: string) {
   );
 }
 
+export function getAuthorizedYouzanMemberMerchants() {
+  return requestClient.get<string[]>('/member/youzan-import/merchants');
+}
+
 export function confirmYouzanCustomerImport(batchId: number) {
   return requestClient.post<YouzanCustomerImportResult>(
     `/member/youzan-import/confirm?batchId=${batchId}`,
   );
 }
 
-export function getYouzanCustomerImportResult(batchId: number) {
+export function getYouzanCustomerImportResult(batchId: number | string) {
   return requestClient.get<YouzanCustomerImportResult>(
     `/member/youzan-import/result?batchId=${batchId}`,
   );
