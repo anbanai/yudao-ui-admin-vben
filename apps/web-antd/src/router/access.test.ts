@@ -2,6 +2,10 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { generateAccess } from './access';
+import infraRoutes from './routes/modules/infra';
+import memberRoutes from './routes/modules/member';
+
 const mocks = vi.hoisted(() => ({
   access: { accessMenus: [] as any[] },
   preferences: { app: { accessMode: 'backend' } },
@@ -15,8 +19,84 @@ vi.mock('@vben/stores', () => ({
   useTabbarStore: () => mocks.tabbar,
 }));
 vi.mock('#/layouts', () => ({ BasicLayout: {}, IFrameView: {} }));
+vi.mock('#/views/infra/share-cover/index.vue', () => ({
+  default: { name: 'ShareCoverTestView' },
+}));
 
-import { generateAccess } from './access';
+it('keeps share cover and member import inside their server menu directories', async () => {
+  mocks.preferences.app.accessMode = 'backend';
+  mocks.access.accessMenus = [
+    {
+      id: 1,
+      name: '商城',
+      path: '/mall',
+      parentId: 0,
+      visible: true,
+      children: [
+        {
+          id: 2,
+          name: '营销中心',
+          path: 'promotion',
+          parentId: 1,
+          visible: true,
+          children: [
+            {
+              id: 3,
+              name: '小程序分享封面',
+              path: 'share-cover',
+              parentId: 2,
+              component: 'infra/share-cover/index',
+              componentName: 'InfraShareCover',
+              visible: true,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 4,
+      name: '会员中心',
+      path: '/member',
+      parentId: 0,
+      visible: true,
+      children: [
+        {
+          id: 5,
+          name: '有赞客户积分导入',
+          path: 'youzan-import',
+          parentId: 4,
+          component: 'member/youzan-import/index',
+          componentName: 'MemberYouzanImport',
+          visible: true,
+        },
+      ],
+    },
+  ];
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{ name: 'Root', path: '/', component: {}, children: [] }],
+  });
+  const { accessibleMenus } = await generateAccess({
+    roles: [],
+    router,
+    routes: [...infraRoutes, ...memberRoutes],
+  });
+  expect(accessibleMenus.map((menu) => menu.path)).toEqual([
+    '/mall',
+    '/member',
+  ]);
+  expect(accessibleMenus[0]?.children?.[0]?.children?.[0]?.path).toBe(
+    '/mall/promotion/share-cover',
+  );
+  expect(accessibleMenus[1]?.children?.[0]?.path).toBe('/member/youzan-import');
+  await router.push('/infra/share-cover?tab=config');
+  expect(router.currentRoute.value.fullPath).toBe(
+    '/mall/promotion/share-cover?tab=config',
+  );
+  expect(router.currentRoute.value.matched.at(-1)?.components?.default).toEqual(
+    expect.objectContaining({ name: 'ShareCoverTestView' }),
+  );
+});
 
 describe('merchant route generation', () => {
   beforeEach(() => {

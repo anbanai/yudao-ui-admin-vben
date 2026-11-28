@@ -2,22 +2,31 @@
 import { onMounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+
 import { Button, Form, FormItem, Input, message } from 'ant-design-vue';
 
-import UploadImg from '#/components/upload/image-upload.vue';
 import {
   getShareCoverConfig,
   saveShareCoverConfig,
 } from '#/api/infra/share-cover';
+import UploadImg from '#/components/upload/image-upload.vue';
 
 const saving = ref(false);
 const customPagePath = ref('');
 const customPageCover = ref('');
-const form = reactive({ default: '', home: '', user: '', pages: {} as Record<string, string> });
-const pageRows = ref<{ path: string; cover: string }[]>([]);
+const form = reactive({
+  default: '',
+  home: '',
+  user: '',
+  pages: {} as Record<string, string>,
+});
+const pageRows = ref<{ cover: string; path: string }[]>([]);
 
 function syncRows() {
-  pageRows.value = Object.entries(form.pages).map(([path, cover]) => ({ path, cover }));
+  pageRows.value = Object.entries(form.pages).map(([path, cover]) => ({
+    path,
+    cover,
+  }));
 }
 
 function parseConfig(value?: string) {
@@ -52,7 +61,9 @@ function addPage() {
 }
 
 function removePage(path: string) {
-  delete form.pages[path];
+  form.pages = Object.fromEntries(
+    Object.entries(form.pages).filter(([pagePath]) => pagePath !== path),
+  );
   syncRows();
 }
 
@@ -87,7 +98,11 @@ onMounted(load);
         未单独配置的页面使用系统默认封面。上传或替换图片后保存，重新进入小程序即可验证分享卡片效果。
       </p>
       <FormItem label="系统默认封面">
-        <UploadImg v-model="form.default" :limit="1" :show-description="false" />
+        <UploadImg
+          v-model="form.default"
+          :limit="1"
+          :show-description="false"
+        />
       </FormItem>
       <FormItem label="首页分享封面">
         <UploadImg v-model="form.home" :limit="1" :show-description="false" />
@@ -96,18 +111,37 @@ onMounted(load);
         <UploadImg v-model="form.user" :limit="1" :show-description="false" />
       </FormItem>
       <FormItem label="自定义页面封面">
-        <div v-for="row in pageRows" :key="row.path" class="mb-3 flex items-center gap-3">
+        <div
+          v-for="row in pageRows"
+          :key="row.path"
+          class="mb-3 flex items-center gap-3"
+        >
           <Input v-model:value="row.path" class="w-64" />
           <UploadImg v-model="row.cover" :limit="1" :show-description="false" />
           <Button danger @click="removePage(row.path)">移除</Button>
         </div>
         <div class="flex items-center gap-3">
-          <Input v-model:value="customPagePath" class="w-64" placeholder="如 page:123" />
-          <UploadImg v-model="customPageCover" :limit="1" :show-description="false" />
+          <Input
+            v-model:value="customPagePath"
+            class="w-64"
+            placeholder="如 page:123"
+          />
+          <UploadImg
+            v-model="customPageCover"
+            :limit="1"
+            :show-description="false"
+          />
           <Button @click="addPage">添加页面</Button>
         </div>
       </FormItem>
-      <Button type="primary" :loading="saving" @click="save">保存配置</Button>
+      <Button
+        v-access:code="['infra:share-cover:save']"
+        type="primary"
+        :loading="saving"
+        @click="save"
+      >
+        保存配置
+      </Button>
     </Form>
   </Page>
 </template>

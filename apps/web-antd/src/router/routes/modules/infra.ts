@@ -3,13 +3,11 @@ import type { RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     path: '/infra/share-cover',
-    component: () => import('#/views/infra/share-cover/index.vue'),
-    name: 'InfraShareCover',
+    redirect: '/mall/promotion/share-cover',
+    name: 'InfraShareCoverRedirect',
     meta: {
       title: '小程序分享封面',
-      icon: 'lucide:image',
-      activePath: '/infra/share-cover',
-      keepAlive: true,
+      hideInMenu: true,
     },
   },
   {
