@@ -80,6 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
     mobile: string;
     nickname: string;
     password: string;
+    tenantId?: number;
     username: string;
   }) {
     return registerMerchant(params);

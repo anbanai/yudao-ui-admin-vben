@@ -11,6 +11,7 @@ export namespace MerchantAuthApi {
     nickname: string;
     mobile: string;
     password: string;
+    tenantId?: number;
   }
 
   export interface LoginParams {

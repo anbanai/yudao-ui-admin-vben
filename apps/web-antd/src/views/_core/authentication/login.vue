@@ -39,11 +39,12 @@ const verifyRef = ref();
 const captchaType = 'blockPuzzle'; // 验证码类型：'blockPuzzle' | 'clickWord'
 const isRegister = ref(false);
 const isMerchantMode = computed(() => authStore.authMode === 'merchant');
+const registerTenantId = ref<null | number>(null);
 
 /** 获取租户列表，并默认选中 */
 const tenantList = ref<AuthApi.TenantResult[]>([]); // 租户列表
 async function fetchTenantList() {
-  if (!tenantEnable || isMerchantMode.value) {
+  if (!tenantEnable) {
     return;
   }
   try {
@@ -51,24 +52,31 @@ async function fetchTenantList() {
     const websiteTenantPromise = getTenantByWebsite(window.location.hostname);
     tenantList.value = await getTenantSimpleList();
 
-    // 选中租户：域名 > store 中的租户 > 首个租户
+    // 管理员登录沿用域名、上次选择、首个租户的默认顺序。
     let tenantId: null | number = null;
     const websiteTenant = await websiteTenantPromise;
     if (websiteTenant?.id) {
       tenantId = websiteTenant.id;
     }
-    // 如果没有从域名获取到租户，尝试从 store 中获取
-    if (!tenantId && accessStore.tenantId) {
+    if (!isMerchantMode.value && !tenantId && accessStore.tenantId) {
       tenantId = accessStore.tenantId;
     }
-    // 如果还是没有租户，使用列表中的第一个
-    if (!tenantId && tenantList.value?.[0]?.id) {
+    if (!isMerchantMode.value && !tenantId && tenantList.value[0]?.id) {
       tenantId = tenantList.value[0].id;
     }
-
-    // 设置选中的租户编号
-    accessStore.setTenantId(tenantId);
-    loginRef.value.getFormApi().setFieldValue('tenantId', tenantId?.toString());
+    if (isMerchantMode.value) {
+      registerTenantId.value = null;
+      if (tenantId && tenantList.value.some((item) => item.id === tenantId)) {
+        registerTenantId.value = tenantId;
+      } else if (tenantList.value.length === 1) {
+        registerTenantId.value = tenantList.value[0]!.id;
+      }
+    } else {
+      accessStore.setTenantId(tenantId);
+      loginRef.value
+        ?.getFormApi()
+        .setFieldValue('tenantId', tenantId?.toString());
+    }
   } catch (error) {
     console.error('获取租户列表失败:', error);
   }
@@ -95,11 +103,17 @@ async function handleMerchantRegister(values: Record<string, string>) {
     nickname: values.nickname ?? '',
     mobile: values.mobile ?? '',
     password: values.password ?? '',
+    tenantId: values.tenantId ? Number(values.tenantId) : undefined,
   });
   await authStore.authLogin('username', {
     username: values.username ?? '',
     password: values.password ?? '',
   });
+}
+
+async function startMerchantRegister() {
+  await fetchTenantList();
+  isRegister.value = true;
 }
 
 function handleModeChange(value: number | string) {
@@ -192,6 +206,25 @@ const formSchema = computed((): VbenFormSchema[] => {
 
 const merchantRegisterSchema = computed((): VbenFormSchema[] => [
   {
+    component: 'VbenSelect',
+    componentProps: {
+      options: tenantList.value.map((item) => ({
+        label: item.name,
+        value: item.id.toString(),
+      })),
+      placeholder: '请选择入驻平台',
+    },
+    fieldName: 'tenantId',
+    label: '入驻平台',
+    rules: tenantEnable
+      ? z
+          .string()
+          .min(1, { message: '请选择入驻平台' })
+          .default(registerTenantId.value?.toString() ?? '')
+      : z.string().optional(),
+    hide: !tenantEnable,
+  },
+  {
     component: 'VbenInput',
     componentProps: { placeholder: '请输入商家账号' },
     fieldName: 'username',
@@ -276,7 +309,7 @@ const merchantRegisterSchema = computed((): VbenFormSchema[] => [
       />
       <div v-if="isMerchantMode" class="mt-4 text-center text-sm">
         还没有商家账号？
-        <AButton type="link" class="p-0" @click="isRegister = true">
+        <AButton type="link" class="p-0" @click="startMerchantRegister">
           立即注册
         </AButton>
       </div>
