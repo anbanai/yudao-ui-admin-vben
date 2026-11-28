@@ -16,6 +16,7 @@ const logoDark = computed(() => preferences.logo.sourceDark);
     :app-name="appName"
     :logo="logo"
     :logo-dark="logoDark"
+    slogan-image="/branding/logo-full.png"
     :page-description="$t('authentication.pageDesc')"
     :page-title="$t('authentication.pageTitle')"
   >

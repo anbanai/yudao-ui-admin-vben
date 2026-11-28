@@ -58,10 +58,10 @@ import {
 
 describe('商品推广数据', () => {
   it('使用公共店铺身份', () => {
-    expect(createShopIdentity('不忍独享', '/branding/logo-mark.png')).toEqual({
+    expect(createShopIdentity('好茶引力', '/branding/logo-mark.png')).toEqual({
       avatarUrl: '/branding/logo-mark.png',
       kind: 'shop',
-      name: '不忍独享',
+      name: '好茶引力',
       shareId: 0,
     });
   });
@@ -80,7 +80,7 @@ describe('商品推广数据', () => {
   it('生成一致的小程序和 H5 追踪参数', () => {
     const context = buildPromotionContext({
       h5Domain: 'https://mall.example.com/store?tenant=tea',
-      identity: createShopIdentity('不忍独享', '/branding/logo-mark.png'),
+      identity: createShopIdentity('好茶引力', '/branding/logo-mark.png'),
       product: {
         id: 88,
         marketPrice: 12900,

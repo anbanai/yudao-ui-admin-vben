@@ -147,7 +147,10 @@ class PreferenceManager {
       this.initialPreferences,
     );
 
-    // Logo 属于应用品牌资源，更新应用后必须覆盖旧缓存；其他设置继续尊重用户选择
+    // 应用名称和 Logo 属于品牌配置，更新后覆盖旧缓存
+    if (overrides?.app?.name) {
+      mergedPreference.app.name = overrides.app.name;
+    }
     if (overrides?.logo) {
       mergedPreference.logo = merge({}, overrides.logo, mergedPreference.logo);
     }

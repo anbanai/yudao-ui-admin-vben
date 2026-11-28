@@ -86,11 +86,12 @@ describe('preferences', () => {
     expect(preferenceManager.getPreferences()).toEqual(expected);
   });
 
-  it('keeps explicit logo overrides when an older logo is cached', async () => {
+  it('keeps explicit branding overrides when older branding is cached', async () => {
     vi.mocked(localStorage.getItem).mockImplementation((key) => {
       if (key.endsWith('-preferences')) {
         return JSON.stringify({
           value: {
+            app: { name: '旧品牌', locale: 'en-US' },
             logo: {
               source: 'https://old.example/logo.webp',
             },
@@ -107,6 +108,7 @@ describe('preferences', () => {
     await preferenceManager.initPreferences({
       namespace: 'branding-migration',
       overrides: {
+        app: { name: '好茶引力' },
         footer: {
           enable: false,
         },
@@ -119,6 +121,8 @@ describe('preferences', () => {
     expect(preferenceManager.getPreferences().logo.source).toBe(
       '/branding/logo-mark.png',
     );
+    expect(preferenceManager.getPreferences().app.name).toBe('好茶引力');
+    expect(preferenceManager.getPreferences().app.locale).toBe('en-US');
     expect(preferenceManager.getPreferences().footer.enable).toBe(true);
   });
 

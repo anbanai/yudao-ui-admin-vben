@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { PromotionAssetType, PromotionContext } from '../promotion-share';
-
 import type { MallSpuApi } from '#/api/mall/product/spu';
 import type { MemberUserApi } from '#/api/member/user';
 
@@ -25,7 +23,11 @@ import {
   createMemberIdentity,
   createShopIdentity,
   findPointOffer,
-  type PromotionPointOffer,
+} from '../promotion-share';
+import type {
+  PromotionAssetType,
+  PromotionContext,
+  PromotionPointOffer,
 } from '../promotion-share';
 import PromotionMemberSelect from './promotion-member-select.vue';
 
@@ -40,7 +42,7 @@ type PreviewState =
   | { status: 'loading' };
 
 const SHOP_AVATAR_URL = '/branding/logo-mark.png';
-const SHOP_NAME = import.meta.env.VITE_APP_TITLE?.trim() || '不忍独享';
+const SHOP_NAME = import.meta.env.VITE_APP_TITLE?.trim() || '好茶引力';
 const H5_CONFIG_MESSAGE = '请配置 VITE_MALL_H5_DOMAIN';
 
 const { hasAccessByCodes } = useAccess();
@@ -333,8 +335,12 @@ async function loadProduct(requestId: number) {
   try {
     const [latestProduct, pointActivityPage] = await Promise.all([
       getSpu(row.id),
-      getPointActivityPage({ pageNo: 1, pageSize: 1, spuId: row.id, status: 0 })
-        .catch(() => undefined),
+      getPointActivityPage({
+        pageNo: 1,
+        pageSize: 1,
+        spuId: row.id,
+        status: 0,
+      }).catch(() => undefined),
     ]);
     if (requestId !== lifecycleRequestId) return;
     product.value = latestProduct;
