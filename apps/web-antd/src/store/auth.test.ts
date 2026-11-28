@@ -3,6 +3,8 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createRouterGuard } from '#/router/guard';
+
 import { useAuthStore } from './auth';
 import { useMerchantSessionStore } from './merchant-session';
 
@@ -21,7 +23,11 @@ const mocks = vi.hoisted(() => ({
     setIsAccessChecked: vi.fn(),
     setLoginExpired: vi.fn(),
     setRefreshToken: vi.fn(),
+    setTenantId: vi.fn(),
+    tenantId: null as null | number,
   },
+  adminPermissions: vi.fn(),
+  adminLogin: vi.fn(),
   application: vi.fn(),
   generate: vi.fn(),
   login: vi.fn(),
@@ -29,6 +35,7 @@ const mocks = vi.hoisted(() => ({
   profile: vi.fn(),
   reset: vi.fn(),
   router: null as any,
+  setDictCacheByApi: vi.fn(),
   user: { setUserInfo: vi.fn(), setUserRoles: vi.fn() },
 }));
 
@@ -39,20 +46,28 @@ vi.mock('vue-router', async (original) => ({
 vi.mock('@vben/stores', () => ({
   resetAllStores: mocks.reset,
   useAccessStore: () => mocks.access,
+  useDictStore: () => ({ setDictCacheByApi: mocks.setDictCacheByApi }),
   useUserStore: () => mocks.user,
 }));
 vi.mock('@vben/preferences', () => ({
-  preferences: { app: { defaultHomePath: '/dashboard' } },
+  preferences: {
+    app: { defaultHomePath: '/dashboard' },
+    transition: { progress: false },
+  },
 }));
-vi.mock('ant-design-vue', () => ({ notification: { success: vi.fn() } }));
+vi.mock('ant-design-vue', () => ({
+  message: { loading: () => vi.fn() },
+  notification: { success: vi.fn() },
+}));
 vi.mock('#/api', () => ({
-  getAuthPermissionInfoApi: vi.fn(),
-  loginApi: vi.fn(),
+  getAuthPermissionInfoApi: mocks.adminPermissions,
+  loginApi: mocks.adminLogin,
   logoutApi: vi.fn(),
   register: vi.fn(),
   smsLogin: vi.fn(),
   socialLogin: vi.fn(),
 }));
+vi.mock('#/api/system/dict/data', () => ({ getSimpleDictDataList: vi.fn() }));
 vi.mock('#/api/mall/product/merchant', () => ({
   MerchantStatus: { APPROVED: 20 },
   getMerchantApplicationMine: mocks.application,
@@ -65,9 +80,12 @@ vi.mock('#/api/merchant/auth', () => ({
 }));
 vi.mock('#/locales', () => ({ $t: (key: string) => key }));
 vi.mock('#/router/access', () => ({ generateAccess: mocks.generate }));
-vi.mock('#/router/routes', () => ({ accessRoutes: [] }));
+vi.mock('#/router/routes', () => ({
+  accessRoutes: [],
+  coreRouteNames: ['Login', 'Root'],
+}));
 
-describe('merchant authentication lifecycle', () => {
+describe('authentication lifecycle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.setItem('teaworthshare-auth-mode', 'merchant');
@@ -75,15 +93,19 @@ describe('merchant authentication lifecycle', () => {
     mocks.router = createRouter({
       history: createMemoryHistory(),
       routes: [
-        { component: {}, name: 'Root', path: '/', children: [] },
+        { name: 'Root', path: '/', redirect: '/dashboard', children: [] },
+        { component: {}, name: 'Dashboard', path: '/dashboard' },
         { component: {}, name: 'Login', path: '/auth/login' },
         { component: {}, name: 'Workbench', path: '/merchant/workbench' },
       ],
     });
     mocks.access.accessMenus = [];
     mocks.access.accessRoutes = [];
+    mocks.access.accessToken = null;
     mocks.access.isAccessChecked = false;
     mocks.access.loginExpired = false;
+    mocks.access.refreshToken = null;
+    mocks.access.tenantId = null;
     mocks.access.setAccessMenus.mockImplementation((value) => {
       mocks.access.accessMenus = value;
     });
@@ -93,12 +115,27 @@ describe('merchant authentication lifecycle', () => {
     mocks.access.setIsAccessChecked.mockImplementation((value) => {
       mocks.access.isAccessChecked = value;
     });
+    mocks.access.setLoginExpired.mockImplementation((value) => {
+      mocks.access.loginExpired = value;
+    });
+    mocks.access.setAccessToken.mockImplementation((value) => {
+      mocks.access.accessToken = value;
+    });
+    mocks.access.setRefreshToken.mockImplementation((value) => {
+      mocks.access.refreshToken = value;
+    });
+    mocks.access.setTenantId.mockImplementation((value) => {
+      mocks.access.tenantId = value;
+    });
     mocks.reset.mockImplementation(() => {
       useAuthStore().$reset();
       useMerchantSessionStore().$reset();
       mocks.access.accessMenus = [];
       mocks.access.accessRoutes = [];
+      mocks.access.accessToken = null;
       mocks.access.isAccessChecked = false;
+      mocks.access.refreshToken = null;
+      mocks.access.tenantId = null;
     });
     mocks.login.mockResolvedValue({
       accessToken: 'new',
@@ -111,6 +148,116 @@ describe('merchant authentication lifecycle', () => {
       accessibleMenus: [],
       accessibleRoutes: [],
     });
+  });
+
+  it('returns a saved merchant session with a forbidden profile to login on startup', async () => {
+    const merchant = useMerchantSessionStore();
+    merchant.setAccessToken('saved-access');
+    merchant.setRefreshToken('saved-refresh');
+    mocks.profile.mockRejectedValueOnce({ code: 403, msg: '没有该操作权限' });
+    createRouterGuard(mocks.router);
+    mocks.router.onError(() => {});
+
+    await mocks.router.push('/');
+
+    expect(mocks.router.currentRoute.value.path).toBe('/auth/login');
+    expect(merchant.accessToken).toBeNull();
+    expect(merchant.refreshToken).toBeNull();
+    expect(mocks.generate).not.toHaveBeenCalled();
+  });
+
+  it('returns a saved administrator session with forbidden permissions to login', async () => {
+    useAuthStore().setAuthMode('admin');
+    mocks.access.accessToken = 'saved-admin';
+    mocks.adminPermissions.mockRejectedValueOnce({ code: 403 });
+    createRouterGuard(mocks.router);
+    mocks.router.onError(() => {});
+
+    await mocks.router.push('/dashboard');
+
+    expect(mocks.router.currentRoute.value.path).toBe('/auth/login');
+    expect(mocks.access.accessToken).toBeNull();
+    expect(mocks.generate).not.toHaveBeenCalled();
+    expect(mocks.setDictCacheByApi).not.toHaveBeenCalled();
+  });
+
+  it('discards newly issued tokens when the first profile request is forbidden', async () => {
+    const merchant = useMerchantSessionStore();
+    mocks.profile.mockRejectedValueOnce({ code: 403 });
+
+    await expect(
+      useAuthStore().authLogin('username', {}),
+    ).rejects.toMatchObject({
+      code: 403,
+    });
+
+    expect(merchant.accessToken).toBeNull();
+    expect(merchant.refreshToken).toBeNull();
+  });
+
+  it('returns to the login page if the login-expired modal receives forbidden permissions', async () => {
+    await mocks.router.push('/merchant/workbench');
+    mocks.access.loginExpired = true;
+    mocks.profile.mockRejectedValueOnce({ code: 403 });
+
+    await expect(useAuthStore().authLogin('username', {})).rejects.toEqual({
+      code: 403,
+    });
+
+    expect(mocks.router.currentRoute.value.path).toBe('/auth/login');
+    expect(mocks.access.loginExpired).toBe(false);
+  });
+
+  it('keeps the selected administrator login tenant so the form can retry a forbidden login', async () => {
+    const auth = useAuthStore();
+    auth.setAuthMode('admin');
+    mocks.access.setTenantId(42);
+    mocks.adminLogin.mockImplementation(async () => {
+      expect(mocks.access.tenantId).toBe(42);
+      return { accessToken: 'admin-access', refreshToken: 'admin-refresh' };
+    });
+    mocks.adminPermissions
+      .mockRejectedValueOnce({ code: 403 })
+      .mockResolvedValueOnce({
+        user: { id: 1 },
+        roles: [],
+        menus: [],
+        permissions: [],
+      });
+
+    await expect(auth.authLogin('username', {})).rejects.toEqual({ code: 403 });
+    expect(mocks.access.accessToken).toBeNull();
+    expect(mocks.access.refreshToken).toBeNull();
+
+    await expect(auth.authLogin('username', {}, () => {})).resolves.toEqual({
+      userInfo: { id: 1 },
+    });
+  });
+
+  it('preserves a new login when an earlier profile request returns forbidden', async () => {
+    const auth = useAuthStore();
+    let rejectProfile!: (error: object) => void;
+    const requested = new Promise<void>((resolve) => {
+      mocks.profile.mockImplementationOnce(
+        () =>
+          new Promise((_, reject) => {
+            rejectProfile = reject;
+            resolve();
+          }),
+      );
+    });
+    mocks.login.mockResolvedValueOnce({
+      accessToken: 'old',
+      refreshToken: 'old-refresh',
+    });
+    const pending = auth.authLogin('username', {});
+    await requested;
+    await auth.authLogin('username', {}, () => {});
+    rejectProfile({ code: 403 });
+
+    await expect(pending).rejects.toEqual({ code: 403 });
+    expect(useMerchantSessionStore().accessToken).toBe('new');
+    expect(mocks.reset).not.toHaveBeenCalled();
   });
 
   it('shows fulfillment menus to operating merchants and hides them after freezing', async () => {

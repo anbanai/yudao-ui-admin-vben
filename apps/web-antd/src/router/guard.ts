@@ -121,11 +121,6 @@ function setupAccessGuard(router: Router) {
       return true;
     }
 
-    // 加载字典数据（不阻塞加载）
-    if (authStore.authMode === 'admin') {
-      dictStore.setDictCacheByApi(getSimpleDictDataList);
-    }
-
     // 生成路由表
     // 当前登录用户拥有的角色标识列表
     let userInfo = userStore.userInfo;
@@ -134,16 +129,27 @@ function setupAccessGuard(router: Router) {
       const loading = message.loading({
         content: `${$t('common.loadingMenu')}...`,
       });
+      const sessionVersion = authStore.sessionVersion;
       try {
         const authPermissionInfo = await authStore.fetchUserInfo();
         if (authPermissionInfo) {
           userInfo = authPermissionInfo.user;
         }
+      } catch (error) {
+        if (authStore.clearForbiddenSession(error, sessionVersion)) {
+          return { path: LOGIN_PATH, replace: true };
+        }
+        throw error;
       } finally {
         loading();
       }
     }
     const userRoles = userStore.userRoles ?? [];
+
+    // 权限校验通过后异步加载字典数据
+    if (authStore.authMode === 'admin') {
+      dictStore.setDictCacheByApi(getSimpleDictDataList);
+    }
 
     // 生成菜单和路由
     const { accessibleMenus, accessibleRoutes } = await generateAccess({

@@ -148,9 +148,16 @@ export const useAuthStore = defineStore('auth', () => {
         //   fetchUserInfo(),
         //   // getAccessCodesApi(),
         // ]);
-        const fetchUserInfoResult = await fetchUserInfo();
-
-        userInfo = fetchUserInfoResult.user;
+        try {
+          const authPermissionInfo = await fetchUserInfo();
+          userInfo = authPermissionInfo.user;
+        } catch (error) {
+          const loginExpired = accessStore.loginExpired;
+          if (clearForbiddenSession(error, version) && loginExpired) {
+            await router.replace({ path: LOGIN_PATH });
+          }
+          throw error;
+        }
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
@@ -193,9 +200,7 @@ export const useAuthStore = defineStore('auth', () => {
       // 不做任何处理
     }
     if (sessionVersion.value !== version) return;
-    removeAccessRoutes(router, accessStore.accessRoutes);
-    resetAllStores();
-    accessStore.setLoginExpired(false);
+    clearLocalSession();
 
     // 回登录页带上当前路由地址
     await router.replace({
@@ -206,6 +211,31 @@ export const useAuthStore = defineStore('auth', () => {
           }
         : {},
     });
+  }
+
+  function clearLocalSession() {
+    removeAccessRoutes(router, accessStore.accessRoutes);
+    resetAllStores();
+    accessStore.setLoginExpired(false);
+  }
+
+  function clearForbiddenSession(error: unknown, version: number) {
+    if (
+      version !== sessionVersion.value ||
+      !error ||
+      typeof error !== 'object' ||
+      !('code' in error) ||
+      error.code !== 403
+    ) {
+      return false;
+    }
+    const tenantId = accessStore.tenantId;
+    clearLocalSession();
+    if (authMode.value === 'admin') {
+      // Keep the tenant selected in the login form for the next attempt.
+      accessStore.setTenantId(tenantId);
+    }
+    return true;
   }
 
   async function fetchUserInfo() {
@@ -369,6 +399,7 @@ export const useAuthStore = defineStore('auth', () => {
     $reset,
     authMode,
     authLogin,
+    clearForbiddenSession,
     fetchUserInfo,
     getActiveAccessToken,
     loginLoading,
